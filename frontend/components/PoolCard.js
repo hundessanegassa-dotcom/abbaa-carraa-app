@@ -1,4 +1,3 @@
-import React from 'react';
 import Link from 'next/link';
 
 // Helper function to format the date nicely
