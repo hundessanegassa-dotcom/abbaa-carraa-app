@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '../lib/supabase'  
 import { useTranslation } from 'react-i18next';
 
 export default function Home() {
