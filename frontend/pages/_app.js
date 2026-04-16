@@ -1,3 +1,4 @@
+import React from 'react';
 import '../styles/globals.css';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
