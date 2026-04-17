@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import LiveChat from '../../components/LiveChat';
 
 export default function PoolDetail() {
   const router = useRouter();
@@ -12,6 +13,8 @@ export default function PoolDetail() {
   const [loading, setLoading] = useState(true);
   const [showPayment, setShowPayment] = useState(false);
   const [user, setUser] = useState(null);
+  const [seats, setSeats] = useState(1);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -30,7 +33,7 @@ export default function PoolDetail() {
       // Fetch pool details
       const { data: poolData, error: poolError } = await supabase
         .from('pools')
-        .select('*, profiles!winner_id(full_name, email)')
+        .select('*, profiles!winner_id(full_name, email), agents(business_name, city)')
         .eq('id', id)
         .single();
 
@@ -55,8 +58,69 @@ export default function PoolDetail() {
     }
   }
 
+  async function handlePayment() {
+    if (!user) {
+      toast.error('Please login first');
+      router.push(`/login?redirect=/pools/${id}`);
+      return;
+    }
+
+    setPaymentLoading(true);
+
+    try {
+      const totalAmount = seats * pool.contribution_amount;
+      const transactionId = `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      // Create pending contribution
+      const { error: contribError } = await supabase
+        .from('contributions')
+        .insert([{
+          user_id: user.id,
+          pool_id: pool.id,
+          amount: totalAmount,
+          transaction_id: transactionId,
+          payment_method: 'chapa',
+          status: 'pending',
+          metadata: { seats: seats }
+        }]);
+
+      if (contribError) throw contribError;
+
+      // Initialize Chapa payment
+      const response = await fetch('/api/chapa/initialize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: totalAmount,
+          email: user.email,
+          first_name: user.user_metadata?.full_name || '',
+          last_name: '',
+          phone_number: '',
+          poolId: pool.id,
+          poolName: pool.prize_name,
+          metadata: { seats: seats, transactionId: transactionId }
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.checkout_url) {
+        window.location.href = result.checkout_url;
+      } else {
+        toast.error(result.error || 'Payment initialization failed');
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast.error('Something went wrong');
+    } finally {
+      setPaymentLoading(false);
+    }
+  }
+
   const progress = pool ? (pool.current_amount / pool.target_amount) * 100 : 0;
   const daysRemaining = pool?.end_date ? Math.ceil((new Date(pool.end_date) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+  const totalAmount = pool ? seats * pool.contribution_amount : 0;
+  const totalTickets = pool ? Math.floor(totalAmount / 100) : 0;
 
   if (loading) {
     return (
@@ -96,7 +160,7 @@ export default function PoolDetail() {
               <p className="text-xl font-bold text-green-600">ETB {pool.target_amount?.toLocaleString()}</p>
             </div>
             <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <p className="text-gray-500 text-sm">Contribution</p>
+              <p className="text-gray-500 text-sm">Contribution per Seat</p>
               <p className="text-xl font-bold text-blue-600">ETB {pool.contribution_amount?.toLocaleString()}</p>
             </div>
             <div className="text-center p-3 bg-gray-50 rounded-lg">
@@ -125,14 +189,62 @@ export default function PoolDetail() {
             </div>
           </div>
 
-          {/* Join Button */}
+          {/* Join Section - Seat Selector */}
           {pool.status === 'active' && (
-            <button
-              onClick={() => setShowPayment(true)}
-              className="w-full mt-6 bg-green-600 text-white py-3 rounded-lg font-semibold text-lg hover:bg-green-700 transition"
-            >
-              Join This Pool - ETB {pool.contribution_amount?.toLocaleString()}
-            </button>
+            <div className="mt-6 border-t pt-6">
+              <h3 className="text-lg font-bold mb-4">Join This Pool</h3>
+              
+              {/* Seat Selector */}
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-gray-600">Number of Seats:</p>
+                  <div className="flex items-center space-x-4 mt-2">
+                    <button
+                      onClick={() => setSeats(Math.max(1, seats - 1))}
+                      className="w-8 h-8 bg-gray-200 rounded-full text-lg font-bold hover:bg-gray-300"
+                    >
+                      -
+                    </button>
+                    <span className="text-xl font-bold w-12 text-center">{seats}</span>
+                    <button
+                      onClick={() => setSeats(seats + 1)}
+                      className="w-8 h-8 bg-gray-200 rounded-full text-lg font-bold hover:bg-gray-300"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-gray-600">Total Amount:</p>
+                  <p className="text-2xl font-bold text-green-600">ETB {totalAmount.toLocaleString()}</p>
+                  <p className="text-xs text-gray-500">{totalTickets} tickets ({Math.floor(totalTickets / (pool.target_amount / 100) * 100)}% chance)</p>
+                </div>
+              </div>
+
+              <button
+                onClick={handlePayment}
+                disabled={paymentLoading}
+                className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold text-lg hover:bg-green-700 disabled:bg-gray-400 transition"
+              >
+                {paymentLoading ? 'Processing...' : `Pay ETB ${totalAmount.toLocaleString()} via Chapa`}
+              </button>
+              <p className="text-xs text-gray-400 text-center mt-2">
+                Secure payment via Chapa (Telebirr & CBE Birr accepted)
+              </p>
+            </div>
+          )}
+
+          {/* Winner Section */}
+          {pool.status === 'completed' && pool.winner_id && (
+            <div className="mt-6 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 border-2 border-yellow-400">
+              <h2 className="text-xl font-bold text-center mb-2">🏆 Winner Announced! 🏆</h2>
+              <p className="text-center">
+                Congratulations to <span className="font-bold text-green-600">{pool.profiles?.full_name || 'Winner'}</span>!
+              </p>
+              <p className="text-center text-gray-600 text-sm mt-1">
+                Draw took place on {new Date(pool.draw_date).toLocaleDateString()}
+              </p>
+            </div>
           )}
         </div>
 
@@ -142,7 +254,7 @@ export default function PoolDetail() {
           {contributions.length === 0 ? (
             <p className="text-gray-500">Be the first to contribute!</p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-60 overflow-y-auto">
               {contributions.map((contrib) => (
                 <div key={contrib.id} className="flex justify-between items-center py-2 border-b">
                   <div>
@@ -160,37 +272,21 @@ export default function PoolDetail() {
           )}
         </div>
 
-        {/* Winner Section (if completed) */}
-        {pool.status === 'completed' && pool.winner_id && (
-          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg shadow-md p-6 border-2 border-yellow-400">
-            <h2 className="text-2xl font-bold text-center mb-2">🏆 Winner Announced! 🏆</h2>
-            <p className="text-center text-lg">
-              Congratulations to <span className="font-bold text-green-600">{pool.profiles?.full_name || 'Winner'}</span>!
-            </p>
-            <p className="text-center text-gray-600 mt-2">
-              Draw took place on {new Date(pool.draw_date).toLocaleDateString()}
-            </p>
+        {/* Agent Info */}
+        {pool.agents && (
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 className="text-xl font-bold mb-4">About the Agent</h2>
+            <p className="font-semibold">{pool.agents.business_name}</p>
+            <p className="text-gray-600 text-sm">📍 {pool.agents.city || pool.city || 'Addis Ababa'}</p>
+            {pool.discount_for_participants > 0 && (
+              <p className="text-blue-600 text-sm mt-2">🎁 Special: {pool.discount_for_participants}% discount for participants!</p>
+            )}
           </div>
         )}
       </div>
 
-      {/* Payment Modal (will connect to Chapa later) */}
-      {showPayment && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h2 className="text-2xl font-bold mb-4">Payment Coming Soon</h2>
-            <p className="text-gray-600 mb-4">
-              Payment integration is being set up. You'll be able to pay via Telebirr and CBE Birr very soon!
-            </p>
-            <button
-              onClick={() => setShowPayment(false)}
-              className="w-full bg-green-600 text-white py-2 rounded-lg"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Live Chat */}
+      <LiveChat poolId={id} poolName={pool?.prize_name} />
     </div>
   );
 }
