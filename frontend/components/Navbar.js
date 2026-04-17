@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 export default function Navbar() {
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [isAgent, setIsAgent] = useState(false);
+  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
     getUser();
@@ -18,12 +18,12 @@ export default function Navbar() {
     setUser(user);
     
     if (user) {
-      const { data } = await supabase
-        .from('agents')
-        .select('id')
-        .eq('user_id', user.id)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
         .single();
-      setIsAgent(!!data);
+      setUserRole(profile?.role);
     }
   }
 
@@ -50,15 +50,24 @@ export default function Navbar() {
             <Link href="/about" className="text-gray-700 hover:text-green-600 transition">About</Link>
             <Link href="/contact" className="text-gray-700 hover:text-green-600 transition">Contact</Link>
             
+            {/* Admin Analytics Link */}
+            {userRole === 'admin' && (
+              <Link href="/admin/analytics" className="text-purple-600 hover:text-purple-700 transition">
+                📊 Analytics
+              </Link>
+            )}
+            
             {user && (
               <Link href="/dashboard" className="text-gray-700 hover:text-green-600 transition">Dashboard</Link>
             )}
             
-            {isAgent && (
+            {/* Agent Dashboard Link */}
+            {userRole === 'agent' && (
               <Link href="/agent/dashboard" className="text-blue-600 hover:text-blue-700 transition">Agent Portal</Link>
             )}
             
-            {!isAgent && user && (
+            {/* Become Agent Link - only for regular users */}
+            {user && userRole !== 'agent' && userRole !== 'admin' && (
               <Link href="/agent/register" className="text-yellow-600 hover:text-yellow-700 transition">Become Agent</Link>
             )}
           </div>
