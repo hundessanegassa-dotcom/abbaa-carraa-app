@@ -46,6 +46,9 @@ export default function Navbar() {
                 <Link href="/register" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
                   Register
                 </Link>
+            <Link href="/winners" className="text-gray-700 hover:text-green-600 transition">
+  Winners
+</Link>
               </>
             )}
           </div>
