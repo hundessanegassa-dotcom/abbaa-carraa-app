@@ -62,6 +62,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Navigation */}
       <nav className="bg-white shadow-md">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/" className="text-2xl font-bold text-green-600">
@@ -73,9 +74,11 @@ export default function Dashboard() {
         </div>
       </nav>
 
+      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">My Dashboard</h1>
         
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-gray-500 text-sm mb-2">Total Contributions</h3>
@@ -95,6 +98,7 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Contributions Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="px-6 py-4 border-b bg-gray-50">
             <h2 className="text-xl font-semibold">Recent Contributions</h2>
@@ -139,8 +143,8 @@ export default function Dashboard() {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500">
                         {new Date(contrib.created_at).toLocaleDateString()}
-                      </td>
-                    </tr>
+                       </td>
+                     </tr>
                   ))}
                 </tbody>
               </table>
@@ -148,6 +152,7 @@ export default function Dashboard() {
           )}
         </div>
 
+        {/* Quick Links */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
           <Link href="/listings" className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg text-center hover:from-green-600 hover:to-green-700 transition">
             🎁 Browse Available Prizes
