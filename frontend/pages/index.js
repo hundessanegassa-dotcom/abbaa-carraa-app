@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useTranslation } from 'react-i18next';
 import PoolCard from '../components/PoolCard';
 import NewsletterSubscribe from '../components/NewsletterSubscribe';
+import PoolRecommendations from '../components/PoolRecommendations';
 
 export default function Home() {
   const { t } = useTranslation();
@@ -137,6 +138,9 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* AI Recommendations */}
+        <PoolRecommendations />
 
         {/* City Filter */}
         {cities.length > 0 && (
