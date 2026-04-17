@@ -46,42 +46,6 @@ export default function Dashboard() {
     if (data) setContributions(data);
   }
 
-  async function downloadReceipt(contributionId) {
-    try {
-      toast.loading('Generating receipt...');
-      
-      const response = await fetch('/api/receipt/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          contributionId, 
-          userId: user?.id 
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate receipt');
-      }
-
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `receipt-${contributionId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      toast.dismiss();
-      toast.success('Receipt downloaded!');
-    } catch (error) {
-      console.error('Download error:', error);
-      toast.dismiss();
-      toast.error('Failed to download receipt');
-    }
-  }
-
   async function handleLogout() {
     await supabase.auth.signOut();
     toast.success('Logged out');
@@ -98,7 +62,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
       <nav className="bg-white shadow-md">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/" className="text-2xl font-bold text-green-600">
@@ -110,11 +73,9 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">My Dashboard</h1>
         
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-gray-500 text-sm mb-2">Total Contributions</h3>
@@ -134,7 +95,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Contributions Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="px-6 py-4 border-b bg-gray-50">
             <h2 className="text-xl font-semibold">Recent Contributions</h2>
@@ -156,7 +116,6 @@ export default function Dashboard() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Receipt</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -181,16 +140,6 @@ export default function Dashboard() {
                       <td className="px-6 py-4 text-sm text-gray-500">
                         {new Date(contrib.created_at).toLocaleDateString()}
                       </td>
-                      <td className="px-6 py-4">
-                        {contrib.status === 'completed' && (
-                          <button
-                            onClick={() => downloadReceipt(contrib.id)}
-                            className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
-                          >
-                            📄 Download PDF
-                          </button>
-                        )}
-                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -199,7 +148,6 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Quick Links */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
           <Link href="/listings" className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg text-center hover:from-green-600 hover:to-green-700 transition">
             🎁 Browse Available Prizes
