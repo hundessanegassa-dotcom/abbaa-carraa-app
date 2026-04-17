@@ -139,7 +139,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* AI Recommendations */}
+        {/* AI Recommendations - NEW */}
         <PoolRecommendations />
 
         {/* City Filter */}
