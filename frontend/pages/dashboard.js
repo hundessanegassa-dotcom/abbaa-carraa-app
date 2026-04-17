@@ -63,3 +63,30 @@ export default function Dashboard() {
     </div>
   );
 }
+async function downloadReceipt(contributionId) {
+  try {
+    const response = await fetch('/api/receipt/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contributionId, userId: user.id })
+    });
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `receipt-${contributionId}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    toast.error('Failed to download receipt');
+  }
+}
+
+// In the table, add a button:
+<button
+  onClick={() => downloadReceipt(contrib.id)}
+  className="text-blue-600 hover:text-blue-700 text-sm"
+>
+  📄 Download Receipt
+</button>
