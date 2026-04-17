@@ -24,7 +24,6 @@
     "react-chartjs-2": "^5.2.0",
     "date-fns": "^3.0.6",
     "uuid": "^9.0.1",
-    "@react-pdf/renderer": "^3.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.5",
