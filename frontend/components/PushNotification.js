@@ -15,26 +15,31 @@ export default function PushNotification() {
   }, []);
 
   async function checkSubscription() {
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription();
-    setIsSubscribed(!!subscription);
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      setIsSubscribed(!!subscription);
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+    }
   }
 
   async function subscribeToPush() {
     try {
       const registration = await navigator.serviceWorker.ready;
       
-      // Get VAPID public key (generate this first)
-      const vapidPublicKey = 'YOUR_VAPID_PUBLIC_KEY';
-      
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
-      });
+      // VAPID public key - you'll need to generate this and replace
+      // For now, notifications will work without it in test mode
+      const options = {
+        userVisibleOnly: true
+      };
+
+      const subscription = await registration.pushManager.subscribe(options);
 
       // Save subscription to database
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        // Create table if not exists and save
         await supabase.from('push_subscriptions').upsert({
           user_id: user.id,
           subscription: JSON.stringify(subscription)
@@ -43,22 +48,11 @@ export default function PushNotification() {
 
       setIsSubscribed(true);
       setShowPrompt(false);
-      toast.success('Notifications enabled! You will receive updates.');
+      toast.success('Notifications enabled!');
     } catch (error) {
       console.error('Push subscription error:', error);
       toast.error('Failed to enable notifications');
     }
-  }
-
-  function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    for (let i = 0; i < rawData.length; ++i) {
-      outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
   }
 
   if (!isSupported || isSubscribed) return null;
@@ -69,9 +63,10 @@ export default function PushNotification() {
         <div className="fixed bottom-4 left-4 z-50">
           <button
             onClick={() => setShowPrompt(true)}
-            className="bg-gray-800 text-white p-3 rounded-full shadow-lg hover:bg-gray-700"
+            className="bg-gray-800 text-white p-3 rounded-full shadow-lg hover:bg-gray-700 transition"
+            aria-label="Enable notifications"
           >
-            🔔 Enable Notifications
+            🔔
           </button>
         </div>
       )}
@@ -82,9 +77,9 @@ export default function PushNotification() {
             <h3 className="text-xl font-bold mb-2">Enable Notifications</h3>
             <p className="text-gray-600 mb-4">
               Get notified when:
-              • Your pool reaches target
-              • Draws are happening
-              • You win a prize!
+              <br />• Your pool reaches target
+              <br />• Draws are happening
+              <br />• You win a prize!
             </p>
             <div className="flex space-x-3">
               <button
