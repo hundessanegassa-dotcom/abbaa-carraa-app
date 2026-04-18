@@ -1,0 +1,62 @@
+{
+  "common": {
+    "welcome": "ናብ ኣባ ካራ ብደሓን መጺኹም",
+    "tagline": "ህብረተሰብ መሰረት ዝገበረ ናይ ሽልማትን ምትሕግጋዝን መድረኽ",
+    "join": "ተጸንበር",
+    "contribute": "ምትሕግጋዝ",
+    "login": "እቶ",
+    "register": "ተመዝገብ",
+    "logout": "ውጻ",
+    "dashboard": "ዳሽቦርድ",
+    "create_pool": "ሓዲሽ ገንዳ ፍጠር",
+    "browse_prizes": "ሽልማታት ርአ",
+    "winners": "ተዓወቲቲ",
+    "about": "ብዛዕባና",
+    "contact": "ራኸቡና",
+    "faq": "ሰገነት ሕቶታት",
+    "become_agent": "ወኪል ኩን",
+    "get_started": "ጀምር"
+  },
+  "pools": {
+    "active_pools": "ንጡፋት ገንዳታት",
+    "featured_pools": "ፍሉያት ገንዳታት",
+    "target_amount": "ዕላማ ዋጋ",
+    "current_amount": "ህሉው ዋጋ",
+    "contribution_amount": "ዋጋ ምትሕግጋዝ",
+    "participants": "ተሳተፍቲ",
+    "progress": "ዕቤት",
+    "days_left": "ዝተረፉ መዓልትታት",
+    "draw_date": "ዕላማ ቀን",
+    "started": "ተጀሚሩ",
+    "join_now": "ሕጂ ተጸንበር",
+    "no_pools": "ኣብዚ እዋን ንጡፋት ገንዳታት የለን"
+  },
+  "agent": {
+    "become_agent": "ወኪል ኩን",
+    "earn_commission": "10% ኮሚሽን ርኸብ",
+    "register_agent": "ከም ወኪል ተመዝገብ",
+    "agent_dashboard": "ዳሽቦርድ ወኪል",
+    "my_listings": "ዝርዝርታተይ",
+    "my_pools": "ገንዳታት ሽልማተይ",
+    "participants": "ተሳተፍቲ",
+    "commissions": "ኮሚሽናት"
+  },
+  "supplier": {
+    "become_supplier": "ኣቕራቢ ኩን",
+    "list_products": "ውጤታትካ ዘርዝር",
+    "offer_discounts": "ንዘይተዓወቱ ተሳተፍቲ ቅናሽ ቅረብ",
+    "register_supplier": "ከም ኣቕራቢ ተመዝገብ"
+  },
+  "organization": {
+    "become_org": "ድርጅት ተመዝገብ",
+    "internal_pools": "ውሽጣዊ ገንዳታት ፍጠር",
+    "member_saving": "ንኣባላት ማሕበራዊ ቁጠባ"
+  },
+  "footer": {
+    "quick_links": "ቅልጡፍ መስመራት",
+    "support": "ደገፍ",
+    "contact_us": "ራኸቡና",
+    "rights": "ኩሉ ሓቂ ተዓቂቡ ተዋሂቡ ኣሎ",
+    "built_by": "ብ ተሰሪሑ"
+  }
+}
