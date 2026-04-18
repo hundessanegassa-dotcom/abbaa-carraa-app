@@ -66,7 +66,12 @@ export default function PoolCard({ pool, featured = false }) {
             <span className="text-gray-600 font-semibold">Contribution:</span>
             <span className="font-bold text-green-600">ETB {pool.contribution_amount?.toLocaleString() || 0}</span>
           </div>
-
+{pool.discount_for_non_winners > 0 && (
+  <div className="mt-2 p-2 bg-blue-50 rounded-lg">
+    <p className="text-xs text-blue-700 font-semibold">🎁 Don't win? Get {pool.discount_for_non_winners}% discount!</p>
+    <p className="text-xs text-blue-600">Purchase the product from supplier at discounted price</p>
+  </div>
+)}
           {/* Current Amount */}
           <div className="flex justify-between text-sm">
             <span className="text-gray-600 font-semibold">Raised:</span>
