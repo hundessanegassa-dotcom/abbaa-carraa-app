@@ -60,7 +60,11 @@ export default function Navbar() {
             {user && (
               <Link href="/dashboard" className="text-gray-700 hover:text-green-600 transition">Dashboard</Link>
             )}
-            
+            {user && (
+  <Link href="/create-pool" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+    ✨ Create Pool
+  </Link>
+)}
             {/* Agent Dashboard Link */}
             {userRole === 'agent' && (
               <Link href="/agent/dashboard" className="text-blue-600 hover:text-blue-700 transition">Agent Portal</Link>
