@@ -30,15 +30,32 @@ export default function PoolCard({ pool, featured = false }) {
 
   return (
     <div className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden ${featured ? 'ring-2 ring-green-500' : ''}`}>
-      {featured && (
-        <div className="bg-green-600 text-white text-center py-1 text-sm font-semibold">
-          ⭐ Featured Pool
+      
+      {/* Image Section - NEW */}
+      {pool.image_url ? (
+        <div className="relative h-48 w-full overflow-hidden bg-gray-100">
+          <img 
+            src={pool.image_url} 
+            alt={pool.prize_name}
+            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+          />
+          {featured && (
+            <div className="absolute top-2 right-2 bg-green-600 text-white text-xs px-2 py-1 rounded-full font-semibold shadow-md">
+              ⭐ Featured
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="h-32 bg-gradient-to-r from-green-100 to-blue-100 flex items-center justify-center">
+          <span className="text-5xl">🎁</span>
         </div>
       )}
       
-      <div className="p-6">
-        <h3 className="text-xl font-bold mb-2 text-gray-800">{pool.prize_name}</h3>
-        <p className="text-gray-600 mb-4 line-clamp-2 min-h-[48px]">{pool.description || 'Join this pool for a chance to win!'}</p>
+      <div className="p-5">
+        <h3 className="text-xl font-bold mb-2 text-gray-800 line-clamp-1">{pool.prize_name}</h3>
+        <p className="text-gray-600 mb-4 line-clamp-2 min-h-[48px] text-sm">
+          {pool.description || 'Join this pool for a chance to win!'}
+        </p>
         
         <div className="space-y-3">
           {/* Progress Bar */}
@@ -66,19 +83,22 @@ export default function PoolCard({ pool, featured = false }) {
             <span className="text-gray-600 font-semibold">Contribution:</span>
             <span className="font-bold text-green-600">ETB {pool.contribution_amount?.toLocaleString() || 0}</span>
           </div>
-{pool.discount_for_non_winners > 0 && (
-  <div className="mt-2 p-2 bg-blue-50 rounded-lg">
-    <p className="text-xs text-blue-700 font-semibold">🎁 Don't win? Get {pool.discount_for_non_winners}% discount!</p>
-    <p className="text-xs text-blue-600">Purchase the product from supplier at discounted price</p>
-  </div>
-)}
+
           {/* Current Amount */}
           <div className="flex justify-between text-sm">
             <span className="text-gray-600 font-semibold">Raised:</span>
             <span className="font-semibold text-gray-800">ETB {pool.current_amount?.toLocaleString() || 0}</span>
           </div>
 
-          {/* === DATE DISPLAY SECTION === */}
+          {/* Discount Badge for Supplier Pools */}
+          {pool.discount_for_non_winners > 0 && (
+            <div className="mt-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-xs text-blue-700 font-semibold">🎁 Don't win? Get {pool.discount_for_non_winners}% discount!</p>
+              <p className="text-xs text-blue-600">Purchase from supplier at discounted price</p>
+            </div>
+          )}
+
+          {/* Date Display Section */}
           <div className="border-t border-gray-100 pt-3 mt-2">
             {/* Start Date */}
             <div className="flex justify-between text-sm">
@@ -96,7 +116,7 @@ export default function PoolCard({ pool, featured = false }) {
               </div>
             )}
             
-            {/* End Date (optional - shows when pool ends) */}
+            {/* End Date */}
             {pool.end_date && (
               <div className="flex justify-between text-xs text-gray-400 mt-1">
                 <span>Draw Date:</span>
@@ -104,11 +124,10 @@ export default function PoolCard({ pool, featured = false }) {
               </div>
             )}
           </div>
-          {/* === END DATE DISPLAY === */}
         </div>
         
         <Link href={`/pools/${pool.id}`}>
-          <button className="w-full mt-6 bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 transition-all duration-200 transform hover:scale-[1.02]">
+          <button className="w-full mt-5 bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition-all duration-200 transform hover:scale-[1.02]">
             🎯 Join This Pool
           </button>
         </Link>
