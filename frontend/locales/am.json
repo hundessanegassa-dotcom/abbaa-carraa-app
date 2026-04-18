@@ -1,0 +1,62 @@
+{
+  "common": {
+    "welcome": "እንኳን ወደ አባ ካራ በደህና መጡ",
+    "tagline": "ማህበረሰብን መሰረት ያደረገ የሽልማት እና የአስተዋጽኦ መድረክ",
+    "join": "ተቀላቀል",
+    "contribute": "አስተዋጽኦ አድርግ",
+    "login": "ግባ",
+    "register": "ተመዝገብ",
+    "logout": "ውጣ",
+    "dashboard": "ዳሽቦርድ",
+    "create_pool": "አዲስ ገንዳ ፍጠር",
+    "browse_prizes": "ሽልማቶችን ይመልከቱ",
+    "winners": "አሸናፊዎች",
+    "about": "ስለእኛ",
+    "contact": "አግኙን",
+    "faq": "ተደጋጋሚ ጥያቄዎች",
+    "become_agent": "ወኪል ሁን",
+    "get_started": "ይጀምሩ"
+  },
+  "pools": {
+    "active_pools": "ንቁ ገንዳዎች",
+    "featured_pools": "የተለዩ ገንዳዎች",
+    "target_amount": "የዒላማ መጠን",
+    "current_amount": "አሁን ያለው መጠን",
+    "contribution_amount": "የአስተዋጽኦ መጠን",
+    "participants": "ተሳታፊዎች",
+    "progress": "እድገት",
+    "days_left": "የቀሩ ቀናት",
+    "draw_date": "የእጣ ቀን",
+    "started": "የተጀመረው",
+    "join_now": "አሁን ተቀላቀል",
+    "no_pools": "በአሁኑ ጊዜ ምንም ንቁ ገንዳዎች የሉም"
+  },
+  "agent": {
+    "become_agent": "ወኪል ሁን",
+    "earn_commission": "10% ኮሚሽን አግኝ",
+    "register_agent": "እንደ ወኪል ይመዝገቡ",
+    "agent_dashboard": "የወኪል ዳሽቦርድ",
+    "my_listings": "የእኔ ዝርዝሮች",
+    "my_pools": "የእኔ ሽልማት ገንዳዎች",
+    "participants": "ተሳታፊዎች",
+    "commissions": "ኮሚሽኖች"
+  },
+  "supplier": {
+    "become_supplier": "አቅራቢ ሁን",
+    "list_products": "ምርቶችዎን ዝርዝር ያድርጉ",
+    "offer_discounts": "ላላሸነፉ ተሳታፊዎች ቅናሽ ያቅርቡ",
+    "register_supplier": "እንደ አቅራቢ ይመዝገቡ"
+  },
+  "organization": {
+    "become_org": "ድርጅት ይመዝገቡ",
+    "internal_pools": "የውስጥ ገንዳዎችን ይፍጠሩ",
+    "member_saving": "ለአባላት የማህበረሰብ ቁጠባ"
+  },
+  "footer": {
+    "quick_links": "ፈጣን አገናኞች",
+    "support": "ድጋፍ",
+    "contact_us": "አግኙን",
+    "rights": "መብቱ በህግ የተጠበቀ ነው",
+    "built_by": "ተገንብቷል በ"
+  }
+}
