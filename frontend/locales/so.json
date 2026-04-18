@@ -1,0 +1,62 @@
+{
+  "common": {
+    "welcome": "Ku Soo Dhawoow Abbaa Carraa",
+    "tagline": "Madal abaal-marin iyo tabaruc wadaagis ah oo bulsho ku saleysan",
+    "join": "Ku Biir",
+    "contribute": "Tabaruc",
+    "login": "Soo Gal",
+    "register": "Isdiiwaan Gel",
+    "logout": "Bax",
+    "dashboard": "Dashboard",
+    "create_pool": "Abuur Pool",
+    "browse_prizes": "Baadh Abaal-marinaha",
+    "winners": "Kuwa Guuleystay",
+    "about": "Nagu Saabsan",
+    "contact": "Nala Soo Xiriir",
+    "faq": "Su'aalaha Badanaa La Is Weydiiyo",
+    "become_agent": "Noqo Wakiil",
+    "get_started": "Bilow"
+  },
+  "pools": {
+    "active_pools": "Pool-yada Firfircoon",
+    "featured_pools": "Pool-yada La Soo Bandhigay",
+    "target_amount": "Qadarka Loo Bartilmaameedsaday",
+    "current_amount": "Qadarka Hadha",
+    "contribution_amount": "Qadarka Tabaruca",
+    "participants": "Kaqeybgalayaasha",
+    "progress": "Horukaca",
+    "days_left": "Maalmaha Ka Hadhay",
+    "draw_date": "Taariikhda Bakhtiyaada",
+    "started": "Bilowday",
+    "join_now": "Hada Ku Biir",
+    "no_pools": "Ma Jiraan Pool-yo Firfircoon oo Hada"
+  },
+  "agent": {
+    "become_agent": "Noqo Wakiil",
+    "earn_commission": "Hel 10% Guddiga",
+    "register_agent": "Isdiiwaan Gel Wakiil Ahaan",
+    "agent_dashboard": "Dashboard-ka Wakiilka",
+    "my_listings": "Liiska Heyga",
+    "my_pools": "Pool-yada Abaal-marinaha Heyga",
+    "participants": "Kaqeybgalayaasha",
+    "commissions": "Guddiyada"
+  },
+  "supplier": {
+    "become_supplier": "Noqo Alaaweeyaha",
+    "list_products": "Liis Gayso Alaabtaada",
+    "offer_discounts": "U Soo Bandhig Dhimis Kaqeybgalayaasha Aan Ku Guulaysan",
+    "register_supplier": "Isdiiwaan Gel Alaaweeyaha Ahaan"
+  },
+  "organization": {
+    "become_org": "Isdiiwaan Gel Urur",
+    "internal_pools": "Abuur Pool-yada Gudaha",
+    "member_saving": "Kaydinta Bulshada ee Xubnaha"
+  },
+  "footer": {
+    "quick_links": "Xiriiriyeyaasha Dheere",
+    "support": "Taageero",
+    "contact_us": "Nala Soo Xiriir",
+    "rights": "Xuquuqda Oo Dhan Waa Loo Dhawran Yahay",
+    "built_by": "Waxaa Dhisey"
+  }
+}
