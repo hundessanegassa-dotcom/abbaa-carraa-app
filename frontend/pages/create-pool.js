@@ -14,7 +14,8 @@ export default function CreatePool() {
     description: '',
     target_amount: '',
     contribution_amount: '',
-    discount: '',
+    discount_percentage: '',
+    discount_terms: '',
     city: '',
   });
 
@@ -55,19 +56,13 @@ export default function CreatePool() {
           created_by: user.id,
           status: 'active',
           // If user is an agent, they get commission
-          agent_id: profile.user_type === 'agent' ? user.id : null
+          agent_id: profile.user_type === 'agent' ? user.id : null,
+          // For suppliers: store discount info
+          discount_for_non_winners: profile.user_type === 'supplier' ? parseInt(formData.discount_percentage) : null,
+          discount_terms: formData.discount_terms || null
         }]).select().single();
 
       if (poolError) throw poolError;
-
-      // 2. If user is a Supplier/Organization and offered a discount, save it
-      if ((profile.user_type === 'supplier' || profile.user_type === 'organization') && formData.discount) {
-        await supabase.from('pool_discounts').insert([{
-          pool_id: pool.id,
-          user_id: user.id,
-          discount_percentage: parseInt(formData.discount)
-        }]);
-      }
 
       toast.success('Prize pool created successfully!');
       router.push('/');
@@ -93,7 +88,7 @@ export default function CreatePool() {
       case 'agent':
         return 'Create a Prize Pool (Earn 10% Commission)';
       case 'supplier':
-        return 'List Your Product & Offer Discounts';
+        return 'List Your Product & Offer Discounts to Non-Winners';
       case 'organization':
         return 'Create Internal Pool for Your Members';
       default:
@@ -106,7 +101,7 @@ export default function CreatePool() {
       case 'agent':
         return 'As an Agent, you will earn 10% commission when this pool completes. List products from local businesses.';
       case 'supplier':
-        return 'As a Supplier/Manufacturer, you can offer a discount to all participants. Winners get the prize, others get your discount.';
+        return 'As a Supplier/Manufacturer: The WINNER gets the product for FREE. All OTHER participants get a DISCOUNT from you if they want to buy the product. This helps you sell multiple units!';
       case 'organization':
         return 'Create a private pool for your organization members. No commission - just community saving for a common goal.';
       default:
@@ -127,25 +122,25 @@ export default function CreatePool() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-gray-700 mb-2 font-medium">Prize Name *</label>
+              <label className="block text-gray-700 mb-2 font-medium">Prize/Product Name *</label>
               <input
                 type="text"
                 required
                 value={formData.prize_name}
                 onChange={(e) => setFormData({...formData, prize_name: e.target.value})}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                placeholder="e.g., Toyota Vitz 2018"
+                placeholder="e.g., Washing Machine X-5000"
               />
             </div>
 
             <div>
-              <label className="block text-gray-700 mb-2 font-medium">Description</label>
+              <label className="block text-gray-700 mb-2 font-medium">Product Description</label>
               <textarea
                 rows={3}
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
                 className="w-full p-3 border border-gray-300 rounded-lg"
-                placeholder="Describe the prize and pool details..."
+                placeholder="Describe the product, features, benefits..."
               />
             </div>
 
@@ -156,13 +151,14 @@ export default function CreatePool() {
                   type="number"
                   required
                   value={formData.target_amount}
-                  onChange={(e) => setFormData({...formData, target_amount: e.target_value})}
+                  onChange={(e) => setFormData({...formData, target_amount: e.target.value})}
                   className="w-full p-3 border border-gray-300 rounded-lg"
                   placeholder="e.g., 500000"
                 />
+                <p className="text-xs text-gray-500 mt-1">Total value of the prize</p>
               </div>
               <div>
-                <label className="block text-gray-700 mb-2 font-medium">Contribution per Seat (ETB) *</label>
+                <label className="block text-gray-700 mb-2 font-medium">Contribution per Person (ETB) *</label>
                 <input
                   type="number"
                   required
@@ -171,6 +167,7 @@ export default function CreatePool() {
                   className="w-full p-3 border border-gray-300 rounded-lg"
                   placeholder="e.g., 1000"
                 />
+                <p className="text-xs text-gray-500 mt-1">Amount each participant pays</p>
               </div>
             </div>
 
@@ -186,18 +183,58 @@ export default function CreatePool() {
               />
             </div>
 
-            {(profile.user_type === 'supplier' || profile.user_type === 'organization') && (
-              <div>
-                <label className="block text-gray-700 mb-2 font-medium">Discount for Non-Winners (%)</label>
-                <input
-                  type="number"
-                  value={formData.discount}
-                  onChange={(e) => setFormData({...formData, discount: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg"
-                  placeholder="e.g., 10 for 10% off"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Participants who don't win will get this discount from you when purchasing from your business.
+            {/* Supplier-Specific Fields */}
+            {profile.user_type === 'supplier' && (
+              <>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h3 className="font-bold text-blue-800 mb-2">💰 Discount for Non-Winners</h3>
+                  <p className="text-sm text-blue-700 mb-3">
+                    When someone participates but does NOT win, they can buy this product from you at a discount.
+                    This encourages participation and helps you sell more units!
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-gray-700 mb-2 font-medium">Discount Percentage (%)</label>
+                      <input
+                        type="number"
+                        value={formData.discount_percentage}
+                        onChange={(e) => setFormData({...formData, discount_percentage: e.target.value})}
+                        className="w-full p-3 border border-gray-300 rounded-lg"
+                        placeholder="e.g., 10"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-700 mb-2 font-medium">Discount Terms (Optional)</label>
+                      <input
+                        type="text"
+                        value={formData.discount_terms}
+                        onChange={(e) => setFormData({...formData, discount_terms: e.target.value})}
+                        className="w-full p-3 border border-gray-300 rounded-lg"
+                        placeholder="e.g., Valid for 30 days"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Example: Set 10% discount. Non-winners can buy the ETB {formData.target_amount || '500,000'} product for ETB {formData.target_amount ? (parseFloat(formData.target_amount) * 0.9).toLocaleString() : '450,000'}!
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* Agent Commission Note */}
+            {profile.user_type === 'agent' && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-sm text-yellow-800">
+                  🤝 As an Agent, you will earn <strong>10% commission</strong> (ETB {(parseFloat(formData.target_amount) * 0.1).toLocaleString() || '0'}) when this pool completes successfully.
+                </p>
+              </div>
+            )}
+
+            {/* Organization Note */}
+            {profile.user_type === 'organization' && (
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <p className="text-sm text-purple-800">
+                  🏢 This pool is for your organization members only. No commission - everyone contributes to help one member win.
                 </p>
               </div>
             )}
