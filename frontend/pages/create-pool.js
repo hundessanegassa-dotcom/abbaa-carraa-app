@@ -9,6 +9,7 @@ export default function CreatePool() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     prize_name: '',
     description: '',
@@ -17,6 +18,8 @@ export default function CreatePool() {
     discount_percentage: '',
     discount_terms: '',
     city: '',
+    image_url: '',
+    image_file: null
   });
 
   useEffect(() => {
@@ -39,12 +42,54 @@ export default function CreatePool() {
     setProfile(data);
   }
 
+  // Handle image upload to Supabase Storage
+  async function handleImageUpload(file) {
+    if (!file) return null;
+    
+    setUploading(true);
+    
+    try {
+      // Create unique file name
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `pool-images/${fileName}`;
+      
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('pool-images')
+        .upload(filePath, file);
+      
+      if (uploadError) throw uploadError;
+      
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('pool-images')
+        .getPublicUrl(filePath);
+      
+      return publicUrl;
+    } catch (error) {
+      console.error('Image upload error:', error);
+      toast.error('Failed to upload image');
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // 1. Create the Pool
+      let imageUrl = formData.image_url;
+      
+      // Upload image if selected
+      if (formData.image_file) {
+        const uploadedUrl = await handleImageUpload(formData.image_file);
+        if (uploadedUrl) imageUrl = uploadedUrl;
+      }
+      
+      // Create the Pool
       const { data: pool, error: poolError } = await supabase
         .from('pools')
         .insert([{
@@ -53,11 +98,10 @@ export default function CreatePool() {
           target_amount: parseFloat(formData.target_amount),
           contribution_amount: parseFloat(formData.contribution_amount),
           city: formData.city,
+          image_url: imageUrl,
           created_by: user.id,
           status: 'active',
-          // If user is an agent, they get commission
           agent_id: profile.user_type === 'agent' ? user.id : null,
-          // For suppliers: store discount info
           discount_for_non_winners: profile.user_type === 'supplier' ? parseInt(formData.discount_percentage) : null,
           discount_terms: formData.discount_terms || null
         }]).select().single();
@@ -74,6 +118,28 @@ export default function CreatePool() {
     }
   }
 
+  // Handle file selection
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image must be less than 5MB');
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        return;
+      }
+      setFormData({...formData, image_file: file});
+      // Preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({...prev, image_preview: reader.result}));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   if (!profile) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -82,7 +148,6 @@ export default function CreatePool() {
     );
   }
 
-  // Different heading based on user type
   const getHeading = () => {
     switch (profile.user_type) {
       case 'agent':
@@ -101,7 +166,7 @@ export default function CreatePool() {
       case 'agent':
         return 'As an Agent, you will earn 10% commission when this pool completes. List products from local businesses.';
       case 'supplier':
-        return 'As a Supplier/Manufacturer: The WINNER gets the product for FREE. All OTHER participants get a DISCOUNT from you if they want to buy the product. This helps you sell multiple units!';
+        return 'As a Supplier/Manufacturer: The WINNER gets the product for FREE. All OTHER participants get a DISCOUNT from you if they want to buy the product.';
       case 'organization':
         return 'Create a private pool for your organization members. No commission - just community saving for a common goal.';
       default:
@@ -121,6 +186,40 @@ export default function CreatePool() {
           <p className="text-gray-600 mb-6">{getDescription()}</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Image Upload */}
+            <div>
+              <label className="block text-gray-700 mb-2 font-medium">Product/Prize Image</label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                {formData.image_preview ? (
+                  <div className="mb-3">
+                    <img src={formData.image_preview} alt="Preview" className="max-h-48 mx-auto rounded-lg" />
+                    <button
+                      type="button"
+                      onClick={() => setFormData({...formData, image_file: null, image_preview: null})}
+                      className="mt-2 text-red-600 text-sm hover:text-red-700"
+                    >
+                      Remove Image
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="text-4xl mb-2">🖼️</div>
+                    <p className="text-gray-500 text-sm mb-2">Click or drag to upload product image</p>
+                    <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg inline-block transition">
+                      Select Image
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                    </label>
+                    <p className="text-xs text-gray-400 mt-2">Max 5MB. JPG, PNG, or GIF</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div>
               <label className="block text-gray-700 mb-2 font-medium">Prize/Product Name *</label>
               <input
@@ -155,7 +254,6 @@ export default function CreatePool() {
                   className="w-full p-3 border border-gray-300 rounded-lg"
                   placeholder="e.g., 500000"
                 />
-                <p className="text-xs text-gray-500 mt-1">Total value of the prize</p>
               </div>
               <div>
                 <label className="block text-gray-700 mb-2 font-medium">Contribution per Person (ETB) *</label>
@@ -167,7 +265,6 @@ export default function CreatePool() {
                   className="w-full p-3 border border-gray-300 rounded-lg"
                   placeholder="e.g., 1000"
                 />
-                <p className="text-xs text-gray-500 mt-1">Amount each participant pays</p>
               </div>
             </div>
 
@@ -183,15 +280,10 @@ export default function CreatePool() {
               />
             </div>
 
-            {/* Supplier-Specific Fields */}
             {profile.user_type === 'supplier' && (
               <>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <h3 className="font-bold text-blue-800 mb-2">💰 Discount for Non-Winners</h3>
-                  <p className="text-sm text-blue-700 mb-3">
-                    When someone participates but does NOT win, they can buy this product from you at a discount.
-                    This encourages participation and helps you sell more units!
-                  </p>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-gray-700 mb-2 font-medium">Discount Percentage (%)</label>
@@ -204,7 +296,7 @@ export default function CreatePool() {
                       />
                     </div>
                     <div>
-                      <label className="block text-gray-700 mb-2 font-medium">Discount Terms (Optional)</label>
+                      <label className="block text-gray-700 mb-2 font-medium">Discount Terms</label>
                       <input
                         type="text"
                         value={formData.discount_terms}
@@ -214,37 +306,16 @@ export default function CreatePool() {
                       />
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Example: Set 10% discount. Non-winners can buy the ETB {formData.target_amount || '500,000'} product for ETB {formData.target_amount ? (parseFloat(formData.target_amount) * 0.9).toLocaleString() : '450,000'}!
-                  </p>
                 </div>
               </>
             )}
 
-            {/* Agent Commission Note */}
-            {profile.user_type === 'agent' && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-sm text-yellow-800">
-                  🤝 As an Agent, you will earn <strong>10% commission</strong> (ETB {(parseFloat(formData.target_amount) * 0.1).toLocaleString() || '0'}) when this pool completes successfully.
-                </p>
-              </div>
-            )}
-
-            {/* Organization Note */}
-            {profile.user_type === 'organization' && (
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                <p className="text-sm text-purple-800">
-                  🏢 This pool is for your organization members only. No commission - everyone contributes to help one member win.
-                </p>
-              </div>
-            )}
-
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || uploading}
               className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold text-lg hover:bg-green-700 disabled:bg-gray-400 transition"
             >
-              {loading ? 'Creating...' : 'Create Prize Pool'}
+              {uploading ? 'Uploading Image...' : loading ? 'Creating...' : 'Create Prize Pool'}
             </button>
           </form>
         </div>
