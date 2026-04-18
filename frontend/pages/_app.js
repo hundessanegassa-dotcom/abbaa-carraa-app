@@ -1,4 +1,4 @@
-import '@/styles/globals.css';
+import '../styles/globals.css';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Toaster } from 'react-hot-toast';
