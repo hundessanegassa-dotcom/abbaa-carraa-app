@@ -20,7 +20,7 @@ export default function Navbar() {
     if (user) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, user_type')
         .eq('id', user.id)
         .single();
       setUserRole(profile?.role);
@@ -49,6 +49,7 @@ export default function Navbar() {
             <Link href="/winners" className="text-gray-700 hover:text-green-600 transition">Winners</Link>
             <Link href="/about" className="text-gray-700 hover:text-green-600 transition">About</Link>
             <Link href="/contact" className="text-gray-700 hover:text-green-600 transition">Contact</Link>
+            <Link href="/faq" className="text-gray-700 hover:text-green-600 transition">FAQ</Link>  {/* ← ADD THIS LINE */}
             
             {/* Admin Analytics Link */}
             {userRole === 'admin' && (
@@ -60,11 +61,7 @@ export default function Navbar() {
             {user && (
               <Link href="/dashboard" className="text-gray-700 hover:text-green-600 transition">Dashboard</Link>
             )}
-            {user && (
-  <Link href="/create-pool" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
-    ✨ Create Pool
-  </Link>
-)}
+            
             {/* Agent Dashboard Link */}
             {userRole === 'agent' && (
               <Link href="/agent/dashboard" className="text-blue-600 hover:text-blue-700 transition">Agent Portal</Link>
@@ -73,6 +70,13 @@ export default function Navbar() {
             {/* Become Agent Link - only for regular users */}
             {user && userRole !== 'agent' && userRole !== 'admin' && (
               <Link href="/agent/register" className="text-yellow-600 hover:text-yellow-700 transition">Become Agent</Link>
+            )}
+            
+            {/* Create Pool Link - for logged in users */}
+            {user && (
+              <Link href="/create-pool" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                ✨ Create Pool
+              </Link>
             )}
           </div>
           
