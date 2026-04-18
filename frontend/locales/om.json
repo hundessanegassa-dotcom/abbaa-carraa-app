@@ -1,0 +1,62 @@
+{
+  "common": {
+    "welcome": "Gara Abbaa Carraa Baga Nagaan Dhufte",
+    "tagline": "Waltajjii badhaasaa fi gumaacha ummata irratti hundaa'e",
+    "join": "Hirmaadhu",
+    "contribute": "Gumaachi",
+    "login": "Seeni",
+    "register": "Galmeessi",
+    "logout": "Ba'i",
+    "dashboard": "Daashboordii",
+    "create_pool": "Hirmaanna Carraa Uumi",
+    "browse_prizes": "Badhaasa Daawwadhaa",
+    "winners": "Mo'attoota",
+    "about": "Waa'ee Keenya",
+    "contact": "Nu Qunnami",
+    "faq": "Gaafiilee Yeebbatan",
+    "become_agent": "Agent Ta'i",
+    "get_started": "Eegalii"
+  },
+  "pools": {
+    "active_pools": "Poolwwan Hojiirraa Jiran",
+    "featured_pools": "Poolwwan Filataman",
+    "target_amount": "Hanga Galma",
+    "current_amount": "Hanga Ammaa",
+    "contribution_amount": "Amma Gumaacha",
+    "participants": "Hirmaattoota",
+    "progress": "Waan Hojjetame",
+    "days_left": "Guyyaa Hafe",
+    "draw_date": "Guyyaa Argannoo",
+    "started": "Eegalame",
+    "join_now": "Hirmaadhu",
+    "no_pools": "Poolwwan Hojiirraa Jiran Hinjiran"
+  },
+  "agent": {
+    "become_agent": "Agent Ta'i",
+    "earn_commission": "10% Komishinii Argadhu",
+    "register_agent": "Agent Ta'uuf Galmeessi",
+    "agent_dashboard": "Daashboordii Agent",
+    "my_listings": "Tarreeffamoo Koo",
+    "my_pools": "Poolwwan Badhaasa Koo",
+    "participants": "Hirmaattoota",
+    "commissions": "Komishiniiwwan"
+  },
+  "supplier": {
+    "become_supplier": "Dhiyeessa Ta'i",
+    "list_products": "Oomisha Keessan Tarreessi",
+    "offer_discounts": "Hirmaattoota Hin Mo'aneef Diskawuntii Kennaa",
+    "register_supplier": "Dhiyeessaa Ta'uuf Galmeessi"
+  },
+  "organization": {
+    "become_org": "Dhaabbata Galmeessi",
+    "internal_pools": "Poolwwan Keessoo Uumi",
+    "member_saving": "Dhaabbattootaaf Qusannaa Ummataa"
+  },
+  "footer": {
+    "quick_links": "Geessituu Dafaa",
+    "support": "Deeggarsa",
+    "contact_us": "Nu Qunnami",
+    "rights": "Mirgiin Hunda Eegame",
+    "built_by": "Kan Ijaare"
+  }
+}
