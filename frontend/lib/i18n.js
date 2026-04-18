@@ -2,30 +2,31 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
+// Import all translations
+import en from '../locales/en.json';
+import am from '../locales/am.json';
+import om from '../locales/om.json';
+import ti from '../locales/ti.json';
+import so from '../locales/so.json';
+
 const resources = {
-  en: {
-    translation: {
-      common: {
-        welcome: "Welcome to Abbaa Carraa",
-        tagline: "A community-driven prize platform",
-        join: "Join Pool",
-        login: "Login",
-        register: "Register",
-        logout: "Logout",
-        dashboard: "Dashboard"
-      },
-      pools: {
-        activePools: "Active Pools",
-        targetAmount: "Target Amount"
-      }
-    }
-  }
+  en: { translation: en },
+  am: { translation: am },
+  om: { translation: om },
+  ti: { translation: ti },
+  so: { translation: so }
 };
 
-i18n.use(LanguageDetector).use(initReactI18next).init({
-  resources,
-  fallbackLng: 'en',
-  interpolation: { escapeValue: false }
-});
+i18n
+  .use(LanguageDetector)
+  .use(initReactI18next)
+  .init({
+    resources,
+    fallbackLng: 'en',
+    debug: false,
+    interpolation: {
+      escapeValue: false,
+    },
+  });
 
 export default i18n;
