@@ -5,66 +5,62 @@ export default function RoleBanners() {
     {
       id: 'individual',
       title: 'Individual',
-      subtitle: 'Join Pools & Win Amazing Prizes',
-      description: 'Contribute small amounts for a chance to win big! Cars, electronics, furniture, and more. Fair draws, transparent system, instant notifications.',
+      subtitle: 'Join Pools and Win Amazing Prizes',
+      description: 'Contribute small amounts for a chance to win big. Cars, electronics, furniture, and more. Fair draws, transparent system, instant notifications.',
       features: [
-        'Join any active prize pool',
-        'Buy multiple seats for higher chances',
-        'Get instant SMS and Email notifications',
-        'Track your contributions and wins'
+        '- Join any active prize pool',
+        '- Buy multiple seats for higher chances',
+        '- Get instant SMS and Email notifications',
+        '- Track your contributions and wins'
       ],
       buttonText: 'Join as Individual',
       buttonLink: '/register',
-      bgColor: 'from-green-500 to-teal-500',
-      icon: '👤'
+      bgColor: 'from-green-500 to-teal-500'
     },
     {
       id: 'agent',
       title: 'Agent',
-      subtitle: 'Earn 10% Commission on Every Pool',
-      description: 'Create prize pools, list products from local businesses, and earn 10% commission when pools complete. No upfront costs - just community building!',
+      subtitle: 'Earn 10 Percent Commission on Every Pool',
+      description: 'Create prize pools, list products from local businesses, and earn 10 percent commission when pools complete. No upfront costs - just community building.',
       features: [
-        'Create unlimited prize pools',
-        'Earn 10% commission on each pool',
-        'List products from local shops',
-        'Build your community and reputation'
+        '- Create unlimited prize pools',
+        '- Earn 10 percent commission on each pool',
+        '- List products from local shops',
+        '- Build your community and reputation'
       ],
       buttonText: 'Register as Agent',
       buttonLink: '/agent/register',
-      bgColor: 'from-yellow-500 to-orange-500',
-      icon: '🤝'
+      bgColor: 'from-yellow-500 to-orange-500'
     },
     {
       id: 'vendor',
       title: 'Vendor',
-      subtitle: 'List Products & Offer Discounts',
-      description: 'Manufacturers, importers, and retailers: List your products as prizes. Winner gets the product FREE. Non-winners get exclusive discounts from you!',
+      subtitle: 'List Products and Offer Discounts',
+      description: 'Manufacturers, importers, and retailers: List your products as prizes. Winner gets the product free. Non-winners get exclusive discounts from you.',
       features: [
-        'List unlimited products as prizes',
-        'Winner gets product FREE - great marketing',
-        'Offer discounts to non-winners',
-        'Reach thousands of potential customers'
+        '- List unlimited products as prizes',
+        '- Winner gets product free - great marketing',
+        '- Offer discounts to non-winners',
+        '- Reach thousands of potential customers'
       ],
       buttonText: 'Register as Vendor',
       buttonLink: '/vendor/register',
-      bgColor: 'from-purple-500 to-pink-500',
-      icon: '🏭'
+      bgColor: 'from-purple-500 to-pink-500'
     },
     {
       id: 'organization',
       title: 'Organization',
       subtitle: 'Create Private Pools for Members',
-      description: 'Banks, NGOs, schools, government offices, and community groups: Create private prize pools for your members only. Help your community save together!',
+      description: 'Banks, NGOs, schools, government offices, and community groups: Create private prize pools for your members only. Help your community save together.',
       features: [
-        'Create private pools for members only',
-        'Earn 10% commission on pools',
-        'Perfect for staff savings groups',
-        'Build stronger community bonds'
+        '- Create private pools for members only',
+        '- Earn 10 percent commission on pools',
+        '- Perfect for staff savings groups',
+        '- Build stronger community bonds'
       ],
       buttonText: 'Register Organization',
       buttonLink: '/organization/register',
-      bgColor: 'from-blue-500 to-cyan-500',
-      icon: '🏢'
+      bgColor: 'from-blue-500 to-cyan-500'
     }
   ];
 
@@ -83,14 +79,13 @@ export default function RoleBanners() {
             className={`bg-gradient-to-br ${role.bgColor} rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}
           >
             <div className="p-6 text-white">
-              <div className="text-4xl mb-3">{role.icon}</div>
               <h3 className="text-xl font-bold mb-1">{role.title}</h3>
               <p className="text-sm opacity-90 mb-3">{role.subtitle}</p>
               <p className="text-xs opacity-80 mb-4 leading-relaxed">{role.description}</p>
               
               <div className="space-y-1 mb-4">
                 {role.features.map((feature, idx) => (
-                  <p key={idx} className="text-xs opacity-90">✓ {feature}</p>
+                  <p key={idx} className="text-xs opacity-90">{feature}</p>
                 ))}
               </div>
               
@@ -105,7 +100,7 @@ export default function RoleBanners() {
       </div>
       
       <div className="text-center mt-8 text-sm text-gray-500">
-        <p>Anyone can create a pool (Organizer) and earn 10% commission | Anyone can join pools (Participant) for a chance to win prizes</p>
+        <p>Anyone can create a pool (Organizer) and earn 10 percent commission. Anyone can join pools (Participant) for a chance to win prizes.</p>
       </div>
     </section>
   );
