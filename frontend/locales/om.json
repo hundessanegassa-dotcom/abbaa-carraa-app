@@ -1,6 +1,6 @@
 {
   "common": {
-    "welcome": "Gara Abbaa Carraa (ባላ ኢዲል) Baga Nagaan Dhufte",
+    "welcome": "Gara Abbaa Carraa Baga Nagaan Dhufte",
     "tagline": "Waltajjii badhaasaa fi gumaacha ummata irratti hundaa'e",
     "home": "Mana",
     "join": "Hirmaadhu",
@@ -35,7 +35,7 @@
   },
   "agent": {
     "become_agent": "Agent Ta'i",
-    "earn_commission": "10% Komishinii Argadhu",
+    "earn_commission": "10 Komishinii Argadhu",
     "register_agent": "Agent Ta'uuf Galmeessi",
     "agent_dashboard": "Daashboordii Agent",
     "my_listings": "Tarreeffamoo Koo",
@@ -62,7 +62,7 @@
     "built_by": "Kan Ijaare"
   },
   "banners": {
-    "agent": "Agent Ta'i - 10% Komishinii Argadhu",
+    "agent": "Agent Ta'i - 10 Komishinii Argadhu",
     "vendor": "Dhiyeessa Ta'i - Oomisha Keessan Tarreessi",
     "organization": "Dhaabbata Galmeessi - Uunka Galmee Carraa Keessoo Uumi",
     "individual": "Akka Dhuunfaa Hirmaadhu - Badhaasa Ajaa'ibsiisaa Argadhu"
