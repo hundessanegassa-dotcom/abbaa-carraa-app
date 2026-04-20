@@ -101,7 +101,10 @@ export default function Home() {
         {/* Hero Section */}
         <section className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-16 md:py-20">
           <div className="container mx-auto px-4 text-center">
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4">{t('common.welcome')}</h1>
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4">
+  Welcome to Abbaa Carraa{' '}
+  <span className="text-yellow-300 font-amharic">(ባላ ኢዲል)</span>
+</h1>
             <p className="text-lg md:text-xl lg:text-2xl mb-6 max-w-2xl mx-auto">{t('common.tagline')}</p>
             <p className="text-base md:text-lg mb-8 opacity-90">💰 Trusted by {stats.total_agents}+ agents | 🎉 {stats.total_winners}+ winners | 💎 ETB {stats.total_raised.toLocaleString()} raised</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
