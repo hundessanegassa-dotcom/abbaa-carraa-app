@@ -235,7 +235,10 @@ export default function Home() {
             </div>
           </div>
         </section>
+{/* Role Banners - Individual, Agent, Vendor, Organization */}
+<RoleBanners />
 
+{/* Become an Agent CTA - Keep existing but maybe remove since RoleBanners covers it */}
         {/* Become an Agent CTA */}
         <section className="bg-gradient-to-r from-green-700 to-green-500 text-white py-12">
           <div className="container mx-auto px-4 text-center">
