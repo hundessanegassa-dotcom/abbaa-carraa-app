@@ -1,6 +1,6 @@
 {
   "common": {
-    "welcome": "እንኳን ወደ አባ ካራ በደህና መጡ",
+    "welcome": "እንኳን ወደ abbaa carraa (ባላ ኢዲል) በደህና መጡ",
     "tagline": "ማህበረሰብን መሰረት ያደረገ የሽልማት እና የአስተዋጽኦ መድረክ",
     "home": "መነሻ",
     "join": "ተቀላቀል",
@@ -9,7 +9,7 @@
     "register": "ተመዝገብ",
     "logout": "ውጣ",
     "dashboard": "ዳሽቦርድ",
-    "create_pool": "አዲስ ገንዳ ፍጠር",
+    "create_pool": "አዲስ የሽልማት መደብ ፍጠር",
     "browse_prizes": "ሽልማቶችን ይመልከቱ",
     "winners": "አሸናፊዎች",
     "about": "ስለእኛ",
@@ -23,8 +23,8 @@
     "all_cities": "ሁሉም ከተሞች"
   },
   "pools": {
-    "active_pools": "ንቁ ገንዳዎች",
-    "featured_pools": "የተለዩ ገንዳዎች",
+    "active_pools": "ንቁ የሽልማት መደቦች",
+    "featured_pools": "የተለዩ የሽልማት መደቦች",
     "target_amount": "የዒላማ መጠን",
     "current_amount": "አሁን ያለው መጠን",
     "contribution_amount": "የአስተዋጽኦ መጠን",
@@ -34,7 +34,7 @@
     "draw_date": "የእጣ ቀን",
     "started": "የተጀመረው",
     "join_now": "አሁን ተቀላቀል",
-    "no_pools": "በአሁኑ ጊዜ ምንም ንቁ ገንዳዎች የሉም"
+    "no_pools": "በአሁኑ ጊዜ ምንም ንቁ የሽልማት መደቦች የሉም"
   },
   "how_it_works": {
     "title": "አባ ካራ እንዴት ይሰራል",
@@ -51,7 +51,7 @@
     "register_agent": "እንደ ወኪል ይመዝገቡ",
     "agent_dashboard": "የወኪል ዳሽቦርድ",
     "my_listings": "የእኔ ዝርዝሮች",
-    "my_pools": "የእኔ ሽልማት ገንዳዎች",
+    "my_pools": "የእኔ የሽልማት መደቦች",
     "participants": "ተሳታፊዎች",
     "commissions": "ኮሚሽኖች"
   },
@@ -63,7 +63,7 @@
   },
   "organization": {
     "become_org": "ድርጅት ይመዝገቡ",
-    "internal_pools": "የውስጥ ገንዳዎችን ይፍጠሩ",
+    "internal_pools": "የውስጥ የሽልማት መደቦችን ይፍጠሩ",
     "member_saving": "ለአባላት የማህበረሰብ ቁጠባ"
   },
   "footer": {
@@ -74,9 +74,9 @@
     "built_by": "ተገንብቷል በ"
   },
   "banners": {
-    "agent": "ወኪል ሁን - 10% ኮሚሽን አግኝ",
-    "vendor": "አቅራቢ ሁን - ምርቶችዎን ዝርዝር ያድርጉ",
-    "organization": "ድርጅት ይመዝገቡ - የውስጥ ገንዳዎችን ይፍጠሩ",
-    "individual": "በግል ተቀላቀል - አስደናቂ ሽልማቶችን አሸንፉ"
+    "agent": "🤝 ወኪል ሁን - 10% ኮሚሽን አግኝ",
+    "vendor": "🏭 አቅራቢ ሁን - ምርቶችዎን ዝርዝር ያድርጉ",
+    "organization": "🏢 ድርጅት ይመዝገቡ - የውስጥ የሽልማት መደቦችን ይፍጠሩ",
+    "individual": "👤 በግል ተቀላቀል - አስደናቂ ሽልማቶችን አሸንፉ"
   }
 }
