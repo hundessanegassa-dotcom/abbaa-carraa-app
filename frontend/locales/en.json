@@ -47,21 +47,12 @@
     "become_vendor": "Become a Vendor",
     "list_products": "List Your Products",
     "offer_discounts": "Offer Discounts to Non-Winners",
-    "register_vendor": "Register as Vendor",
-    "vendor_dashboard": "Vendor Dashboard",
-    "my_products": "My Products",
-    "my_pools": "My Prize Pools",
-    "discount_offers": "Discount Offers"
+    "register_vendor": "Register as Vendor"
   },
   "organization": {
     "become_org": "Register Organization",
     "internal_pools": "Create Internal Pools",
     "member_saving": "Community Saving for Members"
-  },
-  "individual": {
-    "join_pools": "Join Pools",
-    "win_prizes": "Win Amazing Prizes",
-    "my_entries": "My Entries"
   },
   "footer": {
     "quick_links": "Quick Links",
@@ -69,5 +60,11 @@
     "contact_us": "Contact Us",
     "rights": "All rights reserved",
     "built_by": "Built by"
+  },
+  "banners": {
+    "agent": "🤝 Become an Agent - Earn 10% Commission",
+    "vendor": "🏭 Become a Vendor - List Your Products",
+    "organization": "🏢 Become an Organization - Create Internal Pools",
+    "individual": "👤 Join as Individual - Win Amazing Prizes"
   }
 }
