@@ -2,7 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-// Import only working languages for now
+// Import only these languages - NO om.json
 import en from '../locales/en.json';
 import am from '../locales/am.json';
 
