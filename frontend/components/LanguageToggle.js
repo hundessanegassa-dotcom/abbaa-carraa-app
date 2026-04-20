@@ -6,11 +6,9 @@ export default function LanguageToggle() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Complete 9 Ethiopian languages
   const languages = [
     { code: 'en', name: 'English', flag: '🇬🇧', nativeName: 'English' },
     { code: 'am', name: 'Amharic', flag: '🇪🇹', nativeName: 'አማርኛ' },
-    { code: 'om', name: 'Oromo', flag: '🇪🇹', nativeName: 'Oromoo' },
     { code: 'ti', name: 'Tigrigna', flag: '🇪🇹', nativeName: 'ትግርኛ' },
     { code: 'so', name: 'Somali', flag: '🇸🇴', nativeName: 'Soomaali' },
     { code: 'aa', name: 'Afar', flag: '🇪🇹', nativeName: 'Qafar' },
