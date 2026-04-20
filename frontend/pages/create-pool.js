@@ -115,18 +115,17 @@ export default function CreatePool() {
       }
       
       // Determine commission rates based on user type
-      let agentCommissionRate = 0;
-      let platformCommissionRate = 20; // Platform always gets at least 10%
-      let commissionSource = 'platform';
+      // Admin: 0% creator commission, 20% platform
+      // Others: 10% creator, 10% platform
+      let creatorCommissionRate = 10;
+      let platformCommissionRate = 10;
       
-      if (profile.user_type === 'agent') {
-        agentCommissionRate = 10;
-        platformCommissionRate = 10;
-        commissionSource = 'agent';
-      } else {
-        agentCommissionRate = 0;
+      if (profile.user_type === 'admin' || profile.role === 'admin') {
+        creatorCommissionRate = 0;
         platformCommissionRate = 20;
-        commissionSource = 'platform';
+      } else {
+        creatorCommissionRate = 10;
+        platformCommissionRate = 10;
       }
       
       const prizeValue = parseFloat(formData.prize_actual_value);
@@ -147,10 +146,9 @@ export default function CreatePool() {
           created_by: user.id,
           status: 'active',
           agent_id: profile.user_type === 'agent' ? user.id : null,
-          agent_commission_rate: agentCommissionRate,
+          creator_commission_rate: creatorCommissionRate,
           platform_commission_rate: platformCommissionRate,
-          commission_source: commissionSource,
-          discount_for_non_winners: profile.user_type === 'supplier' ? parseInt(formData.discount_percentage) : null,
+          discount_for_non_winners: profile.user_type === 'vendor' ? parseInt(formData.discount_percentage) : null,
           discount_terms: formData.discount_terms || null
         }]).select().single();
 
@@ -189,23 +187,25 @@ export default function CreatePool() {
   // Calculate commission breakdown for display
   const getCommissionBreakdown = () => {
     const prizeValue = parseFloat(formData.prize_actual_value) || 0;
-    const totalCommission = prizeValue * 0.25; // 20% of target (since target = prize/0.8)
+    const totalCommission = prizeValue * 0.25; // 20% of target
     
-    if (profile?.user_type === 'agent') {
+    const isAdmin = profile?.user_type === 'admin' || profile?.role === 'admin';
+    
+    if (isAdmin) {
       return {
-        agentCommission: totalCommission / 2,
-        platformCommission: totalCommission / 2,
+        creatorCommission: 0,
+        platformCommission: totalCommission,
         totalCommission: totalCommission,
-        agentRate: 10,
-        platformRate: 10
+        creatorRate: 0,
+        platformRate: 20
       };
     } else {
       return {
-        agentCommission: 0,
-        platformCommission: totalCommission,
+        creatorCommission: totalCommission / 2,
+        platformCommission: totalCommission / 2,
         totalCommission: totalCommission,
-        agentRate: 0,
-        platformRate: 20
+        creatorRate: 10,
+        platformRate: 10
       };
     }
   };
@@ -219,6 +219,7 @@ export default function CreatePool() {
   }
 
   const commission = getCommissionBreakdown();
+  const isAdmin = profile.user_type === 'admin' || profile.role === 'admin';
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -230,10 +231,11 @@ export default function CreatePool() {
         <div className="bg-white rounded-lg shadow-md p-6">
           <h1 className="text-2xl font-bold mb-2">Create a Prize Pool</h1>
           <p className="text-gray-600 mb-6">
-            {profile.user_type === 'agent' && 'As an Agent, you earn 10% commission when this pool completes.'}
-            {profile.user_type === 'supplier' && 'As a Supplier, the winner gets the product FREE. Non-winners get a discount.'}
-            {profile.user_type === 'organization' && 'Create a private pool for your members. No commission.'}
-            {(profile.user_type === 'citizen' || !profile.user_type) && 'Create a pool and invite others to participate.'}
+            {isAdmin && 'As Admin, you earn 0% commission. Platform earns 20%.'}
+            {!isAdmin && profile.user_type === 'agent' && 'As an Agent, you earn 10% commission when this pool completes.'}
+            {!isAdmin && profile.user_type === 'vendor' && 'As a Vendor, the winner gets the product FREE. Non-winners get a discount.'}
+            {!isAdmin && profile.user_type === 'organization' && 'Create a private pool for your members.'}
+            {!isAdmin && profile.user_type === 'individual' && 'Create a pool and earn 10% commission when it completes!'}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -294,7 +296,7 @@ export default function CreatePool() {
               />
             </div>
 
-            {/* Prize Value Field - This drives everything */}
+            {/* Prize Value Field */}
             <div className="bg-green-50 p-4 rounded-lg border border-green-200">
               <label className="block text-gray-700 mb-2 font-bold text-green-800">
                 🎁 Actual Prize Value (ETB) *
@@ -313,7 +315,7 @@ export default function CreatePool() {
               </p>
             </div>
 
-            {/* Calculated Fields - Read Only */}
+            {/* Calculated Fields */}
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="font-bold mb-3">📊 Pool Calculations</h3>
               <div className="space-y-2 text-sm">
@@ -354,33 +356,34 @@ export default function CreatePool() {
                     <span>ETB {commission.totalCommission.toLocaleString()}</span>
                   </div>
                   <div className="border-t pt-2 mt-2">
-                    {profile.user_type === 'agent' && (
-                      <>
-                        <div className="flex justify-between text-blue-700">
-                          <span>🤝 Agent Commission ({commission.agentRate}%):</span>
-                          <span className="font-semibold">ETB {commission.agentCommission.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between text-purple-700">
-                          <span>🏢 Platform Commission ({commission.platformRate}%):</span>
-                          <span>ETB {commission.platformCommission.toLocaleString()}</span>
-                        </div>
-                      </>
-                    )}
-                    {profile.user_type !== 'agent' && (
-                      <div className="flex justify-between text-purple-700">
-                        <span>🏢 Platform Commission ({commission.platformRate}%):</span>
-                        <span className="font-semibold">ETB {commission.platformCommission.toLocaleString()}</span>
+                    {commission.creatorRate > 0 ? (
+                      <div className="flex justify-between text-blue-700">
+                        <span>🤝 Your Commission ({commission.creatorRate}%):</span>
+                        <span className="font-semibold">ETB {commission.creatorCommission.toLocaleString()}</span>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between text-gray-500">
+                        <span>🤝 Your Commission (0%):</span>
+                        <span>Admin creates pool - commission goes to platform</span>
                       </div>
                     )}
+                    <div className="flex justify-between text-purple-700">
+                      <span>🏢 Platform Commission ({commission.platformRate}%):</span>
+                      <span>ETB {commission.platformCommission.toLocaleString()}</span>
+                    </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Supplier Discount Section */}
-            {profile.user_type === 'supplier' && (
+            {/* Vendor Discount Section */}
+            {profile.user_type === 'vendor' && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="font-bold text-blue-800 mb-2">🎁 Discount for Non-Winners</h3>
+                <p className="text-sm text-blue-700 mb-3">
+                  When someone participates but does NOT win, they can buy this product from you at a discount.
+                  This encourages participation and helps you sell more units!
+                </p>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-gray-700 mb-2 font-medium">Discount Percentage (%)</label>
@@ -405,15 +408,6 @@ export default function CreatePool() {
                 </div>
                 <p className="text-xs text-blue-600 mt-2">
                   Non-winners get this discount when purchasing from you.
-                </p>
-              </div>
-            )}
-
-            {/* Organization Note */}
-            {profile.user_type === 'organization' && (
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                <p className="text-sm text-purple-800">
-                  🏢 This pool is for your organization members only. No commission - everyone contributes to help one member win.
                 </p>
               </div>
             )}
