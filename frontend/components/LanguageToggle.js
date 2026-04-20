@@ -8,13 +8,7 @@ export default function LanguageToggle() {
 
   const languages = [
     { code: 'en', name: 'English', flag: '🇬🇧', nativeName: 'English' },
-    { code: 'am', name: 'Amharic', flag: '🇪🇹', nativeName: 'አማርኛ' },
-    { code: 'ti', name: 'Tigrigna', flag: '🇪🇹', nativeName: 'ትግርኛ' },
-    { code: 'so', name: 'Somali', flag: '🇸🇴', nativeName: 'Soomaali' },
-    { code: 'aa', name: 'Afar', flag: '🇪🇹', nativeName: 'Qafar' },
-    { code: 'wal', name: 'Wolayita', flag: '🇪🇹', nativeName: 'Wolayttatto Doonaa' },
-    { code: 'hdy', name: 'Hadiyya', flag: '🇪🇹', nativeName: 'Hadiyyisa' },
-    { code: 'sid', name: 'Sidama', flag: '🇪🇹', nativeName: 'Sidaamu Afoo' }
+    { code: 'am', name: 'Amharic', flag: '🇪🇹', nativeName: 'አማርኛ' }
   ];
 
   const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
@@ -51,7 +45,7 @@ export default function LanguageToggle() {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden min-w-[190px] max-h-96 overflow-y-auto z-50">
+        <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden min-w-[160px] z-50">
           {languages.map((lang) => (
             <button
               key={lang.code}
