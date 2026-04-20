@@ -73,10 +73,7 @@ export async function executeDraw(poolId) {
     if (drawError) throw drawError;
 
     // Update winner's profile (increment total_wins)
-    await supabase
-      .from('profiles')
-      .update({ total_wins: supabase.rpc('increment_wins', { row_id: winnerId }) })
-      .eq('id', winnerId);
+    await supabase.rpc('increment_wins', { row_id: winnerId });
 
     // Create notification for winner
     await supabase
@@ -93,44 +90,46 @@ export async function executeDraw(poolId) {
     // COMMISSION CALCULATION (20% total)
     // ============================================
     
-    // Calculate commissions based on who created the pool
+    // Calculate commissions based on pool's stored rates
     const prizeValue = pool.prize_actual_value || pool.target_amount;
-    const totalCommission = prizeValue * 0.25; // 20% of target (since target = prize/0.8)
+    const totalCommission = prizeValue * 0.25; // 20% of target
+    
+    const creatorCommissionAmount = (totalCommission * pool.creator_commission_rate) / 20;
+    const platformCommissionAmount = (totalCommission * pool.platform_commission_rate) / 20;
 
-    let agentCommissionAmount = 0;
-    let platformCommissionAmount = totalCommission;
-
-    if (pool.commission_source === 'agent') {
-      agentCommissionAmount = totalCommission / 2;  // 10% to agent
-      platformCommissionAmount = totalCommission / 2; // 10% to platform
-    } else {
-      agentCommissionAmount = 0;
-      platformCommissionAmount = totalCommission; // 20% to platform
+    // Record creator commission (if any)
+    if (pool.created_by && creatorCommissionAmount > 0 && pool.creator_commission_rate > 0) {
+      // Check if creator is an agent (for agent-specific tracking)
+      const { data: creator } = await supabase
+        .from('profiles')
+        .select('user_type')
+        .eq('id', pool.created_by)
+        .single();
+      
+      if (creator?.user_type === 'agent') {
+        await supabase
+          .from('commissions')
+          .insert({
+            agent_id: pool.created_by,
+            pool_id: poolId,
+            amount: creatorCommissionAmount,
+            rate: pool.creator_commission_rate,
+            status: 'pending',
+            commission_type: 'agent'
+          });
+      } else {
+        // For non-agents, record as creator_earnings (you can create this table)
+        console.log(`Creator ${pool.created_by} earned ${creatorCommissionAmount} ETB`);
+      }
     }
 
-    // Record agent commission (if any)
-    if (pool.agent_id && agentCommissionAmount > 0) {
-      const { error: agentCommError } = await supabase
-        .from('commissions')
-        .insert({
-          agent_id: pool.agent_id,
-          pool_id: poolId,
-          amount: agentCommissionAmount,
-          rate: 10.00,
-          status: 'pending',
-          commission_type: 'agent'
-        });
-
-      if (agentCommError) console.error('Agent commission error:', agentCommError);
-    }
-
-    // Record platform commission (your earnings)
+    // Record platform commission
     const { error: platformCommError } = await supabase
       .from('platform_earnings')
       .insert({
         pool_id: poolId,
         amount: platformCommissionAmount,
-        rate: pool.commission_source === 'agent' ? 10.00 : 20.00,
+        rate: pool.platform_commission_rate,
         source: 'platform',
         status: 'pending'
       });
@@ -138,7 +137,7 @@ export async function executeDraw(poolId) {
     if (platformCommError) console.error('Platform commission error:', platformCommError);
 
     console.log(`Draw completed! Winner: ${winnerId}`);
-    console.log(`Commission - Agent: ${agentCommissionAmount}, Platform: ${platformCommissionAmount}`);
+    console.log(`Commission - Creator: ${creatorCommissionAmount}, Platform: ${platformCommissionAmount}`);
 
     return { success: true, winnerId, ticketCount: tickets.length };
   } catch (error) {
@@ -172,27 +171,12 @@ export async function checkAndExecuteDraws() {
 
 /**
  * Schedule automatic draw checks (run every hour)
- * Call this function once when your app initializes
  */
 export function scheduleDrawChecks() {
-  // Run every hour
   const interval = setInterval(async () => {
     console.log('Running scheduled draw check...');
     await checkAndExecuteDraws();
-  }, 60 * 60 * 1000); // 1 hour
+  }, 60 * 60 * 1000);
   
   return interval;
 }
-
-/**
- * Helper function to increment wins (create this function in Supabase)
- * Run this SQL in Supabase:
- * 
- * CREATE OR REPLACE FUNCTION increment_wins(row_id UUID)
- * RETURNS INTEGER AS $$
- * BEGIN
- *   UPDATE profiles SET total_wins = total_wins + 1 WHERE id = row_id;
- *   RETURN 1;
- * END;
- * $$ LANGUAGE plpgsql;
- */
