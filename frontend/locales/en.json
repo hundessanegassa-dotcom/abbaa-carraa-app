@@ -1,7 +1,8 @@
 {
   "common": {
-    "welcome": "Welcome to Abbaa Carraa",
+    "welcome": "Welcome to Abbaa Carraa (ባላ ኢዲል)",
     "tagline": "A community-driven prize and contribution platform",
+    "home": "Home",
     "join": "Join Pool",
     "contribute": "Contribute",
     "login": "Login",
@@ -15,6 +16,7 @@
     "contact": "Contact",
     "faq": "FAQ",
     "become_agent": "Become Agent",
+    "become_vendor": "Become Vendor",
     "get_started": "Get Started"
   },
   "pools": {
@@ -41,16 +43,25 @@
     "participants": "Participants",
     "commissions": "Commissions"
   },
-  "supplier": {
-    "become_supplier": "Become a Supplier",
+  "vendor": {
+    "become_vendor": "Become a Vendor",
     "list_products": "List Your Products",
     "offer_discounts": "Offer Discounts to Non-Winners",
-    "register_supplier": "Register as Supplier"
+    "register_vendor": "Register as Vendor",
+    "vendor_dashboard": "Vendor Dashboard",
+    "my_products": "My Products",
+    "my_pools": "My Prize Pools",
+    "discount_offers": "Discount Offers"
   },
   "organization": {
     "become_org": "Register Organization",
     "internal_pools": "Create Internal Pools",
     "member_saving": "Community Saving for Members"
+  },
+  "individual": {
+    "join_pools": "Join Pools",
+    "win_prizes": "Win Amazing Prizes",
+    "my_entries": "My Entries"
   },
   "footer": {
     "quick_links": "Quick Links",
