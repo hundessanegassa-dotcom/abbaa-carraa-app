@@ -1,6 +1,6 @@
 {
   "common": {
-    "welcome": "Welcome to Abbaa Carraa (ባላ ኢዲል)",
+    "welcome": "Welcome to Abbaa Carraa",
     "tagline": "A community-driven prize and contribution platform",
     "home": "Home",
     "join": "Join Pool",
@@ -17,7 +17,10 @@
     "faq": "FAQ",
     "become_agent": "Become Agent",
     "become_vendor": "Become Vendor",
-    "get_started": "Get Started"
+    "get_started": "Get Started",
+    "trusted_agents": "Trusted Agents",
+    "total_raised": "Total Raised",
+    "all_cities": "All Cities"
   },
   "pools": {
     "active_pools": "Active Pools",
@@ -32,6 +35,15 @@
     "started": "Started",
     "join_now": "Join Now",
     "no_pools": "No active pools at the moment"
+  },
+  "how_it_works": {
+    "title": "How Abbaa Carraa Works",
+    "find_pool": "Find a Pool",
+    "find_pool_desc": "Browse active prize pools by city or category",
+    "contribute": "Contribute",
+    "contribute_desc": "Pay via Telebirr or CBE Birr securely",
+    "win": "Win & Celebrate",
+    "win_desc": "Fair draw selects winner when target is reached"
   },
   "agent": {
     "become_agent": "Become an Agent",
@@ -62,9 +74,9 @@
     "built_by": "Built by"
   },
   "banners": {
-    "agent": "🤝 Become an Agent - Earn 10% Commission",
-    "vendor": "🏭 Become a Vendor - List Your Products",
-    "organization": "🏢 Become an Organization - Create Internal Pools",
-    "individual": "👤 Join as Individual - Win Amazing Prizes"
+    "agent": "Become an Agent - Earn 10% Commission",
+    "vendor": "Become a Vendor - List Your Products",
+    "organization": "Become an Organization - Create Internal Pools",
+    "individual": "Join as Individual - Win Amazing Prizes"
   }
 }
