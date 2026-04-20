@@ -16,19 +16,23 @@ export default function Banner() {
       .eq('is_active', true)
       .order('display_order', { ascending: true });
     
-    if (data) setBanners(data);
+    if (data && data.length > 0) {
+      setBanners(data);
+    }
   }
 
-  if (banners.length === 0) return null;
+  if (banners.length === 0) {
+    return null;
+  }
 
   return (
-    <div className="space-y-1">
+    <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-2 px-4 text-center text-sm">
       {banners.map((banner) => (
-        <div key={banner.id} className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-2 px-4 text-center text-sm">
+        <div key={banner.id} className="inline-block mx-2">
           <span>{banner.title}</span>
-          {banner.description && <span className="ml-2 opacity-90">- {banner.description}</span>}
+          {banner.description && <span className="ml-1 opacity-90">- {banner.description}</span>}
           {banner.link_url && (
-            <Link href={banner.link_url} className="ml-3 underline hover:no-underline">
+            <Link href={banner.link_url} className="ml-2 underline hover:no-underline">
               {banner.button_text || 'Learn More'}
             </Link>
           )}
