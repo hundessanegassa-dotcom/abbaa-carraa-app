@@ -39,10 +39,11 @@ export default function About() {
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">Our Mission</h2>
-          <p className="text-gray-600 text-lg mb-8">
-            Abbaa Carraa ("Opportunity Father") was founded to democratize access to valuable prizes
-            by allowing communities to pool small contributions for a chance to win big.
-          </p>
+<p className="text-gray-600 text-lg mb-8">
+  Abbaa Carraa (<span className="font-semibold text-green-600 font-amharic">ባላ ኢዲል</span> - Opportunity Father) 
+  was founded to democratize access to valuable prizes by allowing communities to pool 
+  small contributions for a chance to win big.
+</p>
         </div>
       </section>
 
