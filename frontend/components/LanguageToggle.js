@@ -6,6 +6,7 @@ export default function LanguageToggle() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
+  // Only English and Amharic - NO OROMO
   const languages = [
     { code: 'en', name: 'English', flag: '🇬🇧', nativeName: 'English' },
     { code: 'am', name: 'Amharic', flag: '🇪🇹', nativeName: 'አማርኛ' }
