@@ -16,6 +16,7 @@
     "contact": "Nu Qunnami",
     "faq": "Gaafiilee Yeebbatan",
     "become_agent": "Agent Ta'i",
+    "become_vendor": "Dhiyeessa Ta'i",
     "get_started": "Eegalii"
   },
   "pools": {
@@ -42,11 +43,11 @@
     "participants": "Hirmaattoota",
     "commissions": "Komishiniiwwan"
   },
-  "supplier": {
-    "become_supplier": "Dhiyeessa Ta'i",
+  "vendor": {
+    "become_vendor": "Dhiyeessa Ta'i",
     "list_products": "Oomisha Keessan Tarreessi",
     "offer_discounts": "Hirmaattoota Hin Mo'aneef Diskawuntii Kennaa",
-    "register_supplier": "Dhiyeessaa Ta'uuf Galmeessi"
+    "register_vendor": "Dhiyeessaa Ta'uuf Galmeessi"
   },
   "organization": {
     "become_org": "Dhaabbata Galmeessi",
@@ -59,5 +60,11 @@
     "contact_us": "Nu Qunnami",
     "rights": "Mirgiin Hunda Eegame",
     "built_by": "Kan Ijaare"
+  },
+  "banners": {
+    "agent": "🤝 Agent Ta'i - 10% Komishinii Argadhu",
+    "vendor": "🏭 Dhiyeessa Ta'i - Oomisha Keessan Tarreessi",
+    "organization": "🏢 Dhaabbata Galmeessi - Poolwwan Keessoo Uumi",
+    "individual": "👤 Akka Dhuunfaa Hirmaadhu - Badhaasa Ajaa'ibsiisaa Argadhu"
   }
 }
