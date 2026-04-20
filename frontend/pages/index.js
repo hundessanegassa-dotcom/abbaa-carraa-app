@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import PoolCard from '../components/PoolCard';
 import NewsletterSubscribe from '../components/NewsletterSubscribe';
 import PoolRecommendations from '../components/PoolRecommendations';
-import RoleBanners from '../components/RoleBanners';
 
 export default function Home() {
   const { t } = useTranslation();
@@ -235,9 +234,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-
-        {/* Role Banners - Individual, Agent, Vendor, Organization */}
-        <RoleBanners />
 
         {/* Newsletter Subscription */}
         <NewsletterSubscribe />
