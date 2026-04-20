@@ -7,6 +7,7 @@ import '../lib/i18n';
 import Banner from '../components/Banner';
 import Footer from '../components/Footer';
 import LanguageToggle from '../components/LanguageToggle';
+import ChatBot from '../components/ChatBot';
 import PushNotification from '../components/PushNotification';
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ function MyApp({ Component, pageProps }) {
       <Component {...pageProps} session={session} />
       <Footer />
       <LanguageToggle />
+      <ChatBot />
       <PushNotification />
       <Toaster position="top-right" />
     </QueryClientProvider>
