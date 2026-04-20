@@ -11,7 +11,7 @@ export default function Register() {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState('');
-  const [userType, setUserType] = useState('citizen');
+  const [userType, setUserType] = useState('individual');
   const [loading, setLoading] = useState(false);
 
   async function handleRegister(e) {
@@ -44,7 +44,7 @@ export default function Register() {
             phone: phone,
             city: city,
             user_type: userType,
-            role: userType === 'agent' ? 'agent' : 'user'
+            role: userType === 'agent' ? 'agent' : (userType === 'admin' ? 'admin' : 'user')
           }]);
 
         if (profileError) console.error('Profile creation error:', profileError);
@@ -132,7 +132,7 @@ export default function Register() {
               />
             </div>
 
-            {/* NEW: User Type Selection */}
+            {/* User Type Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 I am joining as:
@@ -143,16 +143,16 @@ export default function Register() {
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                 required
               >
-                <option value="citizen">👤 Citizen (Join Pools)</option>
+                <option value="individual">👤 Individual (Join Pools)</option>
                 <option value="agent">🤝 Agent (Earn 10% Commission)</option>
-                <option value="supplier">🏭 Supplier/Manufacturer (List Products & Offer Discounts)</option>
+                <option value="vendor">🏭 Vendor (Manufacturer/Importer/Retailer)</option>
                 <option value="organization">🏢 Organization/CBO (Create Internal Pools)</option>
               </select>
               <p className="text-xs text-gray-500 mt-1">
-                {userType === 'agent' && '✓ You will be able to list prizes and earn 10% commission on pools you create.'}
-                {userType === 'supplier' && '✓ You can list products, create prize pools, and offer discounts to participants.'}
-                {userType === 'organization' && '✓ Create private pools for your members. No commission, just community saving.'}
-                {userType === 'citizen' && '✓ Join public pools for a chance to win amazing prizes!'}
+                {userType === 'agent' && '✓ You will earn 10% commission on pools you create.'}
+                {userType === 'vendor' && '✓ List products, create prize pools, offer discounts to non-winners.'}
+                {userType === 'organization' && '✓ Create private pools for your members. No commission.'}
+                {userType === 'individual' && '✓ Join public pools for a chance to win amazing prizes!'}
               </p>
             </div>
 
