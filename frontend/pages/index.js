@@ -1,3 +1,4 @@
+<!-- FORCE FULL REDEPLOY -->
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
