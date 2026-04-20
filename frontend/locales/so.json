@@ -1,25 +1,27 @@
 {
   "common": {
-    "welcome": "Ku Soo Dhawoow Abbaa Carraa",
+    "welcome": "Ku Soo Dhawoow Abbaa Carraa (ባላ ኢዲል)",
     "tagline": "Madal abaal-marin iyo tabaruc wadaagis ah oo bulsho ku saleysan",
+    "home": "Bogga Hore",
     "join": "Ku Biir",
     "contribute": "Tabaruc",
     "login": "Soo Gal",
     "register": "Isdiiwaan Gel",
     "logout": "Bax",
     "dashboard": "Dashboard",
-    "create_pool": "Abuur Pool",
+    "create_pool": "Hagbad Abuur",
     "browse_prizes": "Baadh Abaal-marinaha",
     "winners": "Kuwa Guuleystay",
     "about": "Nagu Saabsan",
     "contact": "Nala Soo Xiriir",
     "faq": "Su'aalaha Badanaa La Is Weydiiyo",
     "become_agent": "Noqo Wakiil",
+    "become_vendor": "Noqo Alaabeeyaha",
     "get_started": "Bilow"
   },
   "pools": {
-    "active_pools": "Pool-yada Firfircoon",
-    "featured_pools": "Pool-yada La Soo Bandhigay",
+    "active_pools": "Hagbadaha Firfircoon",
+    "featured_pools": "Hagbadaha La Soo Bandhigay",
     "target_amount": "Qadarka Loo Bartilmaameedsaday",
     "current_amount": "Qadarka Hadha",
     "contribution_amount": "Qadarka Tabaruca",
@@ -29,27 +31,27 @@
     "draw_date": "Taariikhda Bakhtiyaada",
     "started": "Bilowday",
     "join_now": "Hada Ku Biir",
-    "no_pools": "Ma Jiraan Pool-yo Firfircoon oo Hada"
+    "no_pools": "Ma Jiraan Hagbad Firfircoon oo Hada"
   },
   "agent": {
     "become_agent": "Noqo Wakiil",
-    "earn_commission": "Hel 10% Guddiga",
+    "earn_commission": "Hel 10% Guddi",
     "register_agent": "Isdiiwaan Gel Wakiil Ahaan",
     "agent_dashboard": "Dashboard-ka Wakiilka",
     "my_listings": "Liiska Heyga",
-    "my_pools": "Pool-yada Abaal-marinaha Heyga",
+    "my_pools": "Hagbadahayga",
     "participants": "Kaqeybgalayaasha",
     "commissions": "Guddiyada"
   },
-  "supplier": {
-    "become_supplier": "Noqo Alaaweeyaha",
+  "vendor": {
+    "become_vendor": "Noqo Alaabeeyaha",
     "list_products": "Liis Gayso Alaabtaada",
     "offer_discounts": "U Soo Bandhig Dhimis Kaqeybgalayaasha Aan Ku Guulaysan",
-    "register_supplier": "Isdiiwaan Gel Alaaweeyaha Ahaan"
+    "register_vendor": "Isdiiwaan Gel Alaabeeyaha Ahaan"
   },
   "organization": {
     "become_org": "Isdiiwaan Gel Urur",
-    "internal_pools": "Abuur Pool-yada Gudaha",
+    "internal_pools": "Abuur Hagbadaha Gudaha",
     "member_saving": "Kaydinta Bulshada ee Xubnaha"
   },
   "footer": {
@@ -58,5 +60,11 @@
     "contact_us": "Nala Soo Xiriir",
     "rights": "Xuquuqda Oo Dhan Waa Loo Dhawran Yahay",
     "built_by": "Waxaa Dhisey"
+  },
+  "banners": {
+    "agent": "🤝 Noqo Wakiil - Hel 10% Guddi",
+    "vendor": "🏭 Noqo Alaabeeyaha - Liis Gayso Alaabtaada",
+    "organization": "🏢 Isdiiwaan Gel Urur - Abuur Hagbadaha Gudaha",
+    "individual": "👤 Ku Biir Shaqsi Ahaan - Ku Guuleyso Abaal-marinaha Cajiibka ah"
   }
 }
