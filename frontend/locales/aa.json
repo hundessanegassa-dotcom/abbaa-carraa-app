@@ -1,0 +1,70 @@
+{
+  "common": {
+    "welcome": "Abbaa carraa (ባላ ኢዲል) fanah tanfale",
+    "tagline": "Qadaaduu kee gacalka addunyaal marroo qadaaduu kee jaahil",
+    "home": "Magaala",
+    "join": "Cula",
+    "contribute": "Gacal",
+    "login": "Cula",
+    "register": "Galal",
+    "logout": "Bax",
+    "dashboard": "Dashboard",
+    "create_pool": "Poolin ugu",
+    "browse_prizes": "Qadaaduu cubbusa",
+    "winners": "Qufa",
+    "about": "Nek nee",
+    "contact": "Nee xagta",
+    "faq": "Essaroora essaroora",
+    "become_agent": "Agent cula",
+    "become_vendor": "Vendor cula",
+    "get_started": "Qimbisa"
+  },
+  "pools": {
+    "active_pools": "Poolwa taamisa",
+    "featured_pools": "Poolwa doona",
+    "target_amount": "Gaba galla",
+    "current_amount": "Akkah gaba",
+    "contribution_amount": "Gacalka gaba",
+    "participants": "Culutta",
+    "progress": "Gexa",
+    "days_left": "Ayro raqta",
+    "draw_date": "Yolwa ayro",
+    "started": "Qimbise",
+    "join_now": "Akkah cul",
+    "no_pools": "Poolwa taamisa maybul"
+  },
+  "agent": {
+    "become_agent": "Agent cul",
+    "earn_commission": "10% komishiyon maal",
+    "register_agent": "Agent galal",
+    "agent_dashboard": "Agent dashboard",
+    "my_listings": "Moo gaba",
+    "my_pools": "Moo poolwa",
+    "participants": "Culutta",
+    "commissions": "Komishiyonwa"
+  },
+  "vendor": {
+    "become_vendor": "Vendor cul",
+    "list_products": "Moo alaaluwa cubbus",
+    "offer_discounts": "Culutta may qufaah diskawunti acu",
+    "register_vendor": "Vendor galal"
+  },
+  "organization": {
+    "become_org": "Urru galal",
+    "internal_pools": "Sinni poolwa ugu",
+    "member_saving": "Marih keydinta"
+  },
+  "footer": {
+    "quick_links": "Xawaalatuu",
+    "support": "Qafalat",
+    "contact_us": "Nee xagta",
+    "rights": "Xaquq inkih tu kaa",
+    "built_by": "Bih luk"
+  },
+  "banners": {
+    "agent": "🤝 Agent cul - 10% komishiyon maal",
+    "vendor": "🏭 Vendor cul - Aluwa cubbus",
+    "organization": "🏢 Urru galal - Sinni poolwa ug",
+    "individual": "👤 Cula - Qadaaduu maal"
+  }
+}
