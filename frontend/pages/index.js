@@ -86,8 +86,8 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Abbaa Carraa - Community Prize Platform</title>
-        <meta name="description" content="Join community prize pools and win amazing prizes" />
+        <title>Abbaa Carraa - {t('common.tagline')}</title>
+        <meta name="description" content={t('common.tagline')} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
@@ -96,17 +96,17 @@ export default function Home() {
         <section className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-16 md:py-20">
           <div className="container mx-auto px-4 text-center">
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4">
-              Welcome to Abbaa Carraa <span className="text-yellow-300">(ባላ ኢዲል)</span>
+              {t('common.welcome')} <span className="text-yellow-300">(ባላ ኢዲል)</span>
             </h1>
             <p className="text-lg md:text-xl lg:text-2xl mb-6 max-w-2xl mx-auto">
-              A community-driven prize and contribution platform
+              {t('common.tagline')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/register" className="bg-white text-green-600 px-6 md:px-8 py-2 md:py-3 rounded-full font-semibold hover:shadow-lg transition-all">
-                Get Started
+                {t('common.get_started')}
               </Link>
               <Link href="/listings" className="border-2 border-white text-white px-6 md:px-8 py-2 md:py-3 rounded-full font-semibold hover:bg-white hover:text-green-600 transition-all">
-                Browse Prizes
+                {t('common.browse_prizes')}
               </Link>
             </div>
           </div>
@@ -118,19 +118,19 @@ export default function Home() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div>
                 <div className="text-2xl font-bold text-green-600">{stats.total_pools}+</div>
-                <div className="text-xs text-gray-500">Active Pools</div>
+                <div className="text-xs text-gray-500">{t('pools.active_pools')}</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-green-600">{stats.total_winners}+</div>
-                <div className="text-xs text-gray-500">Happy Winners</div>
+                <div className="text-xs text-gray-500">{t('common.winners')}</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-green-600">{stats.total_agents}+</div>
-                <div className="text-xs text-gray-500">Trusted Agents</div>
+                <div className="text-xs text-gray-500">{t('common.trusted_agents')}</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-green-600">ETB {Math.floor(stats.total_raised / 1000)}K+</div>
-                <div className="text-xs text-gray-500">Total Raised</div>
+                <div className="text-xs text-gray-500">{t('common.total_raised')}</div>
               </div>
             </div>
           </div>
@@ -151,7 +151,7 @@ export default function Home() {
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >
-                All Cities
+                {t('common.all_cities', 'All Cities')}
               </button>
               {cities.map(city => (
                 <button
@@ -173,7 +173,7 @@ export default function Home() {
         {/* Featured Pools */}
         {featuredPools.length > 0 && (
           <section className="container mx-auto px-4 py-8">
-            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center">⭐ Featured Pools</h2>
+            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center">{t('pools.featured_pools')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {featuredPools.map(pool => (
                 <PoolCard key={pool.id} pool={pool} featured />
@@ -184,16 +184,16 @@ export default function Home() {
 
         {/* All Active Pools */}
         <section className="container mx-auto px-4 py-8">
-          <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center">Active Pools</h2>
+          <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center">{t('pools.active_pools')}</h2>
           {loading ? (
             <div className="flex justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
             </div>
           ) : pools.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-lg shadow">
-              <p className="text-gray-500 mb-4">No active pools at the moment.</p>
+              <p className="text-gray-500 mb-4">{t('pools.no_pools')}</p>
               <Link href="/create-pool" className="text-green-600 hover:text-green-700">
-                Create a pool →
+                {t('common.create_pool')} →
               </Link>
             </div>
           ) : (
@@ -208,28 +208,28 @@ export default function Home() {
         {/* How It Works */}
         <section className="bg-gray-100 py-12">
           <div className="container mx-auto px-4">
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">How Abbaa Carraa Works</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">{t('how_it_works.title', 'How Abbaa Carraa Works')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="text-center">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl font-bold text-green-600">1</span>
                 </div>
-                <h3 className="text-lg font-bold mb-2">Find a Pool</h3>
-                <p className="text-gray-600 text-sm">Browse active prize pools by city or category</p>
+                <h3 className="text-lg font-bold mb-2">{t('how_it_works.find_pool')}</h3>
+                <p className="text-gray-600 text-sm">{t('how_it_works.find_pool_desc')}</p>
               </div>
               <div className="text-center">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl font-bold text-green-600">2</span>
                 </div>
-                <h3 className="text-lg font-bold mb-2">Contribute</h3>
-                <p className="text-gray-600 text-sm">Pay via Telebirr or CBE Birr securely</p>
+                <h3 className="text-lg font-bold mb-2">{t('how_it_works.contribute')}</h3>
+                <p className="text-gray-600 text-sm">{t('how_it_works.contribute_desc')}</p>
               </div>
               <div className="text-center">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl font-bold text-green-600">3</span>
                 </div>
-                <h3 className="text-lg font-bold mb-2">Win & Celebrate</h3>
-                <p className="text-gray-600 text-sm">Fair draw selects winner when target is reached</p>
+                <h3 className="text-lg font-bold mb-2">{t('how_it_works.win')}</h3>
+                <p className="text-gray-600 text-sm">{t('how_it_works.win_desc')}</p>
               </div>
             </div>
           </div>
