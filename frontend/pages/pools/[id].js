@@ -29,6 +29,7 @@ export default function PoolDetail() {
 
   async function fetchPoolDetails() {
     try {
+      // Fetch pool details
       const { data: poolData, error: poolError } = await supabase
         .from('pools')
         .select('*, profiles!winner_id(full_name, email), agents(business_name, city)')
@@ -38,6 +39,7 @@ export default function PoolDetail() {
       if (poolError) throw poolError;
       setPool(poolData);
 
+      // Fetch recent contributions
       const { data: contribData, error: contribError } = await supabase
         .from('contributions')
         .select('*, profiles(full_name)')
@@ -68,6 +70,7 @@ export default function PoolDetail() {
       const totalAmount = seats * pool.contribution_amount;
       const transactionId = `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
+      // Create pending contribution
       const { error: contribError } = await supabase
         .from('contributions')
         .insert([{
@@ -76,12 +79,12 @@ export default function PoolDetail() {
           amount: totalAmount,
           transaction_id: transactionId,
           payment_method: 'chapa',
-          status: 'pending',
-          metadata: { seats: seats }
+          status: 'pending'
         }]);
 
       if (contribError) throw contribError;
 
+      // Initialize Chapa payment
       const response = await fetch('/api/chapa/initialize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -92,8 +95,7 @@ export default function PoolDetail() {
           last_name: '',
           phone_number: '',
           poolId: pool.id,
-          poolName: pool.prize_name,
-          metadata: { seats: seats, transactionId: transactionId }
+          poolName: pool.prize_name
         })
       });
 
@@ -139,11 +141,20 @@ export default function PoolDetail() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4 max-w-4xl">
+        {/* Back button */}
         <Link href="/" className="text-green-600 hover:text-green-700 mb-4 inline-block">
           ← Back to Pools
         </Link>
 
+        {/* Pool Header */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          {/* Pool Image */}
+          {pool.image_url && (
+            <div className="mb-4 rounded-lg overflow-hidden">
+              <img src={pool.image_url} alt={pool.prize_name} className="w-full h-64 object-cover" />
+            </div>
+          )}
+          
           <h1 className="text-3xl font-bold mb-2">{pool.prize_name}</h1>
           <p className="text-gray-600 mb-4">{pool.description}</p>
           
@@ -164,6 +175,7 @@ export default function PoolDetail() {
             </div>
           </div>
 
+          {/* Progress Bar */}
           <div className="mt-6">
             <div className="flex justify-between text-sm mb-2">
               <span>Overall Progress</span>
@@ -181,10 +193,12 @@ export default function PoolDetail() {
             </div>
           </div>
 
+          {/* Join Section */}
           {pool.status === 'active' && (
             <div className="mt-6 border-t pt-6">
               <h3 className="text-lg font-bold mb-4">Join This Pool</h3>
               
+              {/* Seat Selector */}
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <p className="text-gray-600">Number of Seats:</p>
@@ -221,16 +235,21 @@ export default function PoolDetail() {
             </div>
           )}
 
+          {/* Winner Section */}
           {pool.status === 'completed' && pool.winner_id && (
             <div className="mt-6 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 border-2 border-yellow-400">
               <h2 className="text-xl font-bold text-center mb-2">🏆 Winner Announced! 🏆</h2>
               <p className="text-center">
                 Congratulations to <span className="font-bold text-green-600">{pool.profiles?.full_name || 'Winner'}</span>!
               </p>
+              <p className="text-center text-gray-600 text-sm mt-1">
+                Draw took place on {new Date(pool.draw_date).toLocaleDateString()}
+              </p>
             </div>
           )}
         </div>
 
+        {/* Recent Contributors */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-xl font-bold mb-4">Recent Contributors</h2>
           {contributions.length === 0 ? (
@@ -250,19 +269,30 @@ export default function PoolDetail() {
           )}
         </div>
 
+        {/* Agent Info */}
         {pool.agents && (
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
             <h2 className="text-xl font-bold mb-4">About the Agent</h2>
             <p className="font-semibold">{pool.agents.business_name}</p>
             <p className="text-gray-600 text-sm">📍 {pool.agents.city || pool.city || 'Addis Ababa'}</p>
-            {pool.discount_for_participants > 0 && (
-              <p className="text-blue-600 text-sm mt-2">🎁 {pool.discount_for_participants}% discount for participants!</p>
+            {pool.discount_for_non_winners > 0 && (
+              <p className="text-blue-600 text-sm mt-2">🎁 {pool.discount_for_non_winners}% discount for participants!</p>
             )}
+          </div>
+        )}
+
+        {/* Discount Info for Non-Winners (Vendor Pools) */}
+        {pool.discount_for_non_winners > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p className="text-blue-800 text-sm">
+              🎉 <strong>Special Offer:</strong> If you don't win, you get {pool.discount_for_non_winners}% discount from the vendor!
+              {pool.discount_terms && <span className="block text-xs mt-1">Terms: {pool.discount_terms}</span>}
+            </p>
           </div>
         )}
       </div>
 
-      {/* Live Chat Component */}
+      {/* Live Chat */}
       <LiveChat poolId={id} poolName={pool?.prize_name} />
     </div>
   );
