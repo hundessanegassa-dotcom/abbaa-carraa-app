@@ -1,4 +1,3 @@
-import RoleBanners from '../components/RoleBanners';
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -7,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import PoolCard from '../components/PoolCard';
 import NewsletterSubscribe from '../components/NewsletterSubscribe';
 import PoolRecommendations from '../components/PoolRecommendations';
+import RoleBanners from '../components/RoleBanners';
 
 export default function Home() {
   const { t } = useTranslation();
@@ -235,22 +235,9 @@ export default function Home() {
             </div>
           </div>
         </section>
-{/* Role Banners - Individual, Agent, Vendor, Organization */}
-<RoleBanners />
 
-{/* Become an Agent CTA - Keep existing but maybe remove since RoleBanners covers it */}
-        {/* Become an Agent CTA */}
-        <section className="bg-gradient-to-r from-green-700 to-green-500 text-white py-12">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">Become an Agent Today!</h2>
-            <p className="text-lg mb-6 max-w-2xl mx-auto">
-              List your products, offer discounts, earn 10% commission, and reach thousands of potential customers.
-            </p>
-            <Link href="/agent/register" className="bg-white text-green-600 px-8 py-3 rounded-full font-semibold hover:shadow-lg transition-all">
-              Register as Agent
-            </Link>
-          </div>
-        </section>
+        {/* Role Banners - Individual, Agent, Vendor, Organization */}
+        <RoleBanners />
 
         {/* Newsletter Subscription */}
         <NewsletterSubscribe />
