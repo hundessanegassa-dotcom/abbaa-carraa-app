@@ -1,7 +1,8 @@
 {
   "common": {
-    "welcome": "ናብ ኣባ ካራ ብደሓን መጺኹም",
+    "welcome": "ናብ abbaa carraa (ባላ ኢዲል) ብደሓን መጺኹም",
     "tagline": "ህብረተሰብ መሰረት ዝገበረ ናይ ሽልማትን ምትሕግጋዝን መድረኽ",
+    "home": "መነበብ",
     "join": "ተጸንበር",
     "contribute": "ምትሕግጋዝ",
     "login": "እቶ",
@@ -15,6 +16,7 @@
     "contact": "ራኸቡና",
     "faq": "ሰገነት ሕቶታት",
     "become_agent": "ወኪል ኩን",
+    "become_vendor": "ኣቕራቢ ኩን",
     "get_started": "ጀምር"
   },
   "pools": {
@@ -41,11 +43,11 @@
     "participants": "ተሳተፍቲ",
     "commissions": "ኮሚሽናት"
   },
-  "supplier": {
-    "become_supplier": "ኣቕራቢ ኩን",
+  "vendor": {
+    "become_vendor": "ኣቕራቢ ኩን",
     "list_products": "ውጤታትካ ዘርዝር",
     "offer_discounts": "ንዘይተዓወቱ ተሳተፍቲ ቅናሽ ቅረብ",
-    "register_supplier": "ከም ኣቕራቢ ተመዝገብ"
+    "register_vendor": "ከም ኣቕራቢ ተመዝገብ"
   },
   "organization": {
     "become_org": "ድርጅት ተመዝገብ",
@@ -58,5 +60,11 @@
     "contact_us": "ራኸቡና",
     "rights": "ኩሉ ሓቂ ተዓቂቡ ተዋሂቡ ኣሎ",
     "built_by": "ብ ተሰሪሑ"
+  },
+  "banners": {
+    "agent": "🤝 ወኪል ኩን - 10% ኮሚሽን ርኸብ",
+    "vendor": "🏭 ኣቕራቢ ኩን - ውጤታትካ ዘርዝር",
+    "organization": "🏢 ድርጅት ተመዝገብ - ውሽጣዊ ገንዳታት ፍጠር",
+    "individual": "👤 ብግል ተጸንበር - ኣስደናቂ ሽልማታት ክትዓወት"
   }
 }
