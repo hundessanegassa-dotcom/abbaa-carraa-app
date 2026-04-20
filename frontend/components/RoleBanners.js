@@ -8,10 +8,10 @@ export default function RoleBanners() {
       subtitle: 'Join Pools & Win Amazing Prizes',
       description: 'Contribute small amounts for a chance to win big! Cars, electronics, furniture, and more. Fair draws, transparent system, instant notifications.',
       features: [
-        '✅ Join any active prize pool',
-        '✅ Buy multiple seats for higher chances',
-        '✅ Get instant SMS/Email notifications',
-        '✅ Track your contributions and wins'
+        'Join any active prize pool',
+        'Buy multiple seats for higher chances',
+        'Get instant SMS/Email notifications',
+        'Track your contributions and wins'
       ],
       buttonText: 'Join as Individual',
       buttonLink: '/register',
@@ -24,10 +24,10 @@ export default function RoleBanners() {
       subtitle: 'Earn 10% Commission on Every Pool',
       description: 'Create prize pools, list products from local businesses, and earn 10% commission when pools complete. No upfront costs - just community building!',
       features: [
-        '✅ Create unlimited prize pools',
-        '✅ Earn 10% commission on each pool',
-        '✅ List products from local shops',
-        '✅ Build your community and reputation'
+        'Create unlimited prize pools',
+        'Earn 10% commission on each pool',
+        'List products from local shops',
+        'Build your community and reputation'
       ],
       buttonText: 'Register as Agent',
       buttonLink: '/agent/register',
@@ -40,10 +40,10 @@ export default function RoleBanners() {
       subtitle: 'List Products & Offer Discounts',
       description: 'Manufacturers, importers, and retailers: List your products as prizes. Winner gets the product FREE. Non-winners get exclusive discounts from you!',
       features: [
-        '✅ List unlimited products as prizes',
-        '✅ Winner gets product FREE - great marketing!',
-        '✅ Offer discounts to non-winners',
-        '✅ Reach thousands of potential customers'
+        'List unlimited products as prizes',
+        'Winner gets product FREE - great marketing',
+        'Offer discounts to non-winners',
+        'Reach thousands of potential customers'
       ],
       buttonText: 'Register as Vendor',
       buttonLink: '/vendor/register',
@@ -56,10 +56,10 @@ export default function RoleBanners() {
       subtitle: 'Create Private Pools for Members',
       description: 'Banks, NGOs, schools, government offices, and community groups: Create private prize pools for your members only. Help your community save together!',
       features: [
-        '✅ Create private pools for members only',
-        '✅ Earn 10% commission on pools',
-        '✅ Perfect for staff savings groups',
-        '✅ Build stronger community bonds'
+        'Create private pools for members only',
+        'Earn 10% commission on pools',
+        'Perfect for staff savings groups',
+        'Build stronger community bonds'
       ],
       buttonText: 'Register Organization',
       buttonLink: '/organization/register',
@@ -90,7 +90,7 @@ export default function RoleBanners() {
               
               <div className="space-y-1 mb-4">
                 {role.features.map((feature, idx) => (
-                  <p key={idx} className="text-xs opacity-90">{feature}</p>
+                  <p key={idx} className="text-xs opacity-90">✅ {feature}</p>
                 ))}
               </div>
               
