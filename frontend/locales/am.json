@@ -1,25 +1,27 @@
 {
   "common": {
-    "welcome": "እንኳን ወደ አባ ካራ በደህና መጡ",
+    "welcome": "እንኳን ወደ abbaa carraa (ባላ ኢዲል) በደህና መጡ",
     "tagline": "ማህበረሰብን መሰረት ያደረገ የሽልማት እና የአስተዋጽኦ መድረክ",
+    "home": "መነሻ",
     "join": "ተቀላቀል",
     "contribute": "አስተዋጽኦ አድርግ",
     "login": "ግባ",
     "register": "ተመዝገብ",
     "logout": "ውጣ",
     "dashboard": "ዳሽቦርድ",
-    "create_pool": "አዲስ ገንዳ ፍጠር",
+    "create_pool": "አዲስ የሽልማት መደብ ፍጠር",
     "browse_prizes": "ሽልማቶችን ይመልከቱ",
     "winners": "አሸናፊዎች",
     "about": "ስለእኛ",
     "contact": "አግኙን",
     "faq": "ተደጋጋሚ ጥያቄዎች",
     "become_agent": "ወኪል ሁን",
+    "become_vendor": "አቅራቢ ሁን",
     "get_started": "ይጀምሩ"
   },
   "pools": {
-    "active_pools": "ንቁ ገንዳዎች",
-    "featured_pools": "የተለዩ ገንዳዎች",
+    "active_pools": "ንቁ የሽልማት መደቦች",
+    "featured_pools": "የተለዩ የሽልማት መደቦች",
     "target_amount": "የዒላማ መጠን",
     "current_amount": "አሁን ያለው መጠን",
     "contribution_amount": "የአስተዋጽኦ መጠን",
@@ -29,7 +31,7 @@
     "draw_date": "የእጣ ቀን",
     "started": "የተጀመረው",
     "join_now": "አሁን ተቀላቀል",
-    "no_pools": "በአሁኑ ጊዜ ምንም ንቁ ገንዳዎች የሉም"
+    "no_pools": "በአሁኑ ጊዜ ምንም ንቁ የሽልማት መደቦች የሉም"
   },
   "agent": {
     "become_agent": "ወኪል ሁን",
@@ -37,19 +39,19 @@
     "register_agent": "እንደ ወኪል ይመዝገቡ",
     "agent_dashboard": "የወኪል ዳሽቦርድ",
     "my_listings": "የእኔ ዝርዝሮች",
-    "my_pools": "የእኔ ሽልማት ገንዳዎች",
+    "my_pools": "የእኔ የሽልማት መደቦች",
     "participants": "ተሳታፊዎች",
     "commissions": "ኮሚሽኖች"
   },
-  "supplier": {
-    "become_supplier": "አቅራቢ ሁን",
+  "vendor": {
+    "become_vendor": "አቅራቢ ሁን",
     "list_products": "ምርቶችዎን ዝርዝር ያድርጉ",
     "offer_discounts": "ላላሸነፉ ተሳታፊዎች ቅናሽ ያቅርቡ",
-    "register_supplier": "እንደ አቅራቢ ይመዝገቡ"
+    "register_vendor": "እንደ አቅራቢ ይመዝገቡ"
   },
   "organization": {
     "become_org": "ድርጅት ይመዝገቡ",
-    "internal_pools": "የውስጥ ገንዳዎችን ይፍጠሩ",
+    "internal_pools": "የውስጥ የሽልማት መደቦችን ይፍጠሩ",
     "member_saving": "ለአባላት የማህበረሰብ ቁጠባ"
   },
   "footer": {
@@ -58,5 +60,11 @@
     "contact_us": "አግኙን",
     "rights": "መብቱ በህግ የተጠበቀ ነው",
     "built_by": "ተገንብቷል በ"
+  },
+  "banners": {
+    "agent": "🤝 ወኪል ሁን - 10% ኮሚሽን አግኝ",
+    "vendor": "🏭 አቅራቢ ሁን - ምርቶችዎን ዝርዝር ያድርጉ",
+    "organization": "🏢 ድርጅት ይመዝገቡ - የውስጥ የሽልማት መደቦችን ይፍጠሩ",
+    "individual": "👤 በግል ተቀላቀል - አስደናቂ ሽልማቶችን አሸንፉ"
   }
 }
