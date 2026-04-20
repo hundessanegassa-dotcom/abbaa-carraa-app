@@ -1,6 +1,70 @@
 {
   "common": {
-    "welcome": "Welcome",
-    "create_pool": "Create Pool"
+    "welcome": "Gara Abbaa Carraa Baga Nagaan Dhufte",
+    "tagline": "Waltajjii badhaasaa fi gumaacha ummata irratti hundaa'e",
+    "home": "Mana",
+    "join": "Hirmaadhu",
+    "contribute": "Gumaachi",
+    "login": "Seeni",
+    "register": "Galmeessi",
+    "logout": "Ba'i",
+    "dashboard": "Daashboordii",
+    "create_pool": "Uunka Galmee Carraa Uumi",
+    "browse_prizes": "Badhaasa Daawwadhaa",
+    "winners": "Mo'attoota",
+    "about": "Waa'ee Keenya",
+    "contact": "Nu Qunnami",
+    "faq": "Gaafiilee Yeebbatan",
+    "become_agent": "Agent Ta'i",
+    "become_vendor": "Dhiyeessa Ta'i",
+    "get_started": "Eegalii"
+  },
+  "pools": {
+    "active_pools": "Uunka Galmee Carraa Hojiirraa Jiran",
+    "featured_pools": "Uunka Galmee Carraa Filataman",
+    "target_amount": "Hanga Galma",
+    "current_amount": "Hanga Ammaa",
+    "contribution_amount": "Amma Gumaacha",
+    "participants": "Hirmaattoota",
+    "progress": "Waan Hojjetame",
+    "days_left": "Guyyaa Hafe",
+    "draw_date": "Guyyaa Argannoo",
+    "started": "Eegalame",
+    "join_now": "Hirmaadhu",
+    "no_pools": "Uunki galmee carraa qophaa'e hinjiru"
+  },
+  "agent": {
+    "become_agent": "Agent Ta'i",
+    "earn_commission": "10 Komishinii Argadhu",
+    "register_agent": "Agent Ta'uuf Galmeessi",
+    "agent_dashboard": "Daashboordii Agent",
+    "my_listings": "Tarreeffamoo Koo",
+    "my_pools": "Uunka Galmee Carraa Koo",
+    "participants": "Hirmaattoota",
+    "commissions": "Komishiniiwwan"
+  },
+  "vendor": {
+    "become_vendor": "Dhiyeessa Ta'i",
+    "list_products": "Oomisha Keessan Tarreessi",
+    "offer_discounts": "Hirmaattoota Hin Mo'aneef Diskawuntii Kennaa",
+    "register_vendor": "Dhiyeessaa Ta'uuf Galmeessi"
+  },
+  "organization": {
+    "become_org": "Dhaabbata Galmeessi",
+    "internal_pools": "Uunka Galmee Carraa Keessoo Uumi",
+    "member_saving": "Dhaabbattootaaf Qusannaa Ummataa"
+  },
+  "footer": {
+    "quick_links": "Geessituu Ariitii",
+    "support": "Deeggarsa",
+    "contact_us": "Nu Qunnami",
+    "rights": "Mirgiin Hunda Eegame",
+    "built_by": "Kan Ijaare"
+  },
+  "banners": {
+    "agent": "Agent Ta'i - 10 Komishinii Argadhu",
+    "vendor": "Dhiyeessa Ta'i - Oomisha Keessan Tarreessi",
+    "organization": "Dhaabbata Galmeessi - Uunka Galmee Carraa Keessoo Uumi",
+    "individual": "Akka Dhuunfaa Hirmaadhu - Badhaasa Ajaa'ibsiisaa Argadhu"
   }
 }
