@@ -20,10 +20,10 @@ export default function RoleBanners() {
               Contribute small amounts for a chance to win big. Fair draws and transparent system.
             </p>
             <div className="space-y-1 mb-4">
-              <p className="text-xs opacity-90">• Join any active prize pool</p>
-              <p className="text-xs opacity-90">• Buy multiple seats for higher chances</p>
-              <p className="text-xs opacity-90">• Get instant notifications</p>
-              <p className="text-xs opacity-90">• Track your contributions</p>
+              <p className="text-xs opacity-90">Join any active prize pool</p>
+              <p className="text-xs opacity-90">Buy multiple seats for higher chances</p>
+              <p className="text-xs opacity-90">Get instant notifications</p>
+              <p className="text-xs opacity-90">Track your contributions</p>
             </div>
             <Link href="/register">
               <button className="w-full bg-white text-gray-800 py-2 rounded-lg font-semibold text-sm hover:bg-gray-100 transition shadow-md">
@@ -43,10 +43,10 @@ export default function RoleBanners() {
               Create prize pools and earn commission when pools complete. No upfront costs.
             </p>
             <div className="space-y-1 mb-4">
-              <p className="text-xs opacity-90">• Create unlimited prize pools</p>
-              <p className="text-xs opacity-90">• Earn 10 percent commission</p>
-              <p className="text-xs opacity-90">• List products from local shops</p>
-              <p className="text-xs opacity-90">• Build your community</p>
+              <p className="text-xs opacity-90">Create unlimited prize pools</p>
+              <p className="text-xs opacity-90">Earn 10 percent commission</p>
+              <p className="text-xs opacity-90">List products from local shops</p>
+              <p className="text-xs opacity-90">Build your community</p>
             </div>
             <Link href="/agent/register">
               <button className="w-full bg-white text-gray-800 py-2 rounded-lg font-semibold text-sm hover:bg-gray-100 transition shadow-md">
@@ -66,10 +66,10 @@ export default function RoleBanners() {
               List your products as prizes. Winner gets product free. Non-winners get discounts.
             </p>
             <div className="space-y-1 mb-4">
-              <p className="text-xs opacity-90">• List unlimited products</p>
-              <p className="text-xs opacity-90">• Winner gets product free</p>
-              <p className="text-xs opacity-90">• Offer discounts to non-winners</p>
-              <p className="text-xs opacity-90">• Reach more customers</p>
+              <p className="text-xs opacity-90">List unlimited products</p>
+              <p className="text-xs opacity-90">Winner gets product free</p>
+              <p className="text-xs opacity-90">Offer discounts to non-winners</p>
+              <p className="text-xs opacity-90">Reach more customers</p>
             </div>
             <Link href="/vendor/register">
               <button className="w-full bg-white text-gray-800 py-2 rounded-lg font-semibold text-sm hover:bg-gray-100 transition shadow-md">
@@ -89,10 +89,10 @@ export default function RoleBanners() {
               Create private prize pools for your members only. Help your community save together.
             </p>
             <div className="space-y-1 mb-4">
-              <p className="text-xs opacity-90">• Create private pools for members</p>
-              <p className="text-xs opacity-90">• Earn 10 percent commission</p>
-              <p className="text-xs opacity-90">• Perfect for staff groups</p>
-              <p className="text-xs opacity-90">• Build community bonds</p>
+              <p className="text-xs opacity-90">Create private pools for members</p>
+              <p className="text-xs opacity-90">Earn 10 percent commission</p>
+              <p className="text-xs opacity-90">Perfect for staff groups</p>
+              <p className="text-xs opacity-90">Build community bonds</p>
             </div>
             <Link href="/organization/register">
               <button className="w-full bg-white text-gray-800 py-2 rounded-lg font-semibold text-sm hover:bg-gray-100 transition shadow-md">
