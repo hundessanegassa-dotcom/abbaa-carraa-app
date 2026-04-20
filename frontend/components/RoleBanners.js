@@ -1,69 +1,6 @@
 import Link from 'next/link';
 
 export default function RoleBanners() {
-  const roles = [
-    {
-      id: 'individual',
-      title: 'Individual',
-      subtitle: 'Join Pools and Win Prizes',
-      description: 'Contribute small amounts for a chance to win big. Fair draws and transparent system.',
-      features: [
-        'Join any active prize pool',
-        'Buy multiple seats for higher chances',
-        'Get instant notifications',
-        'Track your contributions'
-      ],
-      buttonText: 'Join as Individual',
-      buttonLink: '/register',
-      bgColor: 'from-green-500 to-teal-500'
-    },
-    {
-      id: 'agent',
-      title: 'Agent',
-      subtitle: 'Earn 10 Percent Commission',
-      description: 'Create prize pools and earn commission when pools complete. No upfront costs.',
-      features: [
-        'Create unlimited prize pools',
-        'Earn 10 percent commission',
-        'List products from local shops',
-        'Build your community'
-      ],
-      buttonText: 'Register as Agent',
-      buttonLink: '/agent/register',
-      bgColor: 'from-yellow-500 to-orange-500'
-    },
-    {
-      id: 'vendor',
-      title: 'Vendor',
-      subtitle: 'List Products and Offer Discounts',
-      description: 'List your products as prizes. Winner gets product free. Non-winners get discounts.',
-      features: [
-        'List unlimited products',
-        'Winner gets product free',
-        'Offer discounts to non-winners',
-        'Reach more customers'
-      ],
-      buttonText: 'Register as Vendor',
-      buttonLink: '/vendor/register',
-      bgColor: 'from-purple-500 to-pink-500'
-    },
-    {
-      id: 'organization',
-      title: 'Organization',
-      subtitle: 'Create Private Pools for Members',
-      description: 'Create private prize pools for your members only. Help your community save together.',
-      features: [
-        'Create private pools for members',
-        'Earn 10 percent commission',
-        'Perfect for staff groups',
-        'Build community bonds'
-      ],
-      buttonText: 'Register Organization',
-      buttonLink: '/organization/register',
-      bgColor: 'from-blue-500 to-cyan-500'
-    }
-  ];
-
   return (
     <section className="container mx-auto px-4 py-12">
       <h2 className="text-3xl font-bold text-center mb-4">Join Abbaa Carraa Today</h2>
@@ -72,30 +9,99 @@ export default function RoleBanners() {
       </p>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {roles.map((role) => (
-          <div
-            key={role.id}
-            className={`bg-gradient-to-br ${role.bgColor} rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}
-          >
-            <div className="p-6 text-white">
-              <h3 className="text-xl font-bold mb-1">{role.title}</h3>
-              <p className="text-sm opacity-90 mb-3">{role.subtitle}</p>
-              <p className="text-xs opacity-80 mb-4 leading-relaxed">{role.description}</p>
-              
-              <div className="space-y-1 mb-4">
-                {role.features.map((feature, idx) => (
-                  <p key={idx} className="text-xs opacity-90">• {feature}</p>
-                ))}
-              </div>
-              
-              <Link href={role.buttonLink}>
-                <button className="w-full bg-white text-gray-800 py-2 rounded-lg font-semibold text-sm hover:bg-gray-100 transition shadow-md">
-                  {role.buttonText} →
-                </button>
-              </Link>
+        
+        {/* Individual Card */}
+        <div className="bg-gradient-to-br from-green-500 to-teal-500 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <div className="p-6 text-white">
+            <div className="text-4xl mb-3">👤</div>
+            <h3 className="text-xl font-bold mb-1">Individual</h3>
+            <p className="text-sm opacity-90 mb-3">Join Pools and Win Prizes</p>
+            <p className="text-xs opacity-80 mb-4 leading-relaxed">
+              Contribute small amounts for a chance to win big. Fair draws and transparent system.
+            </p>
+            <div className="space-y-1 mb-4">
+              <p className="text-xs opacity-90">• Join any active prize pool</p>
+              <p className="text-xs opacity-90">• Buy multiple seats for higher chances</p>
+              <p className="text-xs opacity-90">• Get instant notifications</p>
+              <p className="text-xs opacity-90">• Track your contributions</p>
             </div>
+            <Link href="/register">
+              <button className="w-full bg-white text-gray-800 py-2 rounded-lg font-semibold text-sm hover:bg-gray-100 transition shadow-md">
+                Join as Individual →
+              </button>
+            </Link>
           </div>
-        ))}
+        </div>
+        
+        {/* Agent Card */}
+        <div className="bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <div className="p-6 text-white">
+            <div className="text-4xl mb-3">🤝</div>
+            <h3 className="text-xl font-bold mb-1">Agent</h3>
+            <p className="text-sm opacity-90 mb-3">Earn 10 Percent Commission</p>
+            <p className="text-xs opacity-80 mb-4 leading-relaxed">
+              Create prize pools and earn commission when pools complete. No upfront costs.
+            </p>
+            <div className="space-y-1 mb-4">
+              <p className="text-xs opacity-90">• Create unlimited prize pools</p>
+              <p className="text-xs opacity-90">• Earn 10 percent commission</p>
+              <p className="text-xs opacity-90">• List products from local shops</p>
+              <p className="text-xs opacity-90">• Build your community</p>
+            </div>
+            <Link href="/agent/register">
+              <button className="w-full bg-white text-gray-800 py-2 rounded-lg font-semibold text-sm hover:bg-gray-100 transition shadow-md">
+                Register as Agent →
+              </button>
+            </Link>
+          </div>
+        </div>
+        
+        {/* Vendor Card */}
+        <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <div className="p-6 text-white">
+            <div className="text-4xl mb-3">🏭</div>
+            <h3 className="text-xl font-bold mb-1">Vendor</h3>
+            <p className="text-sm opacity-90 mb-3">List Products and Offer Discounts</p>
+            <p className="text-xs opacity-80 mb-4 leading-relaxed">
+              List your products as prizes. Winner gets product free. Non-winners get discounts.
+            </p>
+            <div className="space-y-1 mb-4">
+              <p className="text-xs opacity-90">• List unlimited products</p>
+              <p className="text-xs opacity-90">• Winner gets product free</p>
+              <p className="text-xs opacity-90">• Offer discounts to non-winners</p>
+              <p className="text-xs opacity-90">• Reach more customers</p>
+            </div>
+            <Link href="/vendor/register">
+              <button className="w-full bg-white text-gray-800 py-2 rounded-lg font-semibold text-sm hover:bg-gray-100 transition shadow-md">
+                Register as Vendor →
+              </button>
+            </Link>
+          </div>
+        </div>
+        
+        {/* Organization Card */}
+        <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <div className="p-6 text-white">
+            <div className="text-4xl mb-3">🏢</div>
+            <h3 className="text-xl font-bold mb-1">Organization</h3>
+            <p className="text-sm opacity-90 mb-3">Create Private Pools for Members</p>
+            <p className="text-xs opacity-80 mb-4 leading-relaxed">
+              Create private prize pools for your members only. Help your community save together.
+            </p>
+            <div className="space-y-1 mb-4">
+              <p className="text-xs opacity-90">• Create private pools for members</p>
+              <p className="text-xs opacity-90">• Earn 10 percent commission</p>
+              <p className="text-xs opacity-90">• Perfect for staff groups</p>
+              <p className="text-xs opacity-90">• Build community bonds</p>
+            </div>
+            <Link href="/organization/register">
+              <button className="w-full bg-white text-gray-800 py-2 rounded-lg font-semibold text-sm hover:bg-gray-100 transition shadow-md">
+                Register Organization →
+              </button>
+            </Link>
+          </div>
+        </div>
+        
       </div>
       
       <div className="text-center mt-8 text-sm text-gray-500">
