@@ -28,18 +28,12 @@ export default function PushNotification() {
     try {
       const registration = await navigator.serviceWorker.ready;
       
-      // VAPID public key - you'll need to generate this and replace
-      // For now, notifications will work without it in test mode
-      const options = {
+      const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true
-      };
+      });
 
-      const subscription = await registration.pushManager.subscribe(options);
-
-      // Save subscription to database
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        // Create table if not exists and save
         await supabase.from('push_subscriptions').upsert({
           user_id: user.id,
           subscription: JSON.stringify(subscription)
@@ -60,7 +54,7 @@ export default function PushNotification() {
   return (
     <>
       {!showPrompt && (
-        <div className="fixed bottom-4 left-4 z-50">
+        <div className="fixed bottom-20 left-4 z-50">
           <button
             onClick={() => setShowPrompt(true)}
             className="bg-gray-800 text-white p-3 rounded-full shadow-lg hover:bg-gray-700 transition"
