@@ -1,4 +1,3 @@
-<!-- FORCE FULL REDEPLOY -->
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -88,14 +87,8 @@ export default function Home() {
     <>
       <Head>
         <title>Abbaa Carraa - Community Prize Platform</title>
-        <meta name="description" content="Join community prize pools and win amazing prizes. Support local agents and businesses in Ethiopia." />
-        <meta name="keywords" content="prize pool, lottery, community savings, Ethiopia, Telebirr, CBE Birr" />
+        <meta name="description" content="Join community prize pools and win amazing prizes" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="canonical" href="https://abbaacarraaethiopia.vercel.app" />
-        <meta property="og:title" content="Abbaa Carraa - Community Prize Platform" />
-        <meta property="og:description" content="Join community prize pools and win amazing prizes" />
-        <meta property="og:type" content="website" />
-        <meta name="twitter:card" content="summary_large_image" />
       </Head>
 
       <main className="min-h-screen">
@@ -103,11 +96,11 @@ export default function Home() {
         <section className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-16 md:py-20">
           <div className="container mx-auto px-4 text-center">
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4">
-  Welcome to Abbaa Carraa{' '}
-  <span className="text-yellow-300 font-amharic">(ባላ ኢዲል)</span>
-</h1>
-            <p className="text-lg md:text-xl lg:text-2xl mb-6 max-w-2xl mx-auto">{t('common.tagline')}</p>
-            <p className="text-base md:text-lg mb-8 opacity-90">💰 Trusted by {stats.total_agents}+ agents | 🎉 {stats.total_winners}+ winners | 💎 ETB {stats.total_raised.toLocaleString()} raised</p>
+              Welcome to Abbaa Carraa <span className="text-yellow-300">(ባላ ኢዲል)</span>
+            </h1>
+            <p className="text-lg md:text-xl lg:text-2xl mb-6 max-w-2xl mx-auto">
+              A community-driven prize and contribution platform
+            </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/register" className="bg-white text-green-600 px-6 md:px-8 py-2 md:py-3 rounded-full font-semibold hover:shadow-lg transition-all">
                 Get Started
@@ -143,7 +136,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* AI Recommendations - NEW */}
+        {/* AI Recommendations */}
         <PoolRecommendations />
 
         {/* City Filter */}
@@ -191,16 +184,16 @@ export default function Home() {
 
         {/* All Active Pools */}
         <section className="container mx-auto px-4 py-8">
-          <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center">{t('pools.activePools')}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center">Active Pools</h2>
           {loading ? (
             <div className="flex justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
             </div>
           ) : pools.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-lg shadow">
-              <p className="text-gray-500 mb-4">No active pools in {selectedCity === 'all' ? 'your area' : selectedCity} at the moment.</p>
-              <Link href="/agent/register" className="text-green-600 hover:text-green-700">
-                Become an agent and create a pool →
+              <p className="text-gray-500 mb-4">No active pools at the moment.</p>
+              <Link href="/create-pool" className="text-green-600 hover:text-green-700">
+                Create a pool →
               </Link>
             </div>
           ) : (
@@ -242,7 +235,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* For Agents CTA */}
+        {/* Become an Agent CTA */}
         <section className="bg-gradient-to-r from-green-700 to-green-500 text-white py-12">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-2xl md:text-3xl font-bold mb-4">Become an Agent Today!</h2>
