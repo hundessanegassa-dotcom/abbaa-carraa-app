@@ -49,22 +49,22 @@ export default function Navbar() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex space-x-6">
             <Link href="/" className="text-gray-700 hover:text-green-600 transition">
-              {t('common.home', 'Home')}
+              Home
             </Link>
             <Link href="/listings" className="text-gray-700 hover:text-green-600 transition">
-              {t('common.browse_prizes', 'Prizes')}
+              Prizes
             </Link>
             <Link href="/winners" className="text-gray-700 hover:text-green-600 transition">
-              {t('common.winners', 'Winners')}
+              Winners
             </Link>
             <Link href="/about" className="text-gray-700 hover:text-green-600 transition">
-              {t('common.about', 'About')}
+              About
             </Link>
             <Link href="/contact" className="text-gray-700 hover:text-green-600 transition">
-              {t('common.contact', 'Contact')}
+              Contact
             </Link>
             <Link href="/faq" className="text-gray-700 hover:text-green-600 transition">
-              {t('common.faq', 'FAQ')}
+              FAQ
             </Link>
             
             {/* Admin Analytics Link */}
@@ -76,28 +76,35 @@ export default function Navbar() {
             
             {user && (
               <Link href="/dashboard" className="text-gray-700 hover:text-green-600 transition">
-                {t('common.dashboard', 'Dashboard')}
+                Dashboard
               </Link>
             )}
             
             {/* Agent Dashboard Link */}
             {userType === 'agent' && (
               <Link href="/agent/dashboard" className="text-blue-600 hover:text-blue-700 transition">
-                {t('agent.agent_dashboard', 'Agent Portal')}
+                Agent Portal
               </Link>
             )}
             
             {/* Become Agent Link - for regular users */}
-            {user && userType !== 'agent' && userType !== 'admin' && userType !== 'supplier' && userType !== 'organization' && (
+            {user && userType !== 'agent' && userType !== 'admin' && userType !== 'vendor' && userType !== 'organization' && (
               <Link href="/agent/register" className="text-yellow-600 hover:text-yellow-700 transition">
-                {t('common.become_agent', 'Become Agent')}
+                Become Agent
+              </Link>
+            )}
+            
+            {/* Become Vendor Link - for regular users */}
+            {user && userType !== 'vendor' && userType !== 'agent' && userType !== 'admin' && userType !== 'organization' && (
+              <Link href="/vendor/register" className="text-orange-600 hover:text-orange-700 transition">
+                Become Vendor
               </Link>
             )}
             
             {/* Create Pool Link - for logged in users */}
             {user && (
               <Link href="/create-pool" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
-                ✨ {t('common.create_pool', 'Create Pool')}
+                ✨ Create Pool
               </Link>
             )}
           </div>
@@ -106,15 +113,15 @@ export default function Navbar() {
           <div className="flex space-x-4">
             {user ? (
               <button onClick={handleLogout} className="text-red-600 hover:text-red-700 transition">
-                {t('common.logout', 'Logout')}
+                Logout
               </button>
             ) : (
               <>
                 <Link href="/login" className="text-gray-700 hover:text-green-600 transition">
-                  {t('common.login', 'Login')}
+                  Login
                 </Link>
                 <Link href="/register" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
-                  {t('common.register', 'Register')}
+                  Register
                 </Link>
               </>
             )}
