@@ -71,7 +71,7 @@ export default function Register() {
             Create your account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Join prize pools and win amazing rewards
+            Join as an Organizer (earn 10%) or Participant (win prizes)
           </p>
         </div>
 
@@ -132,10 +132,10 @@ export default function Register() {
               />
             </div>
 
-            {/* User Type Selection */}
+            {/* User Type Selection with Organizer vs Participant distinction */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                I am joining as:
+                I want to join as:
               </label>
               <select
                 value={userType}
@@ -143,16 +143,69 @@ export default function Register() {
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                 required
               >
-                <option value="individual">👤 Individual (Join Pools)</option>
-                <option value="agent">🤝 Agent (Earn 10% Commission)</option>
-                <option value="vendor">🏭 Vendor (Manufacturer/Importer/Retailer)</option>
-                <option value="organization">🏢 Organization/CBO (Create Internal Pools)</option>
+                <option value="individual">👤 Individual</option>
+                <option value="agent">🤝 Agent</option>
+                <option value="vendor">🏭 Vendor</option>
+                <option value="organization">🏢 Organization</option>
               </select>
-              <p className="text-xs text-gray-500 mt-1">
-                {userType === 'agent' && '✓ You will earn 10% commission on pools you create.'}
-                {userType === 'vendor' && '✓ List products, create prize pools, offer discounts to non-winners.'}
-                {userType === 'organization' && '✓ Create private pools for your members. No commission.'}
-                {userType === 'individual' && '✓ Join public pools for a chance to win amazing prizes!'}
+              
+              {/* Clear distinction box */}
+              <div className="mt-3 p-3 rounded-lg text-sm">
+                {userType === 'individual' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-green-700 bg-green-50 p-2 rounded">
+                      <span className="text-lg">💰</span>
+                      <span><strong>As Organizer:</strong> Create pools → Earn 10% commission</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-blue-700 bg-blue-50 p-2 rounded">
+                      <span className="text-lg">🎯</span>
+                      <span><strong>As Participant:</strong> Join pools → Chance to win prizes</span>
+                    </div>
+                  </div>
+                )}
+                
+                {userType === 'agent' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-green-700 bg-green-50 p-2 rounded">
+                      <span className="text-lg">💰</span>
+                      <span><strong>As Agent Organizer:</strong> Create pools → Earn 10% commission</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-blue-700 bg-blue-50 p-2 rounded">
+                      <span className="text-lg">🏪</span>
+                      <span><strong>Benefits:</strong> List products from local businesses, build your community</span>
+                    </div>
+                  </div>
+                )}
+                
+                {userType === 'vendor' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-green-700 bg-green-50 p-2 rounded">
+                      <span className="text-lg">💰</span>
+                      <span><strong>As Vendor Organizer:</strong> Create pools → Earn 10% commission</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-blue-700 bg-blue-50 p-2 rounded">
+                      <span className="text-lg">🎁</span>
+                      <span><strong>Benefits:</strong> Winner gets product FREE, non-winners get discounts</span>
+                    </div>
+                  </div>
+                )}
+                
+                {userType === 'organization' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-green-700 bg-green-50 p-2 rounded">
+                      <span className="text-lg">💰</span>
+                      <span><strong>As Organization Organizer:</strong> Create private pools → Earn 10% commission</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-blue-700 bg-blue-50 p-2 rounded">
+                      <span className="text-lg">🏢</span>
+                      <span><strong>Benefits:</strong> Perfect for banks, NGOs, schools, community groups</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <p className="text-xs text-gray-500 mt-2">
+                Note: Anyone can create a pool (Organizer) and earn 10% commission. Anyone can join pools (Participant) for a chance to win prizes.
               </p>
             </div>
 
