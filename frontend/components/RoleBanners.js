@@ -4,23 +4,23 @@ export default function RoleBanners() {
   const roles = [
     {
       id: 'individual',
-      title: '👤 Individual',
+      title: 'Individual',
       subtitle: 'Join Pools & Win Amazing Prizes',
       description: 'Contribute small amounts for a chance to win big! Cars, electronics, furniture, and more. Fair draws, transparent system, instant notifications.',
       features: [
         'Join any active prize pool',
         'Buy multiple seats for higher chances',
-        'Get instant SMS/Email notifications',
+        'Get instant SMS and Email notifications',
         'Track your contributions and wins'
       ],
       buttonText: 'Join as Individual',
       buttonLink: '/register',
       bgColor: 'from-green-500 to-teal-500',
-      icon: '🎯'
+      icon: '👤'
     },
     {
       id: 'agent',
-      title: '🤝 Agent',
+      title: 'Agent',
       subtitle: 'Earn 10% Commission on Every Pool',
       description: 'Create prize pools, list products from local businesses, and earn 10% commission when pools complete. No upfront costs - just community building!',
       features: [
@@ -32,11 +32,11 @@ export default function RoleBanners() {
       buttonText: 'Register as Agent',
       buttonLink: '/agent/register',
       bgColor: 'from-yellow-500 to-orange-500',
-      icon: '💰'
+      icon: '🤝'
     },
     {
       id: 'vendor',
-      title: '🏭 Vendor',
+      title: 'Vendor',
       subtitle: 'List Products & Offer Discounts',
       description: 'Manufacturers, importers, and retailers: List your products as prizes. Winner gets the product FREE. Non-winners get exclusive discounts from you!',
       features: [
@@ -52,7 +52,7 @@ export default function RoleBanners() {
     },
     {
       id: 'organization',
-      title: '🏢 Organization',
+      title: 'Organization',
       subtitle: 'Create Private Pools for Members',
       description: 'Banks, NGOs, schools, government offices, and community groups: Create private prize pools for your members only. Help your community save together!',
       features: [
@@ -90,7 +90,7 @@ export default function RoleBanners() {
               
               <div className="space-y-1 mb-4">
                 {role.features.map((feature, idx) => (
-                  <p key={idx} className="text-xs opacity-90">✅ {feature}</p>
+                  <p key={idx} className="text-xs opacity-90">✓ {feature}</p>
                 ))}
               </div>
               
@@ -105,7 +105,7 @@ export default function RoleBanners() {
       </div>
       
       <div className="text-center mt-8 text-sm text-gray-500">
-        <p>✨ Anyone can create a pool (Organizer) and earn 10% commission | Anyone can join pools (Participant) for a chance to win prizes ✨</p>
+        <p>Anyone can create a pool (Organizer) and earn 10% commission | Anyone can join pools (Participant) for a chance to win prizes</p>
       </div>
     </section>
   );
