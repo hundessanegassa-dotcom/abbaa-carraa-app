@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import PoolCard from '../components/PoolCard';
 import NewsletterSubscribe from '../components/NewsletterSubscribe';
 import RoleBanners from '../components/RoleBanners';
+import Banner from '../components/Banner';
 
 export default function Home() {
   const [pools, setPools] = useState([]);
@@ -70,12 +71,15 @@ export default function Home() {
       </Head>
 
       <main>
-        {/* Hero Section with Background Image */}
+        {/* Promotional Banners */}
+        <Banner />
+
+        {/* Hero Section with Ethiopian Background Image */}
         <section className="relative bg-gradient-to-r from-green-800/90 to-blue-800/90 text-white py-20 md:py-28 overflow-hidden">
           <div className="absolute inset-0 z-0">
             <img 
-              src="https://images.unsplash.com/photo-1567449303074-5a8c61b3e794?w=1600&h=600&fit=crop"
-              alt="Addis Ababa"
+              src="https://images.unsplash.com/photo-1547471080-7cc2caa01df7?w=1600&h=600&fit=crop"
+              alt="Ethiopian Highlands - Simien Mountains"
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-black/50"></div>
