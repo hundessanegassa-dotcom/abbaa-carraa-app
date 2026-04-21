@@ -2,81 +2,36 @@
   "common": {
     "welcome": "Welcome to Abbaa Carraa",
     "tagline": "A community-driven prize and contribution platform",
-    "home": "Home",
-    "join": "Join Pool",
-    "contribute": "Contribute",
-    "login": "Login",
-    "register": "Register",
-    "logout": "Logout",
-    "dashboard": "Dashboard",
-    "create_pool": "Create Pool",
+    "get_started": "Get Started",
     "browse_prizes": "Browse Prizes",
-    "winners": "Winners",
+    "create_pool": "Create Pool",
+    "home": "Home",
     "about": "About",
     "contact": "Contact",
     "faq": "FAQ",
-    "become_agent": "Become Agent",
-    "become_vendor": "Become Vendor",
-    "get_started": "Get Started",
-    "trusted_agents": "Trusted Agents",
-    "total_raised": "Total Raised",
-    "all_cities": "All Cities"
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "dashboard": "Dashboard"
+  },
+  "stats": {
+    "active_pools": "Active Pools",
+    "winners": "Winners",
+    "agents": "Agents",
+    "raised": "Raised"
   },
   "pools": {
     "active_pools": "Active Pools",
     "featured_pools": "Featured Pools",
-    "target_amount": "Target Amount",
-    "current_amount": "Current Amount",
-    "contribution_amount": "Contribution Amount",
-    "participants": "Participants",
-    "progress": "Progress",
-    "days_left": "Days Left",
-    "draw_date": "Draw Date",
-    "started": "Started",
-    "join_now": "Join Now",
     "no_pools": "No active pools at the moment"
   },
   "how_it_works": {
-    "title": "How Abbaa Carraa Works",
-    "find_pool": "Find a Prize Pool",
+    "title": "How It Works",
+    "find_pool": "Find a Pool",
     "find_pool_desc": "Browse active prize pools by city or category",
     "contribute": "Contribute",
     "contribute_desc": "Pay via Telebirr or CBE Birr securely",
     "win": "Win & Celebrate",
     "win_desc": "Fair draw selects winner when target is reached"
-  },
-  "agent": {
-    "become_agent": "Become an Agent",
-    "earn_commission": "Earn 10% Commission",
-    "register_agent": "Register as Agent",
-    "agent_dashboard": "Agent Dashboard",
-    "my_listings": "My Listings",
-    "my_pools": "My Prize Pools",
-    "participants": "Participants",
-    "commissions": "Commissions"
-  },
-  "vendor": {
-    "become_vendor": "Become a Vendor",
-    "list_products": "List Your Products",
-    "offer_discounts": "Offer Discounts to Non-Winners",
-    "register_vendor": "Register as Vendor"
-  },
-  "organization": {
-    "become_org": "Register Organization",
-    "internal_pools": "Create Internal Pools",
-    "member_saving": "Community Saving for Members"
-  },
-  "footer": {
-    "quick_links": "Quick Links",
-    "support": "Support",
-    "contact_us": "Contact Us",
-    "rights": "All rights reserved",
-    "built_by": "Built by"
-  },
-  "banners": {
-    "agent": "Become an Agent - Earn 10% Commission",
-    "vendor": "Become a Vendor - List Your Products",
-    "organization": "Become an Organization - Create Internal Pools",
-    "individual": "Join as Individual - Win Amazing Prizes"
   }
 }
