@@ -1,9 +1,82 @@
 {
   "common": {
-    "welcome": "Abbaa carraa (ባላ ኢዲል) anso ba'no",
+    "welcome": "Abbaa carraa anso ba'no",
     "tagline": "Ummaataa qaalaa kee hiixoo dame yichchilcho medhiya",
     "home": "Maca",
     "join": "Maxa",
     "contribute": "Hiixoo",
     "login": "Soqo",
-    "register
+    "register": "Gargara",
+    "logout": "Ba'no",
+    "dashboard": "Dashboard",
+    "create_pool": "Dame yichchilcho medha",
+    "browse_prizes": "Qaalaa la'a",
+    "winners": "Mo'ichcho",
+    "about": "Nu gishshu",
+    "contact": "Nu qiqira",
+    "faq": "Mincesse oressa",
+    "become_agent": "Agent ba'a",
+    "become_vendor": "Vendor ba'a",
+    "get_started": "Kawusa",
+    "trusted_agents": "Agente amanama",
+    "total_raised": "Wolqa qixxa",
+    "all_cities": "Magaala wolqa"
+  },
+  "pools": {
+    "active_pools": "Ummaataa yichchilcho",
+    "featured_pools": "Filamme yichchilcho",
+    "target_amount": "Malto qixxa",
+    "current_amount": "Ha wode qixxa",
+    "contribution_amount": "Hiixoo qixxa",
+    "participants": "Maxxo",
+    "progress": "Wursi",
+    "days_left": "Hafo ga'ra",
+    "draw_date": "Gombessa ga'ra",
+    "started": "Kawusamme",
+    "join_now": "Ha wode maxa",
+    "no_pools": "Ha wode ummaataa yichchilcho be'enno"
+  },
+  "how_it_works": {
+    "title": "Abbaa carraa annooti ba'ano",
+    "find_pool": "Yichchilcho maxa",
+    "find_pool_desc": "Ummaataa yichchilcho magaalaan hinnay qayyaan la'a",
+    "contribute": "Hiixoo",
+    "contribute_desc": "Telebirr hinnay CBE Birr kawuso hiixo",
+    "win": "Mo'ichcho kee ufaysi",
+    "win_desc": "Malto gakki gombessa mo'ichcho doorama"
+  },
+  "agent": {
+    "become_agent": "Agent ba'a",
+    "earn_commission": "10% komishshana hee'a",
+    "register_agent": "Agent gargara",
+    "agent_dashboard": "Agent dashboard",
+    "my_listings": "Ta gargaramme",
+    "my_pools": "Ta yichchilcho",
+    "participants": "Maxxo",
+    "commissions": "Komishshana"
+  },
+  "vendor": {
+    "become_vendor": "Vendor ba'a",
+    "list_products": "Ne ala gargara",
+    "offer_discounts": "Be'ennaw maxxof diskawunti immo",
+    "register_vendor": "Vendor gargara"
+  },
+  "organization": {
+    "become_org": "Dereja gargara",
+    "internal_pools": "Garssa yichchilcho medha",
+    "member_saving": "Membara maro qixxa"
+  },
+  "footer": {
+    "quick_links": "Xixxiro linkka",
+    "support": "Maadayso",
+    "contact_us": "Nu qiqira",
+    "rights": "Hoo'a amar",
+    "built_by": "Medhise"
+  },
+  "banners": {
+    "agent": "Agent ba'a - 10% komishshana hee'a",
+    "vendor": "Vendor ba'a - Ne ala gargara",
+    "organization": "Dereja gargara - Garssa yichchilcho medha",
+    "individual": "Maxa - Hara qaala hee'a"
+  }
+}
