@@ -100,20 +100,21 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ALL BANNERS - Promotional + Role Banners */}
-        <Banner />
+       import Banner from '../components/Banner';
 
-        {/* Stats Bar */}
-        <section className="bg-white border-b shadow-sm py-4">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              <div><div className="text-2xl md:text-3xl font-bold text-green-600">{stats.total_pools}+</div><div className="text-xs text-gray-500">{t('stats.active_pools')}</div></div>
-              <div><div className="text-2xl md:text-3xl font-bold text-green-600">{stats.total_winners}+</div><div className="text-xs text-gray-500">{t('stats.winners')}</div></div>
-              <div><div className="text-2xl md:text-3xl font-bold text-green-600">{stats.total_agents}+</div><div className="text-xs text-gray-500">{t('stats.agents')}</div></div>
-              <div><div className="text-2xl md:text-3xl font-bold text-green-600">ETB {Math.floor(stats.total_raised / 1000)}K+</div><div className="text-xs text-gray-500">{t('stats.raised')}</div></div>
-            </div>
-          </div>
-        </section>
+// In the return section, AFTER hero section:
+{/* Hero Section */}
+<section className="relative...">
+  ...
+</section>
+
+{/* 5 Banners - Under Welcome to Abbaa Carraa */}
+<Banner />
+
+{/* Stats Bar */}
+<section className="bg-white...">
+  ...
+</section>
 
         {/* Featured Pools */}
         {featuredPools.length > 0 && (
