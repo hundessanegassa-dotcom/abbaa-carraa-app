@@ -26,7 +26,7 @@
   }
 }
 
-/* Amharic text styling for ባላ ኢዲል */
+/* Amharic text styling */
 .font-amharic {
   font-family: 'Noto Sans Ethiopic', 'Times New Roman', serif;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
@@ -46,9 +46,33 @@
   animation: gentlePulse 2s infinite;
 }
 
+/* Shimmer animation for ad banner */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .font-amharic {
     font-size: 0.9em;
   }
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
 }
