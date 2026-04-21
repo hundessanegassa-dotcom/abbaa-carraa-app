@@ -86,26 +86,36 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Abbaa Carraa - {t('common.tagline')}</title>
+        <title>Abbaa Carraa - Community Prize Platform</title>
         <meta name="description" content={t('common.tagline')} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
       <main className="min-h-screen">
-        {/* Hero Section */}
-        <section className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-16 md:py-20">
-          <div className="container mx-auto px-4 text-center">
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4">
-  {t('common.welcome')}
-</h1>
-            <p className="text-lg md:text-xl lg:text-2xl mb-6 max-w-2xl mx-auto">
+        {/* Hero Section with Background Image */}
+        <section className="relative bg-gradient-to-r from-green-800/90 to-blue-800/90 text-white py-16 md:py-24 overflow-hidden">
+          {/* Background Image */}
+          <div className="absolute inset-0 z-0">
+            <img 
+              src="https://images.unsplash.com/photo-1567449303074-5a8c61b3e794?w=1600&h=500&fit=crop"
+              alt="Addis Ababa"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/50"></div>
+          </div>
+          
+          <div className="container mx-auto px-4 text-center relative z-10">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 drop-shadow-lg">
+              Welcome to Abbaa Carraa
+            </h1>
+            <p className="text-xl md:text-2xl lg:text-3xl mb-6 max-w-2xl mx-auto drop-shadow-md">
               {t('common.tagline')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/register" className="bg-white text-green-600 px-6 md:px-8 py-2 md:py-3 rounded-full font-semibold hover:shadow-lg transition-all">
+              <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-full font-semibold text-lg transition-all shadow-lg hover:shadow-xl">
                 {t('common.get_started')}
               </Link>
-              <Link href="/listings" className="border-2 border-white text-white px-6 md:px-8 py-2 md:py-3 rounded-full font-semibold hover:bg-white hover:text-green-600 transition-all">
+              <Link href="/listings" className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-8 py-3 rounded-full font-semibold text-lg transition-all border border-white/30">
                 {t('common.browse_prizes')}
               </Link>
             </div>
@@ -205,35 +215,35 @@ export default function Home() {
           )}
         </section>
 
-       {/* How It Works */}
-<section className="bg-gray-100 py-12">
-  <div className="container mx-auto px-4">
-    <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">{t('how_it_works.title')}</h2>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-      <div className="text-center">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <span className="text-2xl font-bold text-green-600">1</span>
-        </div>
-        <h3 className="text-lg font-bold mb-2">{t('how_it_works.find_pool')}</h3>
-        <p className="text-gray-600 text-sm">{t('how_it_works.find_pool_desc')}</p>
-      </div>
-      <div className="text-center">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <span className="text-2xl font-bold text-green-600">2</span>
-        </div>
-        <h3 className="text-lg font-bold mb-2">{t('how_it_works.contribute')}</h3>
-        <p className="text-gray-600 text-sm">{t('how_it_works.contribute_desc')}</p>
-      </div>
-      <div className="text-center">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <span className="text-2xl font-bold text-green-600">3</span>
-        </div>
-        <h3 className="text-lg font-bold mb-2">{t('how_it_works.win')}</h3>
-        <p className="text-gray-600 text-sm">{t('how_it_works.win_desc')}</p>
-      </div>
-    </div>
-  </div>
-</section>
+        {/* How It Works */}
+        <section className="bg-gray-100 py-12">
+          <div className="container mx-auto px-4">
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">{t('how_it_works.title')}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl font-bold text-green-600">1</span>
+                </div>
+                <h3 className="text-lg font-bold mb-2">{t('how_it_works.find_pool')}</h3>
+                <p className="text-gray-600 text-sm">{t('how_it_works.find_pool_desc')}</p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl font-bold text-green-600">2</span>
+                </div>
+                <h3 className="text-lg font-bold mb-2">{t('how_it_works.contribute')}</h3>
+                <p className="text-gray-600 text-sm">{t('how_it_works.contribute_desc')}</p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl font-bold text-green-600">3</span>
+                </div>
+                <h3 className="text-lg font-bold mb-2">{t('how_it_works.win')}</h3>
+                <p className="text-gray-600 text-sm">{t('how_it_works.win_desc')}</p>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Newsletter Subscription */}
         <NewsletterSubscribe />
