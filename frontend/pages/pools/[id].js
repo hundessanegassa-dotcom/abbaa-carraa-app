@@ -29,6 +29,9 @@ export default function PoolDetail() {
     } catch (error) {
       console.error('Error fetching pool:', error);
       toast.error('Pool not found');
+      setTimeout(() => {
+        router.push('/');
+      }, 2000);
     } finally {
       setLoading(false);
     }
@@ -63,10 +66,16 @@ export default function PoolDetail() {
         </Link>
 
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h1 className="text-3xl font-bold mb-2">{pool.prize_name}</h1>
-          <p className="text-gray-600 mb-4">{pool.description}</p>
+          {pool.image_url && (
+            <div className="mb-6 rounded-lg overflow-hidden">
+              <img src={pool.image_url} alt={pool.prize_name} className="w-full h-64 object-cover" />
+            </div>
+          )}
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          <h1 className="text-3xl font-bold mb-2">{pool.prize_name}</h1>
+          <p className="text-gray-600 mb-6">{pool.description}</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="text-center p-3 bg-gray-50 rounded-lg">
               <p className="text-gray-500 text-sm">Target Amount</p>
               <p className="text-xl font-bold text-green-600">ETB {pool.target_amount?.toLocaleString()}</p>
@@ -81,17 +90,30 @@ export default function PoolDetail() {
             </div>
           </div>
 
-          <div className="mt-6">
+          <div className="mb-6">
             <div className="bg-gray-200 rounded-full h-4 overflow-hidden">
               <div className="bg-green-600 h-4 rounded-full" style={{ width: `${Math.min(progress, 100)}%` }}></div>
             </div>
+            <div className="flex justify-between text-sm mt-2 text-gray-500">
+              <span>Raised: ETB {pool.current_amount?.toLocaleString()}</span>
+              <span>Remaining: ETB {(pool.target_amount - pool.current_amount)?.toLocaleString()}</span>
+            </div>
           </div>
 
-          <Link href={`/pools/${id}/join`}>
-            <button className="w-full mt-6 bg-green-600 text-white py-3 rounded-lg font-semibold text-lg hover:bg-green-700">
-              Join This Pool
-            </button>
-          </Link>
+          {pool.discount_for_non_winners > 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <p className="text-blue-800 text-sm">
+                🎉 Special Offer: If you don't win, you get {pool.discount_for_non_winners}% discount from the vendor!
+              </p>
+            </div>
+          )}
+
+          <button className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold text-lg hover:bg-green-700 transition">
+            Join This Pool - ETB {pool.contribution_amount?.toLocaleString()}
+          </button>
+          <p className="text-xs text-gray-400 text-center mt-2">
+            Payment via Telebirr or CBE Birr (Coming Soon)
+          </p>
         </div>
       </div>
     </div>
