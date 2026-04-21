@@ -1,6 +1,6 @@
 {
   "common": {
-    "welcome": "Ku Soo Dhawoow abbaa carraa (ባላ ኢዲል)",
+    "welcome": "Ku Soo Dhawoow Abbaa Carraa",
     "tagline": "Madal abaal-marin iyo tabaruc wadaagis ah oo bulsho ku saleysan",
     "home": "Bogga Hore",
     "join": "Ku Biir",
@@ -17,7 +17,10 @@
     "faq": "Su'aalaha Badanaa La Is Weydiiyo",
     "become_agent": "Noqo Wakiil",
     "become_vendor": "Noqo Alaabeeyaha",
-    "get_started": "Bilow"
+    "get_started": "Bilow",
+    "trusted_agents": "Wakiilada La Isku Halayaa",
+    "total_raised": "Wadarta La Soo Ururiyay",
+    "all_cities": "Dhamaan Magaalooyinka"
   },
   "pools": {
     "active_pools": "Hagbadaha Firfircoon",
@@ -32,6 +35,15 @@
     "started": "Bilowday",
     "join_now": "Hada Ku Biir",
     "no_pools": "Ma Jiraan Hagbad Firfircoon oo Hada"
+  },
+  "how_it_works": {
+    "title": "Siday Abbaa Carraa U Shaqeyso",
+    "find_pool": "Raadi Hagbad",
+    "find_pool_desc": "Hagbadaha firfircoon ee ku yaal magaaladaada ama qaybtaada ka baadh",
+    "contribute": "Tabaruc",
+    "contribute_desc": "Ku bixi Telebirr ama CBE Birr si ammaan ah",
+    "win": "Ku Guuleyso & U Dabaaldeeg",
+    "win_desc": "Marka bartilmaameedka la gaaro bakhtiyaa caddaalad ah ayaa ku guuleysta dooranaysa"
   },
   "agent": {
     "become_agent": "Noqo Wakiil",
@@ -62,9 +74,9 @@
     "built_by": "Waxaa Dhisey"
   },
   "banners": {
-    "agent": "🤝 Noqo Wakiil - Hel 10% Guddi",
-    "vendor": "🏭 Noqo Alaabeeyaha - Liis Gayso Alaabtaada",
-    "organization": "🏢 Isdiiwaan Gel Urur - Abuur Hagbadaha Gudaha",
-    "individual": "👤 Ku Biir Shaqsi Ahaan - Ku Guuleyso Abaal-marinaha Cajiibka ah"
+    "agent": "Noqo Wakiil - Hel 10% Guddi",
+    "vendor": "Noqo Alaabeeyaha - Liis Gayso Alaabtaada",
+    "organization": "Isdiiwaan Gel Urur - Abuur Hagbadaha Gudaha",
+    "individual": "Ku Biir Shaqsi Ahaan - Ku Guuleyso Abaal-marinaha Cajiibka ah"
   }
 }
