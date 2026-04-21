@@ -1,6 +1,6 @@
 {
   "common": {
-    "welcome": "Abbaa carraa (ባላ ኢዲል) fanah tanfale",
+    "welcome": "Abbaa carraa fanah tanfale",
     "tagline": "Qadaaduu kee gacalka addunyaal marroo qadaaduu kee jaahil",
     "home": "Magaala",
     "join": "Cula",
@@ -17,7 +17,10 @@
     "faq": "Essaroora essaroora",
     "become_agent": "Agent cula",
     "become_vendor": "Vendor cula",
-    "get_started": "Qimbisa"
+    "get_started": "Qimbisa",
+    "trusted_agents": "Agenta elleelite",
+    "total_raised": "Inkih tanfale",
+    "all_cities": "Magaalool inkih"
   },
   "pools": {
     "active_pools": "Poolwa taamisa",
@@ -32,6 +35,15 @@
     "started": "Qimbise",
     "join_now": "Akkah cul",
     "no_pools": "Poolwa taamisa maybul"
+  },
+  "how_it_works": {
+    "title": "Abbaa carraa innah tanfale",
+    "find_pool": "Pool gur",
+    "find_pool_desc": "Poolwa taamisa magaalal hinnay qaynal cubbus",
+    "contribute": "Gacal",
+    "contribute_desc": "Telebirr hinnay CBE Birr luk kullum kah",
+    "win": "Qufaay kee ceelat",
+    "win_desc": "Gaba yekke waqdi yolwa qadaaduu cuwa"
   },
   "agent": {
     "become_agent": "Agent cul",
@@ -62,9 +74,9 @@
     "built_by": "Bih luk"
   },
   "banners": {
-    "agent": "🤝 Agent cul - 10% komishiyon maal",
-    "vendor": "🏭 Vendor cul - Aluwa cubbus",
-    "organization": "🏢 Urru galal - Sinni poolwa ug",
-    "individual": "👤 Cula - Qadaaduu maal"
+    "agent": "Agent cul - 10% komishiyon maal",
+    "vendor": "Vendor cul - Aluwa cubbus",
+    "organization": "Urru galal - Sinni poolwa ug",
+    "individual": "Cula - Qadaaduu maal"
   }
 }
