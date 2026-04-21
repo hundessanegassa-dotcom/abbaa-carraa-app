@@ -4,14 +4,44 @@ import Link from 'next/link';
 import { supabase } from '../lib/supabase';
 import PoolCard from '../components/PoolCard';
 import NewsletterSubscribe from '../components/NewsletterSubscribe';
+import RoleBanners from '../components/RoleBanners';
 
 export default function Home() {
   const [pools, setPools] = useState([]);
+  const [featuredPools, setFeaturedPools] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    total_pools: 0,
+    total_winners: 0,
+    total_agents: 0,
+    total_raised: 0
+  });
 
   useEffect(() => {
+    fetchStats();
     fetchPools();
   }, []);
+
+  async function fetchStats() {
+    try {
+      const [
+        { count: total_pools },
+        { count: total_winners },
+        { count: total_agents },
+        { data: contributions }
+      ] = await Promise.all([
+        supabase.from('pools').select('*', { count: 'exact', head: true }),
+        supabase.from('pools').select('*', { count: 'exact', head: true }).not('winner_id', 'is', null),
+        supabase.from('agents').select('*', { count: 'exact', head: true }),
+        supabase.from('contributions').select('amount').eq('status', 'completed')
+      ]);
+      
+      const total_raised = contributions?.reduce((sum, c) => sum + (c.amount || 0), 0) || 0;
+      setStats({ total_pools, total_winners, total_agents, total_raised });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  }
 
   async function fetchPools() {
     try {
@@ -23,6 +53,7 @@ export default function Home() {
 
       if (error) throw error;
       setPools(data || []);
+      setFeaturedPools(data?.filter(pool => pool.is_featured === true) || []);
     } catch (error) {
       console.error('Error loading pools:', error);
     } finally {
@@ -40,25 +71,30 @@ export default function Home() {
 
       <main>
         {/* Hero Section with Background Image */}
-        <section className="relative bg-gradient-to-r from-green-800/90 to-blue-800/90 text-white py-20 overflow-hidden">
+        <section className="relative bg-gradient-to-r from-green-800/90 to-blue-800/90 text-white py-20 md:py-28 overflow-hidden">
           <div className="absolute inset-0 z-0">
             <img 
-              src="https://images.unsplash.com/photo-1567449303074-5a8c61b3e794?w=1600&h=500&fit=crop"
+              src="https://images.unsplash.com/photo-1567449303074-5a8c61b3e794?w=1600&h=600&fit=crop"
               alt="Addis Ababa"
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-black/50"></div>
           </div>
           <div className="container mx-auto px-4 text-center relative z-10">
-            <h1 className="text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 drop-shadow-lg">
               Welcome to Abbaa Carraa
             </h1>
-            <p className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto drop-shadow-md">
+            <p className="text-xl md:text-2xl lg:text-3xl mb-8 max-w-2xl mx-auto drop-shadow-md">
               A community-driven prize and contribution platform
             </p>
-            <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-full font-semibold text-lg transition-all shadow-lg hover:shadow-xl inline-block">
-              Get Started
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-full font-semibold text-lg transition-all shadow-lg hover:shadow-xl">
+                Get Started
+              </Link>
+              <Link href="/listings" className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-8 py-3 rounded-full font-semibold text-lg transition-all border border-white/30">
+                Browse Prizes
+              </Link>
+            </div>
           </div>
         </section>
 
@@ -67,26 +103,41 @@ export default function Home() {
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div>
-                <div className="text-2xl font-bold text-green-600">{pools.length}</div>
+                <div className="text-2xl md:text-3xl font-bold text-green-600">{stats.total_pools}+</div>
                 <div className="text-xs text-gray-500">Active Pools</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-green-600">0</div>
+                <div className="text-2xl md:text-3xl font-bold text-green-600">{stats.total_winners}+</div>
                 <div className="text-xs text-gray-500">Winners</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-green-600">0</div>
+                <div className="text-2xl md:text-3xl font-bold text-green-600">{stats.total_agents}+</div>
                 <div className="text-xs text-gray-500">Agents</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-green-600">ETB 0K</div>
+                <div className="text-2xl md:text-3xl font-bold text-green-600">ETB {Math.floor(stats.total_raised / 1000)}K+</div>
                 <div className="text-xs text-gray-500">Raised</div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Active Pools */}
+        {/* Role Banners */}
+        <RoleBanners />
+
+        {/* Featured Pools */}
+        {featuredPools.length > 0 && (
+          <section className="container mx-auto px-4 py-12">
+            <h2 className="text-3xl font-bold text-center mb-8">⭐ Featured Pools</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredPools.map(pool => (
+                <PoolCard key={pool.id} pool={pool} featured={true} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* All Active Pools */}
         <section className="container mx-auto px-4 py-12">
           <h2 className="text-3xl font-bold text-center mb-8">Active Pools</h2>
           {loading ? (
@@ -95,8 +146,8 @@ export default function Home() {
             </div>
           ) : pools.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500">No active pools at the moment.</p>
-              <Link href="/create-pool" className="text-green-600 mt-2 inline-block">
+              <p className="text-gray-500 mb-4">No active pools at the moment.</p>
+              <Link href="/create-pool" className="text-green-600 hover:text-green-700">
                 Create a pool →
               </Link>
             </div>
