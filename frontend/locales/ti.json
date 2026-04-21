@@ -1,6 +1,6 @@
 {
   "common": {
-    "welcome": "ናብ abbaa carraa (ባላ ኢዲል) ብደሓን መጺኹም",
+    "welcome": "ናብ abbaa carraa ብደሓን መጺኹም",
     "tagline": "ህብረተሰብ መሰረት ዝገበረ ናይ ሽልማትን ምትሕግጋዝን መድረኽ",
     "home": "መነበብ",
     "join": "ተጸንበር",
@@ -17,7 +17,10 @@
     "faq": "ሰገነት ሕቶታት",
     "become_agent": "ወኪል ኩን",
     "become_vendor": "ኣቕራቢ ኩን",
-    "get_started": "ጀምር"
+    "get_started": "ጀምር",
+    "trusted_agents": "እሙናት ወኪላት",
+    "total_raised": "ዝተኣከበ ጠቕላላ",
+    "all_cities": "ኩሎም ከተማታት"
   },
   "pools": {
     "active_pools": "ንጡፋት ገንዳታት",
@@ -32,6 +35,15 @@
     "started": "ተጀሚሩ",
     "join_now": "ሕጂ ተጸንበር",
     "no_pools": "ኣብዚ እዋን ንጡፋት ገንዳታት የለን"
+  },
+  "how_it_works": {
+    "title": "ኣባ ካራ ብኸመይ ይሰርሕ",
+    "find_pool": "ገንዳ ደልይ",
+    "find_pool_desc": "ንጡፋት ገንዳታት ብከተማ ወይ ብምድብ ርአ",
+    "contribute": "ምትሕግጋዝ",
+    "contribute_desc": "ብተሌብር ወይ ብሲቢኢ ብር ብደሕንኡ ክፈሉ",
+    "win": "ዓወትን ክብርን",
+    "win_desc": "ዕላማ ምስ በጽሐ ፍትሓዊ ዕጫ ዓወታዊ ይምርጽ"
   },
   "agent": {
     "become_agent": "ወኪል ኩን",
@@ -62,9 +74,9 @@
     "built_by": "ብ ተሰሪሑ"
   },
   "banners": {
-    "agent": "🤝 ወኪል ኩን - 10% ኮሚሽን ርኸብ",
-    "vendor": "🏭 ኣቕራቢ ኩን - ውጤታትካ ዘርዝር",
-    "organization": "🏢 ድርጅት ተመዝገብ - ውሽጣዊ ገንዳታት ፍጠር",
-    "individual": "👤 ብግል ተጸንበር - ኣስደናቂ ሽልማታት ክትዓወት"
+    "agent": "ወኪል ኩን - 10% ኮሚሽን ርኸብ",
+    "vendor": "ኣቕራቢ ኩን - ውጤታትካ ዘርዝር",
+    "organization": "ድርጅት ተመዝገብ - ውሽጣዊ ገንዳታት ፍጠር",
+    "individual": "ብግል ተጸንበር - ኣስደናቂ ሽልማታት ክትዓወት"
   }
 }
