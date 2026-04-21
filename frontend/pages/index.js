@@ -72,7 +72,6 @@ export default function Home() {
       </Head>
 
       <main>
-        {/* Hero Section with Background Image */}
         <section className="relative bg-gradient-to-r from-green-800/90 to-blue-800/90 text-white py-20 md:py-28 overflow-hidden">
           <div className="absolute inset-0 z-0">
             <img 
@@ -100,23 +99,19 @@ export default function Home() {
           </div>
         </section>
 
-       import Banner from '../components/Banner';
+        <Banner />
 
-// In the return section, AFTER hero section:
-{/* Hero Section */}
-<section className="relative...">
-  ...
-</section>
+        <section className="bg-white border-b shadow-sm py-4">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+              <div><div className="text-2xl md:text-3xl font-bold text-green-600">{stats.total_pools}+</div><div className="text-xs text-gray-500">{t('stats.active_pools')}</div></div>
+              <div><div className="text-2xl md:text-3xl font-bold text-green-600">{stats.total_winners}+</div><div className="text-xs text-gray-500">{t('stats.winners')}</div></div>
+              <div><div className="text-2xl md:text-3xl font-bold text-green-600">{stats.total_agents}+</div><div className="text-xs text-gray-500">{t('stats.agents')}</div></div>
+              <div><div className="text-2xl md:text-3xl font-bold text-green-600">ETB {Math.floor(stats.total_raised / 1000)}K+</div><div className="text-xs text-gray-500">{t('stats.raised')}</div></div>
+            </div>
+          </div>
+        </section>
 
-{/* 5 Banners - Under Welcome to Abbaa Carraa */}
-<Banner />
-
-{/* Stats Bar */}
-<section className="bg-white...">
-  ...
-</section>
-
-        {/* Featured Pools */}
         {featuredPools.length > 0 && (
           <section className="container mx-auto px-4 py-12">
             <h2 className="text-3xl font-bold text-center mb-8">{t('pools.featured_pools')}</h2>
@@ -126,7 +121,6 @@ export default function Home() {
           </section>
         )}
 
-        {/* Active Pools */}
         <section className="container mx-auto px-4 py-12">
           <h2 className="text-3xl font-bold text-center mb-8">{t('pools.active_pools')}</h2>
           {loading ? (
@@ -143,7 +137,6 @@ export default function Home() {
           )}
         </section>
 
-        {/* How It Works */}
         <section className="bg-gray-100 py-12">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-8">{t('how_it_works.title')}</h2>
