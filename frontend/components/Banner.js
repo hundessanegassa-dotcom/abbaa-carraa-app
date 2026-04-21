@@ -19,97 +19,103 @@ export default function Banner() {
     if (data && data.length > 0) {
       setBanners(data);
     } else {
-      // Complete banners with all roles and promotional
+      // 5 Banners as requested
       setBanners([
-        // Promotional Banner
         { 
           id: 1, 
-          title: '🎉 SPECIAL PROMOTION', 
-          description: 'Register today and get 10% bonus on your first pool creation! Limited time offer.', 
-          link_url: '/register', 
-          button_text: 'Claim Offer',
-          bgColor: 'from-red-500 to-pink-500',
-          icon: '🎉',
-          isPromo: true
+          title: '📢 Advertise Here', 
+          description: 'Reach thousands of potential customers. Promote your business on Abbaa Carraa. Contact us for rates!', 
+          link_url: '/contact', 
+          button_text: 'Contact Us',
+          bgColor: 'from-gray-600 to-gray-800',
+          icon: '📢',
+          isLandscape: true
         },
-        // Organizer Banner
         { 
           id: 2, 
-          title: '💰 Become an Organizer', 
-          description: 'Create a pool and earn 10% commission when it completes. Anyone can be an organizer! No upfront costs.', 
-          link_url: '/register', 
-          button_text: 'Start Earning',
-          bgColor: 'from-amber-500 to-orange-500',
-          icon: '💰'
-        },
-        // Vendor Banner
-        { 
-          id: 3, 
-          title: '🏭 Become a Vendor Organizer', 
-          description: 'List your products as prizes. Winner gets product FREE. Non-winners get exclusive discounts from you!', 
+          title: '🏭 Become a Vendor', 
+          description: 'List your products as prizes. Winner gets FREE product. Non-winners get exclusive discounts from you!', 
           link_url: '/vendor/register', 
           button_text: 'Join as Vendor',
-          bgColor: 'from-purple-500 to-pink-500',
-          icon: '🏭'
+          bgColor: 'from-purple-500 to-purple-600',
+          icon: '🏭',
+          isLandscape: false
         },
-        // Agent Banner
         { 
-          id: 4, 
-          title: '🤝 Become an Agent Organizer', 
+          id: 3, 
+          title: '🤝 Become an Agent', 
           description: 'List products from local businesses, build your community, and earn 10% commission on every pool you create!', 
           link_url: '/agent/register', 
           button_text: 'Register as Agent',
-          bgColor: 'from-yellow-500 to-orange-500',
-          icon: '🤝'
+          bgColor: 'from-blue-500 to-blue-600',
+          icon: '🤝',
+          isLandscape: false
         },
-        // Organization Banner
         { 
-          id: 5, 
+          id: 4, 
           title: '🏢 Become an Organization Organizer', 
           description: 'Create private pools for your members only. Perfect for banks, NGOs, schools, and community groups!', 
           link_url: '/organization/register', 
           button_text: 'Register Organization',
-          bgColor: 'from-blue-500 to-indigo-500',
-          icon: '🏢'
+          bgColor: 'from-green-500 to-green-600',
+          icon: '🏢',
+          isLandscape: false
         },
-        // Participant Banner
         { 
-          id: 6, 
+          id: 5, 
           title: '🎯 Join as a Participant', 
-          description: 'Join existing pools for a chance to win amazing prizes. Cars, electronics, furniture, and more! No commission, just winning!', 
+          description: 'Join existing pools for a chance to win amazing prizes. Cars, electronics, furniture, and more!', 
           link_url: '/register', 
           button_text: 'Join Now',
-          bgColor: 'from-emerald-500 to-teal-500',
-          icon: '🎯'
+          bgColor: 'from-teal-500 to-teal-600',
+          icon: '🎯',
+          isLandscape: false
         }
       ]);
     }
   }
 
   return (
-    <div className="space-y-2 py-3">
+    <div className="space-y-3 py-3">
       {banners.map((banner) => (
         <div 
           key={banner.id} 
-          className={`bg-gradient-to-r ${banner.bgColor} text-white shadow-md hover:shadow-lg transition-all duration-300 ${banner.isPromo ? 'animate-pulse' : ''}`}
+          className={`bg-gradient-to-r ${banner.bgColor} text-white shadow-md hover:shadow-lg transition-all duration-300 ${banner.isLandscape ? 'w-full' : 'rounded-xl'}`}
         >
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-4 flex-1">
-                <span className="text-3xl">{banner.icon}</span>
-                <div>
-                  <p className="font-bold text-base sm:text-lg">{banner.title}</p>
-                  <p className="text-sm opacity-90">{banner.description}</p>
-                </div>
+          <div className={`container mx-auto px-4 ${banner.isLandscape ? 'py-6 md:py-8' : 'py-4'}`}>
+            {banner.isLandscape ? (
+              // Landscape banner (like hero section)
+              <div className="flex flex-col items-center justify-center text-center">
+                <span className="text-5xl mb-3">{banner.icon}</span>
+                <p className="font-bold text-xl md:text-2xl mb-2">{banner.title}</p>
+                <p className="text-sm md:text-base opacity-90 max-w-2xl mb-4">{banner.description}</p>
+                {banner.link_url && (
+                  <Link href={banner.link_url}>
+                    <button className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-6 py-2 rounded-full text-sm font-semibold transition-all duration-200 border border-white/30">
+                      {banner.button_text} →
+                    </button>
+                  </Link>
+                )}
               </div>
-              {banner.link_url && (
-                <Link href={banner.link_url}>
-                  <button className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 border border-white/30 whitespace-nowrap">
-                    {banner.button_text} →
-                  </button>
-                </Link>
-              )}
-            </div>
+            ) : (
+              // Portrait banner (smaller cards)
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-3 flex-1">
+                  <span className="text-2xl">{banner.icon}</span>
+                  <div>
+                    <p className="font-semibold text-sm sm:text-base">{banner.title}</p>
+                    <p className="text-xs opacity-90">{banner.description}</p>
+                  </div>
+                </div>
+                {banner.link_url && (
+                  <Link href={banner.link_url}>
+                    <button className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 border border-white/30 whitespace-nowrap">
+                      {banner.button_text} →
+                    </button>
+                  </Link>
+                )}
+              </div>
+            )}
           </div>
         </div>
       ))}
