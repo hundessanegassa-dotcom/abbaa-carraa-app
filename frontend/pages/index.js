@@ -5,9 +5,10 @@ import { supabase } from '../lib/supabase';
 import { useTranslation } from 'react-i18next';
 import PoolCard from '../components/PoolCard';
 import NewsletterSubscribe from '../components/NewsletterSubscribe';
+import Banner from '../components/Banner';
 
 export default function Home() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [pools, setPools] = useState([]);
   const [featuredPools, setFeaturedPools] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -98,6 +99,9 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* Promotional Banners - UNDER Hero Section */}
+        <Banner />
 
         {/* Stats Bar */}
         <section className="bg-white border-b shadow-sm py-4">
