@@ -23,7 +23,7 @@
     "all_cities": "ሁሉም ከተሞች"
   },
   "pools": {
-    "active_pools": "ንቁ የሽልማት መደቦች",
+    "active_pools": "የሽልማት መደቦች",
     "featured_pools": "የተለዩ የሽልማት መደቦች",
     "target_amount": "የዒላማ መጠን",
     "current_amount": "አሁን ያለው መጠን",
@@ -34,16 +34,22 @@
     "draw_date": "የእጣ ቀን",
     "started": "የተጀመረው",
     "join_now": "አሁን ተቀላቀል",
-    "no_pools": "በአሁኑ ጊዜ ምንም ንቁ የሽልማት መደቦች የሉም"
+    "no_pools": "በአሁኑ ጊዜ ምንም የሽልማት መደቦች የሉም"
   },
   "how_it_works": {
-    "title": "abbaa carraa እንዴት ይሰራል",
+    "title": "አባ ካራ እንዴት ይሰራል",
     "find_pool": "የሽልማት መደብ ፈልግ",
-    "find_pool_desc": "በከተማ ወይም በምድብ ንቁ የሆኑ የሽልማት መደቦችን ይመልከቱ",
+    "find_pool_desc": "በከተማ ወይም በምድብ የሽልማት መደቦችን ይመልከቱ",
     "contribute": "አስተዋጽኦ አድርግ",
     "contribute_desc": "በቴሌብር ወይም በሲቢኢ ብር በደህና ይክፈሉ",
     "win": "አሸንፉ እና አከብሩ",
     "win_desc": "ዒላማው ሲደርስ ፍትሃዊ እጣ አሸናፊውን ይመርጣል"
+  },
+  "stats": {
+    "active_pools": "የሽልማት መደቦች",
+    "winners": "አሸናፊዎች",
+    "agents": "ወኪሎች",
+    "raised": "የተሰበሰበ"
   },
   "agent": {
     "become_agent": "ወኪል ሁን",
