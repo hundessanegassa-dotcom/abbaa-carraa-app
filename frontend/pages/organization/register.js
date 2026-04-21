@@ -69,21 +69,50 @@ export default function OrganizationRegister() {
         <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-4">
           <div>
             <label className="block text-gray-700 mb-2">Organization Name *</label>
-            <input type="text" required value={formData.organization_name} onChange={e => setFormData({...formData, organization_name: e.target.value})} className="w-full p-2 border rounded" />
+            <input 
+              type="text" 
+              required 
+              value={formData.organization_name} 
+              onChange={e => setFormData({...formData, organization_name: e.target.value})} 
+              className="w-full p-2 border rounded" 
+            />
           </div>
           <div>
             <label className="block text-gray-700 mb-2">Description</label>
-            <textarea rows={3} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full p-2 border rounded" />
+            <textarea 
+              rows={3} 
+              value={formData.description} 
+              onChange={e => setFormData({...formData, description: e.target.value})} 
+              className="w-full p-2 border rounded" 
+            />
           </div>
           <div>
             <label className="block text-gray-700 mb-2">City *</label>
-            <input type="text" required value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} className="w-full p-2 border rounded" />
+            <input 
+              type="text" 
+              required 
+              value={formData.city} 
+              onChange={e => setFormData({...formData, city: e.target.value})} 
+              className="w-full p-2 border rounded" 
+            />
           </div>
           <div>
             <label className="block text-gray-700 mb-2">Phone *</label>
-            <input type="tel" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full p-2 border rounded" />
+            <input 
+              type="tel" 
+              required 
+              value={formData.phone} 
+              onChange={e => setFormData({...formData, phone: e.target.value})} 
+              className="w-full p-2 border rounded" 
+            />
           </div>
-          <button type="submit" disabled={loading} className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">{loading ? 'Submitting...' : 'Register Organization'}</button>
+          <button 
+            type="submit" 
+            disabled={loading} 
+            className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+          >
+            {loading ? 'Submitting...' : 'Register Organization'}
+          </button>
         </form>
       </div>
     </div>
