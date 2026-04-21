@@ -29,6 +29,8 @@ export default function PoolDetail() {
 
   async function fetchPoolDetails() {
     try {
+      setLoading(true);
+      
       // Fetch pool details
       const { data: poolData, error: poolError } = await supabase
         .from('pools')
@@ -36,7 +38,13 @@ export default function PoolDetail() {
         .eq('id', id)
         .single();
 
-      if (poolError) throw poolError;
+      if (poolError) {
+        console.error('Pool fetch error:', poolError);
+        toast.error('Pool not found');
+        router.push('/');
+        return;
+      }
+      
       setPool(poolData);
 
       // Fetch recent contributions
@@ -51,7 +59,7 @@ export default function PoolDetail() {
       if (!contribError) setContributions(contribData || []);
     } catch (error) {
       console.error('Error fetching pool:', error);
-      toast.error('Pool not found');
+      toast.error('Failed to load pool details');
     } finally {
       setLoading(false);
     }
@@ -84,28 +92,18 @@ export default function PoolDetail() {
 
       if (contribError) throw contribError;
 
-      // Initialize Chapa payment
-      const response = await fetch('/api/chapa/initialize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: totalAmount,
-          email: user.email,
-          first_name: user.user_metadata?.full_name || '',
-          last_name: '',
-          phone_number: '',
-          poolId: pool.id,
-          poolName: pool.prize_name
-        })
-      });
-
-      const result = await response.json();
-
-      if (result.success && result.checkout_url) {
-        window.location.href = result.checkout_url;
-      } else {
-        toast.error(result.error || 'Payment initialization failed');
-      }
+      // For now, show demo message since Chapa may not be configured
+      toast.success('Demo: Payment would process here. Chapa integration coming soon!');
+      
+      // Update contribution to completed for demo
+      await supabase
+        .from('contributions')
+        .update({ status: 'completed' })
+        .eq('transaction_id', transactionId);
+      
+      // Refresh pool data
+      await fetchPoolDetails();
+      
     } catch (error) {
       console.error('Payment error:', error);
       toast.error('Something went wrong');
@@ -156,7 +154,7 @@ export default function PoolDetail() {
           )}
           
           <h1 className="text-3xl font-bold mb-2">{pool.prize_name}</h1>
-          <p className="text-gray-600 mb-4">{pool.description}</p>
+          <p className="text-gray-600 mb-4">{pool.description || 'Join this pool for a chance to win!'}</p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
             <div className="text-center p-3 bg-gray-50 rounded-lg">
@@ -230,8 +228,11 @@ export default function PoolDetail() {
                 disabled={paymentLoading}
                 className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold text-lg hover:bg-green-700 disabled:bg-gray-400 transition"
               >
-                {paymentLoading ? 'Processing...' : `Pay ETB ${totalAmount.toLocaleString()} via Chapa`}
+                {paymentLoading ? 'Processing...' : `Pay ETB ${totalAmount.toLocaleString()}`}
               </button>
+              <p className="text-xs text-gray-400 text-center mt-2">
+                Payment via Telebirr or CBE Birr (Coming Soon)
+              </p>
             </div>
           )}
 
@@ -276,12 +277,12 @@ export default function PoolDetail() {
             <p className="font-semibold">{pool.agents.business_name}</p>
             <p className="text-gray-600 text-sm">📍 {pool.agents.city || pool.city || 'Addis Ababa'}</p>
             {pool.discount_for_non_winners > 0 && (
-              <p className="text-blue-600 text-sm mt-2">🎁 {pool.discount_for_non_winners}% discount for participants!</p>
+              <p className="text-blue-600 text-sm mt-2">🎁 {pool.discount_for_non_winners}% discount for non-winners!</p>
             )}
           </div>
         )}
 
-        {/* Discount Info for Non-Winners (Vendor Pools) */}
+        {/* Discount Info for Non-Winners */}
         {pool.discount_for_non_winners > 0 && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
             <p className="text-blue-800 text-sm">
