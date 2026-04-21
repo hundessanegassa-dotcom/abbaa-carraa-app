@@ -1,4 +1,4 @@
-import Link from 'next/link';
+Import Link from 'next/link';
 
 // Helper function to format the date nicely
 function formatDate(dateString) {
