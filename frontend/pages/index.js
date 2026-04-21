@@ -100,29 +100,17 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Promotional Banners - UNDER Hero Section */}
+        {/* ALL BANNERS - Promotional + Role Banners */}
         <Banner />
 
         {/* Stats Bar */}
         <section className="bg-white border-b shadow-sm py-4">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              <div>
-                <div className="text-2xl md:text-3xl font-bold text-green-600">{stats.total_pools}+</div>
-                <div className="text-xs text-gray-500">{t('stats.active_pools')}</div>
-              </div>
-              <div>
-                <div className="text-2xl md:text-3xl font-bold text-green-600">{stats.total_winners}+</div>
-                <div className="text-xs text-gray-500">{t('stats.winners')}</div>
-              </div>
-              <div>
-                <div className="text-2xl md:text-3xl font-bold text-green-600">{stats.total_agents}+</div>
-                <div className="text-xs text-gray-500">{t('stats.agents')}</div>
-              </div>
-              <div>
-                <div className="text-2xl md:text-3xl font-bold text-green-600">ETB {Math.floor(stats.total_raised / 1000)}K+</div>
-                <div className="text-xs text-gray-500">{t('stats.raised')}</div>
-              </div>
+              <div><div className="text-2xl md:text-3xl font-bold text-green-600">{stats.total_pools}+</div><div className="text-xs text-gray-500">{t('stats.active_pools')}</div></div>
+              <div><div className="text-2xl md:text-3xl font-bold text-green-600">{stats.total_winners}+</div><div className="text-xs text-gray-500">{t('stats.winners')}</div></div>
+              <div><div className="text-2xl md:text-3xl font-bold text-green-600">{stats.total_agents}+</div><div className="text-xs text-gray-500">{t('stats.agents')}</div></div>
+              <div><div className="text-2xl md:text-3xl font-bold text-green-600">ETB {Math.floor(stats.total_raised / 1000)}K+</div><div className="text-xs text-gray-500">{t('stats.raised')}</div></div>
             </div>
           </div>
         </section>
@@ -132,9 +120,7 @@ export default function Home() {
           <section className="container mx-auto px-4 py-12">
             <h2 className="text-3xl font-bold text-center mb-8">{t('pools.featured_pools')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredPools.map(pool => (
-                <PoolCard key={pool.id} pool={pool} featured={true} />
-              ))}
+              {featuredPools.map(pool => <PoolCard key={pool.id} pool={pool} featured={true} />)}
             </div>
           </section>
         )}
@@ -143,21 +129,15 @@ export default function Home() {
         <section className="container mx-auto px-4 py-12">
           <h2 className="text-3xl font-bold text-center mb-8">{t('pools.active_pools')}</h2>
           {loading ? (
-            <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-            </div>
+            <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div></div>
           ) : pools.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
               <p className="text-gray-500 mb-4">{t('pools.no_pools')}</p>
-              <Link href="/create-pool" className="text-green-600 hover:text-green-700">
-                {t('common.create_pool')} →
-              </Link>
+              <Link href="/create-pool" className="text-green-600 hover:text-green-700">{t('common.create_pool')} →</Link>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {pools.map(pool => (
-                <PoolCard key={pool.id} pool={pool} />
-              ))}
+              {pools.map(pool => <PoolCard key={pool.id} pool={pool} />)}
             </div>
           )}
         </section>
@@ -167,27 +147,9 @@ export default function Home() {
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-8">{t('how_it_works.title')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-              <div>
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl font-bold text-green-600">1</span>
-                </div>
-                <h3 className="font-bold text-lg mb-2">{t('how_it_works.find_pool')}</h3>
-                <p className="text-gray-600">{t('how_it_works.find_pool_desc')}</p>
-              </div>
-              <div>
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl font-bold text-green-600">2</span>
-                </div>
-                <h3 className="font-bold text-lg mb-2">{t('how_it_works.contribute')}</h3>
-                <p className="text-gray-600">{t('how_it_works.contribute_desc')}</p>
-              </div>
-              <div>
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl font-bold text-green-600">3</span>
-                </div>
-                <h3 className="font-bold text-lg mb-2">{t('how_it_works.win')}</h3>
-                <p className="text-gray-600">{t('how_it_works.win_desc')}</p>
-              </div>
+              <div><div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"><span className="text-2xl font-bold text-green-600">1</span></div><h3 className="font-bold text-lg mb-2">{t('how_it_works.find_pool')}</h3><p className="text-gray-600">{t('how_it_works.find_pool_desc')}</p></div>
+              <div><div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"><span className="text-2xl font-bold text-green-600">2</span></div><h3 className="font-bold text-lg mb-2">{t('how_it_works.contribute')}</h3><p className="text-gray-600">{t('how_it_works.contribute_desc')}</p></div>
+              <div><div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"><span className="text-2xl font-bold text-green-600">3</span></div><h3 className="font-bold text-lg mb-2">{t('how_it_works.win')}</h3><p className="text-gray-600">{t('how_it_works.win_desc')}</p></div>
             </div>
           </div>
         </section>
