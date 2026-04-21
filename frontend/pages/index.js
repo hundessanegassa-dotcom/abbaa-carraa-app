@@ -72,6 +72,7 @@ export default function Home() {
       </Head>
 
       <main>
+        {/* Hero Section */}
         <section className="relative bg-gradient-to-r from-green-800/90 to-blue-800/90 text-white py-20 md:py-28 overflow-hidden">
           <div className="absolute inset-0 z-0">
             <img 
@@ -99,8 +100,7 @@ export default function Home() {
           </div>
         </section>
 
-        <Banner />
-
+        {/* Stats Bar */}
         <section className="bg-white border-b shadow-sm py-4">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
@@ -112,15 +112,7 @@ export default function Home() {
           </div>
         </section>
 
-        {featuredPools.length > 0 && (
-          <section className="container mx-auto px-4 py-12">
-            <h2 className="text-3xl font-bold text-center mb-8">{t('pools.featured_pools')}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredPools.map(pool => <PoolCard key={pool.id} pool={pool} featured={true} />)}
-            </div>
-          </section>
-        )}
-
+        {/* Active Pools */}
         <section className="container mx-auto px-4 py-12">
           <h2 className="text-3xl font-bold text-center mb-8">{t('pools.active_pools')}</h2>
           {loading ? (
@@ -137,6 +129,10 @@ export default function Home() {
           )}
         </section>
 
+        {/* 4 Banners - Placed HERE (below Active Pools, above How It Works) */}
+        <Banner />
+
+        {/* How It Works */}
         <section className="bg-gray-100 py-12">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-8">{t('how_it_works.title')}</h2>
