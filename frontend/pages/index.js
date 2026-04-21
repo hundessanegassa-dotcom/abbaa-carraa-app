@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import PoolCard from '../components/PoolCard';
 import NewsletterSubscribe from '../components/NewsletterSubscribe';
 import Banner from '../components/Banner';
+import MovingAd from '../components/MovingAd';
+import AdvertisingBanner from '../components/AdvertisingBanner';
 
 export default function Home() {
   const { t } = useTranslation();
@@ -71,6 +73,7 @@ export default function Home() {
       </Head>
 
       <main>
+        {/* 1. Hero Banner with Counters */}
         <section className="relative bg-gradient-to-r from-green-800/90 to-blue-800/90 text-white py-20 md:py-28 overflow-hidden">
           <div className="absolute inset-0 z-0">
             <img 
@@ -87,7 +90,25 @@ export default function Home() {
             <p className="text-xl md:text-2xl lg:text-3xl mb-8 max-w-2xl mx-auto drop-shadow-md">
               {t('common.tagline')}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                <div className="text-2xl md:text-3xl font-bold">{stats.total_pools}+</div>
+                <div className="text-xs">Active Pools</div>
+              </div>
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                <div className="text-2xl md:text-3xl font-bold">{stats.total_winners}+</div>
+                <div className="text-xs">Winners</div>
+              </div>
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                <div className="text-2xl md:text-3xl font-bold">{stats.total_agents}+</div>
+                <div className="text-xs">Agents</div>
+              </div>
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                <div className="text-2xl md:text-3xl font-bold">ETB {Math.floor(stats.total_raised / 1000)}K+</div>
+                <div className="text-xs">Raised</div>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
               <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-full font-semibold text-lg transition-all shadow-lg hover:shadow-xl">
                 {t('common.get_started')}
               </Link>
@@ -98,29 +119,13 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="bg-white border-b shadow-sm py-4">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              <div>
-                <div className="text-2xl md:text-3xl font-bold text-green-600">{stats.total_pools}+</div>
-                <div className="text-xs text-gray-500">{t('stats.active_pools')}</div>
-              </div>
-              <div>
-                <div className="text-2xl md:text-3xl font-bold text-green-600">{stats.total_winners}+</div>
-                <div className="text-xs text-gray-500">{t('stats.winners')}</div>
-              </div>
-              <div>
-                <div className="text-2xl md:text-3xl font-bold text-green-600">{stats.total_agents}+</div>
-                <div className="text-xs text-gray-500">{t('stats.agents')}</div>
-              </div>
-              <div>
-                <div className="text-2xl md:text-3xl font-bold text-green-600">ETB {Math.floor(stats.total_raised / 1000)}K+</div>
-                <div className="text-xs text-gray-500">{t('stats.raised')}</div>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* 2. Moving Advertising (Promotes Abbaa Carraa, winners, etc.) */}
+        <MovingAd />
 
+        {/* 3. Advertising Banner */}
+        <AdvertisingBanner />
+
+        {/* 4. Featured Pools */}
         {featuredPools.length > 0 && (
           <section className="container mx-auto px-4 py-12">
             <h2 className="text-3xl font-bold text-center mb-8">{t('pools.featured_pools')}</h2>
@@ -132,6 +137,7 @@ export default function Home() {
           </section>
         )}
 
+        {/* 5. Active Pools */}
         <section className="container mx-auto px-4 py-12">
           <h2 className="text-3xl font-bold text-center mb-8">{t('pools.active_pools')}</h2>
           {loading ? (
@@ -154,8 +160,10 @@ export default function Home() {
           )}
         </section>
 
+        {/* 6. Four Banners (Vendor, Agent, Organization, Individual) */}
         <Banner />
 
+        {/* 7. How It Works */}
         <section className="bg-gray-100 py-12">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-8">{t('how_it_works.title')}</h2>
@@ -185,7 +193,10 @@ export default function Home() {
           </div>
         </section>
 
+        {/* 8. Newsletter */}
         <NewsletterSubscribe />
+
+        {/* 9. Footer is in _app.js */}
       </main>
     </>
   );
