@@ -1,0 +1,82 @@
+{
+  "common": {
+    "welcome": "Abbaa carraa garaa ba'ne",
+    "tagline": "Ummata battotanno kee hiixxo mannicho medha",
+    "home": "Mana",
+    "join": "Batto",
+    "contribute": "Hiixxo",
+    "login": "Gela",
+    "register": "Galcha",
+    "logout": "Ba'a",
+    "dashboard": "Dashboard",
+    "create_pool": "Battotanno mannicho medha",
+    "browse_prizes": "Battisa la'a",
+    "winners": "Mo'ichcho",
+    "about": "Nu gishshu",
+    "contact": "Nu oychchicho",
+    "faq": "Oychchi lamadho",
+    "become_agent": "Agent ba'a",
+    "become_vendor": "Vendor ba'a",
+    "get_started": "Eegga",
+    "trusted_agents": "Agente amanama",
+    "total_raised": "Wolqa qixxa",
+    "all_cities": "Magaala wolqa"
+  },
+  "pools": {
+    "active_pools": "Batto battotanno",
+    "featured_pools": "Dooramme battotanno",
+    "target_amount": "Malto qixxa",
+    "current_amount": "Ha wode qixxa",
+    "contribution_amount": "Hiixxo qixxa",
+    "participants": "Batto",
+    "progress": "Wursi",
+    "days_left": "Hafo galla",
+    "draw_date": "Waancho galla",
+    "started": "Eeggamme",
+    "join_now": "Ha wode batta",
+    "no_pools": "Ha wode battotanno mannicho baawa"
+  },
+  "how_it_works": {
+    "title": "Abbaa carraa anooti ba'ano",
+    "find_pool": "Battotanno mannicho gur",
+    "find_pool_desc": "Batto battotanno magaalaan hinnay qayyaan la'a",
+    "contribute": "Hiixxo",
+    "contribute_desc": "Telebirr hinnay CBE Birr hiixxo",
+    "win": "Mo'ichcho kee ufaysi",
+    "win_desc": "Malto gakk waancho mo'ichcho doorama"
+  },
+  "agent": {
+    "become_agent": "Agent ba'a",
+    "earn_commission": "10% komishshana hasa",
+    "register_agent": "Agent galcha",
+    "agent_dashboard": "Agent dashboard",
+    "my_listings": "Ta galchamme",
+    "my_pools": "Ta battotanno",
+    "participants": "Batto",
+    "commissions": "Komishshana"
+  },
+  "vendor": {
+    "become_vendor": "Vendor ba'a",
+    "list_products": "Ne ala galcha",
+    "offer_discounts": "Be'ennaw battou diskawunti imma",
+    "register_vendor": "Vendor galcha"
+  },
+  "organization": {
+    "become_org": "Dereja galcha",
+    "internal_pools": "Garssa battotanno medha",
+    "member_saving": "Membarau maro qixxa"
+  },
+  "footer": {
+    "quick_links": "Xixxiro linkka",
+    "support": "Maadayso",
+    "contact_us": "Nu oychchicho",
+    "rights": "Hoo'a amar",
+    "built_by": "Medhis"
+  },
+  "banners": {
+    "agent": "Agent ba'a - 10% komishshana hasa",
+    "vendor": "Vendor ba'a - Ne ala galcha",
+    "organization": "Dereja galcha - Garssa battotanno medha",
+    "individual": "Batta - Hara battisa hasa"
+  }
+}
