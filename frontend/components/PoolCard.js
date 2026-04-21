@@ -1,14 +1,18 @@
 import Link from 'next/link';
 
-export default function PoolCard({ pool }) {
-  // Calculate progress percentage
+export default function PoolCard({ pool, featured = false }) {
   const progress = pool.target_amount > 0 
     ? (pool.current_amount / pool.target_amount) * 100 
     : 0;
 
   return (
-    <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden">
-      {/* Optional: Add image if pool has one */}
+    <div className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden ${featured ? 'ring-2 ring-green-500' : ''}`}>
+      {featured && (
+        <div className="bg-green-600 text-white text-center py-1 text-sm font-semibold">
+          ⭐ Featured Pool
+        </div>
+      )}
+      
       {pool.image_url && (
         <div className="h-48 w-full overflow-hidden">
           <img 
@@ -25,10 +29,9 @@ export default function PoolCard({ pool }) {
         </h3>
         
         <p className="text-gray-600 mb-4 text-sm line-clamp-2 min-h-[40px]">
-          {pool.description || 'Join this pool for a chance to win amazing prizes!'}
+          {pool.description || 'Join this pool for a chance to win!'}
         </p>
         
-        {/* Progress Bar */}
         <div className="mb-3">
           <div className="flex justify-between text-sm mb-1">
             <span className="text-gray-600">Progress</span>
@@ -42,7 +45,6 @@ export default function PoolCard({ pool }) {
           </div>
         </div>
         
-        {/* Pool Details */}
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-gray-600">Target:</span>
@@ -74,10 +76,9 @@ export default function PoolCard({ pool }) {
           )}
         </div>
         
-        {/* Join Button */}
         <Link href={`/pools/${pool.id}`}>
           <button className="w-full mt-5 bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition-all duration-200">
-            🎯 Join This Pool
+            Join This Pool
           </button>
         </Link>
       </div>
