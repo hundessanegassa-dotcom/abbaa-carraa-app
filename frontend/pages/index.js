@@ -53,23 +53,35 @@ export default function Home() {
             <h1 className="text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg">
               Welcome to Abbaa Carraa
             </h1>
-            <p className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto">
+            <p className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto drop-shadow-md">
               A community-driven prize and contribution platform
             </p>
-            <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-full font-semibold inline-block">
+            <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-full font-semibold text-lg transition-all shadow-lg hover:shadow-xl inline-block">
               Get Started
             </Link>
           </div>
         </section>
 
         {/* Stats Bar */}
-        <section className="bg-white border-b py-4">
+        <section className="bg-white border-b shadow-sm py-4">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              <div><div className="text-2xl font-bold text-green-600">{pools.length}</div><div className="text-xs text-gray-500">Active Pools</div></div>
-              <div><div className="text-2xl font-bold text-green-600">0</div><div className="text-xs text-gray-500">Winners</div></div>
-              <div><div className="text-2xl font-bold text-green-600">0</div><div className="text-xs text-gray-500">Agents</div></div>
-              <div><div className="text-2xl font-bold text-green-600">ETB 0K</div><div className="text-xs text-gray-500">Raised</div></div>
+              <div>
+                <div className="text-2xl font-bold text-green-600">{pools.length}</div>
+                <div className="text-xs text-gray-500">Active Pools</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-green-600">0</div>
+                <div className="text-xs text-gray-500">Winners</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-green-600">0</div>
+                <div className="text-xs text-gray-500">Agents</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-green-600">ETB 0K</div>
+                <div className="text-xs text-gray-500">Raised</div>
+              </div>
             </div>
           </div>
         </section>
@@ -78,14 +90,21 @@ export default function Home() {
         <section className="container mx-auto px-4 py-12">
           <h2 className="text-3xl font-bold text-center mb-8">Active Pools</h2>
           {loading ? (
-            <div className="text-center py-12">Loading...</div>
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+            </div>
           ) : pools.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p>No active pools at the moment.</p>
+              <p className="text-gray-500">No active pools at the moment.</p>
+              <Link href="/create-pool" className="text-green-600 mt-2 inline-block">
+                Create a pool →
+              </Link>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {pools.map(pool => <PoolCard key={pool.id} pool={pool} />)}
+              {pools.map(pool => (
+                <PoolCard key={pool.id} pool={pool} />
+              ))}
             </div>
           )}
         </section>
@@ -95,9 +114,27 @@ export default function Home() {
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-8">How It Works</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-              <div><div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">1</div><h3 className="font-bold mb-2">Find a Pool</h3><p className="text-gray-600">Browse active prize pools</p></div>
-              <div><div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">2</div><h3 className="font-bold mb-2">Contribute</h3><p className="text-gray-600">Pay via Telebirr or CBE Birr</p></div>
-              <div><div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">3</div><h3 className="font-bold mb-2">Win & Celebrate</h3><p className="text-gray-600">Fair draw selects winner</p></div>
+              <div>
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl font-bold text-green-600">1</span>
+                </div>
+                <h3 className="font-bold text-lg mb-2">Find a Pool</h3>
+                <p className="text-gray-600">Browse active prize pools by city or category</p>
+              </div>
+              <div>
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl font-bold text-green-600">2</span>
+                </div>
+                <h3 className="font-bold text-lg mb-2">Contribute</h3>
+                <p className="text-gray-600">Pay via Telebirr or CBE Birr securely</p>
+              </div>
+              <div>
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl font-bold text-green-600">3</span>
+                </div>
+                <h3 className="font-bold text-lg mb-2">Win & Celebrate</h3>
+                <p className="text-gray-600">Fair draw selects winner when target is reached</p>
+              </div>
             </div>
           </div>
         </section>
