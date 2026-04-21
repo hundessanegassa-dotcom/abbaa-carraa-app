@@ -1,6 +1,6 @@
 {
   "common": {
-    "welcome": "Abbaa carraa (ባላ ኢዲል) bolla baana",
+    "welcome": "Abbaa carraa bolla baana",
     "tagline": "Huuphuwaa kee gishsha huuphuwaa qolagiyaa mediya",
     "home": "Keriya",
     "join": "Qolaga",
@@ -13,58 +13,4 @@
     "browse_prizes": "Huuphuwaa be7ida",
     "winners": "Doggida",
     "about": "Nu gishshau",
-    "contact": "Nu oychchida",
-    "faq": "Oychchi laaggidiya",
-    "become_agent": "Agent gida",
-    "become_vendor": "Vendor gida",
-    "get_started": "Kawuwa"
-  },
-  "pools": {
-    "active_pools": "Hupha laaggidiya",
-    "featured_pools": "Doxxida hupha",
-    "target_amount": "Mala qaphu",
-    "current_amount": "Ha wode qaphu",
-    "contribution_amount": "Gishsha qaphu",
-    "participants": "Qolagiya",
-    "progress": "Wursiya",
-    "days_left": "Haara galla",
-    "draw_date": "Bonna galla",
-    "started": "Kawusiya",
-    "join_now": "Ha wode qolaga",
-    "no_pools": "Ha wode hupha laaggidiya baawa"
-  },
-  "agent": {
-    "become_agent": "Agent gida",
-    "earn_commission": "10% komishshana hasada",
-    "register_agent": "Agent xaafida",
-    "agent_dashboard": "Agent dashboard",
-    "my_listings": "Ta xaafiya",
-    "my_pools": "Ta hupha",
-    "participants": "Qolagiya",
-    "commissions": "Komishshana"
-  },
-  "vendor": {
-    "become_vendor": "Vendor gida",
-    "list_products": "Ne malliya xaafa",
-    "offer_discounts": "Be7ennaw qolagiyau diskawunti imma",
-    "register_vendor": "Vendor xaafida"
-  },
-  "organization": {
-    "become_org": "Dereja xaafida",
-    "internal_pools": "Keethiya hupha medha",
-    "member_saving": "Asabau maro qaphu"
-  },
-  "footer": {
-    "quick_links": "Xaafa linkiya",
-    "support": "Maadayso",
-    "contact_us": "Nu oychchida",
-    "rights": "Woytta haahu amar",
-    "built_by": "Medhis"
-  },
-  "banners": {
-    "agent": "🤝 Agent gida - 10% komishshana hasada",
-    "vendor": "🏭 Vendor gida - Ne malliya xaafa",
-    "organization": "🏢 Dereja xaafida - Keethiya hupha medha",
-    "individual": "👤 Qolaga - Hara malliya hasada"
-  }
-}
+    "contact
