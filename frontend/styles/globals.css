@@ -72,3 +72,14 @@
     object-fit: cover !important;
   }
 }
+/* Hero image - show full image on mobile */
+.hero-full-image {
+  object-fit: contain !important;
+  background-color: #1a4d2e;
+}
+
+@media (min-width: 768px) {
+  .hero-full-image {
+    object-fit: cover !important;
+  }
+}
