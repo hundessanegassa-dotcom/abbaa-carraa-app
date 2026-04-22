@@ -32,22 +32,26 @@ function MyApp({ Component, pageProps }) {
     };
   }, []);
 
+  // Full screen splash
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-r from-green-700 to-blue-700 flex items-center justify-center z-50">
-        <div className="text-center px-4">
-          <img 
-            src="/images/abbaa-carraa-banner-image.png"
-            alt="Abbaa Carraa"
-            className="w-40 h-40 sm:w-48 sm:h-48 object-cover rounded-2xl mx-auto mb-6 shadow-2xl animate-pulse"
-          />
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Abbaa Carraa</h1>
-          <p className="text-white/80 text-sm">ባላ ኢዲል</p>
-          <div className="mt-6 flex justify-center gap-2">
-            <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
-            <div className="w-2 h-2 bg-white rounded-full animate-bounce delay-150"></div>
-            <div className="w-2 h-2 bg-white rounded-full animate-bounce delay-300"></div>
+      <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-green-800 via-green-600 to-blue-800 flex items-center justify-center z-[9999]">
+        <div className="text-center px-4 w-full">
+          <div className="flex justify-center">
+            <img 
+              src="/images/abbaa-carraa-banner-image.png"
+              alt="Abbaa Carraa"
+              className="w-32 h-32 sm:w-48 sm:h-48 object-cover rounded-2xl shadow-2xl animate-pulse"
+            />
           </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mt-6 mb-2">Abbaa Carraa</h1>
+          <p className="text-white/80 text-sm sm:text-base">ባላ ኢዲል</p>
+          <div className="mt-8 flex justify-center gap-2">
+            <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
+            <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+            <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+          </div>
+          <p className="text-white/60 text-xs mt-8">Loading amazing prizes...</p>
         </div>
       </div>
     );
