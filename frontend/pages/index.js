@@ -69,13 +69,12 @@ export default function Home() {
       <Head>
         <title>Abbaa Carraa - Community Prize Platform</title>
         <meta name="description" content={t('common.tagline')} />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </Head>
 
       <main>
-        {/* Hero Section - Mobile Optimized */}
+        {/* Hero Section */}
         <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden">
-          {/* Background Image - Adjusted for mobile to show full image */}
           <div className="absolute inset-0 z-0">
             <img 
               src="/images/abbaa-carraa-banner-image.png"
@@ -85,8 +84,7 @@ export default function Home() {
             <div className="absolute inset-0 bg-black/40"></div>
           </div>
           
-          {/* Content - Pushed to bottom */}
-          <div className="relative z-10 container mx-auto px-4 flex flex-col justify-end min-h-[450px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[700px]">
+          <div className="relative z-10 container mx-auto px-4 flex flex-col justify-end min-h-[500px] sm:min-h-[550px] md:min-h-[600px] lg:min-h-[700px]">
             <div className="pb-8 sm:pb-12 md:pb-16 text-center">
               <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 drop-shadow-lg">
                 Welcome to <span className="text-yellow-300">Abbaa Carraa</span>
@@ -95,7 +93,6 @@ export default function Home() {
                 {t('common.tagline')}
               </p>
               
-              {/* Buttons at the bottom */}
               <div className="flex flex-col sm:flex-row gap-2 justify-center">
                 <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition-all shadow-lg">
                   {t('common.get_started')}
