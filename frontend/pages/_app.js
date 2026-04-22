@@ -32,7 +32,6 @@ function MyApp({ Component, pageProps }) {
     };
   }, []);
 
-  // Full screen splash
   if (loading) {
     return (
       <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-green-800 via-green-600 to-blue-800 flex items-center justify-center z-[9999]">
