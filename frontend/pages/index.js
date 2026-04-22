@@ -73,20 +73,28 @@ export default function Home() {
       </Head>
 
       <main>
-        {/* Hero Section with Custom Background Image */}
-        <section className="relative bg-gradient-to-r from-green-900/80 to-blue-900/80 text-white overflow-hidden">
+        {/* Hero Section - Taller to show balloons and full image */}
+        <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden min-h-[600px] md:min-h-[700px] flex flex-col justify-between">
           {/* Background Image */}
           <div className="absolute inset-0 z-0">
             <img 
               src="/images/abbaa-carraa-banner-image.png"
               alt="Abbaa Carraa Celebration"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-center"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.parentElement.style.backgroundColor = '#1a4d2e';
+              }}
             />
+            {/* Lighter overlay to show image details but keep text readable */}
             <div className="absolute inset-0 bg-black/40"></div>
           </div>
           
-          <div className="relative z-10 container mx-auto px-4 py-16 md:py-20 text-center">
-            {/* Welcome Text - Smaller Font, Gradual Sizes */}
+          {/* Top Spacer to push content down */}
+          <div className="relative z-10 flex-1"></div>
+          
+          {/* Content at the bottom of hero */}
+          <div className="relative z-10 container mx-auto px-4 pb-12 md:pb-16 text-center">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 drop-shadow-lg">
               Welcome to <span className="text-yellow-300">Abbaa Carraa</span>
             </h1>
@@ -94,19 +102,19 @@ export default function Home() {
               {t('common.tagline')}
             </p>
             
-            {/* Buttons - Smaller */}
+            {/* Buttons at the bottom */}
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 sm:px-6 sm:py-2.5 rounded-full font-semibold text-sm sm:text-base transition-all shadow-lg hover:shadow-xl">
+              <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 sm:px-8 sm:py-3 rounded-full font-semibold text-sm sm:text-base transition-all shadow-lg hover:shadow-xl">
                 {t('common.get_started')}
               </Link>
-              <Link href="/listings" className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-5 py-2 sm:px-6 sm:py-2.5 rounded-full font-semibold text-sm sm:text-base transition-all border border-white/30">
+              <Link href="/listings" className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-6 py-2.5 sm:px-8 sm:py-3 rounded-full font-semibold text-sm sm:text-base transition-all border border-white/30">
                 {t('common.browse_prizes')}
               </Link>
             </div>
           </div>
         </section>
 
-        {/* Counters Section - White Row, No Background, Single Row */}
+        {/* Counters Section - White Row */}
         <div className="bg-white border-b border-gray-200 py-3">
           <div className="container mx-auto px-4">
             <div className="flex flex-wrap justify-center items-center gap-6 md:gap-12">
