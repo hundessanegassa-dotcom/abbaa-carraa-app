@@ -73,31 +73,34 @@ export default function Home() {
       </Head>
 
       <main>
-        {/* Hero Section */}
+        {/* Hero Section - Mobile Optimized */}
         <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden">
+          {/* Background Image - Adjusted for mobile to show full image */}
           <div className="absolute inset-0 z-0">
             <img 
               src="/images/abbaa-carraa-banner-image.png"
               alt="Abbaa Carraa Celebration"
-              className="w-full h-full object-cover object-center"
+              className="w-full h-full object-cover object-top sm:object-center"
             />
             <div className="absolute inset-0 bg-black/40"></div>
           </div>
           
-          <div className="relative z-10 container mx-auto px-4 py-32 sm:py-40 md:py-48 lg:py-56 text-center flex flex-col justify-end min-h-[450px] sm:min-h-[550px] md:min-h-[650px] lg:min-h-[700px]">
-            <div className="mt-auto">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-2 sm:mb-3 drop-shadow-lg">
+          {/* Content - Pushed to bottom */}
+          <div className="relative z-10 container mx-auto px-4 flex flex-col justify-end min-h-[450px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[700px]">
+            <div className="pb-8 sm:pb-12 md:pb-16 text-center">
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 drop-shadow-lg">
                 Welcome to <span className="text-yellow-300">Abbaa Carraa</span>
               </h1>
-              <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl mb-4 sm:mb-6 max-w-2xl mx-auto drop-shadow-md opacity-95 px-2">
+              <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-4 sm:mb-6 max-w-2xl mx-auto drop-shadow-md opacity-95 px-2">
                 {t('common.tagline')}
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
-                <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-full font-semibold text-xs sm:text-sm md:text-base transition-all shadow-lg hover:shadow-xl">
+              {/* Buttons at the bottom */}
+              <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition-all shadow-lg">
                   {t('common.get_started')}
                 </Link>
-                <Link href="/listings" className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-full font-semibold text-xs sm:text-sm md:text-base transition-all border border-white/30">
+                <Link href="/listings" className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition-all border border-white/30">
                   {t('common.browse_prizes')}
                 </Link>
               </div>
@@ -108,21 +111,21 @@ export default function Home() {
         {/* Counters Section */}
         <div className="bg-white border-b border-gray-200 py-3">
           <div className="container mx-auto px-4">
-            <div className="flex flex-wrap justify-center items-center gap-6 md:gap-12">
+            <div className="flex flex-wrap justify-center items-center gap-4 md:gap-12">
               <div className="text-center">
-                <div className="text-xl md:text-2xl font-bold text-green-600">{stats.total_pools}+</div>
+                <div className="text-lg md:text-2xl font-bold text-green-600">{stats.total_pools}+</div>
                 <div className="text-xs text-gray-500">{t('stats.active_pools')}</div>
               </div>
               <div className="text-center">
-                <div className="text-xl md:text-2xl font-bold text-green-600">{stats.total_winners}+</div>
+                <div className="text-lg md:text-2xl font-bold text-green-600">{stats.total_winners}+</div>
                 <div className="text-xs text-gray-500">{t('stats.winners')}</div>
               </div>
               <div className="text-center">
-                <div className="text-xl md:text-2xl font-bold text-green-600">{stats.total_agents}+</div>
+                <div className="text-lg md:text-2xl font-bold text-green-600">{stats.total_agents}+</div>
                 <div className="text-xs text-gray-500">{t('stats.agents')}</div>
               </div>
               <div className="text-center">
-                <div className="text-xl md:text-2xl font-bold text-green-600">ETB {Math.floor(stats.total_raised / 1000)}K+</div>
+                <div className="text-lg md:text-2xl font-bold text-green-600">ETB {Math.floor(stats.total_raised / 1000)}K+</div>
                 <div className="text-xs text-gray-500">{t('stats.raised')}</div>
               </div>
             </div>
