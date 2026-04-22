@@ -73,19 +73,21 @@ export default function Home() {
       </Head>
 
       <main>
-        {/* Hero Section */}
+        {/* Hero Section - Full image visible on all devices */}
         <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden">
+          {/* Background Image - Full image, no cropping */}
           <div className="absolute inset-0 z-0">
             <img 
               src="/images/abbaa-carraa-banner-image.png"
               alt="Abbaa Carraa Celebration"
-              className="w-full h-full object-cover object-top sm:object-center"
+              className="w-full h-full object-contain md:object-cover bg-green-900"
             />
-            <div className="absolute inset-0 bg-black/40"></div>
+            <div className="absolute inset-0 bg-black/30"></div>
           </div>
           
-          <div className="relative z-10 container mx-auto px-4 flex flex-col justify-end min-h-[500px] sm:min-h-[550px] md:min-h-[600px] lg:min-h-[700px]">
-            <div className="pb-8 sm:pb-12 md:pb-16 text-center">
+          {/* Content - Pushed to bottom */}
+          <div className="relative z-10 container mx-auto px-4 flex flex-col justify-end min-h-[450px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[700px]">
+            <div className="pb-8 sm:pb-12 md:pb-16 text-center bg-gradient-to-t from-black/50 to-transparent rounded-lg">
               <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 drop-shadow-lg">
                 Welcome to <span className="text-yellow-300">Abbaa Carraa</span>
               </h1>
