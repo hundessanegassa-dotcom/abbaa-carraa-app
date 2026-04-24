@@ -73,17 +73,15 @@ export default function Home() {
       </Head>
 
       <main>
-    {/* Hero Section with New Banner Image - Expanded to top */}
-<section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden">
-  {/* Background Image - Full from top to bottom */}
-  <div className="absolute inset-0 z-0 top-0 left-0 right-0">
-    <img 
-      src="/images/abbaa carraa.png"
-      alt="Abbaa Carraa - A man of fortune"
-      className="w-full h-full object-cover object-center"
-    />
-    <div className="absolute inset-0 bg-black/30"></div>
-  </div>
+   {/* Background Image - Full image on mobile */}
+<div className="absolute inset-0 z-0">
+  <img 
+    src="/images/abbaa carraa.png"
+    alt="Abbaa Carraa - A man of fortune"
+    className="w-full h-full object-contain md:object-cover bg-green-900"
+  />
+  <div className="absolute inset-0 bg-black/30"></div>
+</div>
   
   {/* Content - Pushed to bottom */}
   <div className="relative z-10 container mx-auto px-4 flex flex-col justify-end min-h-[450px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[700px]">
