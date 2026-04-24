@@ -21,50 +21,79 @@ export default function GlobalAnnouncement() {
         .single();
         
       if (data && !error) {
-        // Check if expired
-        if (data.expires_at && new Date(data.expires_at) < new Date()) {
-          return;
-        }
         setAnnouncement(data);
       }
     } catch (error) {
-      console.error('Error fetching announcement:', error);
+      console.error('No active announcement:', error);
     }
   }
+
+  if (!announcement || dismissed) return null;
 
   const getTypeStyles = (type) => {
     switch (type) {
       case 'warning':
-        return 'bg-yellow-500 text-black';
+        return 'from-yellow-500 to-amber-600';
       case 'success':
-        return 'bg-green-600 text-white';
+        return 'from-green-500 to-emerald-600';
       case 'alert':
-        return 'bg-red-600 text-white';
+        return 'from-red-500 to-rose-600';
       default:
-        return 'bg-blue-600 text-white';
+        return 'from-blue-500 to-indigo-600';
     }
   };
 
-  if (!announcement || dismissed) return null;
-
   return (
-    <div className={`${getTypeStyles(announcement.type)} py-2.5 px-4 text-center text-sm font-medium relative z-50`}>
-      <div className="container mx-auto flex flex-col sm:flex-row items-center justify-center gap-2">
-        <span className="font-semibold">{announcement.title}:</span>
-        <span>{announcement.message}</span>
-        {announcement.link_url && (
-          <Link href={announcement.link_url} className="underline font-semibold ml-1">
-            {announcement.link_text || 'Learn More'} →
-          </Link>
-        )}
-        <button 
-          onClick={() => setDismissed(true)} 
-          className="absolute right-4 opacity-70 hover:opacity-100"
-          aria-label="Dismiss"
-        >
-          ✕
-        </button>
+    <div className="relative overflow-hidden">
+      {/* Animated gradient background */}
+      <div className={`bg-gradient-to-r ${getTypeStyles(announcement.type)} relative z-10`}>
+        {/* Shimmer effect overlay */}
+        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"></div>
+        
+        {/* Light rays from top */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-yellow-300/80 to-transparent animate-pulse"></div>
+        
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-center">
+            {/* Animated icon */}
+            <div className="flex items-center gap-2 animate-bounce">
+              <span className="text-xl">💰</span>
+              <span className="font-bold text-sm sm:text-base">CASH PRIZE POLICY:</span>
+            </div>
+            
+            <p className="text-sm sm:text-base">
+              Winners receive the <span className="font-bold underline decoration-yellow-300">CASH EQUIVALENT</span> of the prize value LISTED when pool was created. Locked & guaranteed!
+            </p>
+            
+            <Link href="/terms" className="flex items-center gap-1 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-sm font-semibold transition-all duration-200">
+              Learn More 
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+            
+            {/* Dismiss button */}
+            <button 
+              onClick={() => setDismissed(true)} 
+              className="absolute right-4 opacity-70 hover:opacity-100 transition"
+              aria-label="Dismiss"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+        
+        {/* Bottom light ray */}
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-yellow-300/60 to-transparent animate-pulse"></div>
       </div>
+      
+      {/* CSS for animations */}
+      <style jsx>{`
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+      `}</style>
     </div>
   );
 }
