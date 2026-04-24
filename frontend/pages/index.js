@@ -73,40 +73,40 @@ export default function Home() {
       </Head>
 
       <main>
-  {/* Hero Section with New Banner Image - Full image visible on all devices */}
-<section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden">
-  {/* Background Image - Using object-contain to show full image */}
-  <div className="absolute inset-0 z-0">
-    <img 
-      src="/images/abbaa carraa.png"
-      alt="Abbaa Carraa - A man of fortune"
-      className="w-full h-full object-contain md:object-cover bg-gradient-to-r from-green-900 to-blue-900"
-    />
-    <div className="absolute inset-0 bg-black/30"></div>
-  </div>
-  
-  {/* Content - Pushed to bottom */}
-  <div className="relative z-10 container mx-auto px-4 flex flex-col justify-end min-h-[450px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[700px]">
-    <div className="pb-8 sm:pb-12 md:pb-16 text-center bg-gradient-to-t from-black/50 to-transparent rounded-lg">
-      <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 drop-shadow-lg">
-        Welcome to <span className="text-yellow-300">Abbaa Carraa</span>
-      </h1>
-      <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-4 sm:mb-6 max-w-2xl mx-auto drop-shadow-md opacity-95 px-2">
-        {t('common.tagline')}
-      </p>
-      
-      <div className="flex flex-col sm:flex-row gap-2 justify-center">
-        <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition-all shadow-lg">
-          {t('common.get_started')}
-        </Link>
-        <Link href="/listings" className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition-all border border-white/30">
-          {t('common.browse_prizes')}
-        </Link>
-      </div>
-    </div>
-  </div>
-</section>
-    
+        {/* Hero Section with New Banner Image - Full image on all devices */}
+        <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden">
+          {/* Background Image - Full image visible */}
+          <div className="absolute inset-0 z-0">
+            <img 
+              src="/images/abbaa carraa.png"
+              alt="Abbaa Carraa - A man of fortune"
+              className="w-full h-full object-contain md:object-cover bg-green-900"
+            />
+            <div className="absolute inset-0 bg-black/30"></div>
+          </div>
+          
+          {/* Content - Pushed to bottom with gradient overlay for readability */}
+          <div className="relative z-10 container mx-auto px-4 flex flex-col justify-end min-h-[500px] sm:min-h-[550px] md:min-h-[600px] lg:min-h-[700px]">
+            <div className="pb-8 sm:pb-12 md:pb-16 text-center bg-gradient-to-t from-black/60 via-black/20 to-transparent rounded-lg pt-12">
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 drop-shadow-lg">
+                Welcome to <span className="text-yellow-300">Abbaa Carraa</span>
+              </h1>
+              <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-4 sm:mb-6 max-w-2xl mx-auto drop-shadow-md opacity-95 px-2">
+                {t('common.tagline')}
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition-all shadow-lg">
+                  {t('common.get_started')}
+                </Link>
+                <Link href="/listings" className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition-all border border-white/30">
+                  {t('common.browse_prizes')}
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Counters Section */}
         <div className="bg-white border-b border-gray-200 py-3">
           <div className="container mx-auto px-4">
