@@ -106,7 +106,49 @@ export default function Home() {
             </div>
           </div>
         </section>
+{/* Cash Prize Policy Banner - Animated */}
+<div className="relative overflow-hidden bg-gradient-to-r from-yellow-500 via-amber-500 to-yellow-500">
+  {/* Light shimmer from top */}
+  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white to-transparent animate-pulse"></div>
+  
+  {/* Diagonal light sweep */}
+  <div className="absolute inset-0 -translate-x-full animate-[shimmer_3s_infinite] bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12"></div>
+  
+  {/* Second light sweep */}
+  <div className="absolute inset-0 -translate-x-full animate-[shimmer_4s_infinite] bg-gradient-to-r from-transparent via-yellow-200/20 to-transparent skew-x-12 delay-1000"></div>
+  
+  <div className="container mx-auto px-4 py-3">
+    <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-center">
+      {/* Glowing icon */}
+      <div className="flex items-center gap-2">
+        <span className="text-2xl animate-pulse drop-shadow-lg">💰</span>
+        <span className="font-black text-sm sm:text-base text-white drop-shadow-md tracking-wide">
+          ⚡ CASH EQUIVALENT POLICY ⚡
+        </span>
+      </div>
+      
+      <p className="text-white/95 text-sm sm:text-base font-medium">
+        Winners receive <span className="font-bold underline decoration-yellow-300 underline-offset-4">CASH at original listed price</span> — locked & guaranteed!
+      </p>
+      
+      <Link href="/terms">
+        <button className="bg-white/20 hover:bg-white/30 text-white px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 shadow-md hover:shadow-lg border border-white/30">
+          Details →
+        </button>
+      </Link>
+    </div>
+  </div>
+  
+  {/* Bottom light ray */}
+  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-yellow-300 to-transparent animate-pulse"></div>
+</div>
 
+<style jsx>{`
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+`}</style>
         {/* Counters Section */}
         <div className="bg-white border-b border-gray-200 py-3">
           <div className="container mx-auto px-4">
