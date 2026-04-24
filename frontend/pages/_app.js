@@ -7,6 +7,7 @@ import '../lib/i18n';
 import Footer from '../components/Footer';
 import ChatBot from '../components/ChatBot';
 import LanguageToggle from '../components/LanguageToggle';
+import GlobalAnnouncement from '../components/GlobalAnnouncement';
 
 const queryClient = new QueryClient();
 
@@ -32,13 +33,14 @@ function MyApp({ Component, pageProps }) {
     };
   }, []);
 
+  // Full screen splash
   if (loading) {
     return (
       <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-green-800 via-green-600 to-blue-800 flex items-center justify-center z-[9999]">
         <div className="text-center px-4 w-full">
           <div className="flex justify-center">
             <img 
-              src="/images/abbaa-carraa-banner-image.png"
+              src="/images/abbaa carraa.png"
               alt="Abbaa Carraa"
               className="w-32 h-32 sm:w-48 sm:h-48 object-cover rounded-2xl shadow-2xl animate-pulse"
             />
@@ -58,6 +60,8 @@ function MyApp({ Component, pageProps }) {
 
   return (
     <QueryClientProvider client={queryClient}>
+      {/* Global Announcement Banner - appears at the very top */}
+      <GlobalAnnouncement />
       <Component {...pageProps} session={session} />
       <Footer />
       <LanguageToggle />
