@@ -5,80 +5,78 @@ export default function PoolCard({ pool, featured = false }) {
     ? (pool.current_amount / pool.target_amount) * 100 
     : 0;
 
+  // Calculate remaining days
+  const getRemainingDays = (endDate) => {
+    if (!endDate) return null;
+    const today = new Date();
+    const end = new Date(endDate);
+    const diffTime = end - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
+
+  const remainingDays = getRemainingDays(pool.end_date);
+  const isEndingSoon = remainingDays > 0 && remainingDays < 7;
+
   return (
-    <div className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden ${featured ? 'ring-2 ring-green-500' : ''}`}>
-      {featured && (
-        <div className="bg-green-600 text-white text-center py-1 text-sm font-semibold">
-          ⭐ Featured Pool
-        </div>
-      )}
-      
-      {pool.image_url && (
-        <div className="h-48 w-full overflow-hidden">
+    <div className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden ${featured ? 'ring-2 ring-green-500' : ''}`}>
+      {/* Image Section - Smaller for mobile */}
+      <div className="relative h-36 sm:h-44 md:h-48 w-full overflow-hidden bg-gray-100">
+        {pool.image_url ? (
           <img 
             src={pool.image_url} 
             alt={pool.prize_name}
             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
           />
-        </div>
-      )}
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center">
+            <span className="text-3xl">🎁</span>
+          </div>
+        )}
+        {featured && (
+          <div className="absolute top-2 right-2 bg-green-600 text-white text-xs px-2 py-0.5 rounded-full">
+            ⭐ Featured
+          </div>
+        )}
+        {remainingDays > 0 && (
+          <div className={`absolute bottom-2 left-2 text-white text-xs px-2 py-0.5 rounded-full ${isEndingSoon ? 'bg-red-500' : 'bg-black/50'}`}>
+            {isEndingSoon ? `🔥 ${remainingDays} days left` : `${remainingDays} days`}
+          </div>
+        )}
+      </div>
       
-      <div className="p-5">
-        <h3 className="text-xl font-bold mb-2 text-gray-800 line-clamp-1">
+      <div className="p-3 sm:p-4">
+        <h3 className="text-sm sm:text-base md:text-lg font-bold mb-1 text-gray-800 line-clamp-1">
           {pool.prize_name}
         </h3>
         
-        <p className="text-gray-600 mb-4 text-sm line-clamp-2 min-h-[40px]">
+        <p className="text-xs text-gray-500 mb-2 line-clamp-2 min-h-[32px]">
           {pool.description || 'Join this pool for a chance to win!'}
         </p>
         
-        <div className="mb-3">
-          <div className="flex justify-between text-sm mb-1">
-            <span className="text-gray-600">Progress</span>
-            <span className="font-semibold text-green-600">{progress.toFixed(1)}%</span>
+        {/* Progress Bar - Compact */}
+        <div className="mb-2">
+          <div className="flex justify-between text-xs mb-0.5">
+            <span className="text-gray-500">Progress</span>
+            <span className="font-semibold text-green-600">{progress.toFixed(0)}%</span>
           </div>
-          <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
+          <div className="bg-gray-200 rounded-full h-1.5 overflow-hidden">
             <div 
-              className="bg-green-600 h-2 rounded-full transition-all duration-500" 
+              className="bg-green-600 h-1.5 rounded-full transition-all duration-500" 
               style={{ width: `${Math.min(progress, 100)}%` }}
             ></div>
           </div>
         </div>
         
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-600">Target:</span>
-            <span className="font-bold text-gray-800">
-              ETB {pool.target_amount?.toLocaleString() || 0}
-            </span>
-          </div>
-          
-          <div className="flex justify-between">
-            <span className="text-gray-600">Contribution:</span>
-            <span className="font-bold text-green-600">
-              ETB {pool.contribution_amount?.toLocaleString() || 0}
-            </span>
-          </div>
-          
-          <div className="flex justify-between">
-            <span className="text-gray-600">Raised:</span>
-            <span className="font-semibold text-gray-800">
-              ETB {pool.current_amount?.toLocaleString() || 0}
-            </span>
-          </div>
-          
-          {pool.discount_for_non_winners > 0 && (
-            <div className="mt-2 p-2 bg-blue-50 rounded-lg">
-              <p className="text-xs text-blue-700">
-                🎁 Don't win? Get {pool.discount_for_non_winners}% discount!
-              </p>
-            </div>
-          )}
+        {/* Price Row - Compact */}
+        <div className="flex justify-between items-center mb-2 text-xs">
+          <span className="text-gray-500">Entry:</span>
+          <span className="font-bold text-green-600">ETB {pool.contribution_amount?.toLocaleString() || 0}</span>
         </div>
         
         <Link href={`/pools/${pool.id}`}>
-          <button className="w-full mt-5 bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition-all duration-200">
-            Join This Pool
+          <button className="w-full mt-2 bg-green-600 text-white py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm hover:bg-green-700 transition-all duration-200">
+            Join Now 🎯
           </button>
         </Link>
       </div>
