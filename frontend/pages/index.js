@@ -73,37 +73,37 @@ export default function Home() {
       </Head>
 
       <main>
-   {/* Background Image - Full image on mobile */}
-<div className="absolute inset-0 z-0">
-  <img 
-    src="/images/abbaa carraa.png"
-    alt="Abbaa Carraa - A man of fortune"
-    className="w-full h-full object-contain md:object-cover bg-green-900"
-  />
-  <div className="absolute inset-0 bg-black/30"></div>
-</div>
-  
-  {/* Content - Pushed to bottom */}
-  <div className="relative z-10 container mx-auto px-4 flex flex-col justify-end min-h-[450px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[700px]">
-    <div className="pb-8 sm:pb-12 md:pb-16 text-center">
-      <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 drop-shadow-lg">
-        Welcome to <span className="text-yellow-300">Abbaa Carraa</span>
-      </h1>
-      <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-4 sm:mb-6 max-w-2xl mx-auto drop-shadow-md opacity-95 px-2">
-        {t('common.tagline')}
-      </p>
-      
-      <div className="flex flex-col sm:flex-row gap-2 justify-center">
-        <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition-all shadow-lg">
-          {t('common.get_started')}
-        </Link>
-        <Link href="/listings" className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition-all border border-white/30">
-          {t('common.browse_prizes')}
-        </Link>
-      </div>
-    </div>
-  </div>
-</section>
+        {/* Hero Section */}
+        <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden">
+          <div className="absolute inset-0 z-0">
+            <img 
+              src="/images/abbaa carraa.png"
+              alt="Abbaa Carraa"
+              className="w-full h-full object-contain md:object-cover bg-green-900"
+            />
+            <div className="absolute inset-0 bg-black/30"></div>
+          </div>
+          
+          <div className="relative z-10 container mx-auto px-4 flex flex-col justify-end min-h-[450px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[700px]">
+            <div className="pb-8 sm:pb-12 md:pb-16 text-center">
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 drop-shadow-lg">
+                Welcome to <span className="text-yellow-300">Abbaa Carraa</span>
+              </h1>
+              <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-4 sm:mb-6 max-w-2xl mx-auto drop-shadow-md opacity-95 px-2">
+                {t('common.tagline')}
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition-all shadow-lg">
+                  {t('common.get_started')}
+                </Link>
+                <Link href="/listings" className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition-all border border-white/30">
+                  {t('common.browse_prizes')}
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Counters Section */}
         <div className="bg-white border-b border-gray-200 py-3">
