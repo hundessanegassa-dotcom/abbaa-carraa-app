@@ -12,7 +12,6 @@ import AdvertisingBanner from '../components/AdvertisingBanner';
 export default function Home() {
   const { t } = useTranslation();
   const [pools, setPools] = useState([]);
-  const [allPools, setAllPools] = useState([]);
   const [featuredPools, setFeaturedPools] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -21,54 +20,11 @@ export default function Home() {
     total_agents: 0,
     total_raised: 0
   });
-  
-  // Filter states
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedCity, setSelectedCity] = useState('all');
-  const [selectedCreator, setSelectedCreator] = useState('all');
-  const [cities, setCities] = useState([]);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-
-  // Categories based on prize types
-  const categories = [
-    { value: 'all', label: 'All Categories', icon: '🎯' },
-    { value: 'vehicle', label: 'Vehicles', icon: '🚗' },
-    { value: 'machinery', label: 'Machinery', icon: '🏭' },
-    { value: 'electronics', label: 'Electronics', icon: '💻' },
-    { value: 'property', label: 'Property', icon: '🏠' },
-    { value: 'furniture', label: 'Furniture', icon: '🛋️' },
-    { value: 'other', label: 'Other', icon: '🎁' }
-  ];
-
-  // Creator types
-  const creators = [
-    { value: 'all', label: 'All Creators', icon: '👥' },
-    { value: 'admin', label: 'Admin', icon: '👑' },
-    { value: 'agent', label: 'Agents', icon: '🤝' },
-    { value: 'vendor', label: 'Vendors', icon: '🏭' },
-    { value: 'organization', label: 'Organizations', icon: '🏢' },
-    { value: 'individual', label: 'Individuals', icon: '👤' }
-  ];
 
   useEffect(() => {
     fetchStats();
     fetchPools();
-    fetchCities();
   }, []);
-
-  useEffect(() => {
-    filterPools();
-  }, [selectedCategory, selectedCity, selectedCreator, allPools]);
-
-  async function fetchCities() {
-    const { data } = await supabase
-      .from('pools')
-      .select('city')
-      .eq('status', 'active');
-    
-    const uniqueCities = [...new Set(data?.map(p => p.city).filter(Boolean) || [])];
-    setCities(uniqueCities);
-  }
 
   async function fetchStats() {
     try {
@@ -92,15 +48,16 @@ export default function Home() {
 
   async function fetchPools() {
     try {
+      // Simplified query - no complex joins that cause errors
       const { data, error } = await supabase
         .from('pools')
-        .select('*, profiles!created_by(full_name, user_type, role)')
+        .select('*')
         .eq('status', 'active')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      setAllPools(data || []);
+      setPools(data || []);
       setFeaturedPools(data?.filter(pool => pool.is_featured === true) || []);
     } catch (error) {
       console.error('Error loading pools:', error);
@@ -108,55 +65,6 @@ export default function Home() {
       setLoading(false);
     }
   }
-
-  function filterPools() {
-    let filtered = [...allPools];
-
-    // Filter by category (based on prize_name keywords)
-    if (selectedCategory !== 'all') {
-      const categoryKeywords = {
-        vehicle: ['car', 'truck', 'v8', 'sino', 'toyota', 'motorcycle', 'bike'],
-        machinery: ['excavator', 'loader', 'block machine', 'tractor', 'machine'],
-        electronics: ['laptop', 'phone', 'computer', 'tv', 'dell', 'iphone'],
-        property: ['house', 'home', 'villa', 'apartment', 'land'],
-        furniture: ['furniture', 'sofa', 'bed', 'table', 'chair']
-      };
-      
-      const keywords = categoryKeywords[selectedCategory] || [];
-      filtered = filtered.filter(pool => 
-        keywords.some(keyword => 
-          pool.prize_name?.toLowerCase().includes(keyword) || 
-          pool.description?.toLowerCase().includes(keyword)
-        )
-      );
-    }
-
-    // Filter by city
-    if (selectedCity !== 'all') {
-      filtered = filtered.filter(pool => pool.city === selectedCity);
-    }
-
-    // Filter by creator type
-    if (selectedCreator !== 'all') {
-      filtered = filtered.filter(pool => {
-        const creatorType = pool.profiles?.user_type || pool.profiles?.role;
-        if (selectedCreator === 'admin') return creatorType === 'admin';
-        if (selectedCreator === 'agent') return creatorType === 'agent';
-        if (selectedCreator === 'vendor') return creatorType === 'vendor';
-        if (selectedCreator === 'organization') return creatorType === 'organization';
-        if (selectedCreator === 'individual') return creatorType === 'individual' || creatorType === 'user';
-        return true;
-      });
-    }
-
-    setPools(filtered);
-  }
-
-  const resetFilters = () => {
-    setSelectedCategory('all');
-    setSelectedCity('all');
-    setSelectedCreator('all');
-  };
 
   return (
     <>
@@ -226,111 +134,8 @@ export default function Home() {
         <MovingAd />
         <AdvertisingBanner />
 
-        {/* Filter Bar */}
-        <div className="container mx-auto px-4 py-4">
-          {/* Mobile Filter Toggle */}
-          <div className="md:hidden mb-4">
-            <button
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="w-full bg-gray-100 text-gray-800 py-2 rounded-lg flex items-center justify-center gap-2"
-            >
-              <span>🔍</span> Filter Pools
-              <svg className={`w-4 h-4 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Filter Options */}
-          <div className={`${isFilterOpen ? 'block' : 'hidden md:block'} space-y-4 md:space-y-0 md:flex md:flex-wrap md:gap-4 md:items-center md:justify-between`}>
-            {/* Category Filter */}
-            <div className="flex flex-wrap gap-2">
-              <span className="text-sm font-semibold text-gray-700 self-center mr-2 hidden md:block">Category:</span>
-              {categories.map(cat => (
-                <button
-                  key={cat.value}
-                  onClick={() => setSelectedCategory(cat.value)}
-                  className={`px-3 py-1.5 rounded-full text-xs sm:text-sm transition flex items-center gap-1 ${
-                    selectedCategory === cat.value
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  <span>{cat.icon}</span>
-                  <span>{cat.label}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* City Filter */}
-            {cities.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setSelectedCity('all')}
-                  className={`px-3 py-1.5 rounded-full text-xs sm:text-sm transition ${
-                    selectedCity === 'all'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  🌍 All Cities
-                </button>
-                {cities.map(city => (
-                  <button
-                    key={city}
-                    onClick={() => setSelectedCity(city)}
-                    className={`px-3 py-1.5 rounded-full text-xs sm:text-sm transition ${
-                      selectedCity === city
-                        ? 'bg-green-600 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                  >
-                    📍 {city}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Creator Type Filter */}
-            <div className="flex flex-wrap gap-2">
-              <span className="text-sm font-semibold text-gray-700 self-center mr-2 hidden md:block">Creator:</span>
-              {creators.map(creator => (
-                <button
-                  key={creator.value}
-                  onClick={() => setSelectedCreator(creator.value)}
-                  className={`px-3 py-1.5 rounded-full text-xs sm:text-sm transition flex items-center gap-1 ${
-                    selectedCreator === creator.value
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  <span>{creator.icon}</span>
-                  <span>{creator.label}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Reset Filters */}
-            {(selectedCategory !== 'all' || selectedCity !== 'all' || selectedCreator !== 'all') && (
-              <button
-                onClick={resetFilters}
-                className="text-red-600 text-sm hover:text-red-700 underline"
-              >
-                Clear all filters
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Filter Results Count */}
-        <div className="container mx-auto px-4 pb-2">
-          <p className="text-sm text-gray-500">
-            Showing {pools.length} of {allPools.length} active pools
-          </p>
-        </div>
-
         {/* Featured Pools */}
-        {featuredPools.length > 0 && selectedCategory === 'all' && selectedCity === 'all' && selectedCreator === 'all' && (
+        {featuredPools.length > 0 && (
           <section className="container mx-auto px-4 py-8">
             <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">⭐ Featured Pools</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -341,23 +146,19 @@ export default function Home() {
           </section>
         )}
 
-        {/* All Active Pools (Filtered) */}
+        {/* All Active Pools */}
         <section className="container mx-auto px-4 py-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
-            {selectedCategory !== 'all' || selectedCity !== 'all' || selectedCreator !== 'all' 
-              ? 'Filtered Results' 
-              : 'Active Pools'}
-          </h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">{t('pools.active_pools')}</h2>
           {loading ? (
             <div className="flex justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
             </div>
           ) : pools.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500 mb-4">No pools match your filters.</p>
-              <button onClick={resetFilters} className="text-green-600 hover:text-green-700">
-                Clear filters →
-              </button>
+              <p className="text-gray-500 mb-4">{t('pools.no_pools')}</p>
+              <Link href="/create-pool" className="text-green-600 hover:text-green-700">
+                {t('common.create_pool')} →
+              </Link>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
