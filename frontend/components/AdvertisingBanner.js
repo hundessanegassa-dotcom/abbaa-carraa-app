@@ -1,6 +1,15 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { useTranslation } from 'react-i18next';
+
+export default function AdvertisingBanner() {
+  const { t } = useTranslation();
+  // ... rest of your code, replace hardcoded text with t('key')
+}
+import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
 export default function AdvertisingBanner() {
   const [products, setProducts] = useState([]);
