@@ -9,7 +9,7 @@
     "register": "Galmeessi",
     "logout": "Ba'i",
     "dashboard": "Daashboordii",
-    "create_pool": "Uunka Galmee Carraa Uumi",
+    "create_pool": "Uunka Galmee Badhaasaa Uumi",
     "browse_prizes": "Badhaasa Daawwadhaa",
     "winners": "Mo'attoota",
     "about": "Waa'ee Keenya",
@@ -20,11 +20,32 @@
     "get_started": "Eegalii",
     "trusted_agents": "Agentoonni Amanaman",
     "total_raised": "Walumaagalatti Olka'ee",
-    "all_cities": "Magaalaawwan Hunda"
+    "all_cities": "Magaalaawwan Hunda",
+    "loading": "Badhaasa ajaa'ibsiisaa fe'amaa jira...",
+    "back": "Duuba",
+    "save": "Olkaa'i",
+    "cancel": "Haqi",
+    "delete": "Balleessi",
+    "edit": "Gulaali",
+    "submit": "Ergi",
+    "search": "Barbaadi",
+    "filter": "Calalchi",
+    "clear_filters": "Calalgawwan haqi",
+    "showing": "Agarsii jira",
+    "of": "keessaa",
+    "active_pools": "Uunka Galmee Badhaasaa",
+    "no_pools": "Yeroo ammaa Uunka Galmee Badhaasaa hin jiran",
+    "create_first_pool": "Uunka Galmee Badhaasaa Uumi →"
+  },
+  "stats": {
+    "active_pools": "Uunka Galmee Badhaasaa",
+    "winners": "Mo'attoota",
+    "agents": "Agentoota",
+    "raised": "Walumaagalatti Olka'ee"
   },
   "pools": {
-    "active_pools": "Uunka Galmee Carraa Hojiirraa Jiran",
-    "featured_pools": "Uunka Galmee Carraa Filataman",
+    "active_pools": "Uunka Galmee Badhaasaa",
+    "featured_pools": "Uunka Galmee Badhaasaa Filataman",
     "target_amount": "Hanga Galma",
     "current_amount": "Hanga Ammaa",
     "contribution_amount": "Amma Gumaacha",
@@ -34,15 +55,24 @@
     "draw_date": "Guyyaa Argannoo",
     "started": "Eegalame",
     "join_now": "Hirmaadhu",
-    "no_pools": "Uunki galmee carraa qophaa'e hinjiru"
+    "no_pools": "Uunka Galmee Badhaasaa hin jiran",
+    "remaining_days": "guyyaa hafe",
+    "ending_soon": "Dafee ni xumurama!",
+    "cash_equivalent": "Kanfaltii hanga tarreefamaan walqiixa",
+    "winner_gets": "Mo'ataan argatu",
+    "entry_fee": "Kaffaltii Seensaa",
+    "seats": "teessuma",
+    "select_seats": "Lakkoofsa teessumaa filadhu",
+    "total_amount": "Iddoo Walumaa",
+    "tickets": "Tiikeetii"
   },
   "how_it_works": {
     "title": "Abbaa Carraa Akkamitti Hojjeta",
-    "find_pool": "Uunka Galmee Carraa Barbaadi",
-    "find_pool_desc": "Uunka Galmee Carraa Hojiirraa Jiran magaalaa ykn gosaan ilaali",
+    "find_pool": "Uunka Galmee Badhaasaa Barbaadi",
+    "find_pool_desc": "Uunka Galmee Badhaasaa Hojiirraa Jiran magaalaan ykn gosaan ilaali",
     "contribute": "Gumaachi",
     "contribute_desc": "Telebirr ykn CBE Birr tiin kaffali",
-    "win": "Mo'i fi Gammadi",
+    "win": "Mo'i ti Gammadi",
     "win_desc": "Galmi yeroo ga'uu argannoo tolaa mo'ataa filata"
   },
   "agent": {
@@ -51,32 +81,90 @@
     "register_agent": "Agent Ta'uuf Galmeessi",
     "agent_dashboard": "Daashboordii Agent",
     "my_listings": "Tarreeffamoo Koo",
-    "my_pools": "Uunka Galmee Carraa Koo",
+    "my_pools": "Uunka Galmee Badhaasaa Koo",
     "participants": "Hirmaattoota",
-    "commissions": "Komishiniiwwan"
+    "commissions": "Komishiniiwwan",
+    "create_listing": "Tarreeffamoo Uumi",
+    "listing_title": "Mata Duree Tarreeffamoo",
+    "listing_description": "Ibsa"
   },
   "vendor": {
     "become_vendor": "Dhiyeessa Ta'i",
     "list_products": "Oomisha Keessan Tarreessi",
     "offer_discounts": "Hirmaattoota Hin Mo'aneef Diskawuntii Kennaa",
-    "register_vendor": "Dhiyeessaa Ta'uuf Galmeessi"
+    "register_vendor": "Dhiyeessaa Ta'uuf Galmeessi",
+    "vendor_dashboard": "Daashboordii Dhiyeessaa",
+    "my_products": "Oomisha Koo",
+    "discount_offers": "Kenna Diskawuntii"
   },
   "organization": {
     "become_org": "Dhaabbata Galmeessi",
-    "internal_pools": "Uunka Galmee Carraa Keessoo Uumi",
-    "member_saving": "Dhaabbattootaaf Qusannaa Ummataa"
+    "internal_pools": "Uunka Galmee Badhaasaa Keessoo Uumi",
+    "member_saving": "Dhaabbattootaaf Qusannaa Ummataa",
+    "org_dashboard": "Daashboordii Dhaabbataa",
+    "member_pools": "Uunka Galmee Badhaasaa Dhaabbattootaa"
+  },
+  "filters": {
+    "title": "Uunka Galmee Badhaasaa Calalame",
+    "category": "Gosa",
+    "city": "Magaalaa",
+    "creator": "Uumaa",
+    "all_categories": "Gosoota Hunda",
+    "vehicles": "Makiinaawwan",
+    "machinery": "Mashiinoota",
+    "electronics": "Eletirooniksii",
+    "property": "Qabeenya",
+    "furniture": "Meeshaalee Manaa",
+    "other": "Kan Biroo",
+    "all_cities": "Magaalaawwan Hunda",
+    "all_creators": "Uumtoota Hunda",
+    "admin": "Admin",
+    "agents": "Agentoota",
+    "vendors": "Dhiyeessitoota",
+    "organizations": "Dhaabbatawwan",
+    "individuals": "Dhuunfaa"
+  },
+  "payment": {
+    "title": "Kaffaltii",
+    "telebirr": "Telebirr",
+    "cbe_birr": "CBE Birr",
+    "pay_now": "Amma Kaffali",
+    "processing": "Hojii irra jira...",
+    "payment_successful": "Kaffaltiin milkaa'e!",
+    "payment_failed": "Kaffaltiin hin milkaa'in. Irra deebi'ii yaali.",
+    "enter_phone": "Lakkoofsa bilbilaa keessan guutaa",
+    "total_due": "Iddoo Kaffaltii"
+  },
+  "draw": {
+    "title": "Argannoo Badhaasaa",
+    "run_draw": "Argannoo Kaasi",
+    "draw_completed": "Argannoon xumurame!",
+    "winner_announced": "Mo'ataan labsame!",
+    "congratulations": "Baga gammadde!",
+    "you_won": "Mo'atte!",
+    "ticket_count": "Lakkoofsa Tiikeetii",
+    "random_seed": "Sanyii Tasgabbamaa",
+    "verified_draw": "Argannoo Mirkanaa'ee"
   },
   "footer": {
     "quick_links": "Geessituu Ariitii",
     "support": "Deeggarsa",
     "contact_us": "Nu Qunnami",
-    "rights": "Mirgiin Hunda Eegame",
-    "built_by": "Kan Ijaare"
+    "rights": "Mirgiin Hunda Kan Eegame",
+    "built_by": "Kan Ijaare",
+    "follow_us": "Nu Hordofaa"
   },
   "banners": {
     "agent": "Agent Ta'i - 10% Komishinii Argadhu",
     "vendor": "Dhiyeessa Ta'i - Oomisha Keessan Tarreessi",
-    "organization": "Dhaabbata Galmeessi - Uunka Galmee Carraa Keessoo Uumi",
+    "organization": "Dhaabbata Galmeessi - Uunka Galmee Badhaasaa Keessoo Uumi",
     "individual": "Akka Dhuunfaa Hirmaadhu - Badhaasa Ajaa'ibsiisaa Argadhu"
+  },
+  "chatbot": {
+    "title": "Abbaa Carraa Gargaaraa",
+    "placeholder": "Gaafata keessan barreessaa...",
+    "send": "Ergi",
+    "online": "Sarara irra",
+    "ask_me": "Waan barbaadde gaafadhu!"
   }
 }
