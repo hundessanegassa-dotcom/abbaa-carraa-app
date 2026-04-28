@@ -33,7 +33,7 @@ export default function Navbar() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    toast.success('Logged out successfully');
+    toast.success(t('common.logout'));
     router.push('/');
   }
 
@@ -41,12 +41,10 @@ export default function Navbar() {
     <nav className="bg-white shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
           <Link href="/" className="text-2xl font-bold text-green-600">
             Abbaa Carraa
           </Link>
           
-          {/* Desktop Navigation */}
           <div className="hidden md:flex space-x-6">
             <Link href="/" className="text-gray-700 hover:text-green-600 transition">
               {t('common.home')}
@@ -67,7 +65,6 @@ export default function Navbar() {
               {t('common.faq')}
             </Link>
             
-            {/* Admin Analytics Link */}
             {userRole === 'admin' && (
               <Link href="/admin/analytics" className="text-purple-600 hover:text-purple-700 transition">
                 Analytics
@@ -80,28 +77,24 @@ export default function Navbar() {
               </Link>
             )}
             
-            {/* Agent Dashboard Link */}
             {userType === 'agent' && (
               <Link href="/agent/dashboard" className="text-blue-600 hover:text-blue-700 transition">
                 {t('agent.agent_dashboard')}
               </Link>
             )}
             
-            {/* Become Agent Link */}
             {user && userType !== 'agent' && userType !== 'admin' && userType !== 'vendor' && userType !== 'organization' && (
               <Link href="/agent/register" className="text-yellow-600 hover:text-yellow-700 transition">
                 {t('common.become_agent')}
               </Link>
             )}
             
-            {/* Become Vendor Link */}
             {user && userType !== 'vendor' && userType !== 'agent' && userType !== 'admin' && userType !== 'organization' && (
               <Link href="/vendor/register" className="text-orange-600 hover:text-orange-700 transition">
                 {t('common.become_vendor')}
               </Link>
             )}
             
-            {/* Create Pool Link */}
             {user && (
               <Link href="/create-pool" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
                 {t('common.create_pool')}
@@ -109,7 +102,6 @@ export default function Navbar() {
             )}
           </div>
           
-          {/* Auth Buttons */}
           <div className="flex space-x-4">
             {user ? (
               <button onClick={handleLogout} className="text-red-600 hover:text-red-700 transition">
