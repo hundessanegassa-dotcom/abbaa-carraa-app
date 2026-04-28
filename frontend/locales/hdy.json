@@ -1,6 +1,6 @@
 {
   "common": {
-    "welcome": "Abbaa carraa anso ba'no",
+    "welcome": "Abbaa Carraa anso ba'no",
     "tagline": "Ummaataa qaalaa kee hiixoo dame yichchilcho medhiya",
     "home": "Maca",
     "join": "Maxa",
@@ -20,11 +20,32 @@
     "get_started": "Kawusa",
     "trusted_agents": "Agente amanama",
     "total_raised": "Wolqa qixxa",
-    "all_cities": "Magaala wolqa"
+    "all_cities": "Magaala wolqa",
+    "loading": "Qaalaa miidho shuqullo...",
+    "back": "Duuno",
+    "save": "Gummura",
+    "cancel": "Bubba",
+    "delete": "Gurruna",
+    "edit": "Hooxa",
+    "submit": "Maadha",
+    "search": "Kora",
+    "filter": "Girgira",
+    "clear_filters": "Girgiruwa bubba",
+    "showing": "La'issino",
+    "of": "kuma",
+    "active_pools": "Dame yichchilcho",
+    "no_pools": "Ha wode dame yichchilcho be'enno",
+    "create_first_pool": "Dame yichchilcho medha →"
+  },
+  "stats": {
+    "active_pools": "Dame yichchilcho",
+    "winners": "Mo'ichcho",
+    "agents": "Agente",
+    "raised": "Wolqe"
   },
   "pools": {
-    "active_pools": "Ummaataa yichchilcho",
-    "featured_pools": "Filamme yichchilcho",
+    "active_pools": "Dame yichchilcho",
+    "featured_pools": "Filamme dame yichchilcho",
     "target_amount": "Malto qixxa",
     "current_amount": "Ha wode qixxa",
     "contribution_amount": "Hiixoo qixxa",
@@ -34,49 +55,116 @@
     "draw_date": "Gombessa ga'ra",
     "started": "Kawusamme",
     "join_now": "Ha wode maxa",
-    "no_pools": "Ha wode ummaataa yichchilcho be'enno"
+    "no_pools": "Dame yichchilcho be'enno",
+    "remaining_days": "hafo ga'ra",
+    "ending_soon": "Gombessu!",
+    "cash_equivalent": "Miya me'issi",
+    "winner_gets": "Mo'ichcho hasa",
+    "entry_fee": "Maxo qixxa",
+    "seats": "baqla",
+    "select_seats": "Baqla looma doona",
+    "total_amount": "Wolqa qixxa",
+    "tickets": "tikette"
   },
   "how_it_works": {
-    "title": "Abbaa carraa annooti ba'ano",
-    "find_pool": "Yichchilcho maxa",
-    "find_pool_desc": "Ummaataa yichchilcho magaalaan hinnay qayyaan la'a",
+    "title": "Annooti ba'ano",
+    "find_pool": "Dame yichchilcho kora",
+    "find_pool_desc": "Dame yichchilcho magaalaan hinnay qayyaan la'a",
     "contribute": "Hiixoo",
-    "contribute_desc": "Telebirr hinnay CBE Birr kawuso hiixo",
+    "contribute_desc": "Telebirr hinnay CBE Birr hiixo",
     "win": "Mo'ichcho kee ufaysi",
     "win_desc": "Malto gakki gombessa mo'ichcho doorama"
   },
   "agent": {
     "become_agent": "Agent ba'a",
-    "earn_commission": "10% komishshana hee'a",
+    "earn_commission": "Komishshana 10% hee'a",
     "register_agent": "Agent gargara",
     "agent_dashboard": "Agent dashboard",
     "my_listings": "Ta gargaramme",
-    "my_pools": "Ta yichchilcho",
+    "my_pools": "Ta dame yichchilcho",
     "participants": "Maxxo",
-    "commissions": "Komishshana"
+    "commissions": "Komishshana",
+    "create_listing": "Gargara medha",
+    "listing_title": "Gargara maca",
+    "listing_description": "Ibsa"
   },
   "vendor": {
     "become_vendor": "Vendor ba'a",
     "list_products": "Ne ala gargara",
     "offer_discounts": "Be'ennaw maxxof diskawunti immo",
-    "register_vendor": "Vendor gargara"
+    "register_vendor": "Vendor gargara",
+    "vendor_dashboard": "Vendor dashboard",
+    "my_products": "Ta ala",
+    "discount_offers": "Diskawunti immu"
   },
   "organization": {
     "become_org": "Dereja gargara",
-    "internal_pools": "Garssa yichchilcho medha",
-    "member_saving": "Membara maro qixxa"
+    "internal_pools": "Garssa dame yichchilcho medha",
+    "member_saving": "Membara maro qixxa",
+    "org_dashboard": "Dereja dashboard",
+    "member_pools": "Membara dame yichchilcho"
+  },
+  "filters": {
+    "title": "Dame yichchilcho girgira",
+    "category": "Qayya",
+    "city": "Magaala",
+    "creator": "Medha",
+    "all_categories": "Qayya wolqa",
+    "vehicles": "Gabbiro",
+    "machinery": "Maashina",
+    "electronics": "Eletirooniksi",
+    "property": "Qaano",
+    "furniture": "Qumbula",
+    "other": "Midi",
+    "all_cities": "Magaala wolqa",
+    "all_creators": "Medha wolqa",
+    "admin": "Admin",
+    "agents": "Agente",
+    "vendors": "Vendora",
+    "organizations": "Derejeto",
+    "individuals": "Koro"
+  },
+  "payment": {
+    "title": "Hiixoo",
+    "telebirr": "Telebirr",
+    "cbe_birr": "CBE Birr",
+    "pay_now": "Ha wode hiixo",
+    "processing": "Ba'anno...",
+    "payment_successful": "Hiixoo maadhino!",
+    "payment_failed": "Hiixoo maadhiibenno. Qire de'issi.",
+    "enter_phone": "Ne telefoona qixxa gessa",
+    "total_due": "Wolqa hiixoo"
+  },
+  "draw": {
+    "title": "Qaalaa gombessa",
+    "run_draw": "Gombessa kawisa",
+    "draw_completed": "Gombessa maadhino!",
+    "winner_announced": "Mo'ichcho xaafino!",
+    "congratulations": "Moo'issi!",
+    "you_won": "Mo'atte!",
+    "ticket_count": "Tikette looma",
+    "random_seed": "Qorxo mishira",
+    "verified_draw": "Gombessa huudhino"
   },
   "footer": {
-    "quick_links": "Xixxiro linkka",
+    "quick_links": "Xixxiro linkko",
     "support": "Maadayso",
     "contact_us": "Nu qiqira",
     "rights": "Hoo'a amar",
-    "built_by": "Medhise"
+    "built_by": "Medhise",
+    "follow_us": "Nu huuda"
   },
   "banners": {
     "agent": "Agent ba'a - 10% komishshana hee'a",
     "vendor": "Vendor ba'a - Ne ala gargara",
-    "organization": "Dereja gargara - Garssa yichchilcho medha",
-    "individual": "Maxa - Hara qaala hee'a"
+    "organization": "Dereja gargara - Garssa dame yichchilcho medha",
+    "individual": "Maxa - Qaalaa miidho hasa"
+  },
+  "chatbot": {
+    "title": "Abbaa Carraa gargaara",
+    "placeholder": "Ne oressa xaafa...",
+    "send": "Kirira",
+    "online": "Korro",
+    "ask_me": "Wolqa oressa!"
   }
 }
