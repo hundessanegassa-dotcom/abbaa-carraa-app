@@ -8,15 +8,12 @@ import NewsletterSubscribe from '../components/NewsletterSubscribe';
 import Banner from '../components/Banner';
 import MovingAd from '../components/MovingAd';
 import AdvertisingBanner from '../components/AdvertisingBanner';
-import PoolFilters from '../components/PoolFilters';
 
 export default function Home() {
   const { t } = useTranslation();
   const [pools, setPools] = useState([]);
-  const [filteredPools, setFilteredPools] = useState([]);
   const [featuredPools, setFeaturedPools] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeFilters, setActiveFilters] = useState({ category: 'all', city: 'all', creator: 'all' });
   const [stats, setStats] = useState({
     total_pools: 0,
     total_winners: 0,
@@ -28,14 +25,6 @@ export default function Home() {
     fetchStats();
     fetchPools();
   }, []);
-
-  useEffect(() => {
-    if (pools.length > 0) {
-      applyFilters(activeFilters);
-    } else {
-      setFilteredPools(pools);
-    }
-  }, [pools, activeFilters]);
 
   async function fetchStats() {
     try {
@@ -75,38 +64,6 @@ export default function Home() {
     }
   }
 
-  const applyFilters = (filters) => {
-    setActiveFilters(filters);
-    let filtered = [...pools];
-    
-    if (filters.category !== 'all') {
-      const categoryKeywords = {
-        vehicle: ['car', 'truck', 'v8', 'sino', 'toyota', 'motorcycle', 'bike'],
-        machinery: ['excavator', 'loader', 'block machine', 'tractor', 'machine', 'cnc'],
-        electronics: ['laptop', 'phone', 'computer', 'tv', 'dell', 'iphone'],
-        property: ['house', 'home', 'villa', 'apartment', 'land'],
-        furniture: ['furniture', 'sofa', 'bed', 'table', 'chair']
-      };
-      const keywords = categoryKeywords[filters.category] || [];
-      filtered = filtered.filter(pool => 
-        keywords.some(keyword => 
-          pool.prize_name?.toLowerCase().includes(keyword) || 
-          pool.description?.toLowerCase().includes(keyword)
-        )
-      );
-    }
-
-    if (filters.city !== 'all') {
-      filtered = filtered.filter(pool => pool.city === filters.city);
-    }
-
-    if (filters.creator !== 'all') {
-      filtered = filtered.filter(pool => pool.creator_type === filters.creator);
-    }
-    
-    setFilteredPools(filtered);
-  };
-
   return (
     <>
       <Head>
@@ -116,29 +73,31 @@ export default function Home() {
       </Head>
 
       <main>
-        {/* Hero Section - Mobile First, Full Image Visible */}
-        <section className="relative bg-green-900 text-white overflow-hidden">
-          <div className="relative w-full">
+        {/* Hero Section */}
+        <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden">
+          <div className="absolute inset-0 z-0">
             <img 
               src="/images/abbaa carraa.png"
               alt="Abbaa Carraa"
-              className="w-full h-auto max-h-[60vh] sm:max-h-[70vh] md:max-h-none md:h-full md:object-cover object-contain bg-green-900"
+              className="w-full h-full object-cover object-center"
             />
-            <div className="absolute inset-0 bg-black/30"></div>
-            
-            <div className="absolute bottom-0 left-0 right-0 z-10 p-4 pb-8 text-center bg-gradient-to-t from-black/70 via-black/30 to-transparent">
-              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-1 drop-shadow-lg">
+            <div className="absolute inset-0 bg-black/40"></div>
+          </div>
+          
+          <div className="relative z-10 container mx-auto px-4 flex flex-col justify-end min-h-[450px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[700px]">
+            <div className="pb-8 sm:pb-12 md:pb-16 text-center">
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 drop-shadow-lg">
                 Welcome to <span className="text-yellow-300">Abbaa Carraa</span>
               </h1>
-              <p className="text-xs sm:text-sm md:text-base mb-3 max-w-2xl mx-auto drop-shadow-md opacity-95 px-2">
+              <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-4 sm:mb-6 max-w-2xl mx-auto drop-shadow-md opacity-95 px-2">
                 {t('common.tagline')}
               </p>
               
               <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 sm:px-5 sm:py-2 rounded-full font-semibold text-xs sm:text-sm transition-all shadow-lg">
+                <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition-all shadow-lg">
                   {t('common.get_started')}
                 </Link>
-                <Link href="/listings" className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-1.5 sm:px-5 sm:py-2 rounded-full font-semibold text-xs sm:text-sm transition-all border border-white/30">
+                <Link href="/listings" className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition-all border border-white/30">
                   {t('common.browse_prizes')}
                 </Link>
               </div>
@@ -173,16 +132,7 @@ export default function Home() {
         <MovingAd />
         <AdvertisingBanner />
 
-        <PoolFilters onFilterChange={applyFilters} />
-
-        <div className="container mx-auto px-4 pb-2">
-          <p className="text-sm text-gray-500">
-            Showing {filteredPools.length} of {pools.length} active pools
-            {activeFilters.category !== 'all' && <span className="ml-1">• Category: {activeFilters.category}</span>}
-            {activeFilters.city !== 'all' && <span className="ml-1">• City: {activeFilters.city}</span>}
-          </p>
-        </div>
-
+        {/* Featured Pools */}
         {featuredPools.length > 0 && (
           <section className="container mx-auto px-4 py-8">
             <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">⭐ Featured Pools</h2>
@@ -194,29 +144,23 @@ export default function Home() {
           </section>
         )}
 
+        {/* All Active Pools */}
         <section className="container mx-auto px-4 py-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
-            {activeFilters.category !== 'all' || activeFilters.city !== 'all' || activeFilters.creator !== 'all' 
-              ? 'Filtered Results' 
-              : 'Active Pools'}
-          </h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">{t('pools.active_pools')}</h2>
           {loading ? (
             <div className="flex justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
             </div>
-          ) : filteredPools.length === 0 ? (
+          ) : pools.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500 mb-4">No pools match your filters.</p>
-              <button 
-                onClick={() => applyFilters({ category: 'all', city: 'all', creator: 'all' })} 
-                className="text-green-600 hover:text-green-700"
-              >
-                Clear filters →
-              </button>
+              <p className="text-gray-500 mb-4">{t('pools.no_pools')}</p>
+              <Link href="/create-pool" className="text-green-600 hover:text-green-700">
+                {t('common.create_pool')} →
+              </Link>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredPools.map(pool => (
+              {pools.map(pool => (
                 <PoolCard key={pool.id} pool={pool} />
               ))}
             </div>
