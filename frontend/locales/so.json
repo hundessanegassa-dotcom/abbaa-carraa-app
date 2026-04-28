@@ -9,7 +9,7 @@
     "register": "Isdiiwaan Gel",
     "logout": "Bax",
     "dashboard": "Dashboard",
-    "create_pool": "Hagbad Abuur",
+    "create_pool": "Abuur Qeybta Bakhtiyaada",
     "browse_prizes": "Baadh Abaal-marinaha",
     "winners": "Kuwa Guuleystay",
     "about": "Nagu Saabsan",
@@ -20,11 +20,32 @@
     "get_started": "Bilow",
     "trusted_agents": "Wakiilada La Isku Halayaa",
     "total_raised": "Wadarta La Soo Ururiyay",
-    "all_cities": "Dhamaan Magaalooyinka"
+    "all_cities": "Dhamaan Magaalooyinka",
+    "loading": "Abaal-marinaha cajiibka ah ayaa la soo shubayaa...",
+    "back": "Dib",
+    "save": "Badbaadi",
+    "cancel": "Baabi",
+    "delete": "Tirtir",
+    "edit": "Wax Ka Badal",
+    "submit": "Gudbi",
+    "search": "Raadi",
+    "filter": "Shaandhayn",
+    "clear_filters": "Shaandhaynaha Nadiifi",
+    "showing": "Muuqata",
+    "of": "ee",
+    "active_pools": "Qeybaha Bakhtiyaada",
+    "no_pools": "Waqtigan xaadirka ah ma jiraan Qeybaha Bakhtiyaada",
+    "create_first_pool": "Abuur Qeybta Bakhtiyaada →"
+  },
+  "stats": {
+    "active_pools": "Qeybaha Bakhtiyaada",
+    "winners": "Kuwa Guuleystay",
+    "agents": "Wakiilada",
+    "raised": "La Soo Ururiyay"
   },
   "pools": {
-    "active_pools": "Hagbadaha Firfircoon",
-    "featured_pools": "Hagbadaha La Soo Bandhigay",
+    "active_pools": "Qeybaha Bakhtiyaada",
+    "featured_pools": "Qeybaha Bakhtiyaada La Soo Bandhigay",
     "target_amount": "Qadarka Loo Bartilmaameedsaday",
     "current_amount": "Qadarka Hadha",
     "contribution_amount": "Qadarka Tabaruca",
@@ -34,12 +55,21 @@
     "draw_date": "Taariikhda Bakhtiyaada",
     "started": "Bilowday",
     "join_now": "Hada Ku Biir",
-    "no_pools": "Ma Jiraan Hagbad Firfircoon oo Hada"
+    "no_pools": "Qeybaha Bakhtiyaada ma jiraan",
+    "remaining_days": "maalmaha ka hadhay",
+    "ending_soon": "Dhowaan dhammaanayaa!",
+    "cash_equivalent": "Damanaad Lacag Oo Siman",
+    "winner_gets": "Ku guuleysta wuxuu helayaa",
+    "entry_fee": "Kharka Gelitaanka",
+    "seats": "kursi",
+    "select_seats": "Dooro tirada kursiyada",
+    "total_amount": "Wadarta Guud",
+    "tickets": "tigidhada"
   },
   "how_it_works": {
     "title": "Siday Abbaa Carraa U Shaqeyso",
-    "find_pool": "Raadi Hagbad",
-    "find_pool_desc": "Hagbadaha firfircoon ee ku yaal magaaladaada ama qaybtaada ka baadh",
+    "find_pool": "Raadi Qeybta Bakhtiyaada",
+    "find_pool_desc": "Qeybaha bakhtiyaada ee firfircoon magaaladaada ama qaybtaada ka baadh",
     "contribute": "Tabaruc",
     "contribute_desc": "Ku bixi Telebirr ama CBE Birr si ammaan ah",
     "win": "Ku Guuleyso & U Dabaaldeeg",
@@ -51,32 +81,90 @@
     "register_agent": "Isdiiwaan Gel Wakiil Ahaan",
     "agent_dashboard": "Dashboard-ka Wakiilka",
     "my_listings": "Liiska Heyga",
-    "my_pools": "Hagbadahayga",
+    "my_pools": "Qeybaha Bakhtiyaada Hayga",
     "participants": "Kaqeybgalayaasha",
-    "commissions": "Guddiyada"
+    "commissions": "Guddiyada",
+    "create_listing": "Abuur Liis",
+    "listing_title": "Ciwaanka Liiska",
+    "listing_description": "Sharaxaad"
   },
   "vendor": {
     "become_vendor": "Noqo Alaabeeyaha",
     "list_products": "Liis Gayso Alaabtaada",
     "offer_discounts": "U Soo Bandhig Dhimis Kaqeybgalayaasha Aan Ku Guulaysan",
-    "register_vendor": "Isdiiwaan Gel Alaabeeyaha Ahaan"
+    "register_vendor": "Isdiiwaan Gel Alaabeeyaha Ahaan",
+    "vendor_dashboard": "Dashboard-ka Alaabeeyaha",
+    "my_products": "Alaabtayda",
+    "discount_offers": "Dalabyada Dhimista"
   },
   "organization": {
     "become_org": "Isdiiwaan Gel Urur",
-    "internal_pools": "Abuur Hagbadaha Gudaha",
-    "member_saving": "Kaydinta Bulshada ee Xubnaha"
+    "internal_pools": "Abuur Qeybaha Bakhtiyaada Gudaha",
+    "member_saving": "Kaydinta Bulshada ee Xubnaha",
+    "org_dashboard": "Dashboard-ka Ururka",
+    "member_pools": "Qeybaha Bakhtiyaada Xubnaha"
+  },
+  "filters": {
+    "title": "Shaandhayn Qeybaha Bakhtiyaada",
+    "category": "Qayb",
+    "city": "Magaalo",
+    "creator": "Abuuraha",
+    "all_categories": "Dhammaan Qaybaha",
+    "vehicles": "Baabuurta",
+    "machinery": "Mashiinnada",
+    "electronics": "Elektarooniga",
+    "property": "Hanti",
+    "furniture": "Alaabta Guriga",
+    "other": "Kale",
+    "all_cities": "Dhammaan Magaalooyinka",
+    "all_creators": "Dhammaan Abuuraha",
+    "admin": "Maamule",
+    "agents": "Wakiilada",
+    "vendors": "Alaabeeyayaasha",
+    "organizations": "Ururrada",
+    "individuals": "Shakhsiyaadka"
+  },
+  "payment": {
+    "title": "Bixinta",
+    "telebirr": "Telebirr",
+    "cbe_birr": "CBE Birr",
+    "pay_now": "Hada Bixi",
+    "processing": "Waa la wadayaa...",
+    "payment_successful": "Bixintu way ku guuleysatay!",
+    "payment_failed": "Bixintu way ku guul darreysatay. Fadlan isku day mar kale.",
+    "enter_phone": "Gali lambarka taleefankaaga",
+    "total_due": "Wadarta La Bixinayo"
+  },
+  "draw": {
+    "title": "Bakhtiyaada Abaal-marinta",
+    "run_draw": "Samee Bakhtiyaad",
+    "draw_completed": "Bakhtiyaadku waa dhammaaday!",
+    "winner_announced": "Ku guuleystaha waa la dhawaaqay!",
+    "congratulations": "Hambalyo!",
+    "you_won": "Waa ku guuleysatay!",
+    "ticket_count": "Tirada tigidhada",
+    "random_seed": "Abuurka random-ka",
+    "verified_draw": "Bakhtiyaad La Xaqiijiyay"
   },
   "footer": {
     "quick_links": "Xiriiriyeyaasha Dheere",
     "support": "Taageero",
     "contact_us": "Nala Soo Xiriir",
     "rights": "Xuquuqda Oo Dhan Waa Loo Dhawran Yahay",
-    "built_by": "Waxaa Dhisey"
+    "built_by": "Waxaa Dhisey",
+    "follow_us": "Nagu Soo Biir"
   },
   "banners": {
     "agent": "Noqo Wakiil - Hel 10% Guddi",
     "vendor": "Noqo Alaabeeyaha - Liis Gayso Alaabtaada",
-    "organization": "Isdiiwaan Gel Urur - Abuur Hagbadaha Gudaha",
+    "organization": "Isdiiwaan Gel Urur - Abuur Qeybaha Bakhtiyaada Gudaha",
     "individual": "Ku Biir Shaqsi Ahaan - Ku Guuleyso Abaal-marinaha Cajiibka ah"
+  },
+  "chatbot": {
+    "title": "Caawiye Abbaa Carraa",
+    "placeholder": "Su'aashaada qor...",
+    "send": "Dir",
+    "online": "Khadka",
+    "ask_me": "Wax kasta i weydii!"
   }
 }
