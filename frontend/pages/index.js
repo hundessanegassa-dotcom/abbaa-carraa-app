@@ -1,4 +1,3 @@
-import PoolFilters from '../components/PoolFilters';
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -9,12 +8,15 @@ import NewsletterSubscribe from '../components/NewsletterSubscribe';
 import Banner from '../components/Banner';
 import MovingAd from '../components/MovingAd';
 import AdvertisingBanner from '../components/AdvertisingBanner';
+import PoolFilters from '../components/PoolFilters';
 
 export default function Home() {
   const { t } = useTranslation();
   const [pools, setPools] = useState([]);
+  const [filteredPools, setFilteredPools] = useState([]);
   const [featuredPools, setFeaturedPools] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeFilters, setActiveFilters] = useState({ category: 'all', city: 'all', creator: 'all' });
   const [stats, setStats] = useState({
     total_pools: 0,
     total_winners: 0,
@@ -26,6 +28,14 @@ export default function Home() {
     fetchStats();
     fetchPools();
   }, []);
+
+  useEffect(() => {
+    if (pools.length > 0) {
+      applyFilters(activeFilters);
+    } else {
+      setFilteredPools(pools);
+    }
+  }, [pools, activeFilters]);
 
   async function fetchStats() {
     try {
@@ -64,6 +74,43 @@ export default function Home() {
       setLoading(false);
     }
   }
+
+  // Apply filters to pools
+  const applyFilters = (filters) => {
+    setActiveFilters(filters);
+    let filtered = [...pools];
+    
+    // Filter by category
+    if (filters.category !== 'all') {
+      const categoryKeywords = {
+        vehicle: ['car', 'truck', 'v8', 'sino', 'toyota', 'motorcycle', 'bike'],
+        machinery: ['excavator', 'loader', 'block machine', 'tractor', 'machine', 'cnc'],
+        electronics: ['laptop', 'phone', 'computer', 'tv', 'dell', 'iphone'],
+        property: ['house', 'home', 'villa', 'apartment', 'land'],
+        furniture: ['furniture', 'sofa', 'bed', 'table', 'chair']
+      };
+      const keywords = categoryKeywords[filters.category] || [];
+      filtered = filtered.filter(pool => 
+        keywords.some(keyword => 
+          pool.prize_name?.toLowerCase().includes(keyword) || 
+          pool.description?.toLowerCase().includes(keyword)
+        )
+      );
+    }
+
+    // Filter by city
+    if (filters.city !== 'all') {
+      filtered = filtered.filter(pool => pool.city === filters.city);
+    }
+
+    // Filter by creator type (if available in database)
+    if (filters.creator !== 'all') {
+      // This will work when you add creator_type to pools
+      filtered = filtered.filter(pool => pool.creator_type === filters.creator);
+    }
+    
+    setFilteredPools(filtered);
+  };
 
   return (
     <>
@@ -133,6 +180,18 @@ export default function Home() {
         <MovingAd />
         <AdvertisingBanner />
 
+        {/* Pool Filters */}
+        <PoolFilters onFilterChange={applyFilters} />
+
+        {/* Filter Results Count */}
+        <div className="container mx-auto px-4 pb-2">
+          <p className="text-sm text-gray-500">
+            Showing {filteredPools.length} of {pools.length} active pools
+            {activeFilters.category !== 'all' && <span className="ml-1">• Category: {activeFilters.category}</span>}
+            {activeFilters.city !== 'all' && <span className="ml-1">• City: {activeFilters.city}</span>}
+          </p>
+        </div>
+
         {/* Featured Pools */}
         {featuredPools.length > 0 && (
           <section className="container mx-auto px-4 py-8">
@@ -145,23 +204,30 @@ export default function Home() {
           </section>
         )}
 
-        {/* All Active Pools */}
+        {/* All Active Pools (Filtered) */}
         <section className="container mx-auto px-4 py-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">{t('pools.active_pools')}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
+            {activeFilters.category !== 'all' || activeFilters.city !== 'all' || activeFilters.creator !== 'all' 
+              ? 'Filtered Results' 
+              : 'Active Pools'}
+          </h2>
           {loading ? (
             <div className="flex justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
             </div>
-          ) : pools.length === 0 ? (
+          ) : filteredPools.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500 mb-4">{t('pools.no_pools')}</p>
-              <Link href="/create-pool" className="text-green-600 hover:text-green-700">
-                {t('common.create_pool')} →
-              </Link>
+              <p className="text-gray-500 mb-4">No pools match your filters.</p>
+              <button 
+                onClick={() => applyFilters({ category: 'all', city: 'all', creator: 'all' })} 
+                className="text-green-600 hover:text-green-700"
+              >
+                Clear filters →
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {pools.map(pool => (
+              {filteredPools.map(pool => (
                 <PoolCard key={pool.id} pool={pool} />
               ))}
             </div>
