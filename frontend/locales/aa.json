@@ -1,6 +1,6 @@
 {
   "common": {
-    "welcome": "Abbaa carraa fanah tanfale",
+    "welcome": "Ababaa Carraa fanah tanfale",
     "tagline": "Qadaaduu kee gacalka addunyaal marroo qadaaduu kee jaahil",
     "home": "Magaala",
     "join": "Cula",
@@ -9,7 +9,7 @@
     "register": "Galal",
     "logout": "Bax",
     "dashboard": "Dashboard",
-    "create_pool": "Poolin ugu",
+    "create_pool": "Magaala qadaaduu ugu",
     "browse_prizes": "Qadaaduu cubbusa",
     "winners": "Qufa",
     "about": "Nek nee",
@@ -20,11 +20,32 @@
     "get_started": "Qimbisa",
     "trusted_agents": "Agenta elleelite",
     "total_raised": "Inkih tanfale",
-    "all_cities": "Magaalool inkih"
+    "all_cities": "Magaalool inkih",
+    "loading": "Qadaaduu ajaa'ibsiisuh tanfale...",
+    "back": "Garu",
+    "save": "Nabsi",
+    "cancel": "Maban",
+    "delete": "Baxsi",
+    "edit": "Awkal",
+    "submit": "Kulul",
+    "search": "Gur",
+    "filter": "Calalchi",
+    "clear_filters": "Calalgawwan haq",
+    "showing": "Bulable",
+    "of": "kak",
+    "active_pools": "Magaala qadaaduu",
+    "no_pools": "Akkah magaala qadaaduu maybul",
+    "create_first_pool": "Magaala qadaaduu ugu →"
+  },
+  "stats": {
+    "active_pools": "Magaala qadaaduu",
+    "winners": "Qufa",
+    "agents": "Agenta",
+    "raised": "Tanfale"
   },
   "pools": {
-    "active_pools": "Poolwa taamisa",
-    "featured_pools": "Poolwa doona",
+    "active_pools": "Magaala qadaaduu",
+    "featured_pools": "Magaala qadaaduu doona",
     "target_amount": "Gaba galla",
     "current_amount": "Akkah gaba",
     "contribution_amount": "Gacalka gaba",
@@ -34,49 +55,116 @@
     "draw_date": "Yolwa ayro",
     "started": "Qimbise",
     "join_now": "Akkah cul",
-    "no_pools": "Poolwa taamisa maybul"
+    "no_pools": "Magaala qadaaduu maybul",
+    "remaining_days": "ayro raqta",
+    "ending_soon": "Xayyo!",
+    "cash_equivalent": "Diiray leyke",
+    "winner_gets": "Cuwa maxaa",
+    "entry_fee": "Cula gaba",
+    "seats": "ferasa",
+    "select_seats": "Ferasa looma doona",
+    "total_amount": "Inkih gaba",
+    "tickets": "tiketti"
   },
   "how_it_works": {
-    "title": "Abbaa carraa innah tanfale",
-    "find_pool": "Pool gur",
-    "find_pool_desc": "Poolwa taamisa magaalal hinnay qaynal cubbus",
+    "title": "Innah tanfale",
+    "find_pool": "Magaala qadaaduu gur",
+    "find_pool_desc": "Magaalool hinnay qaynal cubbus",
     "contribute": "Gacal",
     "contribute_desc": "Telebirr hinnay CBE Birr luk kullum kah",
-    "win": "Qufaay kee ceelat",
+    "win": "Cuwa kee ceelat",
     "win_desc": "Gaba yekke waqdi yolwa qadaaduu cuwa"
   },
   "agent": {
     "become_agent": "Agent cul",
-    "earn_commission": "10% komishiyon maal",
+    "earn_commission": "Komishiyon 10% maal",
     "register_agent": "Agent galal",
     "agent_dashboard": "Agent dashboard",
     "my_listings": "Moo gaba",
-    "my_pools": "Moo poolwa",
+    "my_pools": "Moo magaala qadaaduu",
     "participants": "Culutta",
-    "commissions": "Komishiyonwa"
+    "commissions": "Komishiyonwa",
+    "create_listing": "Gaba ugu",
+    "listing_title": "Gaba qangale",
+    "listing_description": "Kubbi"
   },
   "vendor": {
     "become_vendor": "Vendor cul",
     "list_products": "Moo alaaluwa cubbus",
     "offer_discounts": "Culutta may qufaah diskawunti acu",
-    "register_vendor": "Vendor galal"
+    "register_vendor": "Vendor galal",
+    "vendor_dashboard": "Vendor dashboard",
+    "my_products": "Moo aluwa",
+    "discount_offers": "Diskawunti acuwa"
   },
   "organization": {
     "become_org": "Urru galal",
-    "internal_pools": "Sinni poolwa ugu",
-    "member_saving": "Marih keydinta"
+    "internal_pools": "Sinni magaala qadaaduu ugu",
+    "member_saving": "Marih keydinta",
+    "org_dashboard": "Urru dashboard",
+    "member_pools": "Magaala qadaaduu urru"
+  },
+  "filters": {
+    "title": "Magaala qadaaduu calalchi",
+    "category": "Qayna",
+    "city": "Magaala",
+    "creator": "Ugu",
+    "all_categories": "Qaynal inkih",
+    "vehicles": "Gariwa",
+    "machinery": "Mashiinwa",
+    "electronics": "Eletirooniks",
+    "property": "Qabeena",
+    "furniture": "Buxa aluwa",
+    "other": "Riyaka",
+    "all_cities": "Magaalool inkih",
+    "all_creators": "Ugoot inkih",
+    "admin": "Admin",
+    "agents": "Agenta",
+    "vendors": "Vendora",
+    "organizations": "Urruwa",
+    "individuals": "Dududa"
+  },
+  "payment": {
+    "title": "Gacal",
+    "telebirr": "Telebirr",
+    "cbe_birr": "CBE Birr",
+    "pay_now": "Akkah gacal",
+    "processing": "Taamisa...",
+    "payment_successful": "Gacal teete!",
+    "payment_failed": "Gacal taaminn. Lak u gaca.",
+    "enter_phone": "Telefoon numur cu",
+    "total_due": "Inkih gacal"
+  },
+  "draw": {
+    "title": "Qadaaduu yolwa",
+    "run_draw": "Yolwa ug",
+    "draw_completed": "Yolwa teete!",
+    "winner_announced": "Cuwa xabise!",
+    "congratulations": "Ceelat!",
+    "you_won": "Cuwa!",
+    "ticket_count": "Tiketti looma",
+    "random_seed": "Qafar seed",
+    "verified_draw": "Yolwa numma teete"
   },
   "footer": {
     "quick_links": "Xawaalatuu",
     "support": "Qafalat",
     "contact_us": "Nee xagta",
     "rights": "Xaquq inkih tu kaa",
-    "built_by": "Bih luk"
+    "built_by": "Bih luk",
+    "follow_us": "Nek katba"
   },
   "banners": {
     "agent": "Agent cul - 10% komishiyon maal",
     "vendor": "Vendor cul - Aluwa cubbus",
-    "organization": "Urru galal - Sinni poolwa ug",
-    "individual": "Cula - Qadaaduu maal"
+    "organization": "Urru galal - Sinni magaala qadaaduu ugu",
+    "individual": "Cula - Qadaaduu ajaa'ibsiisuh cuwa"
+  },
+  "chatbot": {
+    "title": "Abbaa Carraa cattaa",
+    "placeholder": "Essara cu...",
+    "send": "Rub",
+    "online": "Kuluk",
+    "ask_me": "Moo rub!"
   }
 }
