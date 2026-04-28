@@ -8,12 +8,15 @@ import NewsletterSubscribe from '../components/NewsletterSubscribe';
 import Banner from '../components/Banner';
 import MovingAd from '../components/MovingAd';
 import AdvertisingBanner from '../components/AdvertisingBanner';
+import SimpleFilters from '../components/SimpleFilters';
 
 export default function Home() {
   const { t } = useTranslation();
   const [pools, setPools] = useState([]);
+  const [filteredPools, setFilteredPools] = useState([]);
   const [featuredPools, setFeaturedPools] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeFilters, setActiveFilters] = useState({ category: 'all', city: 'all' });
   const [stats, setStats] = useState({
     total_pools: 0,
     total_winners: 0,
@@ -25,6 +28,14 @@ export default function Home() {
     fetchStats();
     fetchPools();
   }, []);
+
+  useEffect(() => {
+    if (pools.length > 0) {
+      applyFilters(activeFilters);
+    } else {
+      setFilteredPools(pools);
+    }
+  }, [pools, activeFilters]);
 
   async function fetchStats() {
     try {
@@ -64,10 +75,40 @@ export default function Home() {
     }
   }
 
+  const applyFilters = (filters) => {
+    setActiveFilters(filters);
+    let filtered = [...pools];
+    
+    // Filter by category
+    if (filters.category !== 'all') {
+      const categoryKeywords = {
+        vehicle: ['car', 'truck', 'v8', 'sino', 'toyota', 'motorcycle', 'bike', 'vitara'],
+        machinery: ['excavator', 'loader', 'block machine', 'tractor', 'machine', 'cnc'],
+        electronics: ['laptop', 'phone', 'computer', 'tv', 'dell', 'iphone', 'samsung'],
+        property: ['house', 'home', 'villa', 'apartment', 'land'],
+        furniture: ['furniture', 'sofa', 'bed', 'table', 'chair', 'cabinet']
+      };
+      const keywords = categoryKeywords[filters.category] || [];
+      filtered = filtered.filter(pool => 
+        keywords.some(keyword => 
+          pool.prize_name?.toLowerCase().includes(keyword) || 
+          pool.description?.toLowerCase().includes(keyword)
+        )
+      );
+    }
+
+    // Filter by city
+    if (filters.city !== 'all') {
+      filtered = filtered.filter(pool => pool.city === filters.city);
+    }
+    
+    setFilteredPools(filtered);
+  };
+
   return (
     <>
       <Head>
-        <title>Abbaa Carraa - Community Prize Platform</title>
+        <title>Abbaa Carraa - {t('common.tagline')}</title>
         <meta name="description" content={t('common.tagline')} />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </Head>
@@ -87,7 +128,7 @@ export default function Home() {
           <div className="relative z-10 container mx-auto px-4 flex flex-col justify-end min-h-[450px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[700px]">
             <div className="pb-8 sm:pb-12 md:pb-16 text-center">
               <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 drop-shadow-lg">
-                Welcome to <span className="text-yellow-300">Abbaa Carraa</span>
+                {t('common.welcome')} <span className="text-yellow-300">Abbaa Carraa</span>
               </h1>
               <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-4 sm:mb-6 max-w-2xl mx-auto drop-shadow-md opacity-95 px-2">
                 {t('common.tagline')}
@@ -132,10 +173,24 @@ export default function Home() {
         <MovingAd />
         <AdvertisingBanner />
 
+        {/* Filters */}
+        <SimpleFilters onFilterChange={applyFilters} />
+
+        {/* Filter Results Count */}
+        {(activeFilters.category !== 'all' || activeFilters.city !== 'all') && (
+          <div className="container mx-auto px-4 pb-2">
+            <p className="text-sm text-gray-500">
+              {t('common.showing')} {filteredPools.length} {t('common.of')} {pools.length} {t('common.active_pools')}
+              {activeFilters.category !== 'all' && <span className="ml-1">• {t('filters.category')}: {activeFilters.category}</span>}
+              {activeFilters.city !== 'all' && <span className="ml-1">• {t('filters.city')}: {activeFilters.city}</span>}
+            </p>
+          </div>
+        )}
+
         {/* Featured Pools */}
         {featuredPools.length > 0 && (
           <section className="container mx-auto px-4 py-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">⭐ Featured Pools</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">⭐ {t('pools.featured_pools')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {featuredPools.map(pool => (
                 <PoolCard key={pool.id} pool={pool} featured={true} />
@@ -146,21 +201,28 @@ export default function Home() {
 
         {/* All Active Pools */}
         <section className="container mx-auto px-4 py-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">{t('pools.active_pools')}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
+            {activeFilters.category !== 'all' || activeFilters.city !== 'all' 
+              ? t('filters.title') 
+              : t('pools.active_pools')}
+          </h2>
           {loading ? (
             <div className="flex justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
             </div>
-          ) : pools.length === 0 ? (
+          ) : filteredPools.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
               <p className="text-gray-500 mb-4">{t('pools.no_pools')}</p>
-              <Link href="/create-pool" className="text-green-600 hover:text-green-700">
-                {t('common.create_pool')} →
-              </Link>
+              <button 
+                onClick={() => applyFilters({ category: 'all', city: 'all' })} 
+                className="text-green-600 hover:text-green-700"
+              >
+                {t('common.clear_filters')} →
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {pools.map(pool => (
+              {filteredPools.map(pool => (
                 <PoolCard key={pool.id} pool={pool} />
               ))}
             </div>
