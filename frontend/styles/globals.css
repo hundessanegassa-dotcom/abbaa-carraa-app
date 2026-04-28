@@ -71,155 +71,30 @@
 }
 
 /* ============================================
-   HERO BANNER - MOBILE FIX
-   Ensures correct height on all devices without cropping
+   HERO BANNER MOBILE FIX - Full image visible
    ============================================ */
 
-/* Hero container - ensures proper height on mobile */
-.hero-container {
-  min-height: 500px;
-}
-
-/* Mobile hero banner fix - prevents cropping and ensures full image visibility */
+/* Mobile: Show full image without cropping on phone */
 @media (max-width: 768px) {
-  .hero-container {
-    min-height: 60vh !important;
-  }
-  
-  /* Ensure hero text is readable on small screens */
-  .hero-title {
-    font-size: 1.5rem !important;
-    line-height: 2rem !important;
-  }
-  
-  .hero-tagline {
-    font-size: 0.875rem !important;
-    line-height: 1.25rem !important;
-  }
-  
-  .hero-button {
-    font-size: 0.75rem !important;
-    padding-left: 0.75rem !important;
-    padding-right: 0.75rem !important;
-    padding-top: 0.375rem !important;
-    padding-bottom: 0.375rem !important;
-  }
-  
-  /* Fix for hero background image */
-  .hero-background {
-    object-fit: cover !important;
+  .hero-background-image {
+    object-fit: contain !important;
     object-position: center !important;
+    background-color: #064e3b;
   }
-}
-
-/* Tablet adjustments */
-@media (min-width: 641px) and (max-width: 768px) {
+  
   .hero-container {
-    min-height: 550px;
+    min-height: auto !important;
   }
-  .hero-title {
-    font-size: 2rem;
-    line-height: 2.5rem;
-  }
-  .hero-tagline {
-    font-size: 1rem;
-    line-height: 1.5rem;
+  
+  .hero-mobile-full {
+    min-height: 85vh !important;
   }
 }
 
-/* Desktop */
+/* Desktop: Cover mode for full width */
 @media (min-width: 769px) {
-  .hero-container {
-    min-height: 650px;
-  }
-}
-
-/* Large Desktop */
-@media (min-width: 1024px) {
-  .hero-container {
-    min-height: 700px;
-  }
-}
-
-/* ============================================
-   HERO IMAGE - FULL VISIBLE ON ALL DEVICES
-   ============================================ */
-
-/* Hero image base style */
-.hero-image {
-  object-fit: cover;
-  object-position: center;
-}
-
-/* Mobile: show full image without cropping */
-@media (max-width: 768px) {
-  .hero-image {
-    object-fit: contain;
-    background-color: #1a4d2e;
-  }
-}
-
-/* Desktop: cover mode for full width effect */
-@media (min-width: 769px) {
-  .hero-image {
-    object-fit: cover;
-  }
-}
-
-/* Ensure images cover correctly */
-.object-cover {
-  object-fit: cover;
-}
-
-.object-contain {
-  object-fit: contain;
-}
-
-/* ============================================
-   RESPONSIVE TEXT SIZES
-   ============================================ */
-
-/* Hero title responsive sizes */
-@media (max-width: 640px) {
-  .hero-title {
-    font-size: 1.5rem;
-    line-height: 2rem;
-  }
-  .hero-tagline {
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-  }
-  .hero-button {
-    font-size: 0.75rem;
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
-    padding-top: 0.375rem;
-    padding-bottom: 0.375rem;
-  }
-}
-
-@media (min-width: 641px) and (max-width: 768px) {
-  .hero-title {
-    font-size: 2rem;
-    line-height: 2.5rem;
-  }
-  .hero-tagline {
-    font-size: 1rem;
-    line-height: 1.5rem;
-  }
-}
-
-@media (min-width: 769px) and (max-width: 1024px) {
-  .hero-title {
-    font-size: 2.5rem;
-    line-height: 3rem;
-  }
-}
-
-@media (min-width: 1025px) {
-  .hero-title {
-    font-size: 3rem;
-    line-height: 3.5rem;
+  .hero-background-image {
+    object-fit: cover !important;
   }
 }
 
@@ -227,7 +102,6 @@
    UTILITY CLASSES
    ============================================ */
 
-/* Hide scrollbar but keep functionality */
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -237,7 +111,6 @@
   display: none;
 }
 
-/* Line clamp for text truncation */
 .line-clamp-1 {
   display: -webkit-box;
   -webkit-line-clamp: 1;
@@ -252,24 +125,19 @@
   overflow: hidden;
 }
 
-/* Smooth transitions */
 .transition-smooth {
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 300ms;
 }
 
-/* Glassmorphism effect */
 .glass-effect {
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-/* ============================================
-   RESPONSIVE ADJUSTMENTS
-   ============================================ */
-
+/* Responsive adjustments */
 @media (max-width: 640px) {
   .container {
     padding-left: 1rem;
@@ -284,21 +152,8 @@
     font-size: 0.7rem;
     padding: 0.25rem 0.75rem;
   }
-}
-
-/* Tablet and up */
-@media (min-width: 641px) {
-  .container {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-  }
-}
-
-/* ============================================
-   POOL CARD MOBILE OPTIMIZATION
-   ============================================ */
-
-@media (max-width: 640px) {
+  
+  /* Pool card mobile optimization */
   .pool-card-title {
     font-size: 0.875rem;
   }
@@ -314,10 +169,14 @@
   }
 }
 
-/* ============================================
-   FILTER SECTION (for future use)
-   ============================================ */
+@media (min-width: 641px) {
+  .container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
 
+/* Filter chips */
 .filter-chip {
   @apply px-3 py-1.5 rounded-full text-xs sm:text-sm transition flex items-center gap-1;
 }
