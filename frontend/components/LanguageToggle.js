@@ -6,12 +6,17 @@ export default function LanguageToggle() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
+  // All 9 Ethiopian languages
   const languages = [
     { code: 'en', name: 'English', flag: '🇬🇧', nativeName: 'English' },
     { code: 'am', name: 'Amharic', flag: '🇪🇹', nativeName: 'አማርኛ' },
     { code: 'om', name: 'Oromo', flag: '🇪🇹', nativeName: 'Oromoo' },
     { code: 'ti', name: 'Tigrigna', flag: '🇪🇹', nativeName: 'ትግርኛ' },
-    { code: 'so', name: 'Somali', flag: '🇸🇴', nativeName: 'Soomaali' }
+    { code: 'so', name: 'Somali', flag: '🇸🇴', nativeName: 'Soomaali' },
+    { code: 'aa', name: 'Afar', flag: '🇪🇹', nativeName: 'Qafar' },
+    { code: 'wal', name: 'Wolayita', flag: '🇪🇹', nativeName: 'Wolayttatto Doonaa' },
+    { code: 'hdy', name: 'Hadiyya', flag: '🇪🇹', nativeName: 'Hadiyyisa' },
+    { code: 'sid', name: 'Sidama', flag: '🇪🇹', nativeName: 'Sidaamu Afoo' }
   ];
 
   const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
@@ -36,7 +41,7 @@ export default function LanguageToggle() {
     <div className="fixed top-4 right-4 z-50" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 bg-white border border-gray-300 rounded-full px-3 py-2 shadow-md hover:shadow-lg transition-all duration-200"
+        className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-2 shadow-md hover:shadow-lg transition-all duration-200"
       >
         <span className="text-xl">{currentLanguage.flag}</span>
         <span className="text-sm font-medium text-gray-700 hidden sm:inline">
@@ -48,7 +53,7 @@ export default function LanguageToggle() {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden min-w-[160px] z-50">
+        <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden min-w-[200px] max-h-96 overflow-y-auto z-50">
           {languages.map((lang) => (
             <button
               key={lang.code}
