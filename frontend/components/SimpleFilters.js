@@ -62,7 +62,7 @@ export default function SimpleFilters({ onFilterChange }) {
           className="w-full bg-gray-100 text-gray-800 py-2 rounded-xl flex items-center justify-center gap-2 font-medium"
         >
           🔍 {t('filters.title')}
-          {hasActiveFilters && <span className="bg-green-600 text-white text-xs px-2 py-0.5 rounded-full">!</span>}
+          {hasActiveFilters && <span className="bg-green-600 text-white text-xs px-2 py-0.5 rounded-full ml-1">!</span>}
         </button>
       </div>
 
