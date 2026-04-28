@@ -168,3 +168,23 @@
     "ask_me": "Akkayya oychche!"
   }
 }
+{
+  "moving_ad": {
+    "join_today": "🎉 Join Abbaa Carraa today and win amazing prizes!",
+    "recent_winner": "🏆 Recent winner won a Toyota Vitz worth 650,000 ETB!",
+    "become_agent": "💰 Become an Agent and earn 10% commission!",
+    "vendor_opportunity": "🏭 Vendors: List your products as prizes!",
+    "participants": "🎯 Over 1,000+ participants have joined our pools!",
+    "learn_more": "Learn More"
+  },
+  "banners": {
+    "agent": "Become an Agent",
+    "agent_desc": "Earn 10% commission on every pool you create",
+    "vendor": "Become a Vendor",
+    "vendor_desc": "List your products as prizes. Winner gets FREE!",
+    "organization": "Become an Organization",
+    "organization_desc": "Create private pools for your members",
+    "individual": "Join as Individual",
+    "individual_desc": "Contribute for a chance to win big"
+  }
+}
