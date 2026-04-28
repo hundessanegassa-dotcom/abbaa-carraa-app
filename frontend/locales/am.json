@@ -9,7 +9,7 @@
     "register": "ተመዝገብ",
     "logout": "ውጣ",
     "dashboard": "ዳሽቦርድ",
-    "create_pool": "አዲስ የሽልማት መደብ ፍጠር",
+    "create_pool": "አዲስ የእጣ መደብ ፍጠር",
     "browse_prizes": "ሽልማቶችን ይመልከቱ",
     "winners": "አሸናፊዎች",
     "about": "ስለእኛ",
@@ -20,11 +20,32 @@
     "get_started": "ይጀምሩ",
     "trusted_agents": "የታመኑ ወኪሎች",
     "total_raised": "የተሰበሰበ ጠቅላላ",
-    "all_cities": "ሁሉም ከተሞች"
+    "all_cities": "ሁሉም ከተሞች",
+    "loading": "አስደናቂ ሽልማቶች በመጫን ላይ...",
+    "back": "ተመለስ",
+    "save": "አስቀምጥ",
+    "cancel": "ሰርዝ",
+    "delete": "አጥፋ",
+    "edit": "አርትዕ",
+    "submit": "አስገባ",
+    "search": "ፈልግ",
+    "filter": "አጣራ",
+    "clear_filters": "ማጣሪያዎችን አጽዳ",
+    "showing": "በማሳየት ላይ",
+    "of": "ከ",
+    "active_pools": "የእጣ መደቦች",
+    "no_pools": "በአሁኑ ጊዜ ምንም የእጣ መደቦች የሉም",
+    "create_first_pool": "አዲስ የእጣ መደብ ፍጠር →"
+  },
+  "stats": {
+    "active_pools": "የእጣ መደቦች",
+    "winners": "አሸናፊዎች",
+    "agents": "ወኪሎች",
+    "raised": "የተሰበሰበ"
   },
   "pools": {
-    "active_pools": "የሽልማት መደቦች",
-    "featured_pools": "የተለዩ የሽልማት መደቦች",
+    "active_pools": "የእጣ መደቦች",
+    "featured_pools": "የተለዩ የእጣ መደቦች",
     "target_amount": "የዒላማ መጠን",
     "current_amount": "አሁን ያለው መጠን",
     "contribution_amount": "የአስተዋጽኦ መጠን",
@@ -34,22 +55,25 @@
     "draw_date": "የእጣ ቀን",
     "started": "የተጀመረው",
     "join_now": "አሁን ተቀላቀል",
-    "no_pools": "በአሁኑ ጊዜ ምንም የሽልማት መደቦች የሉም"
+    "no_pools": "በአሁኑ ጊዜ ምንም የእጣ መደቦች የሉም",
+    "remaining_days": "የቀሩ ቀናት",
+    "ending_soon": "በቅርቡ ያበቃል!",
+    "cash_equivalent": "የገንዘብ ተመጣጣኝ ዋስትና",
+    "winner_gets": "አሸናፊው የሚያገኘው",
+    "entry_fee": "የመግቢያ ክፍያ",
+    "seats": "መቀመጫዎች",
+    "select_seats": "የመቀመጫ ብዛት ምረጥ",
+    "total_amount": "ጠቅላላ መጠን",
+    "tickets": "ቲኬቶች"
   },
   "how_it_works": {
-    "title": "አባ ካራ እንዴት ይሰራል",
-    "find_pool": "የሽልማት መደብ ፈልግ",
-    "find_pool_desc": "በከተማ ወይም በምድብ የሽልማት መደቦችን ይመልከቱ",
+    "title": "እንዴት ይሰራል",
+    "find_pool": "የእጣ መደብ ፈልግ",
+    "find_pool_desc": "በከተማ ወይም በምድብ የእጣ መደቦችን ይመልከቱ",
     "contribute": "አስተዋጽኦ አድርግ",
     "contribute_desc": "በቴሌብር ወይም በሲቢኢ ብር በደህና ይክፈሉ",
     "win": "አሸንፉ እና አከብሩ",
     "win_desc": "ዒላማው ሲደርስ ፍትሃዊ እጣ አሸናፊውን ይመርጣል"
-  },
-  "stats": {
-    "active_pools": "የሽልማት መደቦች",
-    "winners": "አሸናፊዎች",
-    "agents": "ወኪሎች",
-    "raised": "የተሰበሰበ"
   },
   "agent": {
     "become_agent": "ወኪል ሁን",
@@ -57,32 +81,90 @@
     "register_agent": "እንደ ወኪል ይመዝገቡ",
     "agent_dashboard": "የወኪል ዳሽቦርድ",
     "my_listings": "የእኔ ዝርዝሮች",
-    "my_pools": "የእኔ የሽልማት መደቦች",
+    "my_pools": "የእኔ የእጣ መደቦች",
     "participants": "ተሳታፊዎች",
-    "commissions": "ኮሚሽኖች"
+    "commissions": "ኮሚሽኖች",
+    "create_listing": "አዲስ ዝርዝር ፍጠር",
+    "listing_title": "የዝርዝር ርዕስ",
+    "listing_description": "መግለጫ"
   },
   "vendor": {
     "become_vendor": "አቅራቢ ሁን",
     "list_products": "ምርቶችዎን ዝርዝር ያድርጉ",
     "offer_discounts": "ላላሸነፉ ተሳታፊዎች ቅናሽ ያቅርቡ",
-    "register_vendor": "እንደ አቅራቢ ይመዝገቡ"
+    "register_vendor": "እንደ አቅራቢ ይመዝገቡ",
+    "vendor_dashboard": "የአቅራቢ ዳሽቦርድ",
+    "my_products": "የእኔ ምርቶች",
+    "discount_offers": "የቅናሽ ቅናሾች"
   },
   "organization": {
     "become_org": "ድርጅት ይመዝገቡ",
-    "internal_pools": "የውስጥ የሽልማት መደቦችን ይፍጠሩ",
-    "member_saving": "ለአባላት የማህበረሰብ ቁጠባ"
+    "internal_pools": "የውስጥ የእጣ መደቦችን ይፍጠሩ",
+    "member_saving": "ለአባላት የማህበረሰብ ቁጠባ",
+    "org_dashboard": "የድርጅት ዳሽቦርድ",
+    "member_pools": "የአባላት የእጣ መደቦች"
+  },
+  "filters": {
+    "title": "የእጣ መደቦችን አጣራ",
+    "category": "ምድብ",
+    "city": "ከተማ",
+    "creator": "ፈጣሪ",
+    "all_categories": "ሁሉም ምድቦች",
+    "vehicles": "ተሽከርካሪዎች",
+    "machinery": "ማሽኖች",
+    "electronics": "ኤሌክትሮኒክስ",
+    "property": "ንብረት",
+    "furniture": "የቤት እቃዎች",
+    "other": "ሌላ",
+    "all_cities": "ሁሉም ከተሞች",
+    "all_creators": "ሁሉም ፈጣሪዎች",
+    "admin": "አስተዳዳሪ",
+    "agents": "ወኪሎች",
+    "vendors": "አቅራቢዎች",
+    "organizations": "ድርጅቶች",
+    "individuals": "ግለሰቦች"
+  },
+  "payment": {
+    "title": "ክፍያ",
+    "telebirr": "ቴሌብር",
+    "cbe_birr": "ሲቢኢ ብር",
+    "pay_now": "አሁን ክፈል",
+    "processing": "በማካሄድ ላይ...",
+    "payment_successful": "ክፍያ ተሳክቷል!",
+    "payment_failed": "ክፍያ አልተሳካም። እባክዎ ይገምግሙ።",
+    "enter_phone": "ስልክ ቁጥርዎን ያስገቡ",
+    "total_due": "ጠቅላላ መክፈያ"
+  },
+  "draw": {
+    "title": "የሽልማት እጣ",
+    "run_draw": "እጣ አካሂድ",
+    "draw_completed": "እጣ ተጠናቋል!",
+    "winner_announced": "አሸናፊ ታውቋል!",
+    "congratulations": "እንኳን ደስ ያለዎት!",
+    "you_won": "አሸንፈዋል!",
+    "ticket_count": "የቲኬቶች ቁጥር",
+    "random_seed": "የዘፈቀደ ዘር",
+    "verified_draw": "የተረጋገጠ እጣ"
   },
   "footer": {
     "quick_links": "ፈጣን አገናኞች",
     "support": "ድጋፍ",
     "contact_us": "አግኙን",
     "rights": "መብቱ በህግ የተጠበቀ ነው",
-    "built_by": "ተገንብቷል በ"
+    "built_by": "ተገንብቷል በ",
+    "follow_us": "ተከታተሉን"
   },
   "banners": {
     "agent": "ወኪል ሁን - 10% ኮሚሽን አግኝ",
     "vendor": "አቅራቢ ሁን - ምርቶችዎን ዝርዝር ያድርጉ",
-    "organization": "ድርጅት ይመዝገቡ - የውስጥ የሽልማት መደቦችን ይፍጠሩ",
+    "organization": "ድርጅት ይመዝገቡ - የውስጥ የእጣ መደቦችን ይፍጠሩ",
     "individual": "በግል ተቀላቀል - አስደናቂ ሽልማቶችን አሸንፉ"
+  },
+  "chatbot": {
+    "title": "የአባ ካራ አጋዥ",
+    "placeholder": "ጥያቄዎን ይጻፉ...",
+    "send": "ላክ",
+    "online": "በመስመር ላይ",
+    "ask_me": "ማንኛውንም ነገር ጠይቁኝ!"
   }
 }
