@@ -75,12 +75,10 @@ export default function Home() {
     }
   }
 
-  // Apply filters to pools
   const applyFilters = (filters) => {
     setActiveFilters(filters);
     let filtered = [...pools];
     
-    // Filter by category
     if (filters.category !== 'all') {
       const categoryKeywords = {
         vehicle: ['car', 'truck', 'v8', 'sino', 'toyota', 'motorcycle', 'bike'],
@@ -98,14 +96,11 @@ export default function Home() {
       );
     }
 
-    // Filter by city
     if (filters.city !== 'all') {
       filtered = filtered.filter(pool => pool.city === filters.city);
     }
 
-    // Filter by creator type (if available in database)
     if (filters.creator !== 'all') {
-      // This will work when you add creator_type to pools
       filtered = filtered.filter(pool => pool.creator_type === filters.creator);
     }
     
@@ -121,31 +116,29 @@ export default function Home() {
       </Head>
 
       <main>
-        {/* Hero Section */}
-        <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden">
-          <div className="absolute inset-0 z-0">
+        {/* Hero Section - Mobile First, Full Image Visible */}
+        <section className="relative bg-green-900 text-white overflow-hidden">
+          <div className="relative w-full">
             <img 
               src="/images/abbaa carraa.png"
               alt="Abbaa Carraa"
-              className="w-full h-full object-cover object-center"
+              className="w-full h-auto max-h-[60vh] sm:max-h-[70vh] md:max-h-none md:h-full md:object-cover object-contain bg-green-900"
             />
-            <div className="absolute inset-0 bg-black/40"></div>
-          </div>
-          
-          <div className="relative z-10 container mx-auto px-4 flex flex-col justify-end min-h-[450px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[700px]">
-            <div className="pb-8 sm:pb-12 md:pb-16 text-center">
-              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 drop-shadow-lg">
+            <div className="absolute inset-0 bg-black/30"></div>
+            
+            <div className="absolute bottom-0 left-0 right-0 z-10 p-4 pb-8 text-center bg-gradient-to-t from-black/70 via-black/30 to-transparent">
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-1 drop-shadow-lg">
                 Welcome to <span className="text-yellow-300">Abbaa Carraa</span>
               </h1>
-              <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-4 sm:mb-6 max-w-2xl mx-auto drop-shadow-md opacity-95 px-2">
+              <p className="text-xs sm:text-sm md:text-base mb-3 max-w-2xl mx-auto drop-shadow-md opacity-95 px-2">
                 {t('common.tagline')}
               </p>
               
               <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition-all shadow-lg">
+                <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 sm:px-5 sm:py-2 rounded-full font-semibold text-xs sm:text-sm transition-all shadow-lg">
                   {t('common.get_started')}
                 </Link>
-                <Link href="/listings" className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition-all border border-white/30">
+                <Link href="/listings" className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-1.5 sm:px-5 sm:py-2 rounded-full font-semibold text-xs sm:text-sm transition-all border border-white/30">
                   {t('common.browse_prizes')}
                 </Link>
               </div>
@@ -180,10 +173,8 @@ export default function Home() {
         <MovingAd />
         <AdvertisingBanner />
 
-        {/* Pool Filters */}
         <PoolFilters onFilterChange={applyFilters} />
 
-        {/* Filter Results Count */}
         <div className="container mx-auto px-4 pb-2">
           <p className="text-sm text-gray-500">
             Showing {filteredPools.length} of {pools.length} active pools
@@ -192,7 +183,6 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Featured Pools */}
         {featuredPools.length > 0 && (
           <section className="container mx-auto px-4 py-8">
             <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">⭐ Featured Pools</h2>
@@ -204,7 +194,6 @@ export default function Home() {
           </section>
         )}
 
-        {/* All Active Pools (Filtered) */}
         <section className="container mx-auto px-4 py-8">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
             {activeFilters.category !== 'all' || activeFilters.city !== 'all' || activeFilters.creator !== 'all' 
