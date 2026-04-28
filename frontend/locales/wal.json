@@ -1,6 +1,6 @@
 {
   "common": {
-    "welcome": "Abbaa carraa bolla baana",
+    "welcome": "Abbaa Carraa bolla baana",
     "tagline": "Huuphuwaa kee gishsha huuphuwaa qolagiyaa mediya",
     "home": "Keriya",
     "join": "Qolaga",
@@ -20,10 +20,31 @@
     "get_started": "Kawuwa",
     "trusted_agents": "Ageneta amanettiya",
     "total_raised": "Galabto qaphu",
-    "all_cities": "Kattoosa hunda"
+    "all_cities": "Kattoosa hunda",
+    "loading": "Hara malliya hasada...",
+    "back": "Duuba",
+    "save": "Axxuwa",
+    "cancel": "Balle7iya",
+    "delete": "Mucciya",
+    "edit": "Gaafiya",
+    "submit": "Kawushsha",
+    "search": "Koyya",
+    "filter": "Agaytiya",
+    "clear_filters": "Agaytiya haqiya",
+    "showing": "Be7iya",
+    "of": "kaph",
+    "active_pools": "Hupha",
+    "no_pools": "Ha wode hupha baawa",
+    "create_first_pool": "Hupha medhida →"
+  },
+  "stats": {
+    "active_pools": "Hupha",
+    "winners": "Doggida",
+    "agents": "Ageneta",
+    "raised": "Galabto"
   },
   "pools": {
-    "active_pools": "Hupha laaggidiya",
+    "active_pools": "Hupha",
     "featured_pools": "Doxxida hupha",
     "target_amount": "Mala qaphu",
     "current_amount": "Ha wode qaphu",
@@ -34,12 +55,21 @@
     "draw_date": "Bonna galla",
     "started": "Kawusiya",
     "join_now": "Ha wode qolaga",
-    "no_pools": "Ha wode hupha laaggidiya baawa"
+    "no_pools": "Hupha baawa",
+    "remaining_days": "haara galla",
+    "ending_soon": "Bonna!",
+    "cash_equivalent": "Mishira gishsha",
+    "winner_gets": "Doggiya hasa",
+    "entry_fee": "Huphiyo qaphu",
+    "seats": "teessuwa",
+    "select_seats": "Teessuwa looma doona",
+    "total_amount": "Galabto qaphu",
+    "tickets": "tikette"
   },
   "how_it_works": {
-    "title": "Abbaa carraa anniishan kawusiyase",
+    "title": "Anniishan kawusiyase",
     "find_pool": "Hupha koyya",
-    "find_pool_desc": "Hupha laaggidiya kattoosan wursan shaakko qolanttan be7iya",
+    "find_pool_desc": "Kattoosan wursan shaakko qolanttan be7iya",
     "contribute": "Gishsha",
     "contribute_desc": "Telebirr woy CBE Birr gishshaa kaffiya",
     "win": "Doggidaa kee ufaysiya",
@@ -47,36 +77,94 @@
   },
   "agent": {
     "become_agent": "Agent gida",
-    "earn_commission": "10% komishshana hasada",
+    "earn_commission": "Komishshana 10% hasada",
     "register_agent": "Agent xaafida",
     "agent_dashboard": "Agent dashboard",
     "my_listings": "Ta xaafiya",
     "my_pools": "Ta hupha",
     "participants": "Qolagiya",
-    "commissions": "Komishshana"
+    "commissions": "Komishshana",
+    "create_listing": "Xaafa medhida",
+    "listing_title": "Xaafa xaafiya",
+    "listing_description": "Ibsiya"
   },
   "vendor": {
     "become_vendor": "Vendor gida",
     "list_products": "Ne malliya xaafa",
     "offer_discounts": "Be7ennaw qolagiyau diskawunti imma",
-    "register_vendor": "Vendor xaafida"
+    "register_vendor": "Vendor xaafida",
+    "vendor_dashboard": "Vendor dashboard",
+    "my_products": "Ta malliya",
+    "discount_offers": "Diskawunti immana"
   },
   "organization": {
     "become_org": "Dereja xaafida",
     "internal_pools": "Keethiya hupha medha",
-    "member_saving": "Asabau maro qaphu"
+    "member_saving": "Asabau maro qaphu",
+    "org_dashboard": "Dereja dashboard",
+    "member_pools": "Asabau hupha"
+  },
+  "filters": {
+    "title": "Hupha agaytiya",
+    "category": "Shaakko",
+    "city": "Katto",
+    "creator": "Medhida",
+    "all_categories": "Shaakko hunda",
+    "vehicles": "Makiinau",
+    "machinery": "Maashinau",
+    "electronics": "Eletirooniksi",
+    "property": "Dere",
+    "furniture": "Keethiya malliya",
+    "other": "Hara",
+    "all_cities": "Kattoosa hunda",
+    "all_creators": "Medhidau hunda",
+    "admin": "Admin",
+    "agents": "Ageneta",
+    "vendors": "Vendora",
+    "organizations": "Derejeta",
+    "individuals": "Kesiya"
+  },
+  "payment": {
+    "title": "Kaffiya",
+    "telebirr": "Telebirr",
+    "cbe_birr": "CBE Birr",
+    "pay_now": "Ha wode kaffiya",
+    "processing": "Kawushiya...",
+    "payment_successful": "Kaffiya te7iya!",
+    "payment_failed": "Kaffiya te7ibenna. Qana kawuwa.",
+    "enter_phone": "Ne telefon numura gida",
+    "total_due": "Galabto kaffiya"
+  },
+  "draw": {
+    "title": "Huphiyo bonna",
+    "run_draw": "Bonna kawusha",
+    "draw_completed": "Bonna te7iya!",
+    "winner_announced": "Doggiya xaafiya!",
+    "congratulations": "Oyqa!",
+    "you_won": "Dogga!",
+    "ticket_count": "Tikette looma",
+    "random_seed": "Koyro mishira",
+    "verified_draw": "Bonna nummaytiya"
   },
   "footer": {
     "quick_links": "Xaafa linkiya",
     "support": "Maadayso",
     "contact_us": "Nu oychchida",
     "rights": "Woytta haahu amar",
-    "built_by": "Medhis"
+    "built_by": "Medhis",
+    "follow_us": "Nu katba"
   },
   "banners": {
     "agent": "Agent gida - 10% komishshana hasada",
     "vendor": "Vendor gida - Ne malliya xaafa",
     "organization": "Dereja xaafida - Keethiya hupha medha",
     "individual": "Qolaga - Hara malliya hasada"
+  },
+  "chatbot": {
+    "title": "Abbaa Carraa gargaara",
+    "placeholder": "Ne oychchi xaafa...",
+    "send": "Kawusha",
+    "online": "Sararttan",
+    "ask_me": "Akkayya oychche!"
   }
 }
