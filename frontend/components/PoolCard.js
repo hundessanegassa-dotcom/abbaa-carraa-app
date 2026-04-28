@@ -1,11 +1,13 @@
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 
 export default function PoolCard({ pool, featured = false }) {
+  const { t } = useTranslation();
+  
   const progress = pool.target_amount > 0 
     ? (pool.current_amount / pool.target_amount) * 100 
     : 0;
 
-  // Calculate remaining days
   const getRemainingDays = (endDate) => {
     if (!endDate) return null;
     const today = new Date();
@@ -20,7 +22,7 @@ export default function PoolCard({ pool, featured = false }) {
 
   return (
     <div className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden ${featured ? 'ring-2 ring-green-500' : ''}`}>
-      {/* Image Section - Smaller for mobile */}
+      {/* Image Section */}
       <div className="relative h-36 sm:h-44 md:h-48 w-full overflow-hidden bg-gray-100">
         {pool.image_url ? (
           <img 
@@ -35,12 +37,12 @@ export default function PoolCard({ pool, featured = false }) {
         )}
         {featured && (
           <div className="absolute top-2 right-2 bg-green-600 text-white text-xs px-2 py-0.5 rounded-full">
-            ⭐ Featured
+            ⭐ {t('pools.featured_pools')}
           </div>
         )}
         {remainingDays > 0 && (
           <div className={`absolute bottom-2 left-2 text-white text-xs px-2 py-0.5 rounded-full ${isEndingSoon ? 'bg-red-500' : 'bg-black/50'}`}>
-            {isEndingSoon ? `🔥 ${remainingDays} days left` : `${remainingDays} days`}
+            {isEndingSoon ? `🔥 ${remainingDays} ${t('pools.days_left')}` : `${remainingDays} ${t('pools.days_left')}`}
           </div>
         )}
       </div>
@@ -51,13 +53,12 @@ export default function PoolCard({ pool, featured = false }) {
         </h3>
         
         <p className="text-xs text-gray-500 mb-2 line-clamp-2 min-h-[32px]">
-          {pool.description || 'Join this pool for a chance to win!'}
+          {pool.description || t('pools.join_now')}
         </p>
         
-        {/* Progress Bar - Compact */}
         <div className="mb-2">
           <div className="flex justify-between text-xs mb-0.5">
-            <span className="text-gray-500">Progress</span>
+            <span className="text-gray-500">{t('pools.progress')}</span>
             <span className="font-semibold text-green-600">{progress.toFixed(0)}%</span>
           </div>
           <div className="bg-gray-200 rounded-full h-1.5 overflow-hidden">
@@ -68,15 +69,14 @@ export default function PoolCard({ pool, featured = false }) {
           </div>
         </div>
         
-        {/* Price Row - Compact */}
         <div className="flex justify-between items-center mb-2 text-xs">
-          <span className="text-gray-500">Entry:</span>
+          <span className="text-gray-500">{t('pools.entry_fee')}:</span>
           <span className="font-bold text-green-600">ETB {pool.contribution_amount?.toLocaleString() || 0}</span>
         </div>
         
         <Link href={`/pools/${pool.id}`}>
           <button className="w-full mt-2 bg-green-600 text-white py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm hover:bg-green-700 transition-all duration-200">
-            Join Now 🎯
+            {t('common.join')} 🎯
           </button>
         </Link>
       </div>
