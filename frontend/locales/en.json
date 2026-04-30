@@ -35,7 +35,9 @@
     "of": "of",
     "active_pools": "Prize Pools",
     "no_pools": "No prize pools available at the moment",
-    "create_first_pool": "Create a Prize Pool →"
+    "create_first_pool": "Create a Prize Pool",
+    "register_now": "Register Now",
+    "learn_more": "Learn More"
   },
   "stats": {
     "active_pools": "Prize Pools",
@@ -51,13 +53,13 @@
     "contribution_amount": "Contribution Amount",
     "participants": "Participants",
     "progress": "Progress",
-    "days_left": "Days Left",
+    "days_left": "days left",
     "draw_date": "Draw Date",
     "started": "Started",
-    "join_now": "Join Now",
-    "no_pools": "No prize pools available at the moment",
+    "join_now": "Join this pool for a chance to win",
+    "no_pools": "No active pools at the moment",
     "remaining_days": "remaining days",
-    "ending_soon": "Ending soon!",
+    "ending_soon": "Ending soon",
     "cash_equivalent": "Cash Equivalent Guaranteed",
     "winner_gets": "Winner gets",
     "entry_fee": "Entry Fee",
@@ -67,17 +69,17 @@
     "tickets": "tickets"
   },
   "how_it_works": {
-    "title": "How It Works",
+    "title": "How Abbaa Carraa Works",
     "find_pool": "Find a Prize Pool",
     "find_pool_desc": "Browse active prize pools by city or category",
     "contribute": "Contribute",
     "contribute_desc": "Pay via Telebirr or CBE Birr securely",
-    "win": "Win & Celebrate",
+    "win": "Win and Celebrate",
     "win_desc": "Fair draw selects winner when target is reached"
   },
   "agent": {
     "become_agent": "Become an Agent",
-    "earn_commission": "Earn 10% Commission",
+    "earn_commission": "Earn 10 percent Commission",
     "register_agent": "Register as Agent",
     "agent_dashboard": "Agent Dashboard",
     "my_listings": "My Listings",
@@ -124,24 +126,42 @@
     "organizations": "Organizations",
     "individuals": "Individuals"
   },
+  "moving_ad": {
+    "join_today": "Join Abbaa Carraa today and win amazing prizes",
+    "recent_winner": "Recent winner won a Toyota Vitz worth 650,000 ETB",
+    "become_agent": "Become an Agent and earn 10 percent commission",
+    "vendor_opportunity": "Vendors list your products as prizes",
+    "participants": "Over 1000 participants have joined our pools",
+    "learn_more": "Learn More"
+  },
+  "banners": {
+    "agent": "Become an Agent",
+    "agent_desc": "Earn 10 percent commission on every pool you create",
+    "vendor": "Become a Vendor",
+    "vendor_desc": "List your products as prizes. Winner gets FREE",
+    "organization": "Become an Organization",
+    "organization_desc": "Create private pools for your members",
+    "individual": "Join as Individual",
+    "individual_desc": "Contribute for a chance to win big"
+  },
   "payment": {
     "title": "Payment",
     "telebirr": "Telebirr",
     "cbe_birr": "CBE Birr",
     "pay_now": "Pay Now",
-    "processing": "Processing...",
-    "payment_successful": "Payment successful!",
-    "payment_failed": "Payment failed. Please try again.",
+    "processing": "Processing",
+    "payment_successful": "Payment successful",
+    "payment_failed": "Payment failed. Please try again",
     "enter_phone": "Enter your phone number",
     "total_due": "Total Due"
   },
   "draw": {
     "title": "Prize Draw",
     "run_draw": "Run Draw",
-    "draw_completed": "Draw completed!",
-    "winner_announced": "Winner announced!",
-    "congratulations": "Congratulations!",
-    "you_won": "You won!",
+    "draw_completed": "Draw completed",
+    "winner_announced": "Winner announced",
+    "congratulations": "Congratulations",
+    "you_won": "You won",
     "ticket_count": "Ticket count",
     "random_seed": "Random seed",
     "verified_draw": "Verified Draw"
@@ -152,37 +172,32 @@
     "contact_us": "Contact Us",
     "rights": "All rights reserved",
     "built_by": "Built by",
-    "follow_us": "Follow Us"
-  },
-  "banners": {
-    "agent": "Become an Agent - Earn 10% Commission",
-    "vendor": "Become a Vendor - List Your Products",
-    "organization": "Become an Organization - Create Internal Prize Pools",
-    "individual": "Join as Individual - Win Amazing Prizes"
+    "follow_us": "Follow Us",
+    "terms": "Terms and Conditions",
+    "privacy": "Privacy Policy"
   },
   "chatbot": {
     "title": "Abbaa Carraa Assistant",
-    "placeholder": "Type your question...",
+    "placeholder": "Type your question",
     "send": "Send",
     "online": "Online",
-    "ask_me": "Ask me anything!"
+    "ask_me": "Ask me anything"
   },
-  "moving_ad": {
-    "join_today": "🎉 Join Abbaa Carraa today and win amazing prizes!",
-    "recent_winner": "🏆 Recent winner won a Toyota Vitz worth 650,000 ETB!",
-    "become_agent": "💰 Become an Agent and earn 10% commission!",
-    "vendor_opportunity": "🏭 Vendors: List your products as prizes!",
-    "participants": "🎯 Over 1,000+ participants have joined our pools!",
-    "learn_more": "Learn More"
+  "newsletter": {
+    "title": "Subscribe to Our Newsletter",
+    "description": "Get updates about new pools winners and exclusive offers",
+    "name_placeholder": "Your name",
+    "email_placeholder": "Your email",
+    "city_placeholder": "Your city",
+    "subscribe": "Subscribe",
+    "subscribing": "Subscribing",
+    "success": "Subscribed successfully",
+    "error": "Subscription failed"
   },
-  "banners": {
-    "agent": "Become an Agent",
-    "agent_desc": "Earn 10% commission on every pool you create",
-    "vendor": "Become a Vendor",
-    "vendor_desc": "List your products as prizes. Winner gets FREE!",
-    "organization": "Become an Organization",
-    "organization_desc": "Create private pools for your members",
-    "individual": "Join as Individual",
-    "individual_desc": "Contribute for a chance to win big"
+  "buttons": {
+    "join_now": "Join Now",
+    "learn_more": "Learn More",
+    "register": "Register",
+    "contact": "Contact"
   }
 }
