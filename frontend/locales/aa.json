@@ -4,6 +4,7 @@
     "tagline": "Ummat fanah gexa qibaar kee gumaaca fannuk",
     "home": "Maciin",
     "join": "Cula",
+    "join_now": "Wohugal cul",
     "contribute": "Gumaac",
     "login": "Cula",
     "register": "Galmees",
@@ -63,7 +64,7 @@
     "password": "Qellitta Adu",
     "password_placeholder": "Yoo xiqqaate 6 xaraf",
     "password_min_length": "Qellitta adu yoo xiqqaate 6 arfu takke faxa",
-    "creating_account": "Akoonakta oogima...",
+    "creating_account": "Akoonakta oogima",
     "sign_up": "Galmees",
     "already_have_account": "Akoonakta litto?",
     "sign_in": "Cula",
@@ -75,7 +76,7 @@
     "signin_google": "Google tiin cula",
     "signin_github": "GitHub tiin cula",
     "or_continue_with_email": "Ykn imeeli tiin beyt",
-    "signing_in": "Cuula...",
+    "signing_in": "Cuula",
     "forgot_password": "Qellitta adu tekkah?",
     "login_success": "Qaffa culte!",
     "logout_success": "Qaffa tekkah",
@@ -95,10 +96,7 @@
     "signup_with_google": "Google tiin galmees",
     "signup_with_github": "GitHub tiin galmees",
     "login_with_google": "Google tiin cula",
-    "login_with_github": "GitHub tiin cula"
-  },
-  {
-  "common": {
+    "login_with_github": "GitHub tiin cula",
     "pool_not_found": "Gal mageena",
     "back_to_home": "Maciin fanah wadir",
     "back_to_pools": "Galwa fanah wadir",
@@ -109,22 +107,10 @@
     "payment_methods": "Galdah Telebirr hinnay CBE Birr",
     "coming_soon": "Xayyah ama",
     "discount_for_non_winners": "Qaffeweeh diskawuntii gittu!",
-    "cash_equivalent_banner_title": "💰 100% Lakmô Gaagoyta",
+    "cash_equivalent_banner_title": "100% Lakmô Gaagoyta",
     "cash_equivalent_banner_text": "Qibaara inkih lakmô gaagoyta leh. Qibaara mageenik lakmô hayya.",
     "cash_equivalent_banner_button": "Dumah yaaxig"
   },
-  "pools": {
-    "remaining_amount": "Falte",
-    "raised_amount": "Gafarsa",
-    "pool_not_found": "Gal mageena",
-    "join_this_pool": "Gal gal",
-    "current_progress": "Hadda dirre"
-  },
-  "payment": {
-    "telebirr_cbe": "Telebirr hinnay CBE Birr",
-    "secure_payment": "Galdah amaanat"
-  }
-}
   "stats": {
     "active_pools": "Qibaarah galwa",
     "winners": "Qaffa",
