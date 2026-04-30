@@ -97,6 +97,34 @@
     "login_with_google": "Google tun seeni",
     "login_with_github": "GitHub tun seeni"
   },
+  {
+  "common": {
+    "pool_not_found": "Pooliyi Beenna",
+    "back_to_home": "Keettan Duuba",
+    "back_to_pools": "Pooliyan Duuba",
+    "remaining_amount": "Woliqqa",
+    "raised_amount": "Goggidos",
+    "pool_details": "Pooliya Qodha",
+    "special_offer": "Diskawuntii Dooretidays",
+    "payment_methods": "Kaffalo Telebirr ykn CBE Birr",
+    "coming_soon": "Xayushsha",
+    "discount_for_non_winners": "Be dogganchawuu diskawuntii imma!",
+    "cash_equivalent_banner_title": "💰 100% Mishira Laakkishsha",
+    "cash_equivalent_banner_text": "Badhaasi wurssaa mishira laakkishsha oosis. Badhaasi gakiyaben mishira bulaata.",
+    "cash_equivalent_banner_button": "Ayrsha Tamaariya"
+  },
+  "pools": {
+    "remaining_amount": "Woliqqa",
+    "raised_amount": "Goggidos",
+    "pool_not_found": "Pooliyi beenna",
+    "join_this_pool": "Pool kana liyoossa",
+    "current_progress": "Haa wode ba'oosha"
+  },
+  "payment": {
+    "telebirr_cbe": "Telebirr ykn CBE Birr",
+    "secure_payment": "Kaffalo amantida"
+  }
+}
   "stats": {
     "active_pools": "Badhaasa pooliya",
     "winners": "Doggans",
