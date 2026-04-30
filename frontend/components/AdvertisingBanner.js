@@ -1,15 +1,6 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { useTranslation } from 'react-i18next';
-
-export default function AdvertisingBanner() {
-  const { t } = useTranslation();
-  // ... rest of your code, replace hardcoded text with t('key')
-}
-import Link from 'next/link';
-import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
 
 export default function AdvertisingBanner() {
   const [products, setProducts] = useState([]);
@@ -33,7 +24,6 @@ export default function AdvertisingBanner() {
       if (data && data.length > 0) {
         setProducts(data);
       } else {
-        // Fallback default products
         setProducts([
           { id: 1, prize_name: '4-Axis CNC Machine', description: 'Professional 4-axis CNC machine for furniture and 3D carving', target_amount: 1250000, contribution_amount: 2500, image_url: null },
           { id: 2, prize_name: 'Sino Truck', description: 'Sinotruk Howo Homan T5 cargo truck - perfect for logistics business', target_amount: 5500000, contribution_amount: 11000, image_url: null },
@@ -60,7 +50,6 @@ export default function AdvertisingBanner() {
     }
   }, [products.length]);
 
-  // Calculate remaining days
   const getRemainingDays = (endDate) => {
     if (!endDate) return null;
     const today = new Date();
@@ -70,19 +59,16 @@ export default function AdvertisingBanner() {
     return diffDays > 0 ? diffDays : 0;
   };
 
-  // Format date
   const formatDate = (dateString) => {
     if (!dateString) return 'Not set';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
-  // Format price
   const formatPrice = (price) => {
     return price?.toLocaleString() || '0';
   };
 
-  // Map product names to icons and colors
   const getProductStyle = (name) => {
     const styles = {
       '4-Axis CNC Machine': { icon: '🛠️', bgColor: 'from-gray-700 to-gray-900' },
@@ -106,10 +92,8 @@ export default function AdvertisingBanner() {
 
   return (
     <div className="my-4">
-      {/* Rotating Product Banner with Image */}
       <div className={`bg-gradient-to-r ${style.bgColor} text-white rounded-xl overflow-hidden shadow-xl transition-all duration-500`}>
         <div className="flex flex-col md:flex-row">
-          {/* Product Image/Icon */}
           <div className="md:w-1/3 h-48 md:h-auto relative bg-black/20 flex items-center justify-center">
             {currentProduct.image_url ? (
               <img 
@@ -125,7 +109,6 @@ export default function AdvertisingBanner() {
             )}
           </div>
           
-          {/* Product Details */}
           <div className="md:w-2/3 p-6">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-3xl">{style.icon}</span>
@@ -133,7 +116,6 @@ export default function AdvertisingBanner() {
             </div>
             <p className="text-sm opacity-90 mb-3">{currentProduct.description}</p>
             
-            {/* Price and Date Info */}
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="bg-white/10 rounded-lg p-2 text-center">
                 <p className="text-xs opacity-75">Target Amount</p>
@@ -168,7 +150,6 @@ export default function AdvertisingBanner() {
         </div>
       </div>
       
-      {/* Product Dots Indicator */}
       <div className="flex justify-center gap-2 mt-3">
         {products.map((_, idx) => (
           <button
@@ -181,7 +162,6 @@ export default function AdvertisingBanner() {
         ))}
       </div>
 
-      {/* Static Promotion Banners */}
       <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-8 rounded-xl mt-4">
         <div className="container mx-auto px-4 text-center">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
