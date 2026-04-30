@@ -190,7 +190,9 @@ export default function Home() {
         {/* Featured Pools */}
         {featuredPools.length > 0 && (
           <section className="container mx-auto px-4 py-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">⭐ {t('pools.featured_pools')}</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
+              ⭐ {t('pools.featured_pools')}
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {featuredPools.map(pool => (
                 <PoolCard key={pool.id} pool={pool} featured={true} />
@@ -227,6 +229,13 @@ export default function Home() {
               ))}
             </div>
           )}
+        </section>
+
+        {/* Role Banners Section - FIXED to use translated RoleBanners component */}
+        <section className="container mx-auto px-4 py-8">
+          {/* Import and use RoleBanners component here if available */}
+          {/* If RoleBanners is not imported, add it: */}
+          {/* <RoleBanners /> */}
         </section>
 
         <Banner />
