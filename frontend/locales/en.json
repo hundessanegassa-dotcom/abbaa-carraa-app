@@ -122,8 +122,6 @@
   "payment": {
     "telebirr_cbe": "Telebirr or CBE Birr",
     "secure_payment": "Secure payment"
-  }
-}
   },
   "stats": {
     "active_pools": "Prize Pools",
