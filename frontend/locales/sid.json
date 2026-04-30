@@ -21,7 +21,7 @@
     "trusted_agents": "Agente amanama",
     "total_raised": "Wolqa qixxa",
     "all_cities": "Magaala wolqa",
-    "loading": "Battisa ajaa'ibsiisuh fe'ama...",
+    "loading": "Battisa ajaa'ibsiisuh fe'ama",
     "back": "Duubba",
     "save": "Quma",
     "cancel": "Haqi",
@@ -35,7 +35,9 @@
     "of": "kess",
     "active_pools": "Battotanno mannicho",
     "no_pools": "Ha wode battotanno mannicho baawa",
-    "create_first_pool": "Battotanno mannicho medha →"
+    "create_first_pool": "Battotanno mannicho medha",
+    "register_now": "Ha wode galcha",
+    "learn_more": "Wolqa la'a"
   },
   "stats": {
     "active_pools": "Battotanno mannicho",
@@ -57,7 +59,7 @@
     "join_now": "Ha wode batta",
     "no_pools": "Battotanno mannicho baawa",
     "remaining_days": "hafo galla",
-    "ending_soon": "Waanchu!",
+    "ending_soon": "Waanchu",
     "cash_equivalent": "Miyaa garu",
     "winner_gets": "Mo'ichcho hasa",
     "entry_fee": "Batto qixxa",
@@ -67,7 +69,7 @@
     "tickets": "tikette"
   },
   "how_it_works": {
-    "title": "Anooti ba'ano",
+    "title": "Abbaa Carraa anooti ba'ano",
     "find_pool": "Battotanno mannicho gura",
     "find_pool_desc": "Battotanno mannicho magaalaan hinnay qayyaan la'a",
     "contribute": "Hiixxo",
@@ -77,7 +79,7 @@
   },
   "agent": {
     "become_agent": "Agent ba'a",
-    "earn_commission": "Komishshana 10% hasa",
+    "earn_commission": "10 komishshana hasa",
     "register_agent": "Agent galcha",
     "agent_dashboard": "Agent dashboard",
     "my_listings": "Ta galchamme",
@@ -124,24 +126,42 @@
     "organizations": "Derejatu",
     "individuals": "Korro"
   },
+  "moving_ad": {
+    "join_today": "Ha wode Abbaa Carraa batta kee battisa ajaa'ibsiisuh hasa",
+    "recent_winner": "Qirre mo'ichcho 650000 ETB leka Toyota Vitz mo'ate",
+    "become_agent": "Agent ba'a kee 10 komishshana hasa",
+    "vendor_opportunity": "Vendora ne ala battisan galcha",
+    "participants": "1000 dagona battu nu battotanno mannicho battino",
+    "learn_more": "Wolqa la'a"
+  },
+  "banners": {
+    "agent": "Agent ba'a",
+    "agent_desc": "Medhamme battotanno mannicho hunda 10 komishshana hasa",
+    "vendor": "Vendor ba'a",
+    "vendor_desc": "Ne ala battisan galcha Mo'ichcho duuka hasa",
+    "organization": "Dereja galcha",
+    "organization_desc": "Membara garssa battotanno mannicho medha",
+    "individual": "Batta",
+    "individual_desc": "Mo'ichcho hasa hiixxo batta"
+  },
   "payment": {
     "title": "Hiixxo",
     "telebirr": "Telebirr",
     "cbe_birr": "CBE Birr",
     "pay_now": "Ha wode hiixxi",
-    "processing": "Ba'anno...",
-    "payment_successful": "Hiixxo loopphe!",
-    "payment_failed": "Hiixxo looppheenna. Qire de'issi.",
+    "processing": "Ba'anno",
+    "payment_successful": "Hiixxo loopphe",
+    "payment_failed": "Hiixxo looppheenna Qire de'issi",
     "enter_phone": "Ne telefoona qixxa gessa",
     "total_due": "Wolqa hiixxo"
   },
   "draw": {
     "title": "Battisa waancho",
     "run_draw": "Waancho kawisa",
-    "draw_completed": "Waancho loopphe!",
-    "winner_announced": "Mo'ichcho xaafino!",
-    "congratulations": "Moo'issi!",
-    "you_won": "Mo'atte!",
+    "draw_completed": "Waancho loopphe",
+    "winner_announced": "Mo'ichcho xaafino",
+    "congratulations": "Moo'issi",
+    "you_won": "Mo'atte",
     "ticket_count": "Tikette looma",
     "random_seed": "Koyro mishira",
     "verified_draw": "Waancho huudhino"
@@ -152,37 +172,32 @@
     "contact_us": "Nu oychchicho",
     "rights": "Hoo'a amar",
     "built_by": "Medhis",
-    "follow_us": "Nu gakka"
-  },
-  "banners": {
-    "agent": "Agent ba'a - 10% komishshana hasa",
-    "vendor": "Vendor ba'a - Ne ala galcha",
-    "organization": "Dereja galcha - Garssa battotanno mannicho medha",
-    "individual": "Batta - Hara battisa hasa"
+    "follow_us": "Nu gakka",
+    "terms": "Haytaana kee battotanno",
+    "privacy": "Korano iccitii"
   },
   "chatbot": {
     "title": "Abbaa Carraa gargaara",
-    "placeholder": "Ne oychchicho xaafa...",
+    "placeholder": "Ne oychchicho xaafa",
     "send": "Ergi",
     "online": "Korro",
-    "ask_me": "Wolqa oychchicho!"
-   },
-  "moving_ad": {
-    "join_today": "🎉 Join Abbaa Carraa today and win amazing prizes!",
-    "recent_winner": "🏆 Recent winner won a Toyota Vitz worth 650,000 ETB!",
-    "become_agent": "💰 Become an Agent and earn 10% commission!",
-    "vendor_opportunity": "🏭 Vendors: List your products as prizes!",
-    "participants": "🎯 Over 1,000+ participants have joined our pools!",
-    "learn_more": "Learn More"
+    "ask_me": "Wolqa oychchicho"
   },
-  "banners": {
-    "agent": "Become an Agent",
-    "agent_desc": "Earn 10% commission on every pool you create",
-    "vendor": "Become a Vendor",
-    "vendor_desc": "List your products as prizes. Winner gets FREE!",
-    "organization": "Become an Organization",
-    "organization_desc": "Create private pools for your members",
-    "individual": "Join as Individual",
-    "individual_desc": "Contribute for a chance to win big"
+  "newsletter": {
+    "title": "Nu xabaara galcha",
+    "description": "Battotanno mannicho mo'ichcho kee diskawuntira oduu hasa",
+    "name_placeholder": "Ne suntta",
+    "email_placeholder": "Ne email",
+    "city_placeholder": "Ne magaala",
+    "subscribe": "Galcha",
+    "subscribing": "Galchamme",
+    "success": "Galchammo",
+    "error": "Galchammo baawa"
+  },
+  "buttons": {
+    "join_now": "Ha wode batta",
+    "learn_more": "Wolqa la'a",
+    "register": "Galcha",
+    "contact": "Nu oychchicho"
   }
 }
