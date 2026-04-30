@@ -21,7 +21,7 @@
     "trusted_agents": "Ageneta amanettiya",
     "total_raised": "Galabto qaphu",
     "all_cities": "Kattoosa hunda",
-    "loading": "Hara malliya hasada...",
+    "loading": "Hara malliya hasada",
     "back": "Duuba",
     "save": "Axxuwa",
     "cancel": "Balle7iya",
@@ -35,7 +35,9 @@
     "of": "kaph",
     "active_pools": "Hupha",
     "no_pools": "Ha wode hupha baawa",
-    "create_first_pool": "Hupha medhida →"
+    "create_first_pool": "Hupha medhida",
+    "register_now": "Ha wode xaafa",
+    "learn_more": "Qassi be7iya"
   },
   "stats": {
     "active_pools": "Hupha",
@@ -57,7 +59,7 @@
     "join_now": "Ha wode qolaga",
     "no_pools": "Hupha baawa",
     "remaining_days": "haara galla",
-    "ending_soon": "Bonna!",
+    "ending_soon": "Bonna",
     "cash_equivalent": "Mishira gishsha",
     "winner_gets": "Doggiya hasa",
     "entry_fee": "Huphiyo qaphu",
@@ -67,7 +69,7 @@
     "tickets": "tikette"
   },
   "how_it_works": {
-    "title": "Anniishan kawusiyase",
+    "title": "Abbaa Carraa anniishan kawusiyase",
     "find_pool": "Hupha koyya",
     "find_pool_desc": "Kattoosan wursan shaakko qolanttan be7iya",
     "contribute": "Gishsha",
@@ -77,7 +79,7 @@
   },
   "agent": {
     "become_agent": "Agent gida",
-    "earn_commission": "Komishshana 10% hasada",
+    "earn_commission": "10 komishshana hasada",
     "register_agent": "Agent xaafida",
     "agent_dashboard": "Agent dashboard",
     "my_listings": "Ta xaafiya",
@@ -124,24 +126,42 @@
     "organizations": "Derejeta",
     "individuals": "Kesiya"
   },
+  "moving_ad": {
+    "join_today": "Ha wode Abbaa Carraa qolaga kee hara malliya hasada",
+    "recent_winner": "Bonna doggiya 650000 ETB galcha Toyota Vitz doggiya",
+    "become_agent": "Agent gida kee 10 komishshana hasada",
+    "vendor_opportunity": "Vendora ne malliya huphiyan xaafa",
+    "participants": "1000 dagona qolagiya nu huphan qolagiya",
+    "learn_more": "Qassi be7iya"
+  },
+  "banners": {
+    "agent": "Agent gida",
+    "agent_desc": "Medhida hupha hunda 10 komishshana hasada",
+    "vendor": "Vendor gida",
+    "vendor_desc": "Ne malliya huphiyan xaafa Doggiya mela hasa",
+    "organization": "Dereja xaafida",
+    "organization_desc": "Asabau keethiya hupha medha",
+    "individual": "Qolaga",
+    "individual_desc": "Hara malliya hasada gishshaa qolaga"
+  },
   "payment": {
     "title": "Kaffiya",
     "telebirr": "Telebirr",
     "cbe_birr": "CBE Birr",
     "pay_now": "Ha wode kaffiya",
-    "processing": "Kawushiya...",
-    "payment_successful": "Kaffiya te7iya!",
-    "payment_failed": "Kaffiya te7ibenna. Qana kawuwa.",
+    "processing": "Kawushiya",
+    "payment_successful": "Kaffiya te7iya",
+    "payment_failed": "Kaffiya te7ibenna Qana kawuwa",
     "enter_phone": "Ne telefon numura gida",
     "total_due": "Galabto kaffiya"
   },
   "draw": {
     "title": "Huphiyo bonna",
     "run_draw": "Bonna kawusha",
-    "draw_completed": "Bonna te7iya!",
-    "winner_announced": "Doggiya xaafiya!",
-    "congratulations": "Oyqa!",
-    "you_won": "Dogga!",
+    "draw_completed": "Bonna te7iya",
+    "winner_announced": "Doggiya xaafiya",
+    "congratulations": "Oyqa",
+    "you_won": "Dogga",
     "ticket_count": "Tikette looma",
     "random_seed": "Koyro mishira",
     "verified_draw": "Bonna nummaytiya"
@@ -152,37 +172,32 @@
     "contact_us": "Nu oychchida",
     "rights": "Woytta haahu amar",
     "built_by": "Medhis",
-    "follow_us": "Nu katba"
-  },
-  "banners": {
-    "agent": "Agent gida - 10% komishshana hasada",
-    "vendor": "Vendor gida - Ne malliya xaafa",
-    "organization": "Dereja xaafida - Keethiya hupha medha",
-    "individual": "Qolaga - Hara malliya hasada"
+    "follow_us": "Nu katba",
+    "terms": "Haytaana kee qolantta",
+    "privacy": "Keesiya woytta"
   },
   "chatbot": {
     "title": "Abbaa Carraa gargaara",
-    "placeholder": "Ne oychchi xaafa...",
+    "placeholder": "Ne oychchi xaafa",
     "send": "Kawusha",
     "online": "Sararttan",
-    "ask_me": "Akkayya oychche!"
-  }, 
-  "moving_ad": {
-    "join_today": "🎉 Join Abbaa Carraa today and win amazing prizes!",
-    "recent_winner": "🏆 Recent winner won a Toyota Vitz worth 650,000 ETB!",
-    "become_agent": "💰 Become an Agent and earn 10% commission!",
-    "vendor_opportunity": "🏭 Vendors: List your products as prizes!",
-    "participants": "🎯 Over 1,000+ participants have joined our pools!",
-    "learn_more": "Learn More"
+    "ask_me": "Akkayya oychche"
   },
-  "banners": {
-    "agent": "Become an Agent",
-    "agent_desc": "Earn 10% commission on every pool you create",
-    "vendor": "Become a Vendor",
-    "vendor_desc": "List your products as prizes. Winner gets FREE!",
-    "organization": "Become an Organization",
-    "organization_desc": "Create private pools for your members",
-    "individual": "Join as Individual",
-    "individual_desc": "Contribute for a chance to win big"
+  "newsletter": {
+    "title": "Nu xabaara xaafa",
+    "description": "Hupha woo doggiya woo diskawuntira xabaara hasa",
+    "name_placeholder": "Ne suntta",
+    "email_placeholder": "Ne email",
+    "city_placeholder": "Ne katto",
+    "subscribe": "Xaafa",
+    "subscribing": "Xaafiya",
+    "success": "Xaafa te7iya",
+    "error": "Xaafa te7ibenna"
+  },
+  "buttons": {
+    "join_now": "Ha wode qolaga",
+    "learn_more": "Qassi be7iya",
+    "register": "Xaafa",
+    "contact": "Nu oychchida"
   }
 }
