@@ -4,6 +4,7 @@
     "tagline": "Madal abaal-marin iyo tabaruc ku salaysan bulshada",
     "home": "Bogga Hore",
     "join": "Ku Biir",
+    "join_now": "Ku Biir Hadda",
     "contribute": "Tabaruc",
     "login": "Soo Gal",
     "register": "Isdiiwaan geli",
@@ -63,7 +64,7 @@
     "password": "Furaha Sirta",
     "password_placeholder": "Ugu yaraan 6 xaraf",
     "password_min_length": "Furaha sirta waa inuu ahaadaa ugu yaraan 6 xaraf",
-    "creating_account": "Akoonka waa la sameeyayaa...",
+    "creating_account": "Akoonka waa la sameeyayaa",
     "sign_up": "Isdiiwaan geli",
     "already_have_account": "Akoon hore ma u leedahay?",
     "sign_in": "Soo gal",
@@ -75,7 +76,7 @@
     "signin_google": "Ku soo gal Google",
     "signin_github": "Ku soo gal GitHub",
     "or_continue_with_email": "Ama ku sii wad iimaylka",
-    "signing_in": "La soo galayaa...",
+    "signing_in": "La soo galayaa",
     "forgot_password": "Miyayd ku illoowday furaha sirta?",
     "login_success": "Si guul leh ayaad u soo gashay!",
     "logout_success": "Si guul leh ayaad u baxday",
@@ -95,10 +96,7 @@
     "signup_with_google": "Ku isdiiwaan geli Google",
     "signup_with_github": "Ku isdiiwaan geli GitHub",
     "login_with_google": "Ku soo gal Google",
-    "login_with_github": "Ku soo gal GitHub"
-  },
- {
-  "common": {
+    "login_with_github": "Ku soo gal GitHub",
     "pool_not_found": "Abaal-marin Lama Helin",
     "back_to_home": "Ku Noqo Bogga Hore",
     "back_to_pools": "Ku Noqo Abaal-marinaha",
@@ -109,22 +107,10 @@
     "payment_methods": "Bixinta Telebirr ama CBE Birr",
     "coming_soon": "Dhawaan",
     "discount_for_non_winners": "Haddaanad guulaysan waxaad ka heshaa dhimis iibiyaha!",
-    "cash_equivalent_banner_title": "💰 100% Dammanad Lacag U Dhigma",
+    "cash_equivalent_banner_title": "100% Dammanad Lacag U Dhigma",
     "cash_equivalent_banner_text": "Dhammaan abaal-marinaha waxaa dammaanad qaaday lacag u dhigma. Haddii abaal-marinta jiriga ah la heli waayo, lacagta oo dhan waxaad heshaa.",
     "cash_equivalent_banner_button": "Faahfaahin"
   },
-  "pools": {
-    "remaining_amount": "Ka Hadhay",
-    "raised_amount": "La Soo Ururiyay",
-    "pool_not_found": "Abaal-marin lama helin",
-    "join_this_pool": "Ku Biir Abaal-marintan",
-    "current_progress": "Horumarka Hadda"
-  },
-  "payment": {
-    "telebirr_cbe": "Telebirr ama CBE Birr",
-    "secure_payment": "Bixin Ammaan ah"
-  }
-} 
   "stats": {
     "active_pools": "Abaal-marinaha",
     "winners": "Kuwa Guuleystay",
