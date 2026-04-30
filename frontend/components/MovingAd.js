@@ -15,9 +15,11 @@ export default function MovingAd() {
   ];
 
   useEffect(() => {
-    const interval = setInterval(() => { setCurrentIndex((prev) => (prev + 1) % ads.length); }, 5000);
+    const interval = setInterval(() => { 
+      setCurrentIndex((prev) => (prev + 1) % ads.length); 
+    }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [ads.length]); // ✅ Added dependency
 
   return (
     <div className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-3 overflow-hidden">
