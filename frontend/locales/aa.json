@@ -97,6 +97,34 @@
     "login_with_google": "Google tiin cula",
     "login_with_github": "GitHub tiin cula"
   },
+  {
+  "common": {
+    "pool_not_found": "Gal mageena",
+    "back_to_home": "Maciin fanah wadir",
+    "back_to_pools": "Galwa fanah wadir",
+    "remaining_amount": "Falte",
+    "raised_amount": "Gafarsa",
+    "pool_details": "Galul Qidosso",
+    "special_offer": "Diskawuntii Kaxxa",
+    "payment_methods": "Galdah Telebirr hinnay CBE Birr",
+    "coming_soon": "Xayyah ama",
+    "discount_for_non_winners": "Qaffeweeh diskawuntii gittu!",
+    "cash_equivalent_banner_title": "💰 100% Lakmô Gaagoyta",
+    "cash_equivalent_banner_text": "Qibaara inkih lakmô gaagoyta leh. Qibaara mageenik lakmô hayya.",
+    "cash_equivalent_banner_button": "Dumah yaaxig"
+  },
+  "pools": {
+    "remaining_amount": "Falte",
+    "raised_amount": "Gafarsa",
+    "pool_not_found": "Gal mageena",
+    "join_this_pool": "Gal gal",
+    "current_progress": "Hadda dirre"
+  },
+  "payment": {
+    "telebirr_cbe": "Telebirr hinnay CBE Birr",
+    "secure_payment": "Galdah amaanat"
+  }
+}
   "stats": {
     "active_pools": "Qibaarah galwa",
     "winners": "Qaffa",
