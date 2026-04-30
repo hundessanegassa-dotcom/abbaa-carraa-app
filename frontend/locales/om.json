@@ -91,7 +91,11 @@
     "date": "Guyyaa",
     "completed": "Xumurame",
     "pending": "Eeggachaa",
-    "view_winners": "Mo'attoota Ilaali"
+    "view_winners": "Mo'attoota Ilaali",
+    "signup_with_google": "Google tiin galmeessi",
+    "signup_with_github": "GitHub tiin galmeessi",
+    "login_with_google": "Google tiin seeni",
+    "login_with_github": "GitHub tiin seeni"
   },
   "stats": {
     "active_pools": "Galmee Badhaasaa",
@@ -110,8 +114,8 @@
     "days_left": "guyyaa hafe",
     "draw_date": "Guyyaa Argannoo",
     "started": "Eegalame",
-    "join_now": "Amma Hirmaadhu",
-    "no_pools": "Yeroo ammaa Galmeen Badhaasaa hin jiru",
+    "join_now": "Carraa mo'achuuf galmee kana hirmaadhu",
+    "no_pools": "Yeroo ammaa galmee aktiivii hin jiru",
     "remaining_days": "guyyaa hafe",
     "ending_soon": "Dafee ni xumurama",
     "cash_equivalent": "Kanfaltiin Mo'annaa Badhaasaa Kanfaltii Tareefama Dura Faana Walqiixa",
@@ -125,15 +129,15 @@
   "how_it_works": {
     "title": "Abbaan Carraa Akkamitti Hojjeta",
     "find_pool": "Galmee Badhaasaa Barbaadi",
-    "find_pool_desc": "Galmee Badhaasaa Hojiirraa Jiran magaalaan ykn gosaan ilaali",
+    "find_pool_desc": "Galmee Badhaasaa aktiivii magaalaan ykn gosaan ilaali",
     "contribute": "Gumaachi",
-    "contribute_desc": "Telebirr ykn CBE Birr tiin kaffali",
+    "contribute_desc": "Telebirr ykn CBE Birr tiin amanatti kaffali",
     "win": "Mo'itii Gammadi",
     "win_desc": "Galmi yeroo ga'uu argannoo tolaa mo'ataa filata"
   },
   "agent": {
     "become_agent": "Agent Ta'i",
-    "earn_commission": "10 Komishinii Argadhu",
+    "earn_commission": "Parsantii 10 Komishinii Argadhu",
     "register_agent": "Agent Ta'uuf Galmeessi",
     "agent_dashboard": "Daashboordii Agent",
     "my_listings": "Tarreeffamoo Koo",
@@ -147,7 +151,7 @@
   "vendor": {
     "become_vendor": "Dhiyeessa Ta'i",
     "list_products": "Oomisha Keessan Tarreessi",
-    "offer_discounts": "Hirmaattoota Hin Mo'aneef Diskawuntii Kennaa",
+    "offer_discounts": "Hin Mo'aneef Hirmaattootaaf Diskawuntii Kennaa",
     "register_vendor": "Dhiyeessaa Ta'uuf Galmeessi",
     "vendor_dashboard": "Daashboordii Dhiyeessaa",
     "my_products": "Oomisha Koo",
@@ -182,7 +186,7 @@
   },
   "moving_ad": {
     "join_today": "Har'a Abbaa Carraa wajjiin hirmaadhuu ti badhaasa ajaa'ibsiisaa mo'i",
-    "recent_winner": "Mo'ataan dhiyoo 650000 ETB gatii qabu Toyota Vitz mo'ate",
+    "recent_winner": "Mo'ataan dhiyoo 650,000 ETB gatii qabu Toyota Vitz mo'ate",
     "become_agent": "Agent Ta'ii Parsantii 10 Komishinii Argadhu",
     "vendor_opportunity": "Dhiyeessitoota Oomisha Keessan akka badhaasa tarreessi",
     "participants": "Hirmaattoota 1000 ol galmee badhaasaa keenyatti hirmaatan",
@@ -190,13 +194,13 @@
   },
   "banners": {
     "agent": "Agent Ta'i",
-    "agent_desc": "Galmee badhaasaa hunda irratti parsantii 10 komishinii argadhu",
+    "agent_desc": "Galmee badhaasaa uumtu hunda irratti parsantii 10 komishinii argadhu",
     "vendor": "Dhiyeessa Ta'i",
     "vendor_desc": "Oomisha keessan akka badhaasa tarreessi Mo'ataan bilisa argata",
     "organization": "Dhaabbata Galmeessi",
     "organization_desc": "Dhaabbattoota keessaniif galmee badhaasaa keessoo uumi",
     "individual": "Dhuunfaan Hirmaadhu",
-    "individual_desc": "Gumaacha xiqqaa fi carraa mo'achuu"
+    "individual_desc": "Gumaacha xiqqaa fi carraa guddaa mo'achuu"
   },
   "payment": {
     "title": "Kaffaltii",
@@ -205,7 +209,7 @@
     "pay_now": "Amma Kaffali",
     "processing": "Hojii irra jira",
     "payment_successful": "Kaffaltiin milkaa'e",
-    "payment_failed": "Kaffaltiin hin milkaa'in Irra deebi'ii yaali",
+    "payment_failed": "Kaffaltiin hin milkaa'in Mee irra deebi'ii yaali",
     "enter_phone": "Lakkoofsa bilbilaa keessan guutaa",
     "total_due": "Iddoo Kaffaltii"
   },
@@ -228,7 +232,7 @@
     "built_by": "Kan Ijaare",
     "follow_us": "Nu Hordofaa",
     "terms": "Haalota",
-    "privacy": "Wabii iccitii"
+    "privacy": "Wabii Iccitii"
   },
   "chatbot": {
     "title": "Abbaa Carraa Gargaaraa",
@@ -238,8 +242,8 @@
     "ask_me": "Waan barbaadde gaafadhu"
   },
   "newsletter": {
-    "title": "Mata Duree galmeessi",
-    "description": "Galmeewwan haaraa mo'attootaa fi dhiyeessi addaa irratti odeeffannoo argadhu",
+    "title": "Mata Duree Galmeessi",
+    "description": "Galmeewwan haaraa, mo'attootaa fi dhiyeessii addaa irratti odeeffannoo argadhu",
     "name_placeholder": "Maqaa keessan",
     "email_placeholder": "Imeelii keessan",
     "city_placeholder": "Magaalaa keessan",
