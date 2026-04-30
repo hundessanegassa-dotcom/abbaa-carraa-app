@@ -97,6 +97,34 @@
     "login_with_google": "Ku soo gal Google",
     "login_with_github": "Ku soo gal GitHub"
   },
+ {
+  "common": {
+    "pool_not_found": "Abaal-marin Lama Helin",
+    "back_to_home": "Ku Noqo Bogga Hore",
+    "back_to_pools": "Ku Noqo Abaal-marinaha",
+    "remaining_amount": "Ka Hadhay",
+    "raised_amount": "La Soo Ururiyay",
+    "pool_details": "Faahfaahinta Abaal-marinta",
+    "special_offer": "Ballanqaad Gaar ah",
+    "payment_methods": "Bixinta Telebirr ama CBE Birr",
+    "coming_soon": "Dhawaan",
+    "discount_for_non_winners": "Haddaanad guulaysan waxaad ka heshaa dhimis iibiyaha!",
+    "cash_equivalent_banner_title": "💰 100% Dammanad Lacag U Dhigma",
+    "cash_equivalent_banner_text": "Dhammaan abaal-marinaha waxaa dammaanad qaaday lacag u dhigma. Haddii abaal-marinta jiriga ah la heli waayo, lacagta oo dhan waxaad heshaa.",
+    "cash_equivalent_banner_button": "Faahfaahin"
+  },
+  "pools": {
+    "remaining_amount": "Ka Hadhay",
+    "raised_amount": "La Soo Ururiyay",
+    "pool_not_found": "Abaal-marin lama helin",
+    "join_this_pool": "Ku Biir Abaal-marintan",
+    "current_progress": "Horumarka Hadda"
+  },
+  "payment": {
+    "telebirr_cbe": "Telebirr ama CBE Birr",
+    "secure_payment": "Bixin Ammaan ah"
+  }
+} 
   "stats": {
     "active_pools": "Abaal-marinaha",
     "winners": "Kuwa Guuleystay",
