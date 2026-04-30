@@ -21,7 +21,7 @@
     "trusted_agents": "Wakiilada La Isku Halayaa",
     "total_raised": "Wadarta La Soo Ururiyay",
     "all_cities": "Dhamaan Magaalooyinka",
-    "loading": "Abaal-marinaha cajiibka ah ayaa la soo shubayaa...",
+    "loading": "Abaal-marinaha cajiibka ah ayaa la soo shubayaa",
     "back": "Dib",
     "save": "Badbaadi",
     "cancel": "Baabi",
@@ -35,7 +35,9 @@
     "of": "ee",
     "active_pools": "Qeybaha Bakhtiyaada",
     "no_pools": "Waqtigan xaadirka ah ma jiraan Qeybaha Bakhtiyaada",
-    "create_first_pool": "Abuur Qeybta Bakhtiyaada →"
+    "create_first_pool": "Abuur Qeybta Bakhtiyaada",
+    "register_now": "Hada Isdiiwaan Gel",
+    "learn_more": "Faahfaahin"
   },
   "stats": {
     "active_pools": "Qeybaha Bakhtiyaada",
@@ -51,13 +53,13 @@
     "contribution_amount": "Qadarka Tabaruca",
     "participants": "Kaqeybgalayaasha",
     "progress": "Horukaca",
-    "days_left": "Maalmaha Ka Hadhay",
+    "days_left": "maalmaha ka hadhay",
     "draw_date": "Taariikhda Bakhtiyaada",
     "started": "Bilowday",
     "join_now": "Hada Ku Biir",
-    "no_pools": "Qeybaha Bakhtiyaada ma jiraan",
+    "no_pools": "Ma jiraan Qeybaha Bakhtiyaada oo firfircoon",
     "remaining_days": "maalmaha ka hadhay",
-    "ending_soon": "Dhowaan dhammaanayaa!",
+    "ending_soon": "Dhowaan dhammaanayaa",
     "cash_equivalent": "Damanaad Lacag Oo Siman",
     "winner_gets": "Ku guuleysta wuxuu helayaa",
     "entry_fee": "Kharka Gelitaanka",
@@ -124,24 +126,42 @@
     "organizations": "Ururrada",
     "individuals": "Shakhsiyaadka"
   },
+  "moving_ad": {
+    "join_today": "Hada ku biir Abbaa Carraa oo ku guuleyso abaal-marinaha cajiibka ah",
+    "recent_winner": "Ku guuleystihii dhow wuxuu ku guuleystay Toyota Vitz oo qiimaheedu yahay 650,000 ETB",
+    "become_agent": "Noqo Wakiil oo hel 10% guddi",
+    "vendor_opportunity": "Alaabeeyayaasha qeybi alaabtiina abaal-marin ahaan",
+    "participants": "In ka badan 1000 kaqeybgalayaashu way ku biireen qeybaha bakhtiyaada",
+    "learn_more": "Faahfaahin"
+  },
+  "banners": {
+    "agent": "Noqo Wakiil",
+    "agent_desc": "Hel 10% guddi qeyb kasta oo aad abuurto",
+    "vendor": "Noqo Alaabeeyaha",
+    "vendor_desc": "Liis gayso alaabtaada abaal-marin ahaan. Ku guuleystuhu wuxuu helayaa BILAASH",
+    "organization": "Isdiiwaan Gel Urur",
+    "organization_desc": "Abuur qeybaha bakhtiyaada ee gudaha xubnahaada",
+    "individual": "Ku biir Shakhsi Ahaan",
+    "individual_desc": "Tabaruc yar oo fursad aad ku guuleysato"
+  },
   "payment": {
     "title": "Bixinta",
     "telebirr": "Telebirr",
     "cbe_birr": "CBE Birr",
     "pay_now": "Hada Bixi",
-    "processing": "Waa la wadayaa...",
-    "payment_successful": "Bixintu way ku guuleysatay!",
-    "payment_failed": "Bixintu way ku guul darreysatay. Fadlan isku day mar kale.",
+    "processing": "Waa la wadayaa",
+    "payment_successful": "Bixintu way ku guuleysatay",
+    "payment_failed": "Bixintu way ku guul darreysatay Fadlan isku day mar kale",
     "enter_phone": "Gali lambarka taleefankaaga",
     "total_due": "Wadarta La Bixinayo"
   },
   "draw": {
     "title": "Bakhtiyaada Abaal-marinta",
     "run_draw": "Samee Bakhtiyaad",
-    "draw_completed": "Bakhtiyaadku waa dhammaaday!",
-    "winner_announced": "Ku guuleystaha waa la dhawaaqay!",
-    "congratulations": "Hambalyo!",
-    "you_won": "Waa ku guuleysatay!",
+    "draw_completed": "Bakhtiyaadku waa dhammaaday",
+    "winner_announced": "Ku guuleystaha waa la dhawaaqay",
+    "congratulations": "Hambalyo",
+    "you_won": "Waa ku guuleysatay",
     "ticket_count": "Tirada tigidhada",
     "random_seed": "Abuurka random-ka",
     "verified_draw": "Bakhtiyaad La Xaqiijiyay"
@@ -152,37 +172,32 @@
     "contact_us": "Nala Soo Xiriir",
     "rights": "Xuquuqda Oo Dhan Waa Loo Dhawran Yahay",
     "built_by": "Waxaa Dhisey",
-    "follow_us": "Nagu Soo Biir"
-  },
-  "banners": {
-    "agent": "Noqo Wakiil - Hel 10% Guddi",
-    "vendor": "Noqo Alaabeeyaha - Liis Gayso Alaabtaada",
-    "organization": "Isdiiwaan Gel Urur - Abuur Qeybaha Bakhtiyaada Gudaha",
-    "individual": "Ku Biir Shaqsi Ahaan - Ku Guuleyso Abaal-marinaha Cajiibka ah"
+    "follow_us": "Nagu Soo Biir",
+    "terms": "Shuruudaha Adeegga",
+    "privacy": "Siyaasadda Qarsoon"
   },
   "chatbot": {
     "title": "Caawiye Abbaa Carraa",
-    "placeholder": "Su'aashaada qor...",
+    "placeholder": "Qor su'aashaada",
     "send": "Dir",
     "online": "Khadka",
-    "ask_me": "Wax kasta i weydii!"
-   },
-  "moving_ad": {
-    "join_today": "🎉 Join Abbaa Carraa today and win amazing prizes!",
-    "recent_winner": "🏆 Recent winner won a Toyota Vitz worth 650,000 ETB!",
-    "become_agent": "💰 Become an Agent and earn 10% commission!",
-    "vendor_opportunity": "🏭 Vendors: List your products as prizes!",
-    "participants": "🎯 Over 1,000+ participants have joined our pools!",
-    "learn_more": "Learn More"
+    "ask_me": "Wax kasta i weydii"
   },
-  "banners": {
-    "agent": "Become an Agent",
-    "agent_desc": "Earn 10% commission on every pool you create",
-    "vendor": "Become a Vendor",
-    "vendor_desc": "List your products as prizes. Winner gets FREE!",
-    "organization": "Become an Organization",
-    "organization_desc": "Create private pools for your members",
-    "individual": "Join as Individual",
-    "individual_desc": "Contribute for a chance to win big"
+  "newsletter": {
+    "title": "Ku biir wargeyskayaga",
+    "description": "Ka hel wararka ku saabsan qeybaha bakhtiyaada ee cusub kuwa guuleystay iyo dalabyada gaarka ah",
+    "name_placeholder": "Magacaaga",
+    "email_placeholder": "Emailkaaga",
+    "city_placeholder": "Magaaladaada",
+    "subscribe": "Isdiiwaan Gel",
+    "subscribing": "Isdiiwaan gelin",
+    "success": "Waa ku guuleysatay isdiiwaangelintu",
+    "error": "Isdiiwaangelintu way fashilantay"
+  },
+  "buttons": {
+    "join_now": "Hada Ku Biir",
+    "learn_more": "Faahfaahin",
+    "register": "Isdiiwaan Gel",
+    "contact": "Nala Soo Xiriir"
   }
 }
