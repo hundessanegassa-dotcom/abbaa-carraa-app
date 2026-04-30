@@ -1,4 +1,3 @@
-
 {
   "common": {
     "welcome": "Welcome to Abbaa Carraa",
@@ -115,21 +114,21 @@
     "days_left": "days left",
     "draw_date": "Draw Date",
     "started": "Started",
-    "join_now": "Join now",
-    "no_pools": "No active pools",
+    "join_now": "Join this pool for a chance to win",
+    "no_pools": "No active pools at the moment",
     "remaining_days": "remaining days",
     "ending_soon": "Ending soon",
     "cash_equivalent": "Cash Equivalent Guaranteed",
     "winner_gets": "Winner gets",
     "entry_fee": "Entry Fee",
     "seats": "seats",
-    "select_seats": "Select seats",
+    "select_seats": "Select number of seats",
     "total_amount": "Total Amount",
     "tickets": "tickets"
   },
   "how_it_works": {
     "title": "How Abbaa Carraa Works",
-    "find_pool": "Find a Pool",
+    "find_pool": "Find a Prize Pool",
     "find_pool_desc": "Browse active prize pools by city or category",
     "contribute": "Contribute",
     "contribute_desc": "Pay via Telebirr or CBE Birr securely",
@@ -138,11 +137,11 @@
   },
   "agent": {
     "become_agent": "Become an Agent",
-    "earn_commission": "Earn 10% Commission",
+    "earn_commission": "Earn 10 percent Commission",
     "register_agent": "Register as Agent",
     "agent_dashboard": "Agent Dashboard",
     "my_listings": "My Listings",
-    "my_pools": "My Pools",
+    "my_pools": "My Prize Pools",
     "participants": "Participants",
     "commissions": "Commissions",
     "create_listing": "Create Listing",
@@ -160,13 +159,13 @@
   },
   "organization": {
     "become_org": "Register Organization",
-    "internal_pools": "Create Internal Pools",
+    "internal_pools": "Create Internal Prize Pools",
     "member_saving": "Community Saving for Members",
     "org_dashboard": "Organization Dashboard",
-    "member_pools": "Member Pools"
+    "member_pools": "Member Prize Pools"
   },
   "filters": {
-    "title": "Filter Pools",
+    "title": "Filter Prize Pools",
     "category": "Category",
     "city": "City",
     "creator": "Creator",
@@ -188,14 +187,14 @@
   "moving_ad": {
     "join_today": "Join Abbaa Carraa today and win amazing prizes",
     "recent_winner": "Recent winner won a Toyota Vitz worth 650,000 ETB",
-    "become_agent": "Become an Agent and earn 10% commission",
+    "become_agent": "Become an Agent and earn 10 percent commission",
     "vendor_opportunity": "Vendors list your products as prizes",
-    "participants": "Over 1000 participants have joined",
+    "participants": "Over 1000 participants have joined our pools",
     "learn_more": "Learn More"
   },
   "banners": {
     "agent": "Become an Agent",
-    "agent_desc": "Earn 10% commission on every pool you create",
+    "agent_desc": "Earn 10 percent commission on every pool you create",
     "vendor": "Become a Vendor",
     "vendor_desc": "List your products as prizes. Winner gets FREE",
     "organization": "Become an Organization",
@@ -244,7 +243,7 @@
   },
   "newsletter": {
     "title": "Subscribe to Our Newsletter",
-    "description": "Get updates about new pools, winners, and exclusive offers",
+    "description": "Get updates about new pools winners and exclusive offers",
     "name_placeholder": "Your name",
     "email_placeholder": "Your email",
     "city_placeholder": "Your city",
