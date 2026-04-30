@@ -100,15 +100,15 @@
     "pool_not_found": "Pool Not Found",
     "back_to_home": "Back to Home",
     "back_to_pools": "Back to Pools",
-    "remaining_amount": "Remaining Amount",
-    "raised_amount": "Raised Amount",
+    "remaining_amount": "Remaining",
+    "raised_amount": "Raised",
     "pool_details": "Pool Details",
     "special_offer": "Special Offer",
     "payment_methods": "Payment via Telebirr or CBE Birr",
     "coming_soon": "Coming Soon",
     "discount_for_non_winners": "If you don't win, you get discount from the vendor",
-    "cash_equivalent_banner_title": "100% Cash Equivalent Guarantee",
-    "cash_equivalent_banner_text": "All prizes are backed by cash equivalent value. You receive the full cash amount if the physical prize is unavailable.",
+    "cash_equivalent_banner_title": "100 Cash Equivalent Guarantee",
+    "cash_equivalent_banner_text": "All prizes are backed by cash equivalent value",
     "cash_equivalent_banner_button": "Learn More"
   },
   "stats": {
@@ -200,7 +200,7 @@
   },
   "moving_ad": {
     "join_today": "Join Abbaa Carraa today and win amazing prizes",
-    "recent_winner": "Recent winner won a Toyota Vitz worth 650,000 ETB",
+    "recent_winner": "Recent winner won a Toyota Vitz worth 650000 ETB",
     "become_agent": "Become an Agent and earn 10 percent commission",
     "vendor_opportunity": "Vendors list your products as prizes",
     "participants": "Over 1000 participants have joined our pools",
