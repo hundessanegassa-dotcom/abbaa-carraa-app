@@ -21,7 +21,7 @@
     "trusted_agents": "Agente amanama",
     "total_raised": "Wolqa qixxa",
     "all_cities": "Magaala wolqa",
-    "loading": "Qaalaa miidho shuqullo...",
+    "loading": "Qaalaa miidho shuqullo",
     "back": "Duuno",
     "save": "Gummura",
     "cancel": "Bubba",
@@ -35,7 +35,9 @@
     "of": "kuma",
     "active_pools": "Dame yichchilcho",
     "no_pools": "Ha wode dame yichchilcho be'enno",
-    "create_first_pool": "Dame yichchilcho medha →"
+    "create_first_pool": "Dame yichchilcho medha",
+    "register_now": "Ha wode gargara",
+    "learn_more": "Duma la'a"
   },
   "stats": {
     "active_pools": "Dame yichchilcho",
@@ -57,7 +59,7 @@
     "join_now": "Ha wode maxa",
     "no_pools": "Dame yichchilcho be'enno",
     "remaining_days": "hafo ga'ra",
-    "ending_soon": "Gombessu!",
+    "ending_soon": "Gombessu",
     "cash_equivalent": "Miya me'issi",
     "winner_gets": "Mo'ichcho hasa",
     "entry_fee": "Maxo qixxa",
@@ -67,7 +69,7 @@
     "tickets": "tikette"
   },
   "how_it_works": {
-    "title": "Annooti ba'ano",
+    "title": "Abbaa Carraa annooti ba'ano",
     "find_pool": "Dame yichchilcho kora",
     "find_pool_desc": "Dame yichchilcho magaalaan hinnay qayyaan la'a",
     "contribute": "Hiixoo",
@@ -77,7 +79,7 @@
   },
   "agent": {
     "become_agent": "Agent ba'a",
-    "earn_commission": "Komishshana 10% hee'a",
+    "earn_commission": "10 komishshana hee'a",
     "register_agent": "Agent gargara",
     "agent_dashboard": "Agent dashboard",
     "my_listings": "Ta gargaramme",
@@ -124,24 +126,42 @@
     "organizations": "Derejeto",
     "individuals": "Koro"
   },
+  "moving_ad": {
+    "join_today": "Ha wode Abbaa Carraa maxa kee qaalaa miidho hasa",
+    "recent_winner": "Qirre mo'ichcho 650000 ETB leka Toyota Vitz mo'atte",
+    "become_agent": "Agent ba'a kee 10 komishshana hee'a",
+    "vendor_opportunity": "Vendora ne ala qaalaan gargara",
+    "participants": "1000 dagona maxxo nu dame yichchilcho maxxino",
+    "learn_more": "Duma la'a"
+  },
+  "banners": {
+    "agent": "Agent ba'a",
+    "agent_desc": "Medhamme dame yichchilcho hunda 10 komishshana hee'a",
+    "vendor": "Vendor ba'a",
+    "vendor_desc": "Ne ala qaalaan gargara Mo'ichcho duuka hasa",
+    "organization": "Dereja gargara",
+    "organization_desc": "Membara garssa dame yichchilcho medha",
+    "individual": "Maxa",
+    "individual_desc": "Mo'ichcho hee'u hiixoo maxa"
+  },
   "payment": {
     "title": "Hiixoo",
     "telebirr": "Telebirr",
     "cbe_birr": "CBE Birr",
     "pay_now": "Ha wode hiixo",
-    "processing": "Ba'anno...",
-    "payment_successful": "Hiixoo maadhino!",
-    "payment_failed": "Hiixoo maadhiibenno. Qire de'issi.",
+    "processing": "Ba'anno",
+    "payment_successful": "Hiixoo maadhino",
+    "payment_failed": "Hiixoo maadhiibenno Qire de'issi",
     "enter_phone": "Ne telefoona qixxa gessa",
     "total_due": "Wolqa hiixoo"
   },
   "draw": {
     "title": "Qaalaa gombessa",
     "run_draw": "Gombessa kawisa",
-    "draw_completed": "Gombessa maadhino!",
-    "winner_announced": "Mo'ichcho xaafino!",
-    "congratulations": "Moo'issi!",
-    "you_won": "Mo'atte!",
+    "draw_completed": "Gombessa maadhino",
+    "winner_announced": "Mo'ichcho xaafino",
+    "congratulations": "Moo'issi",
+    "you_won": "Mo'atte",
     "ticket_count": "Tikette looma",
     "random_seed": "Qorxo mishira",
     "verified_draw": "Gombessa huudhino"
@@ -152,37 +172,32 @@
     "contact_us": "Nu qiqira",
     "rights": "Hoo'a amar",
     "built_by": "Medhise",
-    "follow_us": "Nu huuda"
-  },
-  "banners": {
-    "agent": "Agent ba'a - 10% komishshana hee'a",
-    "vendor": "Vendor ba'a - Ne ala gargara",
-    "organization": "Dereja gargara - Garssa dame yichchilcho medha",
-    "individual": "Maxa - Qaalaa miidho hasa"
+    "follow_us": "Nu huuda",
+    "terms": "Haytaana kee maxo",
+    "privacy": "Korano iccitii"
   },
   "chatbot": {
     "title": "Abbaa Carraa gargaara",
-    "placeholder": "Ne oressa xaafa...",
+    "placeholder": "Ne oressa xaafa",
     "send": "Kirira",
     "online": "Korro",
-    "ask_me": "Wolqa oressa!"
-  }, 
-  "moving_ad": {
-    "join_today": "🎉 Join Abbaa Carraa today and win amazing prizes!",
-    "recent_winner": "🏆 Recent winner won a Toyota Vitz worth 650,000 ETB!",
-    "become_agent": "💰 Become an Agent and earn 10% commission!",
-    "vendor_opportunity": "🏭 Vendors: List your products as prizes!",
-    "participants": "🎯 Over 1,000+ participants have joined our pools!",
-    "learn_more": "Learn More"
+    "ask_me": "Wolqa oressa"
   },
-  "banners": {
-    "agent": "Become an Agent",
-    "agent_desc": "Earn 10% commission on every pool you create",
-    "vendor": "Become a Vendor",
-    "vendor_desc": "List your products as prizes. Winner gets FREE!",
-    "organization": "Become an Organization",
-    "organization_desc": "Create private pools for your members",
-    "individual": "Join as Individual",
-    "individual_desc": "Contribute for a chance to win big"
+  "newsletter": {
+    "title": "Nu xabaara gargara",
+    "description": "Dame yichchilcho mo'ichcho kee diskawuntira oduu hasa",
+    "name_placeholder": "Ne suntta",
+    "email_placeholder": "Ne email",
+    "city_placeholder": "Ne magaala",
+    "subscribe": "Gargara",
+    "subscribing": "Gargaramme",
+    "success": "Gargarammo",
+    "error": "Gargarammo baawa"
+  },
+  "buttons": {
+    "join_now": "Ha wode maxa",
+    "learn_more": "Duma la'a",
+    "register": "Gargara",
+    "contact": "Nu qiqira"
   }
 }
