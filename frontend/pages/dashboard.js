@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -48,7 +50,7 @@ export default function Dashboard() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    toast.success('Logged out');
+    toast.success(t('common.logout_success'));
     router.push('/');
   }
 
@@ -62,53 +64,49 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
       <nav className="bg-white shadow-md">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/" className="text-2xl font-bold text-green-600">
             Abbaa Carraa
           </Link>
           <button onClick={handleLogout} className="text-red-600 hover:text-red-700">
-            Logout
+            {t('common.logout')}
           </button>
         </div>
       </nav>
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">My Dashboard</h1>
+        <h1 className="text-3xl font-bold mb-8">{t('common.dashboard')}</h1>
         
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-gray-500 text-sm mb-2">Total Contributions</h3>
+            <h3 className="text-gray-500 text-sm mb-2">{t('common.total_contributions')}</h3>
             <p className="text-3xl font-bold text-green-600">
               ETB {profile?.total_contributions?.toLocaleString() || 0}
             </p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-gray-500 text-sm mb-2">Total Wins</h3>
+            <h3 className="text-gray-500 text-sm mb-2">{t('common.total_wins')}</h3>
             <p className="text-3xl font-bold text-blue-600">{profile?.total_wins || 0}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-gray-500 text-sm mb-2">Active Entries</h3>
+            <h3 className="text-gray-500 text-sm mb-2">{t('common.active_entries')}</h3>
             <p className="text-3xl font-bold text-purple-600">
               {contributions.filter(c => c.status === 'completed').length}
             </p>
           </div>
         </div>
 
-        {/* Contributions Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="px-6 py-4 border-b bg-gray-50">
-            <h2 className="text-xl font-semibold">Recent Contributions</h2>
+            <h2 className="text-xl font-semibold">{t('common.recent_contributions')}</h2>
           </div>
           
           {contributions.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
-              <p>You haven't made any contributions yet.</p>
+              <p>{t('common.no_contributions')}</p>
               <Link href="/" className="text-green-600 mt-2 inline-block">
-                Browse Prize Pools →
+                {t('common.browse_pools')} →
               </Link>
             </div>
           ) : (
@@ -116,10 +114,10 @@ export default function Dashboard() {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pool</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('common.pool')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('common.amount')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('common.status')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('common.date')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -138,13 +136,13 @@ export default function Dashboard() {
                             ? 'bg-green-100 text-green-800' 
                             : 'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {contrib.status}
+                          {contrib.status === 'completed' ? t('common.completed') : t('common.pending')}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500">
                         {new Date(contrib.created_at).toLocaleDateString()}
-                       </td>
-                     </tr>
+                      </td>
+                    </tr>
                   ))}
                 </tbody>
               </table>
@@ -152,13 +150,12 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Quick Links */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
           <Link href="/listings" className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg text-center hover:from-green-600 hover:to-green-700 transition">
-            🎁 Browse Available Prizes
+            🎁 {t('common.browse_prizes')}
           </Link>
           <Link href="/winners" className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg text-center hover:from-blue-600 hover:to-blue-700 transition">
-            🏆 View Past Winners
+            🏆 {t('common.view_winners')}
           </Link>
         </div>
       </main>
