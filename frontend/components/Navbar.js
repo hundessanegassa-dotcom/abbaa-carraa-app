@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import LanguageToggle from './LanguageToggle';
 
 export default function Navbar() {
   const { t } = useTranslation();
@@ -33,7 +34,7 @@ export default function Navbar() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    toast.success(t('common.logout'));
+    toast.success(t('common.logout_success'));
     router.push('/');
   }
 
@@ -46,7 +47,7 @@ export default function Navbar() {
           </Link>
           
           <div className="hidden md:flex space-x-6">
-            <Link href="/" className={text-gray-700 hover:text-green-600 transition"> {t('common.home')} </Link>
+            <Link href="/" className="text-gray-700 hover:text-green-600 transition"> {t('common.home')} </Link>
             <Link href="/listings" className="text-gray-700 hover:text-green-600 transition"> {t('common.browse_prizes')} </Link>
             <Link href="/winners" className="text-gray-700 hover:text-green-600 transition"> {t('common.winners')} </Link>
             <Link href="/about" className="text-gray-700 hover:text-green-600 transition"> {t('common.about')} </Link>
@@ -54,7 +55,7 @@ export default function Navbar() {
             <Link href="/faq" className="text-gray-700 hover:text-green-600 transition"> {t('common.faq')} </Link>
             
             {userRole === 'admin' && (
-              <Link href="/admin/analytics" className="text-purple-600 hover:text-purple-700 transition"> Analytics </Link>
+              <Link href="/admin/analytics" className="text-purple-600 hover:text-purple-700 transition"> {t('common.dashboard')} </Link>
             )}
             {user && <Link href="/dashboard" className="text-gray-700 hover:text-green-600 transition"> {t('common.dashboard')} </Link>}
             {userType === 'agent' && <Link href="/agent/dashboard" className="text-blue-600 hover:text-blue-700 transition"> {t('agent.agent_dashboard')} </Link>}
@@ -68,7 +69,9 @@ export default function Navbar() {
             {user && <Link href="/create-pool" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"> {t('common.create_pool')} </Link>}
           </div>
           
-          <div className="flex space-x-4">
+          <div className="flex items-center space-x-4">
+            <LanguageToggle />
+            
             {user ? (
               <button onClick={handleLogout} className="text-red-600 hover:text-red-700 transition"> {t('common.logout')} </button>
             ) : (
