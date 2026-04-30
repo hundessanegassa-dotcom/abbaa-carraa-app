@@ -4,6 +4,7 @@
     "tagline": "ማሕበረሰብ መሰረት ዝገበረ ናይ ሽልማትን አበርክቶን መድረኽ",
     "home": "ገዛ",
     "join": "ተጸንበሩ",
+    "join_now": "ሕጂ ተጸንበሩ",
     "contribute": "አበርክቱ",
     "login": "እቶ",
     "register": "ተመዝገቡ",
@@ -63,11 +64,11 @@
     "password": "መለለይ ቃል",
     "password_placeholder": "ብዙሕ እንተዀነ 6 ፊደላት",
     "password_min_length": "መለለይ ቃል ብዙሕ እንተዀነ 6 ፊደላት ክኸውን ኣለዎ",
-    "creating_account": "ኣካውንት ይፍጠር ኣሎ...",
+    "creating_account": "ኣካውንት ይፍጠር ኣሎ",
     "sign_up": "ተመዝገቡ",
     "already_have_account": "ኣካውንት ኣለኩምዶ?",
     "sign_in": "እቶ",
-    "register_success": "�ምዝገባ ተዓዊቱ! በጃኹም ንምርግጋጺ ኢሜይልኩም ርአዩ።",
+    "register_success": "ምዝገባ ተዓዊቱ! በጃኹም ንምርግጋጺ ኢሜይልኩም ርአዩ።",
     "register_error": "ምዝገባ ኣይተዓወተን። በጃኹም ደጊምኩም ፈትኑ።",
     "sign_in_account": "ናብ ኣካውንትኩም እቶ",
     "or": "ወይ",
@@ -75,7 +76,7 @@
     "signin_google": "ብGoogle እቶ",
     "signin_github": "ብGitHub እቶ",
     "or_continue_with_email": "ወይ ብኢሜይል ቀጽሉ",
-    "signing_in": "ይእቶ ኣሎ...",
+    "signing_in": "ይእቶ ኣሎ",
     "forgot_password": "መለለይ ቃልኩም ረሲዕኩምዶ?",
     "login_success": "ብዓወት ኣቲኹም!",
     "logout_success": "ብዓወት ወጺኹም",
@@ -95,10 +96,7 @@
     "signup_with_google": "ብGoogle ተመዝገቡ",
     "signup_with_github": "ብGitHub ተመዝገቡ",
     "login_with_google": "ብGoogle እቶ",
-    "login_with_github": "ብGitHub እቶ"
-  },
-  {
-  "common": {
+    "login_with_github": "ብGitHub እቶ",
     "pool_not_found": "ዕድላዊ ጕጅለ ኣይተረኽበን",
     "back_to_home": "ናብ ገዛ ተመለሱ",
     "back_to_pools": "ናብ ዕድላዊ ጕጅለታት ተመለሱ",
@@ -109,22 +107,10 @@
     "payment_methods": "ክፍሊት ብቴሌብር ወይ ሲቢኢ ብር",
     "coming_soon": "ቀረቢቱ ይመጽእ",
     "discount_for_non_winners": "እንተዘይዓዊትኩም ካብ ኣቅራቢ ቅናሽ ትረኽቡ!",
-    "cash_equivalent_banner_title": "💰 100% ብገንዘብ ዋስትና",
-    "cash_equivalent_banner_text": "ኩለን ሽልማታት ብገንዘብ ተመጣጣን ዋስትና ኣለዎ። ሽልማቱ ባህላዊ እንተዘይረኸበ ምሉእ ገንዘብ ትቕበሉ።",
+    "cash_equivalent_banner_title": "100% ብገንዘብ ዋስትና",
+    "cash_equivalent_banner_text": "ኩለን ሽልማታት ብገንዘብ ተመጣጣን ዋስትና ኣለዎ።",
     "cash_equivalent_banner_button": "ተወሳኺ ይወቁ"
   },
-  "pools": {
-    "remaining_amount": "ዝተረፈ",
-    "raised_amount": "እተኣከበ",
-    "pool_not_found": "ጕጅለ ኣይተረኽበን",
-    "join_this_pool": "እዚ ጕጅለ ተጸንበሩ",
-    "current_progress": "ሕጂ ዘሎ ዕቤት"
-  },
-  "payment": {
-    "telebirr_cbe": "ቴሌብር ወይ ሲቢኢ ብር",
-    "secure_payment": "ደህንነቱ ዝተሓለወ ክፍሊት"
-  }
-}
   "stats": {
     "active_pools": "ዕድላዊ ጕጅለታት",
     "winners": "ተዓወቲቶ",
