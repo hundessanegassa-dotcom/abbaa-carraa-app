@@ -97,6 +97,34 @@
     "login_with_google": "Google tiin seeni",
     "login_with_github": "GitHub tiin seeni"
   },
+  {
+  "common": {
+    "pool_not_found": "Galmee Badhaasaa Hin Argamne",
+    "back_to_home": "Manatti Deebi'i",
+    "back_to_pools": "Galmeetti Deebi'i",
+    "remaining_amount": "Hafte",
+    "raised_amount": "Waligalaa",
+    "pool_details": "Ibsa Galmee",
+    "special_offer": "Kennaa Addaa",
+    "payment_methods": "Kaffalti Telebirr ykn CBE Birr",
+    "coming_soon": "Dafee Ni Dhufa",
+    "discount_for_non_winners": "Yoo hin mo'anne dhiyeessaa irraa diskawuntii argattu!",
+    "cash_equivalent_banner_title": "💰 100% Waadaa Gatii Walqixaa",
+    "cash_equivalent_banner_text": "Badhaasi hundi gatii walqixaa hanga tareefamatiin waadaa galama. Hangi badhaasaa gatii tareefamaa faana walqixa.",
+    "cash_equivalent_banner_button": "Dabalata Hubadhu"
+  },
+  "pools": {
+    "remaining_amount": "Hafte",
+    "raised_amount": "Waligalaa",
+    "pool_not_found": "Galmee hin argamne",
+    "join_this_pool": "Galmee kana hirmaadhu",
+    "current_progress": "Haala ammaa"
+  },
+  "payment": {
+    "telebirr_cbe": "Telebirr ykn CBE Birr",
+    "secure_payment": "Kaffalti amanamaa"
+  }
+}
   "stats": {
     "active_pools": "Galmee Badhaasaa",
     "winners": "Mo'attoota",
