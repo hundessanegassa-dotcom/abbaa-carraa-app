@@ -4,6 +4,7 @@
     "tagline": "Waltajjii badhaasaa fi gumaacha ummata irratti hundaa'e",
     "home": "Mana",
     "join": "Hirmaadhu",
+    "join_now": "Amma Hirmaadhu",
     "contribute": "Gumaachi",
     "login": "Seeni",
     "register": "Galmeessi",
@@ -36,7 +37,7 @@
     "active_pools": "Galmee Badhaasaa",
     "no_pools": "Yeroo ammaa Galmeen Badhaasaa hin jiru",
     "create_first_pool": "Galmee Badhaasaa Uumi",
-    "register_now": "Amma Galmeessi",
+    "register_now": "Amma Galma'i",
     "learn_more": "Dabalata Hubadhu",
     "create_account": "Galama keessan uumadhaa",
     "join_prize_pools": "Galmee Badhaasaa hirmaadhaa fi badhaasa ajaa'ibsiisaa argadhaa",
@@ -54,7 +55,7 @@
     "sms_notifications": "Ergaa SMS ni argattu",
     "city": "Magaala",
     "city_placeholder": "Finfinnee",
-    "i_am_joining_as": "Akkamittiin hirmaadhaa jira",
+    "i_am_joining_as": "Akkamittiin hirmaamaachu barbaada",
     "individual": "Dhuunfaa",
     "agent": "Agent",
     "vendor": "Dhiyeessa",
@@ -95,10 +96,7 @@
     "signup_with_google": "Google tiin galmeessi",
     "signup_with_github": "GitHub tiin galmeessi",
     "login_with_google": "Google tiin seeni",
-    "login_with_github": "GitHub tiin seeni"
-  },
-  {
-  "common": {
+    "login_with_github": "GitHub tiin seeni",
     "pool_not_found": "Galmee Badhaasaa Hin Argamne",
     "back_to_home": "Manatti Deebi'i",
     "back_to_pools": "Galmeetti Deebi'i",
@@ -113,18 +111,6 @@
     "cash_equivalent_banner_text": "Badhaasi hundi gatii walqixaa hanga tareefamatiin waadaa galama. Hangi badhaasaa gatii tareefamaa faana walqixa.",
     "cash_equivalent_banner_button": "Dabalata Hubadhu"
   },
-  "pools": {
-    "remaining_amount": "Hafte",
-    "raised_amount": "Waligalaa",
-    "pool_not_found": "Galmee hin argamne",
-    "join_this_pool": "Galmee kana hirmaadhu",
-    "current_progress": "Haala ammaa"
-  },
-  "payment": {
-    "telebirr_cbe": "Telebirr ykn CBE Birr",
-    "secure_payment": "Kaffalti amanamaa"
-  }
-}
   "stats": {
     "active_pools": "Galmee Badhaasaa",
     "winners": "Mo'attoota",
@@ -152,7 +138,12 @@
     "seats": "teessuma",
     "select_seats": "Lakkoofsa teessumaa filadhu",
     "total_amount": "Gatii Waligalaa",
-    "tickets": "Tiikeetii"
+    "tickets": "Tiikeetii",
+    "remaining_amount": "Hafte",
+    "raised_amount": "Waligalaa",
+    "pool_not_found": "Galmee hin argamne",
+    "join_this_pool": "Galmee kana hirmaadhu",
+    "current_progress": "Haala ammaa"
   },
   "how_it_works": {
     "title": "Abbaan Carraa Akkamitti Hojjeta",
@@ -239,7 +230,9 @@
     "payment_successful": "Kaffaltiin milkaa'e",
     "payment_failed": "Kaffaltiin hin milkaa'in Mee irra deebi'ii yaali",
     "enter_phone": "Lakkoofsa bilbilaa keessan guutaa",
-    "total_due": "Iddoo Kaffaltii"
+    "total_due": "Iddoo Kaffaltii",
+    "telebirr_cbe": "Telebirr ykn CBE Birr",
+    "secure_payment": "Kaffalti amanamaa"
   },
   "draw": {
     "title": "Argannoo Badhaasaa",
