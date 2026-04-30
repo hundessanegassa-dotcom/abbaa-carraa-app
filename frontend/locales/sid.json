@@ -97,6 +97,34 @@
     "login_with_google": "Google tiin seeni",
     "login_with_github": "GitHub tiin seeni"
   },
+  {
+  "common": {
+    "pool_not_found": "Pool kunchi sii",
+    "back_to_home": "Mana duubbi",
+    "back_to_pools": "Pool duubbi",
+    "remaining_amount": "Haaro",
+    "raised_amount": "Gatamino",
+    "pool_details": "Pool ibsa",
+    "special_offer": "Diskawuntii",
+    "payment_methods": "Kafala Telebirr ykn CBE Birr",
+    "coming_soon": "Dafee ishee",
+    "discount_for_non_winners": "Hin mo'inot diskawuntii isheenna!",
+    "cash_equivalent_banner_title": "💰 100% Laakke Gar Malla",
+    "cash_equivalent_banner_text": "Badhaasa wundaan laakke gar malla aggo. Badhaasa kunchi yoo ta'e malla ida'ama argattu.",
+    "cash_equivalent_banner_button": "Dumma hubadhi"
+  },
+  "pools": {
+    "remaining_amount": "Haaro",
+    "raised_amount": "Gatamino",
+    "pool_not_found": "Pool kunchi sii",
+    "join_this_pool": "Pool kana hirmaadhi",
+    "current_progress": "Amma waan hojjamino"
+  },
+  "payment": {
+    "telebirr_cbe": "Telebirr ykn CBE Birr",
+    "secure_payment": "Kafala amantino"
+  }
+}
   "stats": {
     "active_pools": "Badhaasa pool",
     "winners": "Mo'attoota",
