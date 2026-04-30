@@ -1,6 +1,6 @@
 {
   "common": {
-    "welcome": "እንኳን ወደ abbaa carraa በደህና መጡ",
+    "welcome": "እንኳን ወደ Abbaa Carraa በደህና መጡ",
     "tagline": "ማህበረሰብን መሰረት ያደረገ የሽልማት እና የአስተዋጽኦ መድረክ",
     "home": "መነሻ",
     "join": "ተቀላቀል",
@@ -21,7 +21,7 @@
     "trusted_agents": "የታመኑ ወኪሎች",
     "total_raised": "የተሰበሰበ ጠቅላላ",
     "all_cities": "ሁሉም ከተሞች",
-    "loading": "አስደናቂ ሽልማቶች በመጫን ላይ...",
+    "loading": "አስደናቂ ሽልማቶች በመጫን ላይ",
     "back": "ተመለስ",
     "save": "አስቀምጥ",
     "cancel": "ሰርዝ",
@@ -35,7 +35,9 @@
     "of": "ከ",
     "active_pools": "የእጣ መደቦች",
     "no_pools": "በአሁኑ ጊዜ ምንም የእጣ መደቦች የሉም",
-    "create_first_pool": "አዲስ የእጣ መደብ ፍጠር →"
+    "create_first_pool": "አዲስ የእጣ መደብ ፍጠር",
+    "register_now": "አሁን ይመዝገቡ",
+    "learn_more": "ተጨማሪ ይወቁ"
   },
   "stats": {
     "active_pools": "የእጣ መደቦች",
@@ -55,9 +57,9 @@
     "draw_date": "የእጣ ቀን",
     "started": "የተጀመረው",
     "join_now": "አሁን ተቀላቀል",
-    "no_pools": "በአሁኑ ጊዜ ምንም የእጣ መደቦች የሉም",
+    "no_pools": "በአሁኑ ጊዜ ምንም የእጣ መደቦች  የሉም",
     "remaining_days": "የቀሩ ቀናት",
-    "ending_soon": "በቅርቡ ያበቃል!",
+    "ending_soon": "በቅርቡ ያበቃል",
     "cash_equivalent": "የገንዘብ ተመጣጣኝ ዋስትና",
     "winner_gets": "አሸናፊው የሚያገኘው",
     "entry_fee": "የመግቢያ ክፍያ",
@@ -67,9 +69,9 @@
     "tickets": "ቲኬቶች"
   },
   "how_it_works": {
-    "title": "እንዴት ይሰራል",
+    "title": "Abbaa Carraa እንዴት ይሰራል",
     "find_pool": "የእጣ መደብ ፈልግ",
-    "find_pool_desc": "በከተማ ወይም በምድብ የእጣ መደቦችን ይመልከቱ",
+    "find_pool_desc": "በከተማ ወይም በምድብ ንቁ ገንዳዎችን ይመልከቱ",
     "contribute": "አስተዋጽኦ አድርግ",
     "contribute_desc": "በቴሌብር ወይም በሲቢኢ ብር በደህና ይክፈሉ",
     "win": "አሸንፉ እና አከብሩ",
@@ -77,11 +79,11 @@
   },
   "agent": {
     "become_agent": "ወኪል ሁን",
-    "earn_commission": "10% ኮሚሽን አግኝ",
+    "earn_commission": "10 በመቶ ኮሚሽን አግኝ",
     "register_agent": "እንደ ወኪል ይመዝገቡ",
     "agent_dashboard": "የወኪል ዳሽቦርድ",
     "my_listings": "የእኔ ዝርዝሮች",
-    "my_pools": "የእኔ የእጣ መደቦች",
+    "my_pools": "የእኔ ገንዳዎች",
     "participants": "ተሳታፊዎች",
     "commissions": "ኮሚሽኖች",
     "create_listing": "አዲስ ዝርዝር ፍጠር",
@@ -99,7 +101,7 @@
   },
   "organization": {
     "become_org": "ድርጅት ይመዝገቡ",
-    "internal_pools": "የውስጥ የእጣ መደቦችን ይፍጠሩ",
+    "internal_pools": "የውስጥ የእጣ መደቦች ይፍጠሩ",
     "member_saving": "ለአባላት የማህበረሰብ ቁጠባ",
     "org_dashboard": "የድርጅት ዳሽቦርድ",
     "member_pools": "የአባላት የእጣ መደቦች"
@@ -124,24 +126,42 @@
     "organizations": "ድርጅቶች",
     "individuals": "ግለሰቦች"
   },
+  "moving_ad": {
+    "join_today": "ዛሬውኑ Abbaa Carraa ይቀላቀሉ እና አስደናቂ ሽልማቶችን ያሸንፉ",
+    "recent_winner": "የቅርብ ጊዜ አሸናፊ 650,000 ብር ዋጋ ያለው ቶዮታ ቪትዝ አሸንፏል",
+    "become_agent": "ወኪል ሁን እና 10 በመቶ ኮሚሽን አግኝ",
+    "vendor_opportunity": "አቅራቢዎች ምርቶችዎን እንደ ሽልማት ዝርዝር ያድርጉ",
+    "participants": "ከ1000 በላይ ተሳታፊዎች የእጣ መደቦችን ተቀላቅለዋል",
+    "learn_more": "ተጨማሪ ይወቁ"
+  },
+  "banners": {
+    "agent": "ወኪል ሁን",
+    "agent_desc": "በሚፈጥሩት የእጣ መደቦች ሁሉ 10 በመቶ ኮሚሽን ያግኙ",
+    "vendor": "አቅራቢ ሁን",
+    "vendor_desc": "ምርቶችዎን እንደ ሽልማት ይዘርዝሩ አሸናፊው ነጻ ያገኛል",
+    "organization": "ድርጅት ይመዝገቡ",
+    "organization_desc": "ለአባላትዎ የውስጥ የእጣ መደቦችን ይፍጠሩ",
+    "individual": "በግል ተቀላቀል",
+    "individual_desc": "ለማሸነፍ እድል በትንሽ አስተዋጽኦ ይሳተፉ"
+  },
   "payment": {
     "title": "ክፍያ",
     "telebirr": "ቴሌብር",
     "cbe_birr": "ሲቢኢ ብር",
     "pay_now": "አሁን ክፈል",
-    "processing": "በማካሄድ ላይ...",
-    "payment_successful": "ክፍያ ተሳክቷል!",
-    "payment_failed": "ክፍያ አልተሳካም። እባክዎ ይገምግሙ።",
+    "processing": "በማካሄድ ላይ",
+    "payment_successful": "ክፍያ ተሳክቷል",
+    "payment_failed": "ክፍያ አልተሳካም እባክዎ ይገምግሙ",
     "enter_phone": "ስልክ ቁጥርዎን ያስገቡ",
     "total_due": "ጠቅላላ መክፈያ"
   },
   "draw": {
     "title": "የሽልማት እጣ",
     "run_draw": "እጣ አካሂድ",
-    "draw_completed": "እጣ ተጠናቋል!",
-    "winner_announced": "አሸናፊ ታውቋል!",
-    "congratulations": "እንኳን ደስ ያለዎት!",
-    "you_won": "አሸንፈዋል!",
+    "draw_completed": "እጣ ተጠናቋል",
+    "winner_announced": "አሸናፊ ታውቋል",
+    "congratulations": "እንኳን ደስ ያለዎት",
+    "you_won": "አሸንፈዋል",
     "ticket_count": "የቲኬቶች ቁጥር",
     "random_seed": "የዘፈቀደ ዘር",
     "verified_draw": "የተረጋገጠ እጣ"
@@ -152,37 +172,32 @@
     "contact_us": "አግኙን",
     "rights": "መብቱ በህግ የተጠበቀ ነው",
     "built_by": "ተገንብቷል በ",
-    "follow_us": "ተከታተሉን"
-  },
-  "banners": {
-    "agent": "ወኪል ሁን - 10% ኮሚሽን አግኝ",
-    "vendor": "አቅራቢ ሁን - ምርቶችዎን ዝርዝር ያድርጉ",
-    "organization": "ድርጅት ይመዝገቡ - የውስጥ የእጣ መደቦችን ይፍጠሩ",
-    "individual": "በግል ተቀላቀል - አስደናቂ ሽልማቶችን አሸንፉ"
+    "follow_us": "ተከታተሉን",
+    "terms": "የአገልግሎት ውሎች",
+    "privacy": "የግላዊነት ፖሊሲ"
   },
   "chatbot": {
-    "title": "የአባ ካራ አጋዥ",
-    "placeholder": "ጥያቄዎን ይጻፉ...",
+    "title": " የabbaa carraa አጋዥ",
+    "placeholder": "ጥያቄዎን ይጻፉ",
     "send": "ላክ",
     "online": "በመስመር ላይ",
-    "ask_me": "ማንኛውንም ነገር ጠይቁኝ!"
-   },
-  "moving_ad": {
-  "join_today": "🎉 Join Abbaa Carraa today and win amazing prizes!",
-    "recent_winner": "🏆 Recent winner won a Toyota Vitz worth 650,000 ETB!",
-    "become_agent": "💰 Become an Agent and earn 10% commission!",
-    "vendor_opportunity": "🏭 Vendors: List your products as prizes!",
-    "participants": "🎯 Over 1,000+ participants have joined our pools!",
-    "learn_more": "Learn More"
+    "ask_me": "ማንኛውንም ነገር ጠይቁኝ"
   },
-  "banners": {
-    "agent": "Become an Agent",
-    "agent_desc": "Earn 10% commission on every pool you create",
-    "vendor": "Become a Vendor",
-    "vendor_desc": "List your products as prizes. Winner gets FREE!",
-    "organization": "Become an Organization",
-    "organization_desc": "Create private pools for your members",
-    "individual": "Join as Individual",
-    "individual_desc": "Contribute for a chance to win big"
+  "newsletter": {
+    "title": "ለዜና ደብዳቤያችን ይመዝገቡ",
+    "description": "ስለ አዳዲስ የእጣ መደቦች አሸናፊዎች እና ልዩ ቅናሾች መረጃ ያግኙ",
+    "name_placeholder": "ስምዎ",
+    "email_placeholder": "ኢሜይልዎ",
+    "city_placeholder": "ከተማዎ",
+    "subscribe": "ይመዝገቡ",
+    "subscribing": "በመመዝገብ ላይ",
+    "success": "በተሳካ ሁኔታ ተመዝግበዋል",
+    "error": "ምዝገባ አልተሳካም"
+  },
+  "buttons": {
+    "join_now": "አሁን ተቀላቀል",
+    "learn_more": "ተጨማሪ ይወቁ",
+    "register": "ይመዝገቡ",
+    "contact": "ያግኙን"
   }
 }
