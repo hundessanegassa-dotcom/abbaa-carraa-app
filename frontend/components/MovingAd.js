@@ -15,9 +15,7 @@ export default function MovingAd() {
   ];
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % ads.length);
-    }, 5000);
+    const interval = setInterval(() => { setCurrentIndex((prev) => (prev + 1) % ads.length); }, 5000);
     return () => clearInterval(interval);
   }, []);
 
