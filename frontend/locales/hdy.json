@@ -123,8 +123,7 @@
   "payment": {
     "telebirr_cbe": "Telebirr ykn CBE Birr",
     "secure_payment": "Kafala amantama"
-  }
-}
+  },
   "stats": {
     "active_pools": "Pool badhaasa",
     "winners": "Shananee",
