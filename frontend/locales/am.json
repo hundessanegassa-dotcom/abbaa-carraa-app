@@ -98,6 +98,33 @@
     "login_with_google": "በGoogle ይግቡ",
     "login_with_github": "በGitHub ይግቡ"
   },
+ {
+  "common": {
+    "pool_not_found": "የእጣ መደብ አልተገኘም",
+    "back_to_home": "ወደ መነሻ ተመለስ",
+    "back_to_pools": "ወደ እጣ መደቦች ተመለስ",
+    "remaining_amount": "የቀረው",
+    "raised_amount": "የተሰበሰበው",
+    "pool_details": "የእጣ መደብ ዝርዝር",
+    "special_offer": "ልዩ ቅናሽ",
+    "payment_methods": "ክፍያ በቴሌብር ወይም ሲቢኢ ብር",
+    "coming_soon": "በቅርቡ ይጠበቃል",
+    "discount_for_non_winners": "ካላሸነፉ ከአቅራቢው ቅናሽ ያገኛሉ!",
+    "cash_equivalent_banner_title": "💰 ሙሉ የገንዘብ ዋስትና",
+    "cash_equivalent_banner_text": "ሁሉም ሽልማቶች በገንዘብ ተመጣጣኝ ዋስትና የተደገፉ ናቸው። አካላዊ ሽልማቱ በማይገኝ ጊዜ ሙሉ የገንዘብ መጠኑን ይቀበላሉ።",
+    "cash_equivalent_banner_button": "ተጨማሪ ይወቁ"
+  },
+  "pools": {
+    "remaining_amount": "የቀረው",
+    "raised_amount": "የተሰበሰበው",
+    "pool_not_found": "የእጣ መደብ አልተገኘም",
+    "join_this_pool": "ይህን መደብ ተቀላቀል",
+    "current_progress": "አሁን ያለው እድገት"
+  },
+  "payment": {
+    "telebirr_cbe": "ቴሌብር ወይም ሲቢኢ ብር",
+    "secure_payment": "ደህንነቱ የተጠበቀ ክፍያ"
+  },
   "stats": {
     "active_pools": "የእጣ መደቦች",
     "winners": "አሸናፊዎች",
