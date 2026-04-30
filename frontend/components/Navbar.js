@@ -46,75 +46,35 @@ export default function Navbar() {
           </Link>
           
           <div className="hidden md:flex space-x-6">
-            <Link href="/" className="text-gray-700 hover:text-green-600 transition">
-              {t('common.home')}
-            </Link>
-            <Link href="/listings" className="text-gray-700 hover:text-green-600 transition">
-              {t('common.browse_prizes')}
-            </Link>
-            <Link href="/winners" className="text-gray-700 hover:text-green-600 transition">
-              {t('common.winners')}
-            </Link>
-            <Link href="/about" className="text-gray-700 hover:text-green-600 transition">
-              {t('common.about')}
-            </Link>
-            <Link href="/contact" className="text-gray-700 hover:text-green-600 transition">
-              {t('common.contact')}
-            </Link>
-            <Link href="/faq" className="text-gray-700 hover:text-green-600 transition">
-              {t('common.faq')}
-            </Link>
+            <Link href="/" className={text-gray-700 hover:text-green-600 transition"> {t('common.home')} </Link>
+            <Link href="/listings" className="text-gray-700 hover:text-green-600 transition"> {t('common.browse_prizes')} </Link>
+            <Link href="/winners" className="text-gray-700 hover:text-green-600 transition"> {t('common.winners')} </Link>
+            <Link href="/about" className="text-gray-700 hover:text-green-600 transition"> {t('common.about')} </Link>
+            <Link href="/contact" className="text-gray-700 hover:text-green-600 transition"> {t('common.contact')} </Link>
+            <Link href="/faq" className="text-gray-700 hover:text-green-600 transition"> {t('common.faq')} </Link>
             
             {userRole === 'admin' && (
-              <Link href="/admin/analytics" className="text-purple-600 hover:text-purple-700 transition">
-                Analytics
-              </Link>
+              <Link href="/admin/analytics" className="text-purple-600 hover:text-purple-700 transition"> Analytics </Link>
             )}
-            
-            {user && (
-              <Link href="/dashboard" className="text-gray-700 hover:text-green-600 transition">
-                {t('common.dashboard')}
-              </Link>
-            )}
-            
-            {userType === 'agent' && (
-              <Link href="/agent/dashboard" className="text-blue-600 hover:text-blue-700 transition">
-                {t('agent.agent_dashboard')}
-              </Link>
-            )}
+            {user && <Link href="/dashboard" className="text-gray-700 hover:text-green-600 transition"> {t('common.dashboard')} </Link>}
+            {userType === 'agent' && <Link href="/agent/dashboard" className="text-blue-600 hover:text-blue-700 transition"> {t('agent.agent_dashboard')} </Link>}
             
             {user && userType !== 'agent' && userType !== 'admin' && userType !== 'vendor' && userType !== 'organization' && (
-              <Link href="/agent/register" className="text-yellow-600 hover:text-yellow-700 transition">
-                {t('common.become_agent')}
-              </Link>
+              <Link href="/agent/register" className="text-yellow-600 hover:text-yellow-700 transition"> {t('common.become_agent')} </Link>
             )}
-            
             {user && userType !== 'vendor' && userType !== 'agent' && userType !== 'admin' && userType !== 'organization' && (
-              <Link href="/vendor/register" className="text-orange-600 hover:text-orange-700 transition">
-                {t('common.become_vendor')}
-              </Link>
+              <Link href="/vendor/register" className="text-orange-600 hover:text-orange-700 transition"> {t('common.become_vendor')} </Link>
             )}
-            
-            {user && (
-              <Link href="/create-pool" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
-                {t('common.create_pool')}
-              </Link>
-            )}
+            {user && <Link href="/create-pool" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"> {t('common.create_pool')} </Link>}
           </div>
           
           <div className="flex space-x-4">
             {user ? (
-              <button onClick={handleLogout} className="text-red-600 hover:text-red-700 transition">
-                {t('common.logout')}
-              </button>
+              <button onClick={handleLogout} className="text-red-600 hover:text-red-700 transition"> {t('common.logout')} </button>
             ) : (
               <>
-                <Link href="/login" className="text-gray-700 hover:text-green-600 transition">
-                  {t('common.login')}
-                </Link>
-                <Link href="/register" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
-                  {t('common.register')}
-                </Link>
+                <Link href="/login" className="text-gray-700 hover:text-green-600 transition"> {t('common.login')} </Link>
+                <Link href="/register" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"> {t('common.register')} </Link>
               </>
             )}
           </div>
