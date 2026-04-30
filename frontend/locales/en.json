@@ -96,6 +96,34 @@
     "signup_with_github": "Sign up with GitHub",
     "login_with_google": "Login with Google",
     "login_with_github": "Login with GitHub"
+  {
+  "common": {
+    "pool_not_found": "Pool Not Found",
+    "back_to_home": "Back to Home",
+    "back_to_pools": "Back to Pools",
+    "remaining_amount": "Remaining",
+    "raised_amount": "Raised",
+    "pool_details": "Pool Details",
+    "special_offer": "Special Offer",
+    "payment_methods": "Payment via Telebirr or CBE Birr",
+    "coming_soon": "Coming Soon",
+    "discount_for_non_winners": "If you don't win, you get discount from the vendor!",
+    "cash_equivalent_banner_title": "💰 100% Cash Equivalent Guarantee",
+    "cash_equivalent_banner_text": "All prizes are backed by cash equivalent value. You receive the full cash amount if the physical prize is unavailable.",
+    "cash_equivalent_banner_button": "Learn More"
+  },
+  "pools": {
+    "remaining_amount": "Remaining",
+    "raised_amount": "Raised",
+    "pool_not_found": "Pool not found",
+    "join_this_pool": "Join This Pool",
+    "current_progress": "Current Progress"
+  },
+  "payment": {
+    "telebirr_cbe": "Telebirr or CBE Birr",
+    "secure_payment": "Secure payment"
+  }
+}
   },
   "stats": {
     "active_pools": "Prize Pools",
