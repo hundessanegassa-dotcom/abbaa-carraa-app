@@ -107,7 +107,7 @@
     "payment_methods": "Kafala Telebirr ykn CBE Birr",
     "coming_soon": "Dafee ishee",
     "discount_for_non_winners": "Hin mo'inot diskawuntii isheenna!",
-    "cash_equivalent_banner_title": "💰 100% Laakke Gar Malla",
+    "cash_equivalent_banner_title": "100% Laakke Gar Malla",
     "cash_equivalent_banner_text": "Badhaasa wundaan laakke gar malla aggo. Badhaasa kunchi yoo ta'e malla ida'ama argattu.",
     "cash_equivalent_banner_button": "Dumma hubadhi"
   },
@@ -138,12 +138,7 @@
     "seats": "teessot",
     "select_seats": "Seensa qadira doori",
     "total_amount": "Wali gita",
-    "tickets": "Tikiitota",
-    "remaining_amount": "Haaro",
-    "raised_amount": "Gatamino",
-    "pool_not_found": "Pool kunchi sii",
-    "join_this_pool": "Galmee kana hirmaadhi",
-    "current_progress": "Amma waan hojjamino"
+    "tickets": "Tikiitota"
   },
   "how_it_works": {
     "title": "Abbaa Carraa aanate hojjotta",
@@ -230,9 +225,7 @@
     "payment_successful": "Kafala milkaa'e",
     "payment_failed": "Kafala hin milkaa'in harre isho yaali",
     "enter_phone": "Bilbila lakko booni",
-    "total_due": "Kafalu wali gita",
-    "telebirr_cbe": "Telebirr ykn CBE Birr",
-    "secure_payment": "Kafala amantino"
+    "total_due": "Kafalu wali gita"
   },
   "draw": {
     "title": "Badhaasa pool sooba",
