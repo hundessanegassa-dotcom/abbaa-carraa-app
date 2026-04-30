@@ -1,6 +1,6 @@
 {
   "common": {
-    "welcome": "Gara Abbaa Carraa Baga Nagaan Dhufte",
+    "welcome": "Gara Abbaa Carraa Baga Nagaan Dhuftaan",
     "tagline": "Waltajjii badhaasaa fi gumaacha ummata irratti hundaa'e",
     "home": "Mana",
     "join": "Hirmaadhu",
@@ -9,7 +9,7 @@
     "register": "Galmeessi",
     "logout": "Ba'i",
     "dashboard": "Daashboordii",
-    "create_pool": "Uunka Galmee Badhaasaa Uumi",
+    "create_pool": "Galmee Badhaasaa Uumi",
     "browse_prizes": "Badhaasa Daawwadhaa",
     "winners": "Mo'attoota",
     "about": "Waa'ee Keenya",
@@ -19,9 +19,9 @@
     "become_vendor": "Dhiyeessa Ta'i",
     "get_started": "Eegalii",
     "trusted_agents": "Agentoonni Amanaman",
-    "total_raised": "Walumaagalatti Olka'ee",
+    "total_raised": "Ida'ama",
     "all_cities": "Magaalaawwan Hunda",
-    "loading": "Badhaasa ajaa'ibsiisaa fe'amaa jira...",
+    "loading": "Badhaasa ajaa'ibsiisaa fe'amaa jira",
     "back": "Duuba",
     "save": "Olkaa'i",
     "cancel": "Haqi",
@@ -29,55 +29,57 @@
     "edit": "Gulaali",
     "submit": "Ergi",
     "search": "Barbaadi",
-    "filter": "Calalchi",
-    "clear_filters": "Calalgawwan haqi",
-    "showing": "Agarsii jira",
+    "filter": "Calalli",
+    "clear_filters": "Calalliwwan haqi",
+    "showing": "Agarsiisaa jira",
     "of": "keessaa",
-    "active_pools": "Uunka Galmee Badhaasaa",
-    "no_pools": "Yeroo ammaa Uunka Galmee Badhaasaa hin jiran",
-    "create_first_pool": "Uunka Galmee Badhaasaa Uumi →"
+    "active_pools": "Galmee Badhaasaa",
+    "no_pools": "Yeroo ammaa Galmeen Badhaasaa hin jiru",
+    "create_first_pool": "Galmee Badhaasaa Uumi",
+    "register_now": "Amma Galmeessi",
+    "learn_more": "Dabalata Hubadhu"
   },
   "stats": {
-    "active_pools": "Uunka Galmee Badhaasaa",
+    "active_pools": "Galmee Badhaasaa",
     "winners": "Mo'attoota",
     "agents": "Agentoota",
-    "raised": "Walumaagalatti Olka'ee"
+    "raised": "Ida'ama"
   },
   "pools": {
-    "active_pools": "Uunka Galmee Badhaasaa",
-    "featured_pools": "Uunka Galmee Badhaasaa Filataman",
+    "active_pools": "Galmee Badhaasaa",
+    "featured_pools": "Galmee Badhaasaa Filataman",
     "target_amount": "Hanga Galma",
     "current_amount": "Hanga Ammaa",
     "contribution_amount": "Amma Gumaacha",
     "participants": "Hirmaattoota",
     "progress": "Waan Hojjetame",
-    "days_left": "Guyyaa Hafe",
+    "days_left": "guyyaa hafe",
     "draw_date": "Guyyaa Argannoo",
     "started": "Eegalame",
-    "join_now": "Hirmaadhu",
-    "no_pools": "Uunka Galmee Badhaasaa hin jiran",
+    "join_now": "Amma Hirmaadhu",
+    "no_pools": "Yeroo ammaa Galmeen Badhaasaa hin jiru",
     "remaining_days": "guyyaa hafe",
-    "ending_soon": "Dafee ni xumurama!",
-    "cash_equivalent": "Kanfaltii hanga tarreefamaan walqiixa",
-    "winner_gets": "Mo'ataan argatu",
+    "ending_soon": "Dafee ni xumurama",
+    "cash_equivalent": "Kanfaltiin Mo'annaa Badhaasaa Kanfaltii Tareefama Dura Faana Walqiixa",
+    "winner_gets": "Mo'ataan Kan argatu",
     "entry_fee": "Kaffaltii Seensaa",
     "seats": "teessuma",
     "select_seats": "Lakkoofsa teessumaa filadhu",
-    "total_amount": "Iddoo Walumaa",
+    "total_amount": "Gatii Waligalaa",
     "tickets": "Tiikeetii"
   },
   "how_it_works": {
-    "title": "Abbaa Carraa Akkamitti Hojjeta",
-    "find_pool": "Uunka Galmee Badhaasaa Barbaadi",
-    "find_pool_desc": "Uunka Galmee Badhaasaa Hojiirraa Jiran magaalaan ykn gosaan ilaali",
+    "title": "Abbaan Carraa Akkamitti Hojjeta",
+    "find_pool": "Galmee Badhaasaa Barbaadi",
+    "find_pool_desc": "Galmee Badhaasaa Hojiirraa Jiran magaalaan ykn gosaan ilaali",
     "contribute": "Gumaachi",
     "contribute_desc": "Telebirr ykn CBE Birr tiin kaffali",
-    "win": "Mo'i ti Gammadi",
+    "win": "Mo'itii Gammadi",
     "win_desc": "Galmi yeroo ga'uu argannoo tolaa mo'ataa filata"
   },
   "agent": {
     "become_agent": "Agent Ta'i",
-    "earn_commission": "10% Komishinii Argadhu",
+    "earn_commission": "10 Komishinii Argadhu",
     "register_agent": "Agent Ta'uuf Galmeessi",
     "agent_dashboard": "Daashboordii Agent",
     "my_listings": "Tarreeffamoo Koo",
@@ -95,22 +97,22 @@
     "register_vendor": "Dhiyeessaa Ta'uuf Galmeessi",
     "vendor_dashboard": "Daashboordii Dhiyeessaa",
     "my_products": "Oomisha Koo",
-    "discount_offers": "Kenna Diskawuntii"
+    "discount_offers": "Ofeertiiwwan Diskawuntii"
   },
   "organization": {
     "become_org": "Dhaabbata Galmeessi",
-    "internal_pools": "Uunka Galmee Badhaasaa Keessoo Uumi",
+    "internal_pools": "Galmee Badhaasaa Keessoo Uumi",
     "member_saving": "Dhaabbattootaaf Qusannaa Ummataa",
     "org_dashboard": "Daashboordii Dhaabbataa",
-    "member_pools": "Uunka Galmee Badhaasaa Dhaabbattootaa"
+    "member_pools": "Galmee Badhaasaa Dhaabbattootaa"
   },
   "filters": {
-    "title": "Uunka Galmee Badhaasaa Calalame",
+    "title": "Galmee Badhaasaa Calali",
     "category": "Gosa",
     "city": "Magaalaa",
     "creator": "Uumaa",
     "all_categories": "Gosoota Hunda",
-    "vehicles": "Makiinaawwan",
+    "vehicles": "Koonkolatoota",
     "machinery": "Mashiinoota",
     "electronics": "Eletirooniksii",
     "property": "Qabeenya",
@@ -124,24 +126,42 @@
     "organizations": "Dhaabbatawwan",
     "individuals": "Dhuunfaa"
   },
+  "moving_ad": {
+    "join_today": "Har'a Abbaa Carraa wajjiin hirmaadhuu ti badhaasa ajaa'ibsiisaa mo'i",
+    "recent_winner": "Mo'ataan dhiyoo 650000 ETB gatii qabu Toyota Vitz mo'ate",
+    "become_agent": "Agent Ta'ii Parsantii 10 Komishinii Argadhu",
+    "vendor_opportunity": "Dhiyeessitoota Oomisha Keessan akka badhaasa tarreessi",
+    "participants": "Hirmaattoota 1000 ol uunka galmee badhaasaa keenyatti hirmaatan",
+    "learn_more": "Dabalata Hubadhu"
+  },
+  "banners": {
+    "agent": "Agent Ta'i",
+    "agent_desc": "Galmee badhaasaa hunda irratti parsantii 10 komishinii argadhu",
+    "vendor": "Dhiyeessa Ta'i",
+    "vendor_desc": "Oomisha keessan akka badhaasa tarreessi Mo'ataan bilisa argata",
+    "organization": "Dhaabbata Galmeessi",
+    "organization_desc": "Dhaabbattoota keessaniif galmee badhaasaa keessoo uumi",
+    "individual": "Dhuunfaan Hirmaadhu",
+    "individual_desc": "Gumaacha xiqqaa fi carraa mo'achuu"
+  },
   "payment": {
     "title": "Kaffaltii",
     "telebirr": "Telebirr",
     "cbe_birr": "CBE Birr",
     "pay_now": "Amma Kaffali",
-    "processing": "Hojii irra jira...",
-    "payment_successful": "Kaffaltiin milkaa'e!",
-    "payment_failed": "Kaffaltiin hin milkaa'in. Irra deebi'ii yaali.",
+    "processing": "Hojii irra jira",
+    "payment_successful": "Kaffaltiin milkaa'e",
+    "payment_failed": "Kaffaltiin hin milkaa'in Irra deebi'ii yaali",
     "enter_phone": "Lakkoofsa bilbilaa keessan guutaa",
     "total_due": "Iddoo Kaffaltii"
   },
   "draw": {
     "title": "Argannoo Badhaasaa",
-    "run_draw": "Argannoo Kaasi",
-    "draw_completed": "Argannoon xumurame!",
-    "winner_announced": "Mo'ataan labsame!",
-    "congratulations": "Baga gammadde!",
-    "you_won": "Mo'atte!",
+    "run_draw": "Argannoo Draawii",
+    "draw_completed": "Argannoon xumurame",
+    "winner_announced": "Mo'ataan labsame",
+    "congratulations": "Baga gammadde",
+    "you_won": "Mo'atte",
     "ticket_count": "Lakkoofsa Tiikeetii",
     "random_seed": "Sanyii Tasgabbamaa",
     "verified_draw": "Argannoo Mirkanaa'ee"
@@ -150,39 +170,34 @@
     "quick_links": "Geessituu Ariitii",
     "support": "Deeggarsa",
     "contact_us": "Nu Qunnami",
-    "rights": "Mirgiin Hunda Kan Eegame",
+    "rights": "Mirgii Hunda Kan Eegame",
     "built_by": "Kan Ijaare",
-    "follow_us": "Nu Hordofaa"
-  },
-  "banners": {
-    "agent": "Agent Ta'i - 10% Komishinii Argadhu",
-    "vendor": "Dhiyeessa Ta'i - Oomisha Keessan Tarreessi",
-    "organization": "Dhaabbata Galmeessi - Uunka Galmee Badhaasaa Keessoo Uumi",
-    "individual": "Akka Dhuunfaa Hirmaadhu - Badhaasa Ajaa'ibsiisaa Argadhu"
+    "follow_us": "Nu Hordofaa",
+    "terms": "Haalota",
+    "privacy": "Wabii iccitii"
   },
   "chatbot": {
     "title": "Abbaa Carraa Gargaaraa",
-    "placeholder": "Gaafata keessan barreessaa...",
+    "placeholder": "Gaaffii keessan barreessaa",
     "send": "Ergi",
     "online": "Sarara irra",
-    "ask_me": "Waan barbaadde gaafadhu!"
-   },
-  "moving_ad": {
-    "join_today": "🎉 Join Abbaa Carraa today and win amazing prizes!",
-    "recent_winner": "🏆 Recent winner won a Toyota Vitz worth 650,000 ETB!",
-    "become_agent": "💰 Become an Agent and earn 10% commission!",
-    "vendor_opportunity": "🏭 Vendors: List your products as prizes!",
-    "participants": "🎯 Over 1,000+ participants have joined our pools!",
-    "learn_more": "Learn More"
+    "ask_me": "Waan barbaadde gaafadhu"
   },
-  "banners": {
-    "agent": "Become an Agent",
-    "agent_desc": "Earn 10% commission on every pool you create",
-    "vendor": "Become a Vendor",
-    "vendor_desc": "List your products as prizes. Winner gets FREE!",
-    "organization": "Become an Organization",
-    "organization_desc": "Create private pools for your members",
-    "individual": "Join as Individual",
-    "individual_desc": "Contribute for a chance to win big"
+  "newsletter": {
+    "title": "Mata Duree galmeessi",
+    "description": "Galmeewwan haaraa mo'attootaa fi dhiyeessi addaa irratti odeeffannoo argadhu",
+    "name_placeholder": "Maqaa keessan",
+    "email_placeholder": "Imeelii keessan",
+    "city_placeholder": "Magaalaa keessan",
+    "subscribe": "Galmeessi",
+    "subscribing": "Galmeessaa jira",
+    "success": "Milkaa'inaan galmeessitan",
+    "error": "Galmeessi hin milkaa'in"
+  },
+  "buttons": {
+    "join_now": "Amma Hirmaadhu",
+    "learn_more": "Dabalata Hubadhu",
+    "register": "Galmeessi",
+    "contact": "Quunnami"
   }
 }
