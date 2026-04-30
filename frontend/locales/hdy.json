@@ -97,6 +97,34 @@
     "login_with_google": "Google tiin seeni",
     "login_with_github": "GitHub tiin seeni"
   },
+  {
+  "common": {
+    "pool_not_found": "Pool minnen",
+    "back_to_home": "Mana duuba",
+    "back_to_pools": "Pool duuba",
+    "remaining_amount": "Waliqes",
+    "raised_amount": "Gatumo",
+    "pool_details": "Pool ibsa",
+    "special_offer": "Diskawuntii",
+    "payment_methods": "Kafala Telebirr ykn CBE Birr",
+    "coming_soon": "Xayishsha",
+    "discount_for_non_winners": "Hin shaninot diskawuntii kennino!",
+    "cash_equivalent_banner_title": "💰 100% Laaki walixan",
+    "cash_equivalent_banner_text": "Badhaasi wundaan laaki walixan waadata. Badhaasi minnen malla wali ishemma.",
+    "cash_equivalent_banner_button": "Hasho hubo"
+  },
+  "pools": {
+    "remaining_amount": "Waliqes",
+    "raised_amount": "Gatumo",
+    "pool_not_found": "Pool minnen",
+    "join_this_pool": "Pool kana hirmaadi",
+    "current_progress": "Amma warru"
+  },
+  "payment": {
+    "telebirr_cbe": "Telebirr ykn CBE Birr",
+    "secure_payment": "Kafala amantama"
+  }
+}
   "stats": {
     "active_pools": "Pool badhaasa",
     "winners": "Shananee",
