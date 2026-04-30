@@ -1,6 +1,6 @@
 {
   "common": {
-    "welcome": "Ababaa Carraa fanah tanfale",
+    "welcome": "Abbaa Carraa fanah tanfale",
     "tagline": "Qadaaduu kee gacalka addunyaal marroo qadaaduu kee jaahil",
     "home": "Magaala",
     "join": "Cula",
@@ -21,7 +21,7 @@
     "trusted_agents": "Agenta elleelite",
     "total_raised": "Inkih tanfale",
     "all_cities": "Magaalool inkih",
-    "loading": "Qadaaduu ajaa'ibsiisuh tanfale...",
+    "loading": "Qadaaduu ajaa'ibsiisuh tanfale",
     "back": "Garu",
     "save": "Nabsi",
     "cancel": "Maban",
@@ -35,7 +35,9 @@
     "of": "kak",
     "active_pools": "Magaala qadaaduu",
     "no_pools": "Akkah magaala qadaaduu maybul",
-    "create_first_pool": "Magaala qadaaduu ugu →"
+    "create_first_pool": "Magaala qadaaduu ugu",
+    "register_now": "Akkah galal",
+    "learn_more": "Ka elleel"
   },
   "stats": {
     "active_pools": "Magaala qadaaduu",
@@ -57,7 +59,7 @@
     "join_now": "Akkah cul",
     "no_pools": "Magaala qadaaduu maybul",
     "remaining_days": "ayro raqta",
-    "ending_soon": "Xayyo!",
+    "ending_soon": "Xayyo",
     "cash_equivalent": "Diiray leyke",
     "winner_gets": "Cuwa maxaa",
     "entry_fee": "Cula gaba",
@@ -67,7 +69,7 @@
     "tickets": "tiketti"
   },
   "how_it_works": {
-    "title": "Innah tanfale",
+    "title": "Abbaa Carraa innah tanfale",
     "find_pool": "Magaala qadaaduu gur",
     "find_pool_desc": "Magaalool hinnay qaynal cubbus",
     "contribute": "Gacal",
@@ -77,7 +79,7 @@
   },
   "agent": {
     "become_agent": "Agent cul",
-    "earn_commission": "Komishiyon 10% maal",
+    "earn_commission": "10 komishiyon maal",
     "register_agent": "Agent galal",
     "agent_dashboard": "Agent dashboard",
     "my_listings": "Moo gaba",
@@ -124,24 +126,42 @@
     "organizations": "Urruwa",
     "individuals": "Dududa"
   },
+  "moving_ad": {
+    "join_today": "Abbaq Abbaa Carraa cul kee qadaaduu ajaa'ibsiisuh cuwa",
+    "recent_winner": "Qafar cuwa 650000 ETB gaba leh Toyota Vitz cuwa",
+    "become_agent": "Agent cul kee 10 komishiyon maal",
+    "vendor_opportunity": "Vendora moo aluwa qadaaduu luk cubbusa",
+    "participants": "1000 dagona culutta magaala qadaaduu culte",
+    "learn_more": "Ka elleel"
+  },
+  "banners": {
+    "agent": "Agent cul",
+    "agent_desc": "Ugu magaala qadaaduu inkih 10 komishiyon maal",
+    "vendor": "Vendor cul",
+    "vendor_desc": "Moo aluwa qadaaduu luk cubbus Cuwa dira yalle",
+    "organization": "Urru galal",
+    "organization_desc": "Marih magaala qadaaduu sinni ugu",
+    "individual": "Cula",
+    "individual_desc": "Cuwa gaba xayu gacal"
+  },
   "payment": {
     "title": "Gacal",
     "telebirr": "Telebirr",
     "cbe_birr": "CBE Birr",
     "pay_now": "Akkah gacal",
-    "processing": "Taamisa...",
-    "payment_successful": "Gacal teete!",
-    "payment_failed": "Gacal taaminn. Lak u gaca.",
+    "processing": "Taamisa",
+    "payment_successful": "Gacal teete",
+    "payment_failed": "Gacal taaminn Lak u gaca",
     "enter_phone": "Telefoon numur cu",
     "total_due": "Inkih gacal"
   },
   "draw": {
     "title": "Qadaaduu yolwa",
     "run_draw": "Yolwa ug",
-    "draw_completed": "Yolwa teete!",
-    "winner_announced": "Cuwa xabise!",
-    "congratulations": "Ceelat!",
-    "you_won": "Cuwa!",
+    "draw_completed": "Yolwa teete",
+    "winner_announced": "Cuwa xabise",
+    "congratulations": "Ceelat",
+    "you_won": "Cuwa",
     "ticket_count": "Tiketti looma",
     "random_seed": "Qafar seed",
     "verified_draw": "Yolwa numma teete"
@@ -152,37 +172,32 @@
     "contact_us": "Nee xagta",
     "rights": "Xaquq inkih tu kaa",
     "built_by": "Bih luk",
-    "follow_us": "Nek katba"
-  },
-  "banners": {
-    "agent": "Agent cul - 10% komishiyon maal",
-    "vendor": "Vendor cul - Aluwa cubbus",
-    "organization": "Urru galal - Sinni magaala qadaaduu ugu",
-    "individual": "Cula - Qadaaduu ajaa'ibsiisuh cuwa"
+    "follow_us": "Nek katba",
+    "terms": "Xaquuq kee xaynu",
+    "privacy": "Qellitta gaba"
   },
   "chatbot": {
     "title": "Abbaa Carraa cattaa",
-    "placeholder": "Essara cu...",
+    "placeholder": "Essara cu",
     "send": "Rub",
     "online": "Kuluk",
-    "ask_me": "Moo rub!"
-   },
-  "moving_ad": {
-    "join_today": "🎉 Join Abbaa Carraa today and win amazing prizes!",
-    "recent_winner": "🏆 Recent winner won a Toyota Vitz worth 650,000 ETB!",
-    "become_agent": "💰 Become an Agent and earn 10% commission!",
-    "vendor_opportunity": "🏭 Vendors: List your products as prizes!",
-    "participants": "🎯 Over 1,000+ participants have joined our pools!",
-    "learn_more": "Learn More"
+    "ask_me": "Moo rub"
   },
-  "banners": {
-    "agent": "Become an Agent",
-    "agent_desc": "Earn 10% commission on every pool you create",
-    "vendor": "Become a Vendor",
-    "vendor_desc": "List your products as prizes. Winner gets FREE!",
-    "organization": "Become an Organization",
-    "organization_desc": "Create private pools for your members",
-    "individual": "Join as Individual",
-    "individual_desc": "Contribute for a chance to win big"
+  "newsletter": {
+    "title": "Xabaar luk galal",
+    "description": "Magaala qadaaduu cuwaay kee diskawunti xabaar maal",
+    "name_placeholder": "Maca",
+    "email_placeholder": "Email",
+    "city_placeholder": "Magaala",
+    "subscribe": "Galal",
+    "subscribing": "Galalla",
+    "success": "Galal teete",
+    "error": "Galal taaminn"
+  },
+  "buttons": {
+    "join_now": "Akkah cul",
+    "learn_more": "Ka elleel",
+    "register": "Galal",
+    "contact": "Nee xagta"
   }
 }
