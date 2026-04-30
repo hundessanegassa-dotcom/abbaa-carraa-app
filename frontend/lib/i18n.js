@@ -2,27 +2,17 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-// Import all 9 Ethiopian languages
-import en from '../locales/en.json';
-import am from '../locales/am.json';
-import om from '../locales/om.json';
-import ti from '../locales/ti.json';
-import so from '../locales/so.json';
-import aa from '../locales/aa.json';
-import wal from '../locales/wal.json';
-import hdy from '../locales/hdy.json';
-import sid from '../locales/sid.json';
-
+// Use require for JSON files (works better in some Next.js versions)
 const resources = {
-  en: { translation: en },
-  am: { translation: am },
-  om: { translation: om },
-  ti: { translation: ti },
-  so: { translation: so },
-  aa: { translation: aa },
-  wal: { translation: wal },
-  hdy: { translation: hdy },
-  sid: { translation: sid }
+  en: { translation: require('../locales/en.json') },
+  am: { translation: require('../locales/am.json') },
+  om: { translation: require('../locales/om.json') },
+  ti: { translation: require('../locales/ti.json') },
+  so: { translation: require('../locales/so.json') },
+  aa: { translation: require('../locales/aa.json') },
+  wal: { translation: require('../locales/wal.json') },
+  hdy: { translation: require('../locales/hdy.json') },
+  sid: { translation: require('../locales/sid.json') }
 };
 
 i18n
@@ -32,13 +22,12 @@ i18n
     resources,
     fallbackLng: 'en',
     debug: false,
-    interpolation: {
-      escapeValue: false,
-    },
+    interpolation: { escapeValue: false },
     detection: {
       order: ['localStorage', 'cookie', 'navigator', 'htmlTag'],
       caches: ['localStorage'],
-    }
+    },
+    react: { useSuspense: false }
   });
 
 export default i18n;
