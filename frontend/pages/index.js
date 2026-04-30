@@ -1,3 +1,4 @@
+import RoleBanners from '../components/RoleBanners';
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -230,7 +231,7 @@ export default function Home() {
             </div>
           )}
         </section>
-
+import RoleBanners from '../components/RoleBanners';
         {/* Role Banners Section - FIXED to use translated RoleBanners component */}
         <section className="container mx-auto px-4 py-8">
           {/* Import and use RoleBanners component here if available */}
