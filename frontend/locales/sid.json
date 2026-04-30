@@ -4,6 +4,7 @@
     "tagline": "Ummata irratti hundaa'e badhaasa fi gumaacha marsho",
     "home": "Mana",
     "join": "Hirmaadhu",
+    "join_now": "Amma hirmaadhi",
     "contribute": "Gumaachi",
     "login": "Seeni",
     "register": "Galmeessi",
@@ -63,7 +64,7 @@
     "password": "Jecha Iccitii",
     "password_placeholder": "Yoo xiqqaate 6 arfi",
     "password_min_length": "Jechi iccitii yoo xiqqaate 6 arfii ta'uu qaba",
-    "creating_account": "Galamee uumamaa jira...",
+    "creating_account": "Galamee uumamaa jira",
     "sign_up": "Galmeessi",
     "already_have_account": "Galamee ni qabdaa?",
     "sign_in": "Seeni",
@@ -75,7 +76,7 @@
     "signin_google": "Google tiin seeni",
     "signin_github": "GitHub tiin seeni",
     "or_continue_with_email": "Ykn imeeliin itti fufi",
-    "signing_in": "Seenaa jira...",
+    "signing_in": "Seenaa jira",
     "forgot_password": "Jecha Iccitii dagatte?",
     "login_success": "Milkaa'inaan seenan!",
     "logout_success": "Milkaa'inaan ba'an",
@@ -95,10 +96,7 @@
     "signup_with_google": "Google tiin galmeessi",
     "signup_with_github": "GitHub tiin galmeessi",
     "login_with_google": "Google tiin seeni",
-    "login_with_github": "GitHub tiin seeni"
-  },
-  {
-  "common": {
+    "login_with_github": "GitHub tiin seeni",
     "pool_not_found": "Pool kunchi sii",
     "back_to_home": "Mana duubbi",
     "back_to_pools": "Pool duubbi",
@@ -113,18 +111,6 @@
     "cash_equivalent_banner_text": "Badhaasa wundaan laakke gar malla aggo. Badhaasa kunchi yoo ta'e malla ida'ama argattu.",
     "cash_equivalent_banner_button": "Dumma hubadhi"
   },
-  "pools": {
-    "remaining_amount": "Haaro",
-    "raised_amount": "Gatamino",
-    "pool_not_found": "Pool kunchi sii",
-    "join_this_pool": "Pool kana hirmaadhi",
-    "current_progress": "Amma waan hojjamino"
-  },
-  "payment": {
-    "telebirr_cbe": "Telebirr ykn CBE Birr",
-    "secure_payment": "Kafala amantino"
-  }
-}
   "stats": {
     "active_pools": "Badhaasa pool",
     "winners": "Mo'attoota",
@@ -152,7 +138,12 @@
     "seats": "teessot",
     "select_seats": "Seensa qadira doori",
     "total_amount": "Wali gita",
-    "tickets": "Tikiitota"
+    "tickets": "Tikiitota",
+    "remaining_amount": "Haaro",
+    "raised_amount": "Gatamino",
+    "pool_not_found": "Pool kunchi sii",
+    "join_this_pool": "Galmee kana hirmaadhi",
+    "current_progress": "Amma waan hojjamino"
   },
   "how_it_works": {
     "title": "Abbaa Carraa aanate hojjotta",
@@ -239,7 +230,9 @@
     "payment_successful": "Kafala milkaa'e",
     "payment_failed": "Kafala hin milkaa'in harre isho yaali",
     "enter_phone": "Bilbila lakko booni",
-    "total_due": "Kafalu wali gita"
+    "total_due": "Kafalu wali gita",
+    "telebirr_cbe": "Telebirr ykn CBE Birr",
+    "secure_payment": "Kafala amantino"
   },
   "draw": {
     "title": "Badhaasa pool sooba",
