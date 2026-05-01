@@ -12,7 +12,7 @@ import RoleBanners from '../components/RoleBanners';
 import CashEquivalentBanner from '../components/CashEquivalentBanner';
 
 export default function Home() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [pools, setPools] = useState([]);
   const [filteredPools, setFilteredPools] = useState([]);
   const [featuredPools, setFeaturedPools] = useState([]);
@@ -24,6 +24,27 @@ export default function Home() {
     total_agents: 0,
     total_raised: 0
   });
+
+  // DEBUG: Log loading state
+  useEffect(() => {
+    console.log('🔍 Debug Info:', {
+      loading,
+      poolsCount: pools.length,
+      i18nReady: i18n.isInitialized,
+      currentLanguage: i18n.language
+    });
+  }, [loading, pools.length, i18n.isInitialized, i18n.language]);
+
+  // Add timeout fallback to prevent infinite loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        console.warn('⚠️ Loading timeout after 8 seconds - forcing render');
+        setLoading(false);
+      }
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   useEffect(() => {
     fetchStats();
@@ -40,6 +61,7 @@ export default function Home() {
 
   async function fetchStats() {
     try {
+      console.log('📊 Fetching stats...');
       const [poolsResult, winnersResult, agentsResult, contributionsResult] = await Promise.all([
         supabase.from('pools').select('*', { count: 'exact', head: true }),
         supabase.from('pools').select('*', { count: 'exact', head: true }).not('winner_id', 'is', null),
@@ -53,13 +75,15 @@ export default function Home() {
       const total_raised = contributionsResult.data?.reduce((sum, c) => sum + (c.amount || 0), 0) || 0;
       
       setStats({ total_pools, total_winners, total_agents, total_raised });
+      console.log('✅ Stats fetched:', { total_pools, total_winners, total_agents, total_raised });
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      console.error('❌ Error fetching stats:', error);
     }
   }
 
   async function fetchPools() {
     try {
+      console.log('🏊 Fetching pools...');
       const { data, error } = await supabase
         .from('pools')
         .select('*')
@@ -69,10 +93,12 @@ export default function Home() {
       if (error) throw error;
       setPools(data || []);
       setFeaturedPools(data?.filter(pool => pool.is_featured === true) || []);
+      console.log('✅ Pools fetched:', data?.length || 0, 'active pools');
     } catch (error) {
-      console.error('Error loading pools:', error);
+      console.error('❌ Error loading pools:', error);
     } finally {
       setLoading(false);
+      console.log('🏁 Loading set to false');
     }
   }
 
@@ -104,6 +130,17 @@ export default function Home() {
     setFilteredPools(filtered);
   };
 
+  // If still loading after timeout, show error message
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
+        <p className="text-gray-500">{t('common.loading') || 'Loading...'}</p>
+        <p className="text-xs text-gray-400 mt-2">If this takes too long, check your internet connection</p>
+      </div>
+    );
+  }
+
   return (
     <>
       <Head>
@@ -113,6 +150,7 @@ export default function Home() {
       </Head>
 
       <main>
+        {/* Cash Equivalent Banner - ONLY ONE INSTANCE */}
         <CashEquivalentBanner />
 
         <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden">
@@ -121,6 +159,10 @@ export default function Home() {
               src="/images/abbaa carraa.png"
               alt="Abbaa Carraa"
               className="w-full h-full object-cover object-center"
+              onError={(e) => {
+                console.warn('⚠️ Image not found, hiding');
+                e.target.style.display = 'none';
+              }}
             />
             <div className="absolute inset-0 bg-black/40"></div>
           </div>
@@ -202,11 +244,7 @@ export default function Home() {
               ? t('filters.title') 
               : t('pools.active_pools')}
           </h2>
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-            </div>
-          ) : filteredPools.length === 0 ? (
+          {filteredPools.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
               <p className="text-gray-500 mb-4">{t('pools.no_pools')}</p>
               <button 
