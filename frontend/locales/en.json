@@ -111,6 +111,13 @@
     "cash_equivalent_banner_text": "All prizes are backed by cash equivalent value",
     "cash_equivalent_banner_button": "Learn More"
   },
+  {
+  "common": {
+    "join_today": "Join Abbaa Carraa Today",
+    "join_description": "Choose how you want to participate. Create pools and earn commission or join pools to win prizes.",
+    "become_org": "Register Organization"
+  }
+}
   "stats": {
     "active_pools": "Prize Pools",
     "winners": "Winners",
