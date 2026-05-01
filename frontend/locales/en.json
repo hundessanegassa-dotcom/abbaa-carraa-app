@@ -18,6 +18,7 @@
     "faq": "FAQ",
     "become_agent": "Become Agent",
     "become_vendor": "Become Vendor",
+    "become_org": "Register Organization",
     "get_started": "Get Started",
     "trusted_agents": "Trusted Agents",
     "total_raised": "Total Raised",
@@ -107,17 +108,13 @@
     "payment_methods": "Payment via Telebirr or CBE Birr",
     "coming_soon": "Coming Soon",
     "discount_for_non_winners": "If you don't win, you get discount from the vendor",
-    "cash_equivalent_banner_title": "100 Cash Equivalent Guarantee",
-    "cash_equivalent_banner_text": "All prizes are backed by cash equivalent value",
-    "cash_equivalent_banner_button": "Learn More"
-  },
-  {
-  "common": {
+    "cash_equivalent_banner_title": "100% Cash Equivalent Guarantee",
+    "cash_equivalent_banner_text": "All prizes are backed by cash equivalent value. You receive the full cash amount if the physical prize is unavailable.",
+    "cash_equivalent_banner_button": "Learn More",
     "join_today": "Join Abbaa Carraa Today",
     "join_description": "Choose how you want to participate. Create pools and earn commission or join pools to win prizes.",
-    "become_org": "Register Organization"
-  }
-}
+    "not_set": "Not set"
+  },
   "stats": {
     "active_pools": "Prize Pools",
     "winners": "Winners",
@@ -207,11 +204,15 @@
   },
   "moving_ad": {
     "join_today": "Join Abbaa Carraa today and win amazing prizes",
-    "recent_winner": "Recent winner won a Toyota Vitz worth 650000 ETB",
+    "recent_winner": "Recent winner won a Toyota Vitz worth 650,000 ETB",
     "become_agent": "Become an Agent and earn 10 percent commission",
     "vendor_opportunity": "Vendors list your products as prizes",
     "participants": "Over 1000 participants have joined our pools",
-    "learn_more": "Learn More"
+    "learn_more": "Learn More",
+    "win_this_prize": "Win this prize!",
+    "special_promotion": "Special Promotion!",
+    "special_promotion_desc": "Register today and get 10% bonus on your first pool creation",
+    "winners_circle_desc": "See our recent winners and their amazing prizes"
   },
   "banners": {
     "agent": "Become an Agent",
