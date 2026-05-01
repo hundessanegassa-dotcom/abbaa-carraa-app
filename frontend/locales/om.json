@@ -111,6 +111,13 @@
     "cash_equivalent_banner_text": "Badhaasi hundi gatii walqixaa hanga tareefamatiin waadaa galama. Hangi badhaasaa gatii tareefamaa faana walqixa.",
     "cash_equivalent_banner_button": "Dabalata Hubadhu"
   },
+  {
+  "common": {
+    "join_today": "Har'a Abbaa Carraa Wajjiin Hirmaadhaa",
+    "join_description": "Akkamittiakka hirmaachuu barbaaddu filadhu. Galmee badhaasaa uumiitii komishinii argadhu ykn mo'uuf galma'uun hirmaadhu.",
+    "become_org": "Dhaabbata Galmeessi"
+  }
+}
   "stats": {
     "active_pools": "Galmee Badhaasaa",
     "winners": "Mo'attoota",
