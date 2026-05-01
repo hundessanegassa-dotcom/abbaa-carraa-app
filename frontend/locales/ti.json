@@ -111,6 +111,13 @@
     "cash_equivalent_banner_text": "ኩለን ሽልማታት ብገንዘብ ተመጣጣን ዋስትና ኣለዎ።",
     "cash_equivalent_banner_button": "ተወሳኺ ይወቁ"
   },
+ {
+  "common": {
+    "join_today": "ሎሚ ን Abbaa Carraa ተጸንበሩ",
+    "join_description": "ብኸመይ ክትሳተፉ ከም እትደልዩ ምረጹ። ዕድላዊ ጕጅለታት ፍጠሩን ኮሚሽን ርኸቡ ወይ ንምዕዋት ጕጅለታት ተጸንበሩ።",
+    "become_org": "ድርጅት ተመዝገቡ"
+  }
+} 
   "stats": {
     "active_pools": "ዕድላዊ ጕጅለታት",
     "winners": "ተዓወቲቶ",
