@@ -231,12 +231,9 @@ export default function Home() {
             </div>
           )}
         </section>
-import RoleBanners from '../components/RoleBanners';
-        {/* Role Banners Section - FIXED to use translated RoleBanners component */}
+        {/* Role Banners Section */}
         <section className="container mx-auto px-4 py-8">
-          {/* Import and use RoleBanners component here if available */}
-          {/* If RoleBanners is not imported, add it: */}
-          {/* <RoleBanners /> */}
+          <RoleBanners />
         </section>
 
         <Banner />
