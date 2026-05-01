@@ -113,7 +113,13 @@ export default function Home() {
         <meta name="description" content={t('common.tagline')} />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </Head>
+import CashEquivalentBanner from '../components/CashEquivalentBanner';
 
+// Then in the return, add right after <main>:
+<main>
+  <CashEquivalentBanner />
+  {/* Hero Section */}
+  <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90...">
       <main>
         {/* Hero Section */}
         <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden">
