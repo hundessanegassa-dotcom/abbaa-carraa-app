@@ -18,6 +18,7 @@
     "faq": "Essa wirse",
     "become_agent": "Agent cak",
     "become_vendor": "Vendor cak",
+    "become_org": "Dhaabbata galmees",
     "get_started": "Qimbis",
     "trusted_agents": "Agente lamaamane",
     "total_raised": "Walal gafartem",
@@ -107,17 +108,13 @@
     "payment_methods": "Galdah Telebirr hinnay CBE Birr",
     "coming_soon": "Xayyah ama",
     "discount_for_non_winners": "Qaffeweeh diskawuntii gittu!",
-    "cash_equivalent_banner_title": "100% Lakmô Gaagoyta",
-    "cash_equivalent_banner_text": "Qibaara inkih lakmô gaagoyta leh. Qibaara mageenik lakmô hayya.",
-    "cash_equivalent_banner_button": "Dumah yaaxig"
-  },
-  {
-  "common": {
+    "cash_equivalent_banner_title": "Lakmô Gaagoyta",
+    "cash_equivalent_banner_text": "Qibaara inkih lakmô gaagoyta leh",
+    "cash_equivalent_banner_button": "Dumah yaaxig",
     "join_today": "Asaak Abbaa Carraa cul",
     "join_description": "Tannoh culuh door. Qibaarah galwa ciggis kee komishini mak hinnay qibaarah galwa cul kee qaffa.",
-    "become_org": "Dhaabbata galmees"
-  }
-}
+    "not_set": "Mamaysinniyo"
+  },
   "stats": {
     "active_pools": "Qibaarah galwa",
     "winners": "Qaffa",
@@ -211,7 +208,11 @@
     "become_agent": "Agent cak parsantii 10 komishini mak",
     "vendor_opportunity": "Vendo gausa qibaarah gosissa",
     "participants": "1000 saaku culul galwa nan cule",
-    "learn_more": "Dumah yaaxig"
+    "learn_more": "Dumah yaaxig",
+    "win_this_prize": "Qibaara hay qaffa!",
+    "special_promotion": "Diskawuntii Kaxxa!",
+    "special_promotion_desc": "Asaak galmees kay galwa toh addat parsantii 10 diskawuntii mak",
+    "winners_circle_desc": "Xayyu qaffi kee ken qibaara qajgne wikri"
   },
   "banners": {
     "agent": "Agent cak",
