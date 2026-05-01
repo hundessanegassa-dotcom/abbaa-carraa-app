@@ -18,6 +18,7 @@
     "faq": "Su'aalaha Inta Badan La Is Weydiiyo",
     "become_agent": "Wakiil Noqo",
     "become_vendor": "Iibiyeyaal Noqo",
+    "become_org": "Hay'ad Isdiiwaan geli",
     "get_started": "Bilow",
     "trusted_agents": "Wakiilada La Aaminay",
     "total_raised": "Wadarta La Soo Ururiyay",
@@ -107,17 +108,13 @@
     "payment_methods": "Bixinta Telebirr ama CBE Birr",
     "coming_soon": "Dhawaan",
     "discount_for_non_winners": "Haddaanad guulaysan waxaad ka heshaa dhimis iibiyaha",
-    "cash_equivalent_banner_title": "100% Dammanad Lacag U Dhigma",
-    "cash_equivalent_banner_text": "Dhammaan abaal-marinaha waxaa dammaanad qaaday lacag u dhigma. Haddii abaal-marinta jiriga ah la heli waayo, lacagta oo dhan waxaad heshaa.",
-    "cash_equivalent_banner_button": "Faahfaahin"
-  },
-  {
-  "common": {
+    "cash_equivalent_banner_title": "Dammanad Lacag U Dhigma",
+    "cash_equivalent_banner_text": "Dhammaan abaal-marinaha waxaa dammaanad qaaday lacag u dhigma",
+    "cash_equivalent_banner_button": "Faahfaahin",
     "join_today": "Maanta Ku Biir Abbaa Carraa",
     "join_description": "Dooro sida aad ugu biiraysid. Samee abaal-marinaha oo guddo ka dhigso ama ku biir abaal-marinaha si aad u guuleysato.",
-    "become_org": "Hay'ad Isdiiwaan geli"
-  }
-}
+    "not_set": "Lama dhigin"
+  },
   "stats": {
     "active_pools": "Abaal-marinaha",
     "winners": "Kuwa Guuleystay",
@@ -211,7 +208,11 @@
     "become_agent": "Noqo Wakiil oo 10 boqolkiiba Guddad Ah Ka Dhigso",
     "vendor_opportunity": "Iibiyeyaashu Badeecadooda Abaalmurin ahaan Liisas Geliya",
     "participants": "In kabadan 1000 Kaqeybgalayaasha ayaa ku biiray abaal-marinahayaga",
-    "learn_more": "Faahfaahin"
+    "learn_more": "Faahfaahin",
+    "win_this_prize": "Ku guuleyso abaalmurintan!",
+    "special_promotion": "Ballanqaad Gaar ah!",
+    "special_promotion_desc": "Isdiiwaangeli maanta oo hel 10% dhimis abaal-marintaada koowaad",
+    "winners_circle_desc": "Ka daalac kuwa dhawaan guuleystay iyo abaalmarihooda cajiibka ah"
   },
   "banners": {
     "agent": "Wakiil Noqo",
