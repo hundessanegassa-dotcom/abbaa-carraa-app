@@ -149,7 +149,7 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </Head>
 
-      <main>
+      <main suppressHydrationWarning>
         {/* Cash Equivalent Banner */}
         <CashEquivalentBanner />
 
@@ -170,11 +170,10 @@ export default function Home() {
           
           <div className="relative z-10 container mx-auto px-4 flex flex-col justify-end min-h-[450px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[700px]">
             <div className="pb-8 sm:pb-12 md:pb-16 text-center">
-              {/* FIXED: No duplicate Abbaa Carraa - entire welcome text in yellow */}
-              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 drop-shadow-lg">
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 drop-shadow-lg" suppressHydrationWarning>
                 <span className="text-yellow-300">{t('common.welcome')}</span>
               </h1>
-              <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-4 sm:mb-6 max-w-2xl mx-auto drop-shadow-md opacity-95 px-2">
+              <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-4 sm:mb-6 max-w-2xl mx-auto drop-shadow-md opacity-95 px-2" suppressHydrationWarning>
                 {t('common.tagline')}
               </p>
               
