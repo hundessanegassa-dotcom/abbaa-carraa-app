@@ -111,6 +111,13 @@
     "cash_equivalent_banner_text": "Badhaasi wundaan laaki walixan waadata. Badhaasi minnen malla wali ishemma.",
     "cash_equivalent_banner_button": "Hasho hubo"
   },
+  {
+  "common": {
+    "join_today": "Asee Abbaa Carraa hirmaadi",
+    "join_description": "Akkamitti hirmaadu doori. Pool sham komishinii argi ykn shanu pool hirmaadi.",
+    "become_org": "Dhaabbata galmeesi"
+  }
+}
   "stats": {
     "active_pools": "Pool badhaasa",
     "winners": "Shananee",
