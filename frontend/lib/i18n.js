@@ -2,6 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
+// Import all 9 Ethiopian languages
 import en from '../locales/en.json';
 import am from '../locales/am.json';
 import om from '../locales/om.json';
@@ -31,12 +32,19 @@ i18n
     resources,
     fallbackLng: 'en',
     debug: false,
-    interpolation: { escapeValue: false },
-    detection: {
-      order: ['localStorage', 'cookie', 'navigator'],
-      caches: ['localStorage']
+    interpolation: {
+      escapeValue: false,
     },
-    react: { useSuspense: false }
+    detection: {
+      order: ['localStorage', 'cookie', 'navigator', 'htmlTag'],
+      caches: ['localStorage'],
+    },
+    react: {
+      useSuspense: false,
+      bindI18n: 'languageChanged',
+      bindI18nStore: '',
+    },
+    initImmediately: false, // Prevents hydration mismatch
   });
 
 export default i18n;
