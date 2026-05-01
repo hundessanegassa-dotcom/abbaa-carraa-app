@@ -174,7 +174,6 @@ export default function Home() {
 
         <MovingAd />
         <AdvertisingBanner />
-
         <SimpleFilters onFilterChange={applyFilters} />
 
         {(activeFilters.category !== 'all' || activeFilters.city !== 'all') && (
@@ -229,12 +228,9 @@ export default function Home() {
           )}
         </section>
 
-        {/* Role Banners Section - Only ONE banner component now */}
         <section className="container mx-auto px-4 py-8">
           <RoleBanners />
         </section>
-
-        {/* Banner component REMOVED - was causing duplicate English banners */}
 
         <section className="bg-gray-100 py-12">
           <div className="container mx-auto px-4">
