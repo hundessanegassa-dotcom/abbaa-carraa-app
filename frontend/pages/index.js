@@ -5,11 +5,11 @@ import { supabase } from '../lib/supabase';
 import { useTranslation } from 'react-i18next';
 import PoolCard from '../components/PoolCard';
 import NewsletterSubscribe from '../components/NewsletterSubscribe';
-import Banner from '../components/Banner';
 import MovingAd from '../components/MovingAd';
 import AdvertisingBanner from '../components/AdvertisingBanner';
 import SimpleFilters from '../components/SimpleFilters';
-import RoleBanners from '../components/RoleBanners';  // ← ADDED THIS LINE
+import RoleBanners from '../components/RoleBanners';
+import CashEquivalentBanner from '../components/CashEquivalentBanner';
 
 export default function Home() {
   const { t } = useTranslation();
@@ -80,7 +80,6 @@ export default function Home() {
     setActiveFilters(filters);
     let filtered = [...pools];
     
-    // Filter by category
     if (filters.category !== 'all') {
       const categoryKeywords = {
         vehicle: ['car', 'truck', 'v8', 'sino', 'toyota', 'motorcycle', 'bike', 'vitara'],
@@ -98,7 +97,6 @@ export default function Home() {
       );
     }
 
-    // Filter by city
     if (filters.city !== 'all') {
       filtered = filtered.filter(pool => pool.city === filters.city);
     }
@@ -113,14 +111,11 @@ export default function Home() {
         <meta name="description" content={t('common.tagline')} />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </Head>
-import CashEquivalentBanner from '../components/CashEquivalentBanner';
 
-// Then in the return, add right after <main>:
-<main>
-  <CashEquivalentBanner />
-  {/* Hero Section */}
-  <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90...">
       <main>
+        {/* Cash Equivalent Banner */}
+        <CashEquivalentBanner />
+
         {/* Hero Section */}
         <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden">
           <div className="absolute inset-0 z-0">
@@ -180,10 +175,8 @@ import CashEquivalentBanner from '../components/CashEquivalentBanner';
         <MovingAd />
         <AdvertisingBanner />
 
-        {/* Filters */}
         <SimpleFilters onFilterChange={applyFilters} />
 
-        {/* Filter Results Count */}
         {(activeFilters.category !== 'all' || activeFilters.city !== 'all') && (
           <div className="container mx-auto px-4 pb-2">
             <p className="text-sm text-gray-500">
@@ -194,7 +187,6 @@ import CashEquivalentBanner from '../components/CashEquivalentBanner';
           </div>
         )}
 
-        {/* Featured Pools */}
         {featuredPools.length > 0 && (
           <section className="container mx-auto px-4 py-8">
             <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
@@ -208,7 +200,6 @@ import CashEquivalentBanner from '../components/CashEquivalentBanner';
           </section>
         )}
 
-        {/* All Active Pools */}
         <section className="container mx-auto px-4 py-8">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
             {activeFilters.category !== 'all' || activeFilters.city !== 'all' 
@@ -238,12 +229,12 @@ import CashEquivalentBanner from '../components/CashEquivalentBanner';
           )}
         </section>
 
-        {/* Role Banners Section */}
+        {/* Role Banners Section - Only ONE banner component now */}
         <section className="container mx-auto px-4 py-8">
           <RoleBanners />
         </section>
 
-        <Banner />
+        {/* Banner component REMOVED - was causing duplicate English banners */}
 
         <section className="bg-gray-100 py-12">
           <div className="container mx-auto px-4">
