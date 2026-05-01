@@ -150,9 +150,10 @@ export default function Home() {
       </Head>
 
       <main>
-        {/* Cash Equivalent Banner - ONLY ONE INSTANCE */}
+        {/* Cash Equivalent Banner */}
         <CashEquivalentBanner />
 
+        {/* Hero Section */}
         <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden">
           <div className="absolute inset-0 z-0">
             <img 
@@ -169,8 +170,9 @@ export default function Home() {
           
           <div className="relative z-10 container mx-auto px-4 flex flex-col justify-end min-h-[450px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[700px]">
             <div className="pb-8 sm:pb-12 md:pb-16 text-center">
+              {/* FIXED: No duplicate Abbaa Carraa - entire welcome text in yellow */}
               <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 drop-shadow-lg">
-                {t('common.welcome')} <span className="text-yellow-300">Abbaa Carraa</span>
+                <span className="text-yellow-300">{t('common.welcome')}</span>
               </h1>
               <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-4 sm:mb-6 max-w-2xl mx-auto drop-shadow-md opacity-95 px-2">
                 {t('common.tagline')}
@@ -188,6 +190,7 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Stats Counters */}
         <div className="bg-white border-b border-gray-200 py-3">
           <div className="container mx-auto px-4">
             <div className="flex flex-wrap justify-center items-center gap-4 md:gap-12">
@@ -215,6 +218,7 @@ export default function Home() {
         <AdvertisingBanner />
         <SimpleFilters onFilterChange={applyFilters} />
 
+        {/* Filter Results Count */}
         {(activeFilters.category !== 'all' || activeFilters.city !== 'all') && (
           <div className="container mx-auto px-4 pb-2">
             <p className="text-sm text-gray-500">
@@ -225,6 +229,7 @@ export default function Home() {
           </div>
         )}
 
+        {/* Featured Pools */}
         {featuredPools.length > 0 && (
           <section className="container mx-auto px-4 py-8">
             <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
@@ -238,6 +243,7 @@ export default function Home() {
           </section>
         )}
 
+        {/* All Active Pools */}
         <section className="container mx-auto px-4 py-8">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
             {activeFilters.category !== 'all' || activeFilters.city !== 'all' 
@@ -263,10 +269,12 @@ export default function Home() {
           )}
         </section>
 
+        {/* Role Banners */}
         <section className="container mx-auto px-4 py-8">
           <RoleBanners />
         </section>
 
+        {/* How It Works */}
         <section className="bg-gray-100 py-12">
           <div className="container mx-auto px-4">
             <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">{t('how_it_works.title')}</h2>
