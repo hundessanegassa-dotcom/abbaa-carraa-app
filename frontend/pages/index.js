@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -10,6 +9,7 @@ import Banner from '../components/Banner';
 import MovingAd from '../components/MovingAd';
 import AdvertisingBanner from '../components/AdvertisingBanner';
 import SimpleFilters from '../components/SimpleFilters';
+import RoleBanners from '../components/RoleBanners';  // ← ADDED THIS LINE
 
 export default function Home() {
   const { t } = useTranslation();
@@ -231,6 +231,7 @@ export default function Home() {
             </div>
           )}
         </section>
+
         {/* Role Banners Section */}
         <section className="container mx-auto px-4 py-8">
           <RoleBanners />
