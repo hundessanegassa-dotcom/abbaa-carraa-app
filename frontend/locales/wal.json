@@ -111,6 +111,13 @@
     "cash_equivalent_banner_text": "Badhaasi wurssaa mishira laakkishsha oosis.",
     "cash_equivalent_banner_button": "Ayrsha Tamaariya"
   },
+  {
+  "common": {
+    "join_today": "Haqqala Abbaa Carraa liyoossa",
+    "join_description": "Ontidi liyoossiya doora. Pool oossa komishinii be ykn doggu pool liyoossa.",
+    "become_org": "Dhaabbata galmeessa"
+  }
+}
   "stats": {
     "active_pools": "Badhaasa pooliya",
     "winners": "Doggans",
