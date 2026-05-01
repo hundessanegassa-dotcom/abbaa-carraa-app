@@ -111,6 +111,13 @@
     "cash_equivalent_banner_text": "Dhammaan abaal-marinaha waxaa dammaanad qaaday lacag u dhigma. Haddii abaal-marinta jiriga ah la heli waayo, lacagta oo dhan waxaad heshaa.",
     "cash_equivalent_banner_button": "Faahfaahin"
   },
+  {
+  "common": {
+    "join_today": "Maanta Ku Biir Abbaa Carraa",
+    "join_description": "Dooro sida aad ugu biiraysid. Samee abaal-marinaha oo guddo ka dhigso ama ku biir abaal-marinaha si aad u guuleysato.",
+    "become_org": "Hay'ad Isdiiwaan geli"
+  }
+}
   "stats": {
     "active_pools": "Abaal-marinaha",
     "winners": "Kuwa Guuleystay",
