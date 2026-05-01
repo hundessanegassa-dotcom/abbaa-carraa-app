@@ -18,6 +18,7 @@
     "faq": "ተደጋጋሚ ጥያቄዎች",
     "become_agent": "ወኪል ሁን",
     "become_vendor": "አቅራቢ ሁን",
+    "become_org": "ድርጅት ይመዝገቡ",
     "get_started": "ይጀምሩ",
     "trusted_agents": "የታመኑ ወኪሎች",
     "total_raised": "የተሰበሰበ ጠቅላላ",
@@ -68,8 +69,8 @@
     "sign_up": "ይመዝገቡ",
     "already_have_account": "አካውንት አለዎት?",
     "sign_in": "ይግቡ",
-    "register_success": "ምዝገባ ተሳክቷል. እባክዎ ለማረጋገጫ ኢሜይልዎን ያረጋግጡ.",
-    "register_error": "ምዝገባ አልተሳካም. እባክዎ እንደገና ይሞክሩ.",
+    "register_success": "ምዝገባ ተሳክቷል. እባክዎ ለማረጋገጫ ኢሜይልዎን ያረጋግጡ።",
+    "register_error": "ምዝገባ አልተሳካም. እባክዎ እንደገና ይሞክሩ።",
     "sign_in_account": "ወደ አካውንትዎ ይግቡ",
     "or": "ወይም",
     "create_new_account": "አዲስ አካውንት ይፍጠሩ",
@@ -84,7 +85,7 @@
     "total_wins": "ጠቅላላ ድሎች",
     "active_entries": "ንቁ ግቤቶች",
     "recent_contributions": "የቅርብ ጊዜ አስተዋጽኦዎች",
-    "no_contributions": "እስካሁን ምንም አስተዋጽኦ አላደረጉም.",
+    "no_contributions": "እስካሁን ምንም አስተዋጽኦ አላደረጉም።",
     "browse_pools": "የእጣ መደቦችን ይመልከቱ",
     "pool": "መደብ",
     "amount": "መጠን",
@@ -108,16 +109,12 @@
     "coming_soon": "በቅርቡ ይጠበቃል",
     "discount_for_non_winners": "ካላሸነፉ ከአቅራቢው ቅናሽ ያገኛሉ",
     "cash_equivalent_banner_title": "ሙሉ የገንዘብ ዋስትና",
-    "cash_equivalent_banner_text": "ሁሉም ሽልማቶች በገንዘብ ተመጣጣኝ ዋስትና የተደገፉ ናቸው.",
-    "cash_equivalent_banner_button": "ተጨማሪ ይወቁ"
-  },
-  {
-  "common": {
+    "cash_equivalent_banner_text": "ሁሉም ሽልማቶች በገንዘብ ተመጣጣኝ ዋስትና የተደገፉ ናቸው።",
+    "cash_equivalent_banner_button": "ተጨማሪ ይወቁ",
     "join_today": "ዛሬውኑ Abbaa Carraa ይቀላቀሉ",
     "join_description": "እንዴት መሳተፍ እንደሚፈልጉ ይምረጡ። የእጣ መደቦችን ይፍጠሩ እና ኮሚሽን ያግኙ ወይም ለማሸነፍ መደቦችን ይቀላቀሉ።",
-    "become_org": "ድርጅት ይመዝገቡ"
-  }
-}
+    "not_set": "አልተዘጋጀም"
+  },
   "stats": {
     "active_pools": "የእጣ መደቦች",
     "winners": "አሸናፊዎች",
@@ -211,7 +208,11 @@
     "become_agent": "ወኪል ሁን እና 10 በመቶ ኮሚሽን አግኝ",
     "vendor_opportunity": "አቅራቢዎች ምርቶችዎን እንደ ሽልማት ዝርዝር ያድርጉ",
     "participants": "ከ1000 በላይ ተሳታፊዎች የእጣ መደቦቻችንን ተቀላቅለዋል",
-    "learn_more": "ተጨማሪ ይወቁ"
+    "learn_more": "ተጨማሪ ይወቁ",
+    "win_this_prize": "ይህን ሽልማት ያሸንፉ!",
+    "special_promotion": "ልዩ ቅናሽ!",
+    "special_promotion_desc": "ዛሬ ይመዝገቡ እና በመጀመሪያ የእጣ መደብ ፍጠሪያ ላይ 10% ቅናሽ ያግኙ",
+    "winners_circle_desc": "የቅርብ ጊዜ አሸናፊዎቻችንን እና አስደናቂ ሽልማቶቻቸውን ይመልከቱ"
   },
   "banners": {
     "agent": "ወኪል ሁን",
