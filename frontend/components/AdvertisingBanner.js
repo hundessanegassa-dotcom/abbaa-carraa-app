@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 
 export default function AdvertisingBanner() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation(); // ← Added i18n here
   const [products, setProducts] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -61,10 +61,12 @@ export default function AdvertisingBanner() {
     return diffDays > 0 ? diffDays : 0;
   };
 
+  // ✅ FIXED: Use i18n.language instead of t('common.locale')
   const formatDate = (dateString) => {
     if (!dateString) return t('common.not_set') || 'Not set';
     const date = new Date(dateString);
-    return date.toLocaleDateString(t('common.locale') || 'en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    const locale = i18n.language || 'en-US';
+    return date.toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
   const formatPrice = (price) => {
@@ -166,7 +168,7 @@ export default function AdvertisingBanner() {
         ))}
       </div>
 
-      {/* Special Promotion & Winner's Circle - NOW TRANSLATED! */}
+      {/* Special Promotion & Winner's Circle */}
       <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-8 rounded-xl mt-4">
         <div className="container mx-auto px-4 text-center">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
