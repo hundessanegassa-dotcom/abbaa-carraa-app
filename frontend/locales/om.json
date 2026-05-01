@@ -109,19 +109,12 @@
     "coming_soon": "Dafee Ni Dhufa",
     "discount_for_non_winners": "Yoo hin mo'anne dhiyeessaa irraa diskawuntii argattu",
     "cash_equivalent_banner_title": "Waadaa Gatii Walqixaa",
-    "cash_equivalent_banner_text": "Badhaasi hundi gatii walqixaa hanga tareefamatiin waadaa galama",
-    "cash_equivalent_banner_button": "Dabalata Hubadhu",
+    "cash_equivalent_banner_text": "Badhaasi hundi gatii walqixaa hanga tareefamatiin waadaa galama. Badhaasi qamaan yoo hin jiraanne gatii hanga qarshiin tareefame ni argattu.",
+    "cash_equivalent_banner_button": "Dabalatan Hubadhu",
     "join_today": "Har'a Abbaa Carraa Wajjiin Hirmaadhaa",
     "join_description": "Akkamitti hirmaachuu barbaaddu filadhu. Galmee badhaasaa uumiitii komishinii argadhu ykn mo'uuf galmee hirmaadhu",
     "not_set": "Hin muuse"
   },
-  {
-  "common": {
-    "cash_equivalent_banner_title": "💰 100% Waadaa Gatii Walqixaa",
-    "cash_equivalent_banner_text": "Badhaasi hundi gatii walqixaa hanga tareefamatiin waadaa galama. Badhaasi qamaan yoo hin jiraanne gatii hanga qarshiin tareefame ni argattu.",
-    "cash_equivalent_banner_button": "Dabalatan Hubadhu"
-  }
-}
   "stats": {
     "active_pools": "Galmee Badhaasaa",
     "winners": "Mo'attoota",
