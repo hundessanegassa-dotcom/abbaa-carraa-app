@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import '../lib/i18n';
 import Footer from '../components/Footer';
 import ChatBot from '../components/ChatBot';
@@ -12,6 +13,7 @@ import GlobalAnnouncement from '../components/GlobalAnnouncement';
 const queryClient = new QueryClient();
 
 function MyApp({ Component, pageProps }) {
+  const { t } = useTranslation();
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -43,16 +45,17 @@ function MyApp({ Component, pageProps }) {
               src="/images/abbaa carraa.png"
               alt="Abbaa Carraa"
               className="w-32 h-32 sm:w-48 sm:h-48 object-cover rounded-2xl shadow-2xl animate-pulse"
+              onError={(e) => e.target.style.display = 'none'}
             />
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white mt-6 mb-2">Abbaa Carraa</h1>
-          <p className="text-white/80 text-sm sm:text-base">ባላ ኢዲል</p>
+          <p className="text-white/80 text-sm sm:text-base">{t('common.loading')}</p>
           <div className="mt-8 flex justify-center gap-2">
             <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
             <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
             <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
           </div>
-          <p className="text-white/60 text-xs mt-8">Loading amazing prizes...</p>
+          <p className="text-white/60 text-xs mt-8">{t('common.loading')}...</p>
         </div>
       </div>
     );
@@ -60,7 +63,6 @@ function MyApp({ Component, pageProps }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Global Announcement Banner - appears at the very top */}
       <GlobalAnnouncement />
       <Component {...pageProps} session={session} />
       <Footer />
