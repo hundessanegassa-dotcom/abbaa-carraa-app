@@ -18,6 +18,7 @@
     "faq": "Gaafi lammise",
     "become_agent": "Agent tahi",
     "become_vendor": "Vendor tahi",
+    "become_org": "Dhaabbata galmeesi",
     "get_started": "Eegali",
     "trusted_agents": "Agent amanama",
     "total_raised": "Wali gatu",
@@ -107,17 +108,13 @@
     "payment_methods": "Kafala Telebirr ykn CBE Birr",
     "coming_soon": "Xayishsha",
     "discount_for_non_winners": "Hin shaninot diskawuntii kennino!",
-    "cash_equivalent_banner_title": "100% Laaki walixan",
-    "cash_equivalent_banner_text": "Badhaasi wundaan laaki walixan waadata. Badhaasi minnen malla wali ishemma.",
-    "cash_equivalent_banner_button": "Hasho hubo"
-  },
-  {
-  "common": {
+    "cash_equivalent_banner_title": "Laaki walixan",
+    "cash_equivalent_banner_text": "Badhaasi wundaan laaki walixan waadata",
+    "cash_equivalent_banner_button": "Hasho hubo",
     "join_today": "Asee Abbaa Carraa hirmaadi",
     "join_description": "Akkamitti hirmaadu doori. Pool sham komishinii argi ykn shanu pool hirmaadi.",
-    "become_org": "Dhaabbata galmeesi"
-  }
-}
+    "not_set": "Hin muuse"
+  },
   "stats": {
     "active_pools": "Pool badhaasa",
     "winners": "Shananee",
@@ -211,7 +208,11 @@
     "become_agent": "Agent tahi parsantii 10 komishinii argi",
     "vendor_opportunity": "Vendortta miisha ke badhaasa ta'u liistisiyya",
     "participants": "Gogorro 1000 hirmaattoota pool nu hirmadanti",
-    "learn_more": "Hasho hubo"
+    "learn_more": "Hasho hubo",
+    "win_this_prize": "Badhaasa kana shani!",
+    "special_promotion": "Diskawuntii!",
+    "special_promotion_desc": "Asee galmeesi pool mati addat parsantii 10 diskawuntii kenni",
+    "winners_circle_desc": "Diha shananee fi badhaasa qarish isaani ilali"
   },
   "banners": {
     "agent": "Agent tahi",
