@@ -115,6 +115,13 @@
     "join_description": "እንዴት መሳተፍ እንደሚፈልጉ ይምረጡ። የእጣ መደቦችን ይፍጠሩ እና ኮሚሽን ያግኙ ወይም ለማሸነፍ መደቦችን ይቀላቀሉ።",
     "not_set": "አልተዘጋጀም"
   },
+  {
+  "common": {
+    "cash_equivalent_banner_title": "💰 100% የገንዘብ ዋስትና",
+    "cash_equivalent_banner_text": "ሁሉም ሽልማቶች በገንዘብ ተመጣጣኝ ዋስትና የተደገፉ ናቸው። አካላዊ ሽልማቱ በማይገኝ ጊዜ ሙሉ የገንዘብ መጠኑን ይቀበላሉ።",
+    "cash_equivalent_banner_button": "ተጨማሪ ይወቁ"
+  }
+}
   "stats": {
     "active_pools": "የእጣ መደቦች",
     "winners": "አሸናፊዎች",
