@@ -113,10 +113,8 @@ export default function Home() {
       </Head>
 
       <main>
-        {/* Cash Equivalent Banner */}
         <CashEquivalentBanner />
 
-        {/* Hero Section */}
         <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden">
           <div className="absolute inset-0 z-0">
             <img 
@@ -148,7 +146,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Counters Section */}
         <div className="bg-white border-b border-gray-200 py-3">
           <div className="container mx-auto px-4">
             <div className="flex flex-wrap justify-center items-center gap-4 md:gap-12">
