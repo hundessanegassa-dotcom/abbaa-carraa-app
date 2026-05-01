@@ -2,16 +2,15 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-// Use require instead of import for more reliable JSON parsing
-const en = require('../locales/en.json');
-const am = require('../locales/am.json');
-const om = require('../locales/om.json');
-const ti = require('../locales/ti.json');
-const so = require('../locales/so.json');
-const aa = require('../locales/aa.json');
-const wal = require('../locales/wal.json');
-const hdy = require('../locales/hdy.json');
-const sid = require('../locales/sid.json');
+import en from '../locales/en.json';
+import am from '../locales/am.json';
+import om from '../locales/om.json';
+import ti from '../locales/ti.json';
+import so from '../locales/so.json';
+import aa from '../locales/aa.json';
+import wal from '../locales/wal.json';
+import hdy from '../locales/hdy.json';
+import sid from '../locales/sid.json';
 
 const resources = {
   en: { translation: en },
