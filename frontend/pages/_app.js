@@ -16,6 +16,12 @@ function MyApp({ Component, pageProps }) {
   const { t } = useTranslation();
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch by only rendering after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -34,6 +40,11 @@ function MyApp({ Component, pageProps }) {
       clearTimeout(timer);
     };
   }, []);
+
+  // Don't render anything on server that depends on translations
+  if (!mounted) {
+    return null;
+  }
 
   // Full screen splash
   if (loading) {
