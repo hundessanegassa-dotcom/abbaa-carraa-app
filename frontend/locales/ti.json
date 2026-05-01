@@ -18,6 +18,7 @@
     "faq": "ተደጋጋሚ ሕቶታት",
     "become_agent": "ወኪል ኩኑ",
     "become_vendor": "ኣቅራቢ ኩኑ",
+    "become_org": "ድርጅት ተመዝገቡ",
     "get_started": "ጀምሩ",
     "trusted_agents": "እሙናት ወኪላት",
     "total_raised": "እተኣከበ ጠቕላላ",
@@ -107,17 +108,13 @@
     "payment_methods": "ክፍሊት ብቴሌብር ወይ ሲቢኢ ብር",
     "coming_soon": "ቀረቢቱ ይመጽእ",
     "discount_for_non_winners": "እንተዘይዓዊትኩም ካብ ኣቅራቢ ቅናሽ ትረኽቡ!",
-    "cash_equivalent_banner_title": "100% ብገንዘብ ዋስትና",
-    "cash_equivalent_banner_text": "ኩለን ሽልማታት ብገንዘብ ተመጣጣን ዋስትና ኣለዎ።",
-    "cash_equivalent_banner_button": "ተወሳኺ ይወቁ"
-  },
- {
-  "common": {
+    "cash_equivalent_banner_title": "ምሉእ ብገንዘብ ዋስትና",
+    "cash_equivalent_banner_text": "ኩለን ሽልማታት ብገንዘብ ተመጣጣን ዋስትና ኣለዎ",
+    "cash_equivalent_banner_button": "ተወሳኺ ይወቁ",
     "join_today": "ሎሚ ን Abbaa Carraa ተጸንበሩ",
     "join_description": "ብኸመይ ክትሳተፉ ከም እትደልዩ ምረጹ። ዕድላዊ ጕጅለታት ፍጠሩን ኮሚሽን ርኸቡ ወይ ንምዕዋት ጕጅለታት ተጸንበሩ።",
-    "become_org": "ድርጅት ተመዝገቡ"
-  }
-} 
+    "not_set": "ኣይተቀመጠን"
+  },
   "stats": {
     "active_pools": "ዕድላዊ ጕጅለታት",
     "winners": "ተዓወቲቶ",
@@ -211,7 +208,11 @@
     "become_agent": "ወኪል ኩኑ 10 ሚእታዊ ኮሚሽን ርኸቡ",
     "vendor_opportunity": "ኣቅራብቲ እቃታትኩም ከም ሽልማት ዝርዝሩ",
     "participants": "ልዕሊ 1000 ተሳተፍቲ ንጕጅለታትና ተጸንቢሮም",
-    "learn_more": "ተወሳኺ ይወቁ"
+    "learn_more": "ተወሳኺ ይወቁ",
+    "win_this_prize": "እዚ ሽልማት ዓወቱ!",
+    "special_promotion": "ፍሉጥ ቅናሽ!",
+    "special_promotion_desc": "ሎሚ ተመዝገቡ ኣብ ቀዳማይ ጕጅለኩም 10% ቅናሽ ርኸቡ",
+    "winners_circle_desc": "እዚኣቶም ቀረቢቱ ዝዓወቱ ዘደንቕ ሽልማታት ርአዩ"
   },
   "banners": {
     "agent": "ወኪል ኩኑ",
