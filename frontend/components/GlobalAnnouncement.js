@@ -30,40 +30,39 @@ export default function GlobalAnnouncement() {
     }
   }
 
-  // Only show database announcements, NOT cash policy (handled by CashEquivalentBanner)
   if (!announcement || dismissed) return null;
 
   const getTypeStyles = (type) => {
     switch (type) {
       case 'warning':
-        return 'from-yellow-500 to-amber-600';
+        return 'from-yellow-600 to-amber-700';
       case 'success':
-        return 'from-green-500 to-emerald-600';
+        return 'from-green-600 to-emerald-700';
       case 'alert':
-        return 'from-red-500 to-rose-600';
+        return 'from-red-600 to-rose-700';
       default:
-        return 'from-blue-500 to-indigo-600';
+        return 'from-gray-600 to-gray-800'; // ← Changed to gray
     }
   };
 
   return (
-    <div className="relative overflow-hidden">
-      <div className={`bg-gradient-to-r ${getTypeStyles(announcement.type)} relative z-10 text-white`}>
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-center">
-            <p className="text-sm sm:text-base font-medium">
+    <div className="relative overflow-hidden text-sm">
+      <div className={`bg-gradient-to-r ${getTypeStyles(announcement.type)} text-white`}>
+        <div className="container mx-auto px-4 py-1.5"> {/* ← Smaller padding */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-center">
+            <p className="text-xs sm:text-sm">
               {announcement.title}: {announcement.message}
             </p>
             
             {announcement.link_url && (
-              <Link href={announcement.link_url} className="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-sm font-semibold transition">
+              <Link href={announcement.link_url} className="bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded-full text-xs font-semibold transition">
                 {announcement.link_text || t('common.learn_more')} →
               </Link>
             )}
             
             <button 
               onClick={() => setDismissed(true)} 
-              className="absolute right-4 opacity-70 hover:opacity-100 transition"
+              className="absolute right-2 opacity-70 hover:opacity-100 transition text-xs"
               aria-label="Dismiss"
             >
               ✕
