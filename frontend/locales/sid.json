@@ -111,6 +111,13 @@
     "cash_equivalent_banner_text": "Badhaasa wundaan laakke gar malla aggo. Badhaasa kunchi yoo ta'e malla ida'ama argattu.",
     "cash_equivalent_banner_button": "Dumma hubadhi"
   },
+  {
+  "common": {
+    "join_today": "Asee Abbaa Carraa hirmaadhi",
+    "join_description": "Akkamitti hirmaadhu doori. Pool isho komishinii argisi ykn mo'u pool hirmaadhi.",
+    "become_org": "Dhaabbata galmeessi"
+  }
+}
   "stats": {
     "active_pools": "Badhaasa pool",
     "winners": "Mo'attoota",
