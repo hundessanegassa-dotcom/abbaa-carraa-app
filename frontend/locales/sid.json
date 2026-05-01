@@ -18,6 +18,7 @@
     "faq": "Gaafi lamise",
     "become_agent": "Agent ta'i",
     "become_vendor": "Vendor ta'i",
+    "become_org": "Dhaabbata galmeessi",
     "get_started": "Eegali",
     "trusted_agents": "Agentot amanamino",
     "total_raised": "Wali gatan",
@@ -107,17 +108,13 @@
     "payment_methods": "Kafala Telebirr ykn CBE Birr",
     "coming_soon": "Dafee ishee",
     "discount_for_non_winners": "Hin mo'inot diskawuntii isheenna!",
-    "cash_equivalent_banner_title": "100% Laakke Gar Malla",
-    "cash_equivalent_banner_text": "Badhaasa wundaan laakke gar malla aggo. Badhaasa kunchi yoo ta'e malla ida'ama argattu.",
-    "cash_equivalent_banner_button": "Dumma hubadhi"
-  },
-  {
-  "common": {
+    "cash_equivalent_banner_title": "Laakke Gar Malla",
+    "cash_equivalent_banner_text": "Badhaasa wundaan laakke gar malla aggo",
+    "cash_equivalent_banner_button": "Dumma hubadhi",
     "join_today": "Asee Abbaa Carraa hirmaadhi",
     "join_description": "Akkamitti hirmaadhu doori. Pool isho komishinii argisi ykn mo'u pool hirmaadhi.",
-    "become_org": "Dhaabbata galmeessi"
-  }
-}
+    "not_set": "Hin giiginni"
+  },
   "stats": {
     "active_pools": "Badhaasa pool",
     "winners": "Mo'attoota",
@@ -211,7 +208,11 @@
     "become_agent": "Agent ta'i Parsantii 10 Komishinii argisi",
     "vendor_opportunity": "Vendorot urji ke badhaasa ta'u liistisiya",
     "participants": "1000 ke hormati hirmaattoot pool nu hirmaatten",
-    "learn_more": "Duummanno hubadhu"
+    "learn_more": "Duummanno hubadhu",
+    "win_this_prize": "Badhaasa kana mo'i!",
+    "special_promotion": "Diskawuntii!",
+    "special_promotion_desc": "Asee galmeessi pool toha addat parsantii 10 diskawuntii argisi",
+    "winners_circle_desc": "Diha mo'attoot fi badhaasa waare isaani ilaali"
   },
   "banners": {
     "agent": "Agent ta'i",
