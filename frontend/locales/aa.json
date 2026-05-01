@@ -111,6 +111,13 @@
     "cash_equivalent_banner_text": "Qibaara inkih lakmô gaagoyta leh. Qibaara mageenik lakmô hayya.",
     "cash_equivalent_banner_button": "Dumah yaaxig"
   },
+  {
+  "common": {
+    "join_today": "Asaak Abbaa Carraa cul",
+    "join_description": "Tannoh culuh door. Qibaarah galwa ciggis kee komishini mak hinnay qibaarah galwa cul kee qaffa.",
+    "become_org": "Dhaabbata galmees"
+  }
+}
   "stats": {
     "active_pools": "Qibaarah galwa",
     "winners": "Qaffa",
