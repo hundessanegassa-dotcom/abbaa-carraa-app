@@ -1,10 +1,10 @@
-
 {
   "common": {
     "welcome": "እንኳን ወደ Abbaa Carraa በደህና መጡ",
     "tagline": "ማህበረሰብን መሰረት ያደረገ የሽልማት እና የአስተዋጽኦ መድረክ",
     "home": "መነሻ",
     "join": "ተቀላቀል",
+    "join_now": "አሁን ተቀላቀል",
     "contribute": "አስተዋጽኦ አድርግ",
     "login": "ግባ",
     "register": "ተመዝገብ",
@@ -64,19 +64,19 @@
     "password": "ይለፍ ቃል",
     "password_placeholder": "ቢያንስ 6 ቁምፊዎች",
     "password_min_length": "ይለፍ ቃል ቢያንስ 6 ቁምፊዎች መሆን አለበት",
-    "creating_account": "አካውንት በመፍጠር ላይ...",
+    "creating_account": "አካውንት በመፍጠር ላይ",
     "sign_up": "ይመዝገቡ",
     "already_have_account": "አካውንት አለዎት?",
     "sign_in": "ይግቡ",
-    "register_success": "ምዝገባ ተሳክቷል! እባክዎ ለማረጋገጫ ኢሜይልዎን ያረጋግጡ።",
-    "register_error": "ምዝገባ አልተሳካም። እባክዎ እንደገና ይሞክሩ።",
+    "register_success": "ምዝገባ ተሳክቷል. እባክዎ ለማረጋገጫ ኢሜይልዎን ያረጋግጡ.",
+    "register_error": "ምዝገባ አልተሳካም. እባክዎ እንደገና ይሞክሩ.",
     "sign_in_account": "ወደ አካውንትዎ ይግቡ",
     "or": "ወይም",
     "create_new_account": "አዲስ አካውንት ይፍጠሩ",
     "signin_google": "በGoogle ይግቡ",
     "signin_github": "በGitHub ይግቡ",
     "or_continue_with_email": "ወይም በኢሜይል ይቀጥሉ",
-    "signing_in": "በመግባት ላይ...",
+    "signing_in": "በመግባት ላይ",
     "forgot_password": "ይለፍ ቃልዎን ረሱት?",
     "login_success": "በተሳካ ሁኔታ ገብተዋል!",
     "logout_success": "በተሳካ ሁኔታ ወጥተዋል",
@@ -84,7 +84,7 @@
     "total_wins": "ጠቅላላ ድሎች",
     "active_entries": "ንቁ ግቤቶች",
     "recent_contributions": "የቅርብ ጊዜ አስተዋጽኦዎች",
-    "no_contributions": "እስካሁን ምንም አስተዋጽኦ አላደረጉም።",
+    "no_contributions": "እስካሁን ምንም አስተዋጽኦ አላደረጉም.",
     "browse_pools": "የእጣ መደቦችን ይመልከቱ",
     "pool": "መደብ",
     "amount": "መጠን",
@@ -96,10 +96,7 @@
     "signup_with_google": "በGoogle ይመዝገቡ",
     "signup_with_github": "በGitHub ይመዝገቡ",
     "login_with_google": "በGoogle ይግቡ",
-    "login_with_github": "በGitHub ይግቡ"
-  },
- {
-  "common": {
+    "login_with_github": "በGitHub ይግቡ",
     "pool_not_found": "የእጣ መደብ አልተገኘም",
     "back_to_home": "ወደ መነሻ ተመለስ",
     "back_to_pools": "ወደ እጣ መደቦች ተመለስ",
@@ -109,21 +106,10 @@
     "special_offer": "ልዩ ቅናሽ",
     "payment_methods": "ክፍያ በቴሌብር ወይም ሲቢኢ ብር",
     "coming_soon": "በቅርቡ ይጠበቃል",
-    "discount_for_non_winners": "ካላሸነፉ ከአቅራቢው ቅናሽ ያገኛሉ!",
-    "cash_equivalent_banner_title": "💰 ሙሉ የገንዘብ ዋስትና",
-    "cash_equivalent_banner_text": "ሁሉም ሽልማቶች በገንዘብ ተመጣጣኝ ዋስትና የተደገፉ ናቸው። አካላዊ ሽልማቱ በማይገኝ ጊዜ ሙሉ የገንዘብ መጠኑን ይቀበላሉ።",
+    "discount_for_non_winners": "ካላሸነፉ ከአቅራቢው ቅናሽ ያገኛሉ",
+    "cash_equivalent_banner_title": "ሙሉ የገንዘብ ዋስትና",
+    "cash_equivalent_banner_text": "ሁሉም ሽልማቶች በገንዘብ ተመጣጣኝ ዋስትና የተደገፉ ናቸው.",
     "cash_equivalent_banner_button": "ተጨማሪ ይወቁ"
-  },
-  "pools": {
-    "remaining_amount": "የቀረው",
-    "raised_amount": "የተሰበሰበው",
-    "pool_not_found": "የእጣ መደብ አልተገኘም",
-    "join_this_pool": "ይህን መደብ ተቀላቀል",
-    "current_progress": "አሁን ያለው እድገት"
-  },
-  "payment": {
-    "telebirr_cbe": "ቴሌብር ወይም ሲቢኢ ብር",
-    "secure_payment": "ደህንነቱ የተጠበቀ ክፍያ"
   },
   "stats": {
     "active_pools": "የእጣ መደቦች",
