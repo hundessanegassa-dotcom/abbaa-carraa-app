@@ -111,6 +111,13 @@
     "cash_equivalent_banner_text": "ሁሉም ሽልማቶች በገንዘብ ተመጣጣኝ ዋስትና የተደገፉ ናቸው.",
     "cash_equivalent_banner_button": "ተጨማሪ ይወቁ"
   },
+  {
+  "common": {
+    "join_today": "ዛሬውኑ Abbaa Carraa ይቀላቀሉ",
+    "join_description": "እንዴት መሳተፍ እንደሚፈልጉ ይምረጡ። የእጣ መደቦችን ይፍጠሩ እና ኮሚሽን ያግኙ ወይም ለማሸነፍ መደቦችን ይቀላቀሉ።",
+    "become_org": "ድርጅት ይመዝገቡ"
+  }
+}
   "stats": {
     "active_pools": "የእጣ መደቦች",
     "winners": "አሸናፊዎች",
