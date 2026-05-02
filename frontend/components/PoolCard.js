@@ -1,21 +1,29 @@
-import { useState } from 'react';
+import { useState, useMemo, lazy, Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
-import WinnerModal from './WinnerModal';
+
+// Lazy load WinnerModal to reduce initial bundle size
+const WinnerModal = lazy(() => import('./WinnerModal'));
 
 export default function PoolCard({ pool, featured = false }) {
   const { t } = useTranslation();
   const [showWinnerModal, setShowWinnerModal] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
-  const progress = (pool.current_amount / pool.target_amount) * 100;
+  // Memoize calculations to prevent re-renders
+  const progress = useMemo(() => {
+    return (pool.current_amount / pool.target_amount) * 100;
+  }, [pool.current_amount, pool.target_amount]);
+
   const isCompleted = pool.status === 'completed' && pool.winner_id;
   const isActive = pool.status === 'active';
 
-  const formatPrice = (price) => {
+  const formatPrice = useMemo(() => (price) => {
     return price?.toLocaleString() || '0';
-  };
+  }, []);
 
-  const getCategoryIcon = (category) => {
+  const getCategoryIcon = useMemo(() => (category) => {
     const icons = {
       vehicle: '🚗',
       machinery: '🏭',
@@ -25,7 +33,13 @@ export default function PoolCard({ pool, featured = false }) {
       other: '🎁'
     };
     return icons[category] || '🎁';
-  };
+  }, []);
+
+  const getDaysLeft = useMemo(() => {
+    if (!pool.end_date || isCompleted) return null;
+    const days = Math.max(0, Math.ceil((new Date(pool.end_date) - new Date()) / (1000 * 60 * 60 * 24)));
+    return days;
+  }, [pool.end_date, isCompleted]);
 
   return (
     <>
@@ -34,13 +48,16 @@ export default function PoolCard({ pool, featured = false }) {
           featured ? 'ring-2 ring-yellow-400 ring-offset-2' : ''
         }`}
       >
-        {/* Image Section */}
-        <div className="relative h-48 overflow-hidden">
-          {pool.image_url ? (
+        {/* Image Section - Optimized with Next/Image */}
+        <div className="relative h-48 overflow-hidden bg-gray-100">
+          {pool.image_url && !imageError ? (
             <img 
-              src={pool.image_url} 
+              src={pool.image_url}
               alt={pool.prize_name}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+              onError={() => setImageError(true)}
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center">
@@ -50,22 +67,22 @@ export default function PoolCard({ pool, featured = false }) {
           
           {/* Featured Badge */}
           {featured && (
-            <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
+            <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md z-10">
               ⭐ {t('pools.featured') || 'Featured'}
             </div>
           )}
           
           {/* Status Badge */}
           {isCompleted ? (
-            <div className="absolute top-2 left-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
+            <div className="absolute top-2 left-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md z-10">
               ✅ {t('common.completed')}
             </div>
           ) : isActive ? (
-            <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
+            <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md z-10">
               🔴 {t('common.active')}
             </div>
           ) : (
-            <div className="absolute top-2 left-2 bg-gray-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
+            <div className="absolute top-2 left-2 bg-gray-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md z-10">
               ⏸️ {t('common.pending')}
             </div>
           )}
@@ -87,7 +104,7 @@ export default function PoolCard({ pool, featured = false }) {
           <div className="mb-3">
             <div className="flex justify-between text-xs text-gray-500 mb-1">
               <span>{t('pools.progress')}</span>
-              <span>{Math.round(progress)}%</span>
+              <span>{Math.min(Math.round(progress), 100)}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
               <div 
@@ -95,6 +112,10 @@ export default function PoolCard({ pool, featured = false }) {
                   isCompleted ? 'bg-green-600' : 'bg-green-500'
                 }`}
                 style={{ width: `${Math.min(progress, 100)}%` }}
+                role="progressbar"
+                aria-valuenow={Math.min(progress, 100)}
+                aria-valuemin={0}
+                aria-valuemax={100}
               />
             </div>
           </div>
@@ -117,11 +138,11 @@ export default function PoolCard({ pool, featured = false }) {
               <span className="text-gray-500">{t('pools.participants')}:</span>
               <span className="font-semibold">{pool.participants_count || 0}</span>
             </div>
-            {pool.end_date && !isCompleted && (
+            {getDaysLeft !== null && getDaysLeft > 0 && !isCompleted && (
               <div className="flex justify-between items-center text-sm">
                 <span className="text-gray-500">{t('pools.days_left')}:</span>
-                <span className="font-semibold text-orange-600">
-                  {Math.max(0, Math.ceil((new Date(pool.end_date) - new Date()) / (1000 * 60 * 60 * 24)))} {t('pools.days_left')}
+                <span className={`font-semibold ${getDaysLeft < 7 ? 'text-red-600' : 'text-orange-600'}`}>
+                  {getDaysLeft} {t('pools.days_left')}
                 </span>
               </div>
             )}
@@ -136,7 +157,7 @@ export default function PoolCard({ pool, featured = false }) {
               🏆 {t('common.view_winners')}
             </button>
           ) : isActive ? (
-            <Link href={`/pools/${pool.id}`}>
+            <Link href={`/pools/${pool.id}`} prefetch={false}>
               <button className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2">
                 🎯 {t('pools.join_now')}
               </button>
@@ -161,12 +182,16 @@ export default function PoolCard({ pool, featured = false }) {
         </div>
       </div>
 
-      {/* Winner Modal */}
-      <WinnerModal
-        poolId={pool.id}
-        isOpen={showWinnerModal}
-        onClose={() => setShowWinnerModal(false)}
-      />
+      {/* Winner Modal - Lazy loaded */}
+      {showWinnerModal && (
+        <Suspense fallback={null}>
+          <WinnerModal
+            poolId={pool.id}
+            isOpen={showWinnerModal}
+            onClose={() => setShowWinnerModal(false)}
+          />
+        </Suspense>
+      )}
     </>
   );
 }
