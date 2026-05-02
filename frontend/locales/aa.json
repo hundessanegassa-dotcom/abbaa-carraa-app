@@ -35,7 +35,7 @@
     "clear_filters": "Baaxiywa siib",
     "showing": "Bulunna",
     "of": "kak",
-    "active_pools": "Qibaarah galwa",
+    "active_pools": "Qibaarah Galwa Angaroo",
     "no_pools": "Waqdi hada qibaarah galub matan",
     "create_first_pool": "Qibaarah galub oogis",
     "register_now": "Wohugal galmees",
@@ -108,12 +108,16 @@
     "payment_methods": "Galdah Telebirr hinnay CBE Birr",
     "coming_soon": "Xayyah ama",
     "discount_for_non_winners": "Qaffeweeh diskawuntii gittu!",
-    "cash_equivalent_banner_title": "Lakmô Gaagoyta",
-    "cash_equivalent_banner_text": "Qibaara inkih lakmô gaagoyta leh",
+    "cash_equivalent_banner_title": "100% Lakmô Gaagoyta",
+    "cash_equivalent_banner_text": "Qibaara inkih lakmô gaagoyta leh. Qibaara qamaan yoo mageenik lakmô hayya.",
     "cash_equivalent_banner_button": "Dumah yaaxig",
     "join_today": "Asaak Abbaa Carraa cul",
     "join_description": "Tannoh culuh door. Qibaarah galwa ciggis kee komishini mak hinnay qibaarah galwa cul kee qaffa.",
-    "not_set": "Mamaysinniyo"
+    "not_set": "Mamaysinniyo",
+    "active": "Angaro",
+    "featured": "Dooxe",
+    "close": "Xaya",
+    "featured_pools": "Galwa Dooxe"
   },
   "stats": {
     "active_pools": "Qibaarah galwa",
@@ -132,7 +136,7 @@
     "days_left": "aysa falte",
     "draw_date": "Galub edde angawo ayró",
     "started": "Qimbiseh",
-    "join_now": "Qaffu carra gal ahay liyoossa",
+    "join_now": "Qaffu carra gal ahay cula",
     "no_pools": "Hadda galwa aktiifi matan",
     "remaining_days": "aysa falte",
     "ending_soon": "Xiyya dare",
@@ -222,7 +226,7 @@
     "organization": "Dhaabbata galmees",
     "organization_desc": "Membit bukka galwa ciggis",
     "individual": "Koro cul",
-    "individual_desc": "Gumaaca dagona gidda qaffa fayxi"
+    "individual_desc": "Gumaaca dagona carraa guddaa qaffu"
   },
   "payment": {
     "title": "Galdah",
