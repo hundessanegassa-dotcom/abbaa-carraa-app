@@ -35,7 +35,7 @@
     "clear_filters": "Shoolishsha haqi",
     "showing": "Agisanno",
     "of": "ke",
-    "active_pools": "Badhaasa pool",
+    "active_pools": "Galmee Badhaasaa Hojiirra jira",
     "no_pools": "Amma badhaasa pool kunchi isii",
     "create_first_pool": "Haara badhaasa pool isho",
     "register_now": "Amma galmeessi",
@@ -108,12 +108,16 @@
     "payment_methods": "Kafala Telebirr ykn CBE Birr",
     "coming_soon": "Dafee ishee",
     "discount_for_non_winners": "Hin mo'inot diskawuntii isheenna!",
-    "cash_equivalent_banner_title": "Laakke Gar Malla",
-    "cash_equivalent_banner_text": "Badhaasa wundaan laakke gar malla aggo",
+    "cash_equivalent_banner_title": "100% Laakke Gar Malla Waadaa",
+    "cash_equivalent_banner_text": "Badhaasa wundaan laakke gar malla aggo. Badhaasa qamaan yoo hin jiraanne malla ida'ama ni argattu.",
     "cash_equivalent_banner_button": "Dumma hubadhi",
     "join_today": "Asee Abbaa Carraa hirmaadhi",
     "join_description": "Akkamitti hirmaadhu doori. Pool isho komishinii argisi ykn mo'u pool hirmaadhi.",
-    "not_set": "Hin giiginni"
+    "not_set": "Hin kaa'amu",
+    "active": "Hojiirra jira",
+    "featured": "Filatame",
+    "close": "Cufi",
+    "featured_pools": "Pool Filatamot"
   },
   "stats": {
     "active_pools": "Badhaasa pool",
@@ -210,7 +214,7 @@
     "participants": "1000 ke hormati hirmaattoot pool nu hirmaatten",
     "learn_more": "Duummanno hubadhu",
     "win_this_prize": "Badhaasa kana mo'i!",
-    "special_promotion": "Diskawuntii!",
+    "special_promotion": "Diskawuntii Addaa!",
     "special_promotion_desc": "Asee galmeessi pool toha addat parsantii 10 diskawuntii argisi",
     "winners_circle_desc": "Diha mo'attoot fi badhaasa waare isaani ilaali"
   },
@@ -222,7 +226,7 @@
     "organization": "Dhaabbata galmeessi",
     "organization_desc": "Membarot ke mela pool keessaa isho",
     "individual": "Kormo ta'u hirmaadhi",
-    "individual_desc": "Gumaacha xiqqaan guddaa mo'u carra"
+    "individual_desc": "Gumaacha xiqqaan carraa guddaa mo'u"
   },
   "payment": {
     "title": "Kafala",
