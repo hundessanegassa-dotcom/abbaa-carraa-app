@@ -115,6 +115,13 @@
     "join_description": "Akkamitti hirmaachuu barbaaddu filadhu. Galmee badhaasaa uumiitii komishinii argadhu ykn mo'uuf galmee hirmaadhu",
     "not_set": "Hin muuse"
   },
+ {
+  "common": {
+    "active": "Aktiivii",
+    "completed": "Xumurame",
+    "pending": "Eeggachaa"
+  }
+} 
   "stats": {
     "active_pools": "Galmee Badhaasaa",
     "winners": "Mo'attoota",
