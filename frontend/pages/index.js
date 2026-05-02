@@ -147,32 +147,28 @@ export default function Home() {
       </Head>
 
       <main suppressHydrationWarning>
-        {/* Cash Equivalent Banner - WITH TOP PADDING */}
-        <div className="pt-3 sm:pt-4">
-          <CashEquivalentBanner />
-        </div>
+        {/* Cash Equivalent Banner - Full width, no extra padding here */}
+        <CashEquivalentBanner />
 
-        {/* Hero Section */}
-        <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden mt-0">
-          {/* NEW Background Image */}
+        {/* Hero Section - Add top padding to account for cash banner */}
+        <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden pt-2 sm:pt-3 md:pt-4">
+          {/* Background Image */}
           <div className="absolute inset-0 z-0">
             <img 
               src="/images/abbaa-carraa-bg.png"
               alt="Abbaa Carraa Background"
               className="w-full h-full object-cover object-top"
               onError={(e) => {
-                console.warn('⚠️ New background image not found, trying fallback');
-                e.target.src = '/images/abbaa carraa.png';
+                console.warn('⚠️ Background image not found');
+                e.target.style.display = 'none';
               }}
             />
             <div className="absolute inset-0 bg-black/40"></div>
           </div>
           
           <div className="relative z-10 container mx-auto px-4 flex flex-col justify-between min-h-[380px] sm:min-h-[420px] md:min-h-[480px] lg:min-h-[520px]">
-            {/* Spacer to push content down */}
             <div className="flex-1"></div>
             
-            {/* Main Hero Content */}
             <div className="text-center pb-4 sm:pb-6">
               <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 sm:mb-3 drop-shadow-lg" suppressHydrationWarning>
                 <span className="text-yellow-300">{t('common.welcome')}</span>
@@ -182,7 +178,6 @@ export default function Home() {
               </p>
             </div>
             
-            {/* Buttons at bottom */}
             <div className="pb-6 sm:pb-8 md:pb-10">
               <div className="flex flex-row gap-3 justify-center">
                 <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 sm:px-6 sm:py-2.5 rounded-full font-semibold text-sm sm:text-base transition-all shadow-lg">
