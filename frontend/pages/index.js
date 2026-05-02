@@ -1,29 +1,306 @@
-import { useTranslation } from 'react-i18next';
+import { useEffect, useState } from 'react';
+import Head from 'next/head';
 import Link from 'next/link';
+import { supabase } from '../lib/supabase';
+import { useTranslation } from 'react-i18next';
+import PoolCard from '../components/PoolCard';
+import NewsletterSubscribe from '../components/NewsletterSubscribe';
+import MovingAd from '../components/MovingAd';
+import AdvertisingBanner from '../components/AdvertisingBanner';
+import SimpleFilters from '../components/SimpleFilters';
+import RoleBanners from '../components/RoleBanners';
+import CashEquivalentBanner from '../components/CashEquivalentBanner';
 
-export default function CashEquivalentBanner() {
-  const { t } = useTranslation();
+export default function Home() {
+  const { t, i18n } = useTranslation();
+  const [pools, setPools] = useState([]);
+  const [filteredPools, setFilteredPools] = useState([]);
+  const [featuredPools, setFeaturedPools] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeFilters, setActiveFilters] = useState({ category: 'all', city: 'all' });
+  const [stats, setStats] = useState({
+    total_pools: 0,
+    total_winners: 0,
+    total_agents: 0,
+    total_raised: 0
+  });
+
+  useEffect(() => {
+    console.log('🔍 Debug Info:', {
+      loading,
+      poolsCount: pools.length,
+      i18nReady: i18n.isInitialized,
+      currentLanguage: i18n.language
+    });
+  }, [loading, pools.length, i18n.isInitialized, i18n.language]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        console.warn('⚠️ Loading timeout after 8 seconds - forcing render');
+        setLoading(false);
+      }
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, [loading]);
+
+  useEffect(() => {
+    fetchStats();
+    fetchPools();
+  }, []);
+
+  useEffect(() => {
+    if (pools.length > 0) {
+      applyFilters(activeFilters);
+    } else {
+      setFilteredPools(pools);
+    }
+  }, [pools, activeFilters]);
+
+  async function fetchStats() {
+    try {
+      console.log('📊 Fetching stats...');
+      const [poolsResult, winnersResult, agentsResult, contributionsResult] = await Promise.all([
+        supabase.from('pools').select('*', { count: 'exact', head: true }),
+        supabase.from('pools').select('*', { count: 'exact', head: true }).not('winner_id', 'is', null),
+        supabase.from('agents').select('*', { count: 'exact', head: true }),
+        supabase.from('contributions').select('amount').eq('status', 'completed')
+      ]);
+      
+      const total_pools = poolsResult.count || 0;
+      const total_winners = winnersResult.count || 0;
+      const total_agents = agentsResult.count || 0;
+      const total_raised = contributionsResult.data?.reduce((sum, c) => sum + (c.amount || 0), 0) || 0;
+      
+      setStats({ total_pools, total_winners, total_agents, total_raised });
+      console.log('✅ Stats fetched:', { total_pools, total_winners, total_agents, total_raised });
+    } catch (error) {
+      console.error('❌ Error fetching stats:', error);
+    }
+  }
+
+  async function fetchPools() {
+    try {
+      console.log('🏊 Fetching pools...');
+      const { data, error } = await supabase
+        .from('pools')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setPools(data || []);
+      setFeaturedPools(data?.filter(pool => pool.is_featured === true) || []);
+      console.log('✅ Pools fetched:', data?.length || 0, 'active pools');
+    } catch (error) {
+      console.error('❌ Error loading pools:', error);
+    } finally {
+      setLoading(false);
+      console.log('🏁 Loading set to false');
+    }
+  }
+
+  const applyFilters = (filters) => {
+    setActiveFilters(filters);
+    let filtered = [...pools];
+    
+    if (filters.category !== 'all') {
+      const categoryKeywords = {
+        vehicle: ['car', 'truck', 'v8', 'sino', 'toyota', 'motorcycle', 'bike', 'vitara'],
+        machinery: ['excavator', 'loader', 'block machine', 'tractor', 'machine', 'cnc'],
+        electronics: ['laptop', 'phone', 'computer', 'tv', 'dell', 'iphone', 'samsung'],
+        property: ['house', 'home', 'villa', 'apartment', 'land'],
+        furniture: ['furniture', 'sofa', 'bed', 'table', 'chair', 'cabinet']
+      };
+      const keywords = categoryKeywords[filters.category] || [];
+      filtered = filtered.filter(pool => 
+        keywords.some(keyword => 
+          pool.prize_name?.toLowerCase().includes(keyword) || 
+          pool.description?.toLowerCase().includes(keyword)
+        )
+      );
+    }
+
+    if (filters.city !== 'all') {
+      filtered = filtered.filter(pool => pool.city === filters.city);
+    }
+    
+    setFilteredPools(filtered);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
+        <p className="text-gray-500">{t('common.loading') || 'Loading...'}</p>
+        <p className="text-xs text-gray-400 mt-2">If this takes too long, check your internet connection</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 mt-1 sm:mt-2">
-      <div className="bg-gradient-to-r from-gray-600 to-gray-800 text-white py-1.5 px-3 rounded-md shadow-sm">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm">💰</span>
-            <span className="font-semibold text-xs">
-              {t('common.cash_equivalent_banner_title')}
-            </span>
+    <>
+      <Head>
+        <title>Abbaa Carraa - {t('common.tagline')}</title>
+        <meta name="description" content={t('common.tagline')} />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+      </Head>
+
+      <main suppressHydrationWarning>
+        {/* Cash Equivalent Banner */}
+        <CashEquivalentBanner />
+
+        {/* Hero Section */}
+        <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden">
+          <div className="absolute inset-0 z-0">
+            <img 
+              src="/images/abbaa carraa.png"
+              alt="Abbaa Carraa"
+              className="w-full h-full object-cover object-top md:object-center"
+              onError={(e) => {
+                console.warn('⚠️ Image not found, hiding');
+                e.target.style.display = 'none';
+              }}
+            />
+            <div className="absolute inset-0 bg-black/40"></div>
           </div>
-          <p className="text-xs text-gray-200 text-center sm:text-left">
-            {t('common.cash_equivalent_banner_text')}
-          </p>
-          <Link href="/about#guarantee">
-            <button className="bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded-full text-xs font-medium transition whitespace-nowrap">
-              {t('common.cash_equivalent_banner_button')} →
-            </button>
-          </Link>
+          
+          <div className="relative z-10 container mx-auto px-4 flex flex-col justify-between min-h-[400px] sm:min-h-[450px] md:min-h-[500px] lg:min-h-[550px]">
+            <div className="flex-1"></div>
+            
+            <div className="text-center pb-6">
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-3 drop-shadow-lg" suppressHydrationWarning>
+                <span className="text-yellow-300">{t('common.welcome')}</span>
+              </h1>
+              <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-6 max-w-2xl mx-auto drop-shadow-md opacity-95 px-2" suppressHydrationWarning>
+                {t('common.tagline')}
+              </p>
+            </div>
+            
+            <div className="pb-8 sm:pb-10 md:pb-12">
+              <div className="flex flex-row gap-3 justify-center">
+                <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 sm:px-6 sm:py-2.5 rounded-full font-semibold text-sm sm:text-base transition-all shadow-lg">
+                  {t('common.get_started')}
+                </Link>
+                <Link href="/listings" className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 sm:px-6 sm:py-2.5 rounded-full font-semibold text-sm sm:text-base transition-all shadow-lg">
+                  {t('common.browse_prizes')}
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Stats Counters */}
+        <div className="bg-white border-b border-gray-200 py-3">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-wrap justify-center items-center gap-4 md:gap-12">
+              <div className="text-center">
+                <div className="text-lg md:text-2xl font-bold text-green-600">{stats.total_pools}+</div>
+                <div className="text-xs text-gray-500">{t('stats.active_pools')}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg md:text-2xl font-bold text-green-600">{stats.total_winners}+</div>
+                <div className="text-xs text-gray-500">{t('stats.winners')}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg md:text-2xl font-bold text-green-600">{stats.total_agents}+</div>
+                <div className="text-xs text-gray-500">{t('stats.agents')}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg md:text-2xl font-bold text-green-600">ETB {Math.floor(stats.total_raised / 1000)}K+</div>
+                <div className="text-xs text-gray-500">{t('stats.raised')}</div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+
+        <MovingAd />
+        <AdvertisingBanner />
+        <SimpleFilters onFilterChange={applyFilters} />
+
+        {(activeFilters.category !== 'all' || activeFilters.city !== 'all') && (
+          <div className="container mx-auto px-4 pb-2">
+            <p className="text-sm text-gray-500">
+              {t('common.showing')} {filteredPools.length} {t('common.of')} {pools.length} {t('common.active_pools')}
+              {activeFilters.category !== 'all' && <span className="ml-1">• {t('filters.category')}: {activeFilters.category}</span>}
+              {activeFilters.city !== 'all' && <span className="ml-1">• {t('filters.city')}: {activeFilters.city}</span>}
+            </p>
+          </div>
+        )}
+
+        {featuredPools.length > 0 && (
+          <section className="container mx-auto px-4 py-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
+              ⭐ {t('pools.featured_pools')}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredPools.map(pool => (
+                <PoolCard key={pool.id} pool={pool} featured={true} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section className="container mx-auto px-4 py-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
+            {activeFilters.category !== 'all' || activeFilters.city !== 'all' 
+              ? t('filters.title') 
+              : t('pools.active_pools')}
+          </h2>
+          {filteredPools.length === 0 ? (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <p className="text-gray-500 mb-4">{t('pools.no_pools')}</p>
+              <button 
+                onClick={() => applyFilters({ category: 'all', city: 'all' })} 
+                className="text-green-600 hover:text-green-700"
+              >
+                {t('common.clear_filters')} →
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredPools.map(pool => (
+                <PoolCard key={pool.id} pool={pool} />
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="container mx-auto px-4 py-8">
+          <RoleBanners />
+        </section>
+
+        <section className="bg-gray-100 py-12">
+          <div className="container mx-auto px-4">
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">{t('how_it_works.title')}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+              <div>
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl font-bold text-green-600">1</span>
+                </div>
+                <h3 className="font-bold text-lg mb-2">{t('how_it_works.find_pool')}</h3>
+                <p className="text-gray-600">{t('how_it_works.find_pool_desc')}</p>
+              </div>
+              <div>
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl font-bold text-green-600">2</span>
+                </div>
+                <h3 className="font-bold text-lg mb-2">{t('how_it_works.contribute')}</h3>
+                <p className="text-gray-600">{t('how_it_works.contribute_desc')}</p>
+              </div>
+              <div>
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl font-bold text-green-600">3</span>
+                </div>
+                <h3 className="font-bold text-lg mb-2">{t('how_it_works.win')}</h3>
+                <p className="text-gray-600">{t('how_it_works.win_desc')}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <NewsletterSubscribe />
+      </main>
+    </>
   );
 }
