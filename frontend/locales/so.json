@@ -35,7 +35,7 @@
     "clear_filters": "Shaandhaynta nadiifi",
     "showing": "Muujinayaa",
     "of": "ka mid ah",
-    "active_pools": "Abaal-marinaha",
+    "active_pools": "Abaal-marinaha Firfircoon",
     "no_pools": "Waqtigan xaadirka ah abaal-marin kuma jiro",
     "create_first_pool": "Samee Abaal-marin Cusub",
     "register_now": "Hadda Isdiiwaan geli",
@@ -108,20 +108,17 @@
     "payment_methods": "Bixinta Telebirr ama CBE Birr",
     "coming_soon": "Dhawaan",
     "discount_for_non_winners": "Haddaanad guulaysan waxaad ka heshaa dhimis iibiyaha",
-    "cash_equivalent_banner_title": "Dammanad Lacag U Dhigma",
-    "cash_equivalent_banner_text": "Dhammaan abaal-marinaha waxaa dammaanad qaaday lacag u dhigma",
+    "cash_equivalent_banner_title": "100% Dammanad Lacag U Dhigma",
+    "cash_equivalent_banner_text": "Dhammaan abaal-marinaha waxaa dammaanad qaaday lacag u dhigma. Haddii abaal-marinta jiriga ah la heli waayo, lacagta oo dhan waxaad heshaa.",
     "cash_equivalent_banner_button": "Faahfaahin",
     "join_today": "Maanta Ku Biir Abbaa Carraa",
     "join_description": "Dooro sida aad ugu biiraysid. Samee abaal-marinaha oo guddo ka dhigso ama ku biir abaal-marinaha si aad u guuleysato.",
-    "not_set": "Lama dhigin"
-  },
-  {
-  "common": {
+    "not_set": "Lama Dhigin",
     "active": "Firfircoon",
-    "completed": "Dhamaystiran",
-    "pending": "Sugaya"
-  }
-}
+    "featured": "La Soo Bandhigay",
+    "close": "Xidh",
+    "featured_pools": "Abaal-marinaha La Soo Bandhigay"
+  },
   "stats": {
     "active_pools": "Abaal-marinaha",
     "winners": "Kuwa Guuleystay",
