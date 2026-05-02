@@ -11,7 +11,6 @@ export default function UpdatePassword() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Check if user has a valid reset session
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
       if (!data.session) {
@@ -20,7 +19,7 @@ export default function UpdatePassword() {
       }
     };
     checkSession();
-  }, []);
+  }, [router]);
 
   async function handleUpdatePassword(e) {
     e.preventDefault();
