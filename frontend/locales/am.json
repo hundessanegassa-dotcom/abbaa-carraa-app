@@ -69,8 +69,8 @@
     "sign_up": "ይመዝገቡ",
     "already_have_account": "አካውንት አለዎት?",
     "sign_in": "ይግቡ",
-    "register_success": "ምዝገባ ተሳክቷል. እባክዎ ለማረጋገጫ ኢሜይልዎን ያረጋግጡ።",
-    "register_error": "ምዝገባ አልተሳካም. እባክዎ እንደገና ይሞክሩ።",
+    "register_success": "ምዝገባ ተሳክቷል። እባክዎ ለማረጋገጫ ኢሜይልዎን ያረጋግጡ።",
+    "register_error": "ምዝገባ አልተሳካም። እባክዎ እንደገና ይሞክሩ።",
     "sign_in_account": "ወደ አካውንትዎ ይግቡ",
     "or": "ወይም",
     "create_new_account": "አዲስ አካውንት ይፍጠሩ",
@@ -113,15 +113,12 @@
     "cash_equivalent_banner_button": "ተጨማሪ ይወቁ",
     "join_today": "ዛሬውኑ Abbaa Carraa ይቀላቀሉ",
     "join_description": "እንዴት መሳተፍ እንደሚፈልጉ ይምረጡ። የእጣ መደቦችን ይፍጠሩ እና ኮሚሽን ያግኙ ወይም ለማሸነፍ መደቦችን ይቀላቀሉ።",
-    "not_set": "አልተዘጋጀም"
-  },
-  {
-  "common": {
+    "not_set": "አልተዘጋጀም",
     "active": "ንቁ",
-    "completed": "ተጠናቋል",
-    "pending": "በመጠባበቅ ላይ"
-  }
-}
+    "featured": "የተለየ",
+    "close": "ዝጋ",
+    "featured_pools": "የተለዩ የእጣ መደቦች"
+  },
   "stats": {
     "active_pools": "የእጣ መደቦች",
     "winners": "አሸናፊዎች",
@@ -250,7 +247,7 @@
     "congratulations": "እንኳን ደስ ያለዎት",
     "you_won": "አሸንፈዋል",
     "ticket_count": "የቲኬቶች ብዛት",
-    "random_seed": "የዘፈቀደ ዘር",
+    "random_seed": "የዘፈቀደ ቁጥር",
     "verified_draw": "የተረጋገጠ እጣ"
   },
   "footer": {
