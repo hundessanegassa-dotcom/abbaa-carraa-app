@@ -35,8 +35,8 @@
     "clear_filters": "ማኣራኽያ ኣጽድዑ",
     "showing": "ዘርእዩ ዘሎ",
     "of": "ካብ",
-    "active_pools": "ዕድላዊ ጕጅለታት",
-    "no_pools": "በዚ ግዜ እዚ ምንም ዕድላዊ ጕጅለታት የለን",
+    "active_pools": "ንጡፋት ዕድላዊ ጕጅለታት",
+    "no_pools": "በዚ ግዜ ምንም ዕድላዊ ጕጅለታት የለን",
     "create_first_pool": "ሓድሽ ዕድላዊ ጕጅለ ፍጠሩ",
     "register_now": "ሕጂ ተመዝገቡ",
     "learn_more": "ተወሳኺ ይወቁ",
@@ -107,21 +107,18 @@
     "special_offer": "ፍሉጥ ቅናሽ",
     "payment_methods": "ክፍሊት ብቴሌብር ወይ ሲቢኢ ብር",
     "coming_soon": "ቀረቢቱ ይመጽእ",
-    "discount_for_non_winners": "እንተዘይዓዊትኩም ካብ ኣቅራቢ ቅናሽ ትረኽቡ!",
-    "cash_equivalent_banner_title": "ምሉእ ብገንዘብ ዋስትና",
-    "cash_equivalent_banner_text": "ኩለን ሽልማታት ብገንዘብ ተመጣጣን ዋስትና ኣለዎ",
+    "discount_for_non_winners": "እንተዘይዓዊትኩም ካብ ኣቅራቢ ቅናሽ ትረኽቡ።",
+    "cash_equivalent_banner_title": "100% ብገንዘብ ዋስትና",
+    "cash_equivalent_banner_text": "ኩለን ሽልማታት ብገንዘብ ተመጣጣን ዋስትና ኣለዎ። ሽልማቱ ባህላዊ እንተዘይረኸበ ምሉእ ገንዘብ ትቕበሉ።",
     "cash_equivalent_banner_button": "ተወሳኺ ይወቁ",
     "join_today": "ሎሚ ን Abbaa Carraa ተጸንበሩ",
     "join_description": "ብኸመይ ክትሳተፉ ከም እትደልዩ ምረጹ። ዕድላዊ ጕጅለታት ፍጠሩን ኮሚሽን ርኸቡ ወይ ንምዕዋት ጕጅለታት ተጸንበሩ።",
-    "not_set": "ኣይተቀመጠን"
-  },
-  {
-  "common": {
+    "not_set": "ኣይተቀመጠን",
     "active": "ንጡፍ",
-    "completed": "ተዛዚሙ",
-    "pending": "ይጽበ ኣሎ"
-  }
-}
+    "featured": "ፍሉጥ",
+    "close": "ዕጹዎ",
+    "featured_pools": "ፍሉጥ ዕድላዊ ጕጅለታት"
+  },
   "stats": {
     "active_pools": "ዕድላዊ ጕጅለታት",
     "winners": "ተዓወቲቶ",
