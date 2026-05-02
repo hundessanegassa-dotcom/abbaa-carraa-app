@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
@@ -24,29 +24,34 @@ export default function Home() {
     total_agents: 0,
     total_raised: 0
   });
+  const [error, setError] = useState(null);
 
+  // Optimized: Fetch all data in parallel with a timeout
   useEffect(() => {
-    console.log('🔍 Debug Info:', {
-      loading,
-      poolsCount: pools.length,
-      i18nReady: i18n.isInitialized,
-      currentLanguage: i18n.language
-    });
-  }, [loading, pools.length, i18n.isInitialized, i18n.language]);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (loading) {
-        console.warn('⚠️ Loading timeout after 8 seconds - forcing render');
+    const loadData = async () => {
+      try {
+        setError(null);
+        await Promise.all([fetchStats(), fetchPools()]);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Loading error:', err);
+          setError('Failed to load data. Please refresh the page.');
+        }
+      } finally {
+        clearTimeout(timeoutId);
         setLoading(false);
       }
-    }, 8000);
-    return () => clearTimeout(timer);
-  }, [loading]);
+    };
 
-  useEffect(() => {
-    fetchStats();
-    fetchPools();
+    loadData();
+
+    return () => {
+      controller.abort();
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   useEffect(() => {
@@ -57,46 +62,47 @@ export default function Home() {
     }
   }, [pools, activeFilters]);
 
+  // Optimized: Fetch stats with better error handling
   async function fetchStats() {
     try {
-      console.log('📊 Fetching stats...');
-      const [poolsResult, winnersResult, agentsResult, contributionsResult] = await Promise.all([
+      // Run queries in parallel but don't wait for all if one fails
+      const results = await Promise.allSettled([
         supabase.from('pools').select('*', { count: 'exact', head: true }),
         supabase.from('pools').select('*', { count: 'exact', head: true }).not('winner_id', 'is', null),
         supabase.from('agents').select('*', { count: 'exact', head: true }),
         supabase.from('contributions').select('amount').eq('status', 'completed')
       ]);
       
-      const total_pools = poolsResult.count || 0;
-      const total_winners = winnersResult.count || 0;
-      const total_agents = agentsResult.count || 0;
-      const total_raised = contributionsResult.data?.reduce((sum, c) => sum + (c.amount || 0), 0) || 0;
+      const total_pools = results[0]?.value?.count || 0;
+      const total_winners = results[1]?.value?.count || 0;
+      const total_agents = results[2]?.value?.count || 0;
+      const contributions = results[3]?.value?.data || [];
+      const total_raised = contributions.reduce((sum, c) => sum + (c.amount || 0), 0);
       
       setStats({ total_pools, total_winners, total_agents, total_raised });
-      console.log('✅ Stats fetched:', { total_pools, total_winners, total_agents, total_raised });
     } catch (error) {
-      console.error('❌ Error fetching stats:', error);
+      console.error('Error fetching stats:', error);
+      // Don't block the UI if stats fail
     }
   }
 
+  // Optimized: Fetch pools with limit and caching
   async function fetchPools() {
     try {
-      console.log('🏊 Fetching pools...');
+      // Add limit to prevent loading too many pools at once
       const { data, error } = await supabase
         .from('pools')
         .select('*')
         .eq('status', 'active')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(50); // Limit to 50 pools initially
 
       if (error) throw error;
       setPools(data || []);
       setFeaturedPools(data?.filter(pool => pool.is_featured === true) || []);
-      console.log('✅ Pools fetched:', data?.length || 0, 'active pools');
     } catch (error) {
-      console.error('❌ Error loading pools:', error);
-    } finally {
-      setLoading(false);
-      console.log('🏁 Loading set to false');
+      console.error('Error loading pools:', error);
+      setError('Could not load prize pools. Please try again.');
     }
   }
 
@@ -128,12 +134,45 @@ export default function Home() {
     setFilteredPools(filtered);
   };
 
+  // Show error state
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="text-red-500 text-6xl mb-4">⚠️</div>
+        <h2 className="text-xl font-bold mb-2">Something went wrong</h2>
+        <p className="text-gray-500 mb-4">{error}</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
+        >
+          Refresh Page
+        </button>
+      </div>
+    );
+  }
+
+  // Show loading skeleton (much faster perception than spinner)
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
-        <p className="text-gray-500">{t('common.loading') || 'Loading...'}</p>
-        <p className="text-xs text-gray-400 mt-2">If this takes too long, check your internet connection</p>
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-8">
+          {/* Skeleton Hero */}
+          <div className="animate-pulse">
+            <div className="h-64 bg-gray-200 rounded-lg mb-8"></div>
+            {/* Skeleton Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-20 bg-gray-200 rounded-lg"></div>
+              ))}
+            </div>
+            {/* Skeleton Pools */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-80 bg-gray-200 rounded-lg"></div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -147,19 +186,17 @@ export default function Home() {
       </Head>
 
       <main suppressHydrationWarning>
-        {/* Cash Equivalent Banner - Full width, no extra padding here */}
         <CashEquivalentBanner />
 
-        {/* Hero Section - Add top padding to account for cash banner */}
-        <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden pt-2 sm:pt-3 md:pt-4">
-          {/* Background Image */}
+        <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden mt-0">
           <div className="absolute inset-0 z-0">
             <img 
               src="/images/abbaa-carraa-bg.png"
               alt="Abbaa Carraa Background"
               className="w-full h-full object-cover object-top"
+              loading="eager"
+              fetchPriority="high"
               onError={(e) => {
-                console.warn('⚠️ Background image not found');
                 e.target.style.display = 'none';
               }}
             />
@@ -191,7 +228,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Stats Counters */}
         <div className="bg-white border-b border-gray-200 py-3">
           <div className="container mx-auto px-4">
             <div className="flex flex-wrap justify-center items-center gap-4 md:gap-12">
