@@ -115,6 +115,13 @@
     "join_description": "Dooro sida aad ugu biiraysid. Samee abaal-marinaha oo guddo ka dhigso ama ku biir abaal-marinaha si aad u guuleysato.",
     "not_set": "Lama dhigin"
   },
+  {
+  "common": {
+    "active": "Firfircoon",
+    "completed": "Dhamaystiran",
+    "pending": "Sugaya"
+  }
+}
   "stats": {
     "active_pools": "Abaal-marinaha",
     "winners": "Kuwa Guuleystay",
