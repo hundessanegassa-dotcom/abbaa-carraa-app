@@ -157,7 +157,7 @@ export default function Home() {
         <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden">
           <div className="absolute inset-0 z-0">
             <img 
-              src="/images/abbaa carraa.png"
+             src="/images/abbaa-carraa-bg.png"
               alt="Abbaa Carraa"
               className="w-full h-full object-cover object-center"
               onError={(e) => {
