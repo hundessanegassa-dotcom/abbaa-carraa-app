@@ -173,15 +173,16 @@ export default function Home() {
               <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 drop-shadow-lg" suppressHydrationWarning>
                 <span className="text-yellow-300">{t('common.welcome')}</span>
               </h1>
-              <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-4 sm:mb-6 max-w-2xl mx-auto drop-shadow-md opacity-95 px-2" suppressHydrationWarning>
+              <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-6 sm:mb-8 max-w-2xl mx-auto drop-shadow-md opacity-95 px-2" suppressHydrationWarning>
                 {t('common.tagline')}
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition-all shadow-lg">
+              {/* BUTTONS - Moved to bottom, one line, same green color */}
+              <div className="flex flex-row gap-3 justify-center mt-4">
+                <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-full font-semibold text-sm sm:text-base transition-all shadow-lg">
                   {t('common.get_started')}
                 </Link>
-                <Link href="/listings" className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition-all border border-white/30">
+                <Link href="/listings" className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-full font-semibold text-sm sm:text-base transition-all shadow-lg">
                   {t('common.browse_prizes')}
                 </Link>
               </div>
