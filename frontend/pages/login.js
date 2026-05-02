@@ -37,8 +37,9 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     
+    // FIXED: Use live Vercel URL instead of localhost
     const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-      redirectTo: `${window.location.origin}/update-password`,
+      redirectTo: 'https://abbaa-carraa-ethiopia.vercel.app/update-password',
     });
     
     if (error) {
@@ -59,6 +60,7 @@ export default function Login() {
             <p className="text-gray-600 mb-4">
               We sent a password reset link to <strong>{resetEmail}</strong>
             </p>
+            <p className="text-sm text-gray-500 mb-4">Please check your spam folder if you don't see it.</p>
             <button
               onClick={() => {
                 setResetMode(false);
