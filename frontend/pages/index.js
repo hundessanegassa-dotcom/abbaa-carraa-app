@@ -147,42 +147,48 @@ export default function Home() {
       </Head>
 
       <main suppressHydrationWarning>
-        {/* Cash Equivalent Banner */}
-        <CashEquivalentBanner />
+        {/* Cash Equivalent Banner - WITH TOP PADDING */}
+        <div className="pt-3 sm:pt-4">
+          <CashEquivalentBanner />
+        </div>
 
         {/* Hero Section */}
-        <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden">
+        <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden mt-0">
+          {/* NEW Background Image */}
           <div className="absolute inset-0 z-0">
             <img 
-              src="/images/abbaa carraa.png"
-              alt="Abbaa Carraa"
-              className="w-full h-full object-cover object-top md:object-center"
+              src="/images/abbaa-carraa-bg.png"
+              alt="Abbaa Carraa Background"
+              className="w-full h-full object-cover object-top"
               onError={(e) => {
-                console.warn('⚠️ Image not found, hiding');
-                e.target.style.display = 'none';
+                console.warn('⚠️ New background image not found, trying fallback');
+                e.target.src = '/images/abbaa carraa.png';
               }}
             />
             <div className="absolute inset-0 bg-black/40"></div>
           </div>
           
-          <div className="relative z-10 container mx-auto px-4 flex flex-col justify-between min-h-[400px] sm:min-h-[450px] md:min-h-[500px] lg:min-h-[550px]">
+          <div className="relative z-10 container mx-auto px-4 flex flex-col justify-between min-h-[380px] sm:min-h-[420px] md:min-h-[480px] lg:min-h-[520px]">
+            {/* Spacer to push content down */}
             <div className="flex-1"></div>
             
-            <div className="text-center pb-6">
-              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-3 drop-shadow-lg" suppressHydrationWarning>
+            {/* Main Hero Content */}
+            <div className="text-center pb-4 sm:pb-6">
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 sm:mb-3 drop-shadow-lg" suppressHydrationWarning>
                 <span className="text-yellow-300">{t('common.welcome')}</span>
               </h1>
-              <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-6 max-w-2xl mx-auto drop-shadow-md opacity-95 px-2" suppressHydrationWarning>
+              <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-4 sm:mb-5 max-w-2xl mx-auto drop-shadow-md opacity-95 px-2" suppressHydrationWarning>
                 {t('common.tagline')}
               </p>
             </div>
             
-            <div className="pb-8 sm:pb-10 md:pb-12">
+            {/* Buttons at bottom */}
+            <div className="pb-6 sm:pb-8 md:pb-10">
               <div className="flex flex-row gap-3 justify-center">
-                <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 sm:px-6 sm:py-2.5 rounded-full font-semibold text-sm sm:text-base transition-all shadow-lg">
+                <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 sm:px-6 sm:py-2.5 rounded-full font-semibold text-sm sm:text-base transition-all shadow-lg">
                   {t('common.get_started')}
                 </Link>
-                <Link href="/listings" className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 sm:px-6 sm:py-2.5 rounded-full font-semibold text-sm sm:text-base transition-all shadow-lg">
+                <Link href="/listings" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 sm:px-6 sm:py-2.5 rounded-full font-semibold text-sm sm:text-base transition-all shadow-lg">
                   {t('common.browse_prizes')}
                 </Link>
               </div>
