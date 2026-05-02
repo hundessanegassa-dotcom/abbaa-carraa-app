@@ -168,21 +168,27 @@ export default function Home() {
             <div className="absolute inset-0 bg-black/40"></div>
           </div>
           
-          <div className="relative z-10 container mx-auto px-4 flex flex-col justify-end min-h-[450px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[700px]">
-            <div className="pb-8 sm:pb-12 md:pb-16 text-center">
-              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 drop-shadow-lg" suppressHydrationWarning>
+          <div className="relative z-10 container mx-auto px-4 flex flex-col justify-between min-h-[500px] sm:min-h-[550px] md:min-h-[600px] lg:min-h-[650px]">
+            {/* Top spacing to push content down */}
+            <div className="flex-1"></div>
+            
+            {/* Main Hero Content */}
+            <div className="text-center pb-6">
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-3 drop-shadow-lg" suppressHydrationWarning>
                 <span className="text-yellow-300">{t('common.welcome')}</span>
               </h1>
-              <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-6 sm:mb-8 max-w-2xl mx-auto drop-shadow-md opacity-95 px-2" suppressHydrationWarning>
+              <p className="text-xs sm:text-sm md:text-base lg:text-lg mb-6 max-w-2xl mx-auto drop-shadow-md opacity-95 px-2" suppressHydrationWarning>
                 {t('common.tagline')}
               </p>
-              
-              {/* BUTTONS - Moved to bottom, one line, same green color */}
-              <div className="flex flex-row gap-3 justify-center mt-4">
-                <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-full font-semibold text-sm sm:text-base transition-all shadow-lg">
+            </div>
+            
+            {/* Buttons at the BOTTOM of hero banner - just above counters */}
+            <div className="pb-8 sm:pb-10 md:pb-12">
+              <div className="flex flex-row gap-3 justify-center">
+                <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 sm:px-6 sm:py-2.5 rounded-full font-semibold text-sm sm:text-base transition-all shadow-lg">
                   {t('common.get_started')}
                 </Link>
-                <Link href="/listings" className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-full font-semibold text-sm sm:text-base transition-all shadow-lg">
+                <Link href="/listings" className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 sm:px-6 sm:py-2.5 rounded-full font-semibold text-sm sm:text-base transition-all shadow-lg">
                   {t('common.browse_prizes')}
                 </Link>
               </div>
@@ -190,7 +196,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Stats Counters */}
+        {/* Stats Counters - directly below hero buttons */}
         <div className="bg-white border-b border-gray-200 py-3">
           <div className="container mx-auto px-4">
             <div className="flex flex-wrap justify-center items-center gap-4 md:gap-12">
