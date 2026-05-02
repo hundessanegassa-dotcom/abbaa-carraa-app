@@ -10,6 +10,7 @@ import AdvertisingBanner from '../components/AdvertisingBanner';
 import SimpleFilters from '../components/SimpleFilters';
 import RoleBanners from '../components/RoleBanners';
 import CashEquivalentBanner from '../components/CashEquivalentBanner';
+import GlobalAnnouncement from '../components/GlobalAnnouncement';
 
 export default function Home() {
   const { t, i18n } = useTranslation();
@@ -29,7 +30,7 @@ export default function Home() {
   // Optimized: Fetch all data in parallel with a timeout
   useEffect(() => {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     const loadData = async () => {
       try {
@@ -62,10 +63,8 @@ export default function Home() {
     }
   }, [pools, activeFilters]);
 
-  // Optimized: Fetch stats with better error handling
   async function fetchStats() {
     try {
-      // Run queries in parallel but don't wait for all if one fails
       const results = await Promise.allSettled([
         supabase.from('pools').select('*', { count: 'exact', head: true }),
         supabase.from('pools').select('*', { count: 'exact', head: true }).not('winner_id', 'is', null),
@@ -82,20 +81,17 @@ export default function Home() {
       setStats({ total_pools, total_winners, total_agents, total_raised });
     } catch (error) {
       console.error('Error fetching stats:', error);
-      // Don't block the UI if stats fail
     }
   }
 
-  // Optimized: Fetch pools with limit and caching
   async function fetchPools() {
     try {
-      // Add limit to prevent loading too many pools at once
       const { data, error } = await supabase
         .from('pools')
         .select('*')
         .eq('status', 'active')
         .order('created_at', { ascending: false })
-        .limit(50); // Limit to 50 pools initially
+        .limit(50);
 
       if (error) throw error;
       setPools(data || []);
@@ -134,7 +130,6 @@ export default function Home() {
     setFilteredPools(filtered);
   };
 
-  // Show error state
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
@@ -151,21 +146,17 @@ export default function Home() {
     );
   }
 
-  // Show loading skeleton (much faster perception than spinner)
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-8">
-          {/* Skeleton Hero */}
           <div className="animate-pulse">
             <div className="h-64 bg-gray-200 rounded-lg mb-8"></div>
-            {/* Skeleton Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="h-20 bg-gray-200 rounded-lg"></div>
               ))}
             </div>
-            {/* Skeleton Pools */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="h-80 bg-gray-200 rounded-lg"></div>
@@ -186,9 +177,13 @@ export default function Home() {
       </Head>
 
       <main suppressHydrationWarning>
+        {/* Compact Top Banners - Single line each */}
         <CashEquivalentBanner />
+        <GlobalAnnouncement />
 
+        {/* Hero Section */}
         <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden mt-0">
+          {/* Background Image */}
           <div className="absolute inset-0 z-0">
             <img 
               src="/images/abbaa-carraa-bg.png"
@@ -228,6 +223,7 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Stats Counters */}
         <div className="bg-white border-b border-gray-200 py-3">
           <div className="container mx-auto px-4">
             <div className="flex flex-wrap justify-center items-center gap-4 md:gap-12">
@@ -255,6 +251,7 @@ export default function Home() {
         <AdvertisingBanner />
         <SimpleFilters onFilterChange={applyFilters} />
 
+        {/* Filter Results Count */}
         {(activeFilters.category !== 'all' || activeFilters.city !== 'all') && (
           <div className="container mx-auto px-4 pb-2">
             <p className="text-sm text-gray-500">
@@ -265,6 +262,7 @@ export default function Home() {
           </div>
         )}
 
+        {/* Featured Pools */}
         {featuredPools.length > 0 && (
           <section className="container mx-auto px-4 py-8">
             <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
@@ -278,6 +276,7 @@ export default function Home() {
           </section>
         )}
 
+        {/* All Active Pools */}
         <section className="container mx-auto px-4 py-8">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
             {activeFilters.category !== 'all' || activeFilters.city !== 'all' 
@@ -303,10 +302,12 @@ export default function Home() {
           )}
         </section>
 
+        {/* Role Banners */}
         <section className="container mx-auto px-4 py-8">
           <RoleBanners />
         </section>
 
+        {/* How It Works */}
         <section className="bg-gray-100 py-12">
           <div className="container mx-auto px-4">
             <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">{t('how_it_works.title')}</h2>
