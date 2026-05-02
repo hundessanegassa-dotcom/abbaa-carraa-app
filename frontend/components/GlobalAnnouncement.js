@@ -32,42 +32,29 @@ export default function GlobalAnnouncement() {
 
   if (!announcement || dismissed) return null;
 
-  const getTypeStyles = (type) => {
-    switch (type) {
-      case 'warning':
-        return 'from-yellow-600 to-amber-700';
-      case 'success':
-        return 'from-green-600 to-emerald-700';
-      case 'alert':
-        return 'from-red-600 to-rose-700';
-      default:
-        return 'from-gray-600 to-gray-800'; // ← Changed to gray
-    }
-  };
-
   return (
-    <div className="relative overflow-hidden text-sm">
-      <div className={`bg-gradient-to-r ${getTypeStyles(announcement.type)} text-white`}>
-        <div className="container mx-auto px-4 py-1.5"> {/* ← Smaller padding */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-center">
-            <p className="text-xs sm:text-sm">
-              {announcement.title}: {announcement.message}
-            </p>
-            
-            {announcement.link_url && (
-              <Link href={announcement.link_url} className="bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded-full text-xs font-semibold transition">
+    <div className="w-full bg-gradient-to-r from-green-700 to-blue-700 text-white">
+      <div className="container mx-auto px-3 py-1.5">
+        <div className="flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm">
+          <span className="text-sm sm:text-base">📢</span>
+          <span className="font-medium">
+            {announcement.title}: {announcement.message}
+          </span>
+          {announcement.link_url && (
+            <>
+              <span className="hidden sm:inline text-gray-300">•</span>
+              <Link href={announcement.link_url} className="text-yellow-200 hover:text-yellow-100 transition underline decoration-yellow-200/50 underline-offset-2">
                 {announcement.link_text || t('common.learn_more')} →
               </Link>
-            )}
-            
-            <button 
-              onClick={() => setDismissed(true)} 
-              className="absolute right-2 opacity-70 hover:opacity-100 transition text-xs"
-              aria-label="Dismiss"
-            >
-              ✕
-            </button>
-          </div>
+            </>
+          )}
+          <button 
+            onClick={() => setDismissed(true)} 
+            className="ml-1 opacity-60 hover:opacity-100 transition text-xs"
+            aria-label="Dismiss"
+          >
+            ✕
+          </button>
         </div>
       </div>
     </div>
