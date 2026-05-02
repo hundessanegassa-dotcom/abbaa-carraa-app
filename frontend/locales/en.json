@@ -113,15 +113,12 @@
     "cash_equivalent_banner_button": "Learn More",
     "join_today": "Join Abbaa Carraa Today",
     "join_description": "Choose how you want to participate. Create pools and earn commission or join pools to win prizes.",
-    "not_set": "Not set"
-  },
-  {
-  "common": {
+    "not_set": "Not set",
     "active": "Active",
-    "completed": "Completed",
-    "pending": "Pending"
-  }
-}
+    "featured": "Featured",
+    "close": "Close",
+    "featured_pools": "Featured Prize Pools"
+  },
   "stats": {
     "active_pools": "Prize Pools",
     "winners": "Winners",
