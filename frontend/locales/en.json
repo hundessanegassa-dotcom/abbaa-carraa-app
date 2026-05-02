@@ -115,6 +115,13 @@
     "join_description": "Choose how you want to participate. Create pools and earn commission or join pools to win prizes.",
     "not_set": "Not set"
   },
+  {
+  "common": {
+    "active": "Active",
+    "completed": "Completed",
+    "pending": "Pending"
+  }
+}
   "stats": {
     "active_pools": "Prize Pools",
     "winners": "Winners",
