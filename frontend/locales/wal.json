@@ -35,7 +35,7 @@
     "clear_filters": "Baaxiya wura haqiya",
     "showing": "Baxishoos",
     "of": "nabe",
-    "active_pools": "Badhaasa pooliya",
+    "active_pools": "Badhaasa Pooliya Oottida",
     "no_pools": "Ha wode badhaasa pooliyi beenna",
     "create_first_pool": "Badhaasa pool oossa",
     "register_now": "Haqqala galmeessa",
@@ -108,12 +108,16 @@
     "payment_methods": "Kaffalo Telebirr ykn CBE Birr",
     "coming_soon": "Xayushsha",
     "discount_for_non_winners": "Be dogganchawuu diskawuntii imma!",
-    "cash_equivalent_banner_title": "Mishira Laakkishsha",
-    "cash_equivalent_banner_text": "Badhaasi wurssaa mishira laakkishsha oosis",
+    "cash_equivalent_banner_title": "100% Mishira Laakkishsha Waadaa",
+    "cash_equivalent_banner_text": "Badhaasi wurssaa mishira laakkishsha oosis. Badhaasi qamaan yoo hin jiraanne misha bulaata.",
     "cash_equivalent_banner_button": "Ayrsha Tamaariya",
     "join_today": "Haqqala Abbaa Carraa liyoossa",
     "join_description": "Ontidi liyoossiya doora. Pool oossa komishinii be ykn doggu pool liyoossa.",
-    "not_set": "Hin giigis"
+    "not_set": "Hin giigis",
+    "active": "Oottida",
+    "featured": "Dooretidays",
+    "close": "Xafiya",
+    "featured_pools": "Pool Dooretidays"
   },
   "stats": {
     "active_pools": "Badhaasa pooliya",
@@ -209,7 +213,7 @@
     "vendor_opportunity": "Vendoruwakka miishiya kaa badhaasan liistiya",
     "participants": "1000 kappo liyoossiya pooliya nu liyoossoos",
     "learn_more": "Ayrsha tamaariya",
-    "win_this_prize": "Badhaasa kana dogga!",
+    "win_this_prize": "Badhaasa kana doggi!",
     "special_promotion": "Diskawuntii Dooretidays!",
     "special_promotion_desc": "Haqqala galmeessa pool kaa tohana 10% diskawuntii be",
     "winners_circle_desc": "Bolla doggansa kee ken badhaasa galayba ilaha"
@@ -218,11 +222,11 @@
     "agent": "Agent ta'i",
     "agent_desc": "Oossi poolu parsantiya 10 komishinii be",
     "vendor": "Vendor ta'i",
-    "vendor_desc": "Miishiya kaa badhaasa ta'u liisti Doggansi bulaata",
+    "vendor_desc": "Miishiya kaa badhaasa ta'u liisti Doggansi bilisa argisa",
     "organization": "Dhaabbata galmeessa",
     "organization_desc": "Membaratu mela pool karan oossa",
     "individual": "Assaaru tun liyoossa",
-    "individual_desc": "Gumaacha shiixin gidda doggu carra"
+    "individual_desc": "Gumaacha shiixin carraa guddaa doggu"
   },
   "payment": {
     "title": "Kaffala",
