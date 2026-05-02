@@ -17,14 +17,14 @@ export default function WinnerModal({ poolId, isOpen, onClose }) {
   async function fetchWinner() {
     setLoading(true);
     try {
-      // Fetch winner info
+      // Fetch pool with winner info
       const { data: pool, error: poolError } = await supabase
         .from('pools')
         .select(`
           id,
           prize_name,
           winner_id,
-          profiles!winner_id (full_name)
+          profiles!winner_id (full_name, email)
         `)
         .eq('id', poolId)
         .single();
@@ -52,8 +52,8 @@ export default function WinnerModal({ poolId, isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold text-green-600">
