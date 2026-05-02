@@ -15,7 +15,7 @@
     "winners": "Mo'attoota",
     "about": "Waa'ee Keenya",
     "contact": "Nu Qunnami",
-    "faq": "Gaafiilee Hatatamaa",
+    "faq": "Gaafiilee Yeebbatan",
     "become_agent": "Agent Ta'i",
     "become_vendor": "Dhiyeessa Ta'i",
     "become_org": "Dhaabbata Galmeessi",
@@ -35,13 +35,13 @@
     "clear_filters": "Calalliwwan haqi",
     "showing": "Agarsiisaa jira",
     "of": "keessaa",
-    "active_pools": "Galmee Badhaasaa",
+    "active_pools": "Galmee Badhaasaa Aktiivii",
     "no_pools": "Yeroo ammaa Galmeen Badhaasaa hin jiru",
     "create_first_pool": "Galmee Badhaasaa Uumi",
     "register_now": "Amma Galmeessi",
-    "learn_more": "Dabalatan Hubadhu",
-    "create_account": "Galmee keessan uumadhaa",
-    "join_prize_pools": "Galmee Badhaasaa hirmaadhaa ti badhaasa ajaa'ibsiisaa argadhaa",
+    "learn_more": "Dabalata Hubadhu",
+    "create_account": "Galama keessan uumadhaa",
+    "join_prize_pools": "Galmee Badhaasaa hirmaadhaa fi badhaasa ajaa'ibsiisaa argadhaa",
     "signup_google": "Google tiin galmeessi",
     "signup_github": "GitHub tiin galmeessi",
     "or_signup_with": "Ykn imeeliin ykn bilbilaan galmeessi",
@@ -61,28 +61,28 @@
     "agent": "Agent",
     "vendor": "Dhiyeessa",
     "organization": "Dhaabbata",
-    "join_pools": "Galmee hirmaadhaa ti carraa mo'adhu",
+    "join_pools": "Galmee hirmaadhaa fi carraa mo'achuu",
     "password": "Jecha Iccitii",
-    "password_placeholder": "Yoo xiqqaate 6 fi isa ol tahu qaba",
-    "password_min_length": "Jechi iccitii yoo xiqqaate 6 fi isa ol ta'uu qaba",
-    "creating_account": "Galmee uumamaa jira",
+    "password_placeholder": "Yoo xiqqaate 6 arfi",
+    "password_min_length": "Jechi iccitii yoo xiqqaate 6 arfii ta'uu qaba",
+    "creating_account": "Galamee uumamaa jira",
     "sign_up": "Galmeessi",
-    "already_have_account": "Galmee ni qabdaa",
+    "already_have_account": "Galamee ni qabdaa?",
     "sign_in": "Seeni",
     "register_success": "Galmeessi milkaa'e! Mee imeelii keessan ilaalaa",
     "register_error": "Galmeessi hin milkaa'in. Mee irra deebi'aa yaali",
-    "sign_in_account": "Galmee keessan seenaa",
+    "sign_in_account": "Galama keessan seenaa",
     "or": "Ykn",
-    "create_new_account": "galmee haaraa uumadhaa",
+    "create_new_account": "galama haaraa uumadhaa",
     "signin_google": "Google tiin seeni",
     "signin_github": "GitHub tiin seeni",
     "or_continue_with_email": "Ykn imeeliin itti fufi",
     "signing_in": "Seenaa jira",
-    "forgot_password": "Jecha Iccitii dagatte",
+    "forgot_password": "Jecha Iccitii dagatte?",
     "login_success": "Milkaa'inaan seenan!",
     "logout_success": "Milkaa'inaan ba'an",
-    "total_contributions": "Gumaacha Waligalaa",
-    "total_wins": "Mo'anno Waligalaa",
+    "total_contributions": "Gumaacha Walumaa",
+    "total_wins": "Mo'anno Walumaa",
     "active_entries": "Seensa Aktiivii",
     "recent_contributions": "Gumaacha Dhiyoo",
     "no_contributions": "Gumaacha takkayyu hin goone",
@@ -108,20 +108,17 @@
     "payment_methods": "Kaffalti Telebirr ykn CBE Birr",
     "coming_soon": "Dafee Ni Dhufa",
     "discount_for_non_winners": "Yoo hin mo'anne dhiyeessaa irraa diskawuntii argattu",
-    "cash_equivalent_banner_title": "Waadaa Gatii Walqixaa",
-    "cash_equivalent_banner_text": "Badhaasi hundi gatii walqixaa hanga tareefamatiin waadaa galama. Badhaasi qamaan yoo hin jiraanne gatii hanga qarshiin tareefame ni argattu.",
-    "cash_equivalent_banner_button": "Dabalatan Hubadhu",
+    "cash_equivalent_banner_title": "100% Waadaa Gatii Walqixaa",
+    "cash_equivalent_banner_text": "Badhaasinni hundi gatii walqixaa hanga tareefamatiin waadaa galama. Badhaasinni qamaan yoo hin jiraanne gatii ida'amaan ni argattu.",
+    "cash_equivalent_banner_button": "Dabalata Hubadhu",
     "join_today": "Har'a Abbaa Carraa Wajjiin Hirmaadhaa",
-    "join_description": "Akkamitti hirmaachuu barbaaddu filadhu. Galmee badhaasaa uumiitii komishinii argadhu ykn mo'uuf galmee hirmaadhu",
-    "not_set": "Hin muuse"
-  },
- {
-  "common": {
+    "join_description": "Akkamitti akka hirmaachuu barbaaddu filadhu. Galmee badhaasaa uumiitii komishinii argadhu ykn mo'uuf galmee hirmaadhu",
+    "not_set": "Hin muurtofinne",
     "active": "Aktiivii",
-    "completed": "Xumurame",
-    "pending": "Eeggachaa"
-  }
-} 
+    "featured": "Filatamaa",
+    "close": "Cufi",
+    "featured_pools": "Galmee Badhaasaa Filataman"
+  },
   "stats": {
     "active_pools": "Galmee Badhaasaa",
     "winners": "Mo'attoota",
@@ -158,7 +155,7 @@
     "contribute": "Gumaachi",
     "contribute_desc": "Telebirr ykn CBE Birr tiin amanatti kaffali",
     "win": "Mo'itii Gammadi",
-    "win_desc": "Galmi yeroo ga'uu argannoo tolaa mo'ataa filata"
+    "win_desc": "Galmi yeroo ga'uu argannoon tolaan mo'ataa filata"
   },
   "agent": {
     "become_agent": "Agent Ta'i",
@@ -175,8 +172,8 @@
   },
   "vendor": {
     "become_vendor": "Dhiyeessa Ta'i",
-    "list_products": "Oomisha Keessan Tarreessa",
-    "offer_discounts": "Hirmaattootaa Hin Mo'aneef Diskawuntii Kennaa",
+    "list_products": "Oomisha Keessan Tarreessi",
+    "offer_discounts": "Hin Mo'aneef Hirmaattootaaf Diskawuntii Kennaa",
     "register_vendor": "Dhiyeessaa Ta'uuf Galmeessi",
     "vendor_dashboard": "Daashboordii Dhiyeessaa",
     "my_products": "Oomisha Koo",
@@ -213,7 +210,7 @@
     "join_today": "Har'a Abbaa Carraa wajjiin hirmaadhuu ti badhaasa ajaa'ibsiisaa mo'i",
     "recent_winner": "Mo'ataan dhiyoo 650,000 ETB gatii qabu Toyota Vitz mo'ate",
     "become_agent": "Agent Ta'ii Parsantii 10 Komishinii Argadhu",
-    "vendor_opportunity": "Dhiyeessitoota Oomisha Keessan badhaasaaf tarreessa",
+    "vendor_opportunity": "Dhiyeessitoota Oomisha Keessan akka badhaasa tarreessi",
     "participants": "Hirmaattoota 1000 ol galmee badhaasaa keenyatti hirmaatan",
     "learn_more": "Dabalata Hubadhu",
     "win_this_prize": "Badhaasa kana mo'i!",
@@ -229,7 +226,7 @@
     "organization": "Dhaabbata Galmeessi",
     "organization_desc": "Dhaabbattoota keessaniif galmee badhaasaa keessoo uumi",
     "individual": "Dhuunfaan Hirmaadhu",
-    "individual_desc": "Gumaacha xiqqaan fi carraa guddaa mo'achuu"
+    "individual_desc": "Gumaacha xiqqaa fi carraa guddaa mo'achuu"
   },
   "payment": {
     "title": "Kaffaltii",
@@ -238,7 +235,7 @@
     "pay_now": "Amma Kaffali",
     "processing": "Hojii irra jira",
     "payment_successful": "Kaffaltiin milkaa'e",
-    "payment_failed": "Kaffaltiin hin milkoofinne Mee irra deebi'ii yaali",
+    "payment_failed": "Kaffaltiin hin milkaa'in Mee irra deebi'ii yaali",
     "enter_phone": "Lakkoofsa bilbilaa keessan guutaa",
     "total_due": "Iddoo Kaffaltii"
   },
@@ -264,26 +261,26 @@
     "privacy": "Wabii Iccitii"
   },
   "chatbot": {
-    "title": "Mata Duree",
+    "title": "Abbaa Carraa Gargaaraa",
     "placeholder": "Gaaffii keessan barreessaa",
     "send": "Ergi",
     "online": "Sarara irra",
     "ask_me": "Waan barbaadde gaafadhu"
   },
   "newsletter": {
-    "title": "Mata Duree Galmeessi",
+    "title": "Mata Duree",
     "description": "Galmeewwan haaraa, mo'attootaa fi dhiyeessii addaa irratti odeeffannoo argadhu",
     "name_placeholder": "Maqaa keessan",
     "email_placeholder": "Imeelii keessan",
     "city_placeholder": "Magaalaa keessan",
     "subscribe": "Galmeessi",
     "subscribing": "Galmeessaa jira",
-    "success": "Milkaa'inaan galmeessitanittu",
-    "error": "Galmeessi hin milkoofinne"
+    "success": "Milkaa'inaan galmeessitan",
+    "error": "Galmeessi hin milkaa'in"
   },
   "buttons": {
     "join_now": "Amma Hirmaadhu",
-    "learn_more": "Dabalataan Hubadhu",
+    "learn_more": "Dabalata Hubadhu",
     "register": "Galmeessi",
     "contact": "Quunnami"
   }
