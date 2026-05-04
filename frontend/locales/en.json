@@ -117,10 +117,7 @@
     "active": "Active",
     "featured": "Featured",
     "close": "Close",
-    "featured_pools": "Featured Prize Pools"
-  },
-  {
-  "common": {
+    "featured_pools": "Featured Prize Pools",
     "share": "Share",
     "whatsapp": "WhatsApp",
     "telegram": "Telegram",
@@ -131,19 +128,6 @@
     "on_abbaa_carraa": "on Abbaa Carraa",
     "to_enter": "to enter"
   },
-  "pools": {
-    "featured": "Featured",
-    "winner_gets": "Winner Gets",
-    "total_collection": "Total Collection",
-    "incl_commission": "incl. 20% commission",
-    "entry_fee": "Entry Fee",
-    "participants": "Participants",
-    "days_left": "days left",
-    "progress": "Progress",
-    "cash_equivalent": "Cash Equivalent Guaranteed",
-    "join_now": "Join Now"
-  }
-}
   "stats": {
     "active_pools": "Prize Pools",
     "winners": "Winners",
@@ -171,7 +155,9 @@
     "seats": "seats",
     "select_seats": "Select number of seats",
     "total_amount": "Total Amount",
-    "tickets": "tickets"
+    "tickets": "tickets",
+    "total_collection": "Total Collection",
+    "incl_commission": "incl. 20% commission"
   },
   "how_it_works": {
     "title": "How Abbaa Carraa Works",
