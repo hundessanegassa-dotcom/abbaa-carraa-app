@@ -7,6 +7,7 @@ export default function PoolCard({ pool, featured = false }) {
   const { t } = useTranslation();
   const [showWinnerModal, setShowWinnerModal] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
 
   // Memoized calculations for performance
   const progress = useMemo(() => {
@@ -42,6 +43,34 @@ export default function PoolCard({ pool, featured = false }) {
   };
 
   const daysLeft = getDaysLeft();
+
+  // Share functions
+  const shareOnWhatsApp = () => {
+    const poolUrl = `${window.location.origin}/pools/${pool.id}`;
+    const text = `🎁 Join me to win ${pool.prize_name} on Abbaa Carraa! Only ETB ${formatPrice(pool.contribution_amount)} to enter. Let's win together!`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + poolUrl)}`, '_blank');
+    setShowShareMenu(false);
+  };
+
+  const shareOnTelegram = () => {
+    const poolUrl = `${window.location.origin}/pools/${pool.id}`;
+    const text = `🎁 Join me to win ${pool.prize_name} on Abbaa Carraa! Only ETB ${formatPrice(pool.contribution_amount)} to enter.`;
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(poolUrl)}&text=${encodeURIComponent(text)}`, '_blank');
+    setShowShareMenu(false);
+  };
+
+  const shareOnFacebook = () => {
+    const poolUrl = `${window.location.origin}/pools/${pool.id}`;
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(poolUrl)}`, '_blank');
+    setShowShareMenu(false);
+  };
+
+  const copyLink = () => {
+    const poolUrl = `${window.location.origin}/pools/${pool.id}`;
+    navigator.clipboard.writeText(poolUrl);
+    alert('Link copied to clipboard!');
+    setShowShareMenu(false);
+  };
 
   return (
     <>
@@ -161,28 +190,71 @@ export default function PoolCard({ pool, featured = false }) {
             )}
           </div>
 
-          {/* Action Button */}
-          {isCompleted ? (
-            <button
-              onClick={() => setShowWinnerModal(true)}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2"
-            >
-              🏆 {t('common.view_winners')}
-            </button>
-          ) : isActive ? (
-            <Link href={`/pools/${pool.id}`} prefetch={false}>
-              <button className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2">
-                🎯 {t('pools.join_now')}
+          {/* Action Buttons */}
+          <div className="space-y-2">
+            {isCompleted ? (
+              <button
+                onClick={() => setShowWinnerModal(true)}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2"
+              >
+                🏆 {t('common.view_winners')}
               </button>
-            </Link>
-          ) : (
-            <button
-              disabled
-              className="w-full bg-gray-400 text-white py-2 rounded-lg font-semibold cursor-not-allowed"
-            >
-              ⏳ {t('common.coming_soon')}
-            </button>
-          )}
+            ) : isActive ? (
+              <Link href={`/pools/${pool.id}`} prefetch={false}>
+                <button className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2">
+                  🎯 {t('pools.join_now')}
+                </button>
+              </Link>
+            ) : (
+              <button
+                disabled
+                className="w-full bg-gray-400 text-white py-2 rounded-lg font-semibold cursor-not-allowed"
+              >
+                ⏳ {t('common.coming_soon')}
+              </button>
+            )}
+
+            {/* Social Share Button - Only for active pools */}
+            {isActive && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowShareMenu(!showShareMenu)}
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white py-1.5 rounded-lg text-sm transition flex items-center justify-center gap-2"
+                >
+                  📤 Share this pool
+                </button>
+                
+                {showShareMenu && (
+                  <div className="absolute bottom-full left-0 mb-2 w-full bg-white rounded-lg shadow-lg border overflow-hidden z-20">
+                    <button
+                      onClick={shareOnWhatsApp}
+                      className="w-full px-4 py-2 text-left hover:bg-green-50 flex items-center gap-2 text-sm"
+                    >
+                      <span className="text-green-600">📱</span> Share on WhatsApp
+                    </button>
+                    <button
+                      onClick={shareOnTelegram}
+                      className="w-full px-4 py-2 text-left hover:bg-blue-50 flex items-center gap-2 text-sm"
+                    >
+                      <span className="text-blue-600">💬</span> Share on Telegram
+                    </button>
+                    <button
+                      onClick={shareOnFacebook}
+                      className="w-full px-4 py-2 text-left hover:bg-blue-50 flex items-center gap-2 text-sm"
+                    >
+                      <span className="text-blue-700">📘</span> Share on Facebook
+                    </button>
+                    <button
+                      onClick={copyLink}
+                      className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-sm border-t"
+                    >
+                      <span className="text-gray-600">🔗</span> Copy Link
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Cash Equivalent Guarantee Badge */}
           {isActive && (
