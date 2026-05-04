@@ -12,7 +12,7 @@ export default function CashEquivalentBanner() {
           <span className="font-medium">
             {t('common.cash_equivalent_banner_title')}
           </span>
-          <span className="hidden sm:inline text-gray-300">•</span>
+          <span className="hidden sm:inline text-gray-400">•</span>
           <Link href="/about#guarantee" className="text-yellow-300 hover:text-yellow-200 transition">
             {t('common.cash_equivalent_banner_button')} →
           </Link>
