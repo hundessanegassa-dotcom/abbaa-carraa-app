@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 
 export default function About() {
+  const { t } = useTranslation();
   const [stats, setStats] = useState({
     total_pools: 0,
     total_winners: 0,
@@ -43,42 +45,138 @@ export default function About() {
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">Our Mission</h2>
-          <p className="text-gray-600 text-lg mb-6">
-            Abbaa Carraa (<span className="font-semibold text-green-600">ባላ ኢዲል</span> - "Opportunity Father") 
-            was founded to democratize access to valuable prizes by allowing communities to pool 
+          <p className="text-gray-600 text-lg">
+            Abbaa Carraa was founded to democratize access to valuable prizes by allowing communities to pool 
             small contributions for a chance to win big – whether a car, laptop, machinery, furniture, or cash prize.
           </p>
-          <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500 text-left">
-            <p className="text-sm font-semibold text-green-800">📌 Our Promise:</p>
-            <p className="text-sm text-gray-700">Every draw is fair, verifiable, and transparent. Winners receive their prizes within 14 days. Creators earn commissions for building community.</p>
-          </div>
         </div>
       </section>
 
       {/* Stats Section */}
       <section className="bg-white py-12 shadow-sm">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-8">Our Impact So Far</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div>
               <div className="text-4xl font-bold text-green-600">{stats.total_pools}+</div>
               <div className="text-gray-600">Active Pools</div>
-              <p className="text-xs text-gray-400 mt-1">prize opportunities</p>
             </div>
             <div>
               <div className="text-4xl font-bold text-green-600">{stats.total_winners}+</div>
               <div className="text-gray-600">Happy Winners</div>
-              <p className="text-xs text-gray-400 mt-1">dreams fulfilled</p>
             </div>
             <div>
               <div className="text-4xl font-bold text-green-600">{stats.total_agents}+</div>
               <div className="text-gray-600">Trusted Agents</div>
-              <p className="text-xs text-gray-400 mt-1">business partners</p>
             </div>
             <div>
-              <div className="text-4xl font-bold text-green-600">{Math.floor(stats.total_raised / 1000)}K+</div>
-              <div className="text-gray-600">ETB Raised</div>
-              <p className="text-xs text-gray-400 mt-1">community contributions</p>
+              <div className="text-4xl font-bold text-green-600">100%</div>
+              <div className="text-gray-600">Transparent</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========== CASH EQUIVALENT GUARANTEE SECTION ========== */}
+      <section id="guarantee" className="container mx-auto px-4 py-12 scroll-mt-20">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <span className="text-5xl mb-4 block">💰</span>
+            <h2 className="text-3xl font-bold text-gray-800">100% Cash Equivalent Guarantee</h2>
+            <div className="w-20 h-1 bg-green-500 mx-auto mt-4"></div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
+            <p className="text-gray-700 mb-4 leading-relaxed">
+              At Abbaa Carraa, we believe in <strong className="text-green-600">100% transparency and fairness</strong>. 
+              Every prize listed on our platform is backed by a <strong className="text-green-600">Cash Equivalent Guarantee</strong>.
+            </p>
+            
+            <div className="bg-green-50 border-l-4 border-green-500 p-4 my-6">
+              <p className="text-green-800 font-semibold mb-2">📌 What does this mean for you?</p>
+              <p className="text-gray-700">If you win a prize pool and the physical product (car, electronics, machinery, etc.) is unavailable for any reason, 
+              you will receive the <strong className="text-green-700">full cash equivalent</strong> of the listed target amount. No questions asked.</p>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-6 mt-6">
+              <div className="border rounded-lg p-4 text-center">
+                <div className="text-3xl mb-2">🏆</div>
+                <h3 className="font-bold text-lg mb-2">Winner Gets</h3>
+                <p className="text-gray-600">Either the <strong>actual product</strong> or <strong>full cash value</strong></p>
+              </div>
+              <div className="border rounded-lg p-4 text-center">
+                <div className="text-3xl mb-2">🔒</div>
+                <h3 className="font-bold text-lg mb-2">Guaranteed Payout</h3>
+                <p className="text-gray-600">Paid within <strong>14 days</strong> of draw completion</p>
+              </div>
+            </div>
+            
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-500">
+                <strong>📋 Example:</strong> You win a car pool with a target amount of 500,000 ETB. 
+                If the car is sold or unavailable, you receive 500,000 ETB cash directly to your Telebirr or bank account.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========== CHARITY & SOCIAL RESPONSIBILITY SECTION ========== */}
+      <section id="charity" className="container mx-auto px-4 py-12 scroll-mt-20 bg-gradient-to-r from-red-50 to-pink-50">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <span className="text-5xl mb-4 block animate-pulse">❤️</span>
+            <h2 className="text-3xl font-bold text-red-700">Our Commitment to Health</h2>
+            <div className="w-20 h-1 bg-red-500 mx-auto mt-4"></div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
+            <div className="text-center mb-6">
+              <div className="inline-block bg-red-100 rounded-full px-4 py-2 mb-4">
+                <span className="text-red-600 font-bold">2% of ALL income</span>
+              </div>
+              <p className="text-xl font-semibold text-gray-800">
+                Supporting Ethiopians fighting <span className="text-red-600">kidney & heart disease</span>
+              </p>
+            </div>
+            
+            <p className="text-gray-700 mb-4 leading-relaxed">
+              At Abbaa Carraa, we believe that <strong className="text-red-600">every contribution creates impact</strong> – not just for winners, 
+              but for our community's health and well-being.
+            </p>
+            
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 my-6">
+              <p className="text-red-800 font-semibold mb-2">📌 How it works:</p>
+              <ul className="list-disc list-inside text-gray-700 space-y-2">
+                <li>2% of <strong>all platform income</strong> is set aside for health support</li>
+                <li>Funds go to verified patients fighting kidney and heart disease</li>
+                <li>Supports dialysis treatment, medications, and surgeries</li>
+                <li>Full transparency – donation reports published quarterly</li>
+              </ul>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-4 mt-6">
+              <div className="text-center p-3 bg-red-50 rounded-lg">
+                <div className="text-2xl mb-1">🩺</div>
+                <p className="font-semibold">Dialysis Support</p>
+                <p className="text-xs text-gray-500">Life-saving treatment access</p>
+              </div>
+              <div className="text-center p-3 bg-red-50 rounded-lg">
+                <div className="text-2xl mb-1">❤️</div>
+                <p className="font-semibold">Heart Care</p>
+                <p className="text-xs text-gray-500">Medications & surgeries</p>
+              </div>
+              <div className="text-center p-3 bg-red-50 rounded-lg">
+                <div className="text-2xl mb-1">🤝</div>
+                <p className="font-semibold">Community Impact</p>
+                <p className="text-xs text-gray-500">Every pool gives hope</p>
+              </div>
+            </div>
+            
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg text-center">
+              <p className="text-sm text-gray-600">
+                <strong>💚 Join the movement:</strong> Your participation doesn't just give you a chance to win – 
+                it helps save lives. Every contribution, every pool, every winner brings us closer to a healthier Ethiopia.
+              </p>
             </div>
           </div>
         </div>
@@ -87,109 +185,32 @@ export default function About() {
       {/* How It Works */}
       <section className="container mx-auto px-4 py-12">
         <h2 className="text-3xl font-bold text-center mb-8">How Abbaa Carraa Works</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="text-center">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+          <div>
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-3xl font-bold text-green-600">1</span>
             </div>
             <h3 className="text-xl font-bold mb-2">Find a Pool</h3>
-            <p className="text-gray-600">Browse active prize pools by city or category – cars, electronics, furniture, machinery, and more</p>
-            <div className="mt-3 p-3 bg-gray-50 rounded-lg text-left">
-              <p className="text-xs text-gray-500">📌 Example</p>
-              <p className="text-sm">Filter by "Addis Ababa" and "Vehicles" to see all car pools near you</p>
-            </div>
+            <p className="text-gray-600">Browse active prize pools by city or category</p>
           </div>
-          <div className="text-center">
+          <div>
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-3xl font-bold text-green-600">2</span>
             </div>
             <h3 className="text-xl font-bold mb-2">Contribute</h3>
-            <p className="text-gray-600">Make a small contribution via Telebirr or CBE Birr – the more you contribute, the higher your chance to win</p>
-            <div className="mt-3 p-3 bg-gray-50 rounded-lg text-left">
-              <p className="text-xs text-gray-500">📌 Example</p>
-              <p className="text-sm">Contribute 1,000 ETB for 2 tickets (500 ETB each) for double the winning chance</p>
-            </div>
+            <p className="text-gray-600">Make a small contribution via Telebirr or CBE Birr</p>
           </div>
-          <div className="text-center">
+          <div>
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-3xl font-bold text-green-600">3</span>
             </div>
             <h3 className="text-xl font-bold mb-2">Win & Celebrate</h3>
-            <p className="text-gray-600">Fair, cryptographically secure draw selects winner when pool reaches target. Get SMS/Email notification immediately</p>
-            <div className="mt-3 p-3 bg-gray-50 rounded-lg text-left">
-              <p className="text-xs text-gray-500">📌 Example</p>
-              <p className="text-sm">Pool reaches 500,000 ETB → Draw runs automatically → Winner receives SMS within seconds</p>
-            </div>
+            <p className="text-gray-600">Fair draw selects winner when pool reaches target</p>
           </div>
         </div>
       </section>
 
-      {/* For Agents Section */}
-      <section className="bg-gray-100 py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-4">Become a Pool Creator</h2>
-            <p className="text-gray-600 mb-6">
-              Are you a business owner, real estate agent, car dealer, manufacturer, or community leader?
-              Partner with Abbaa Carraa to list prizes and earn commissions.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <div className="bg-white rounded-lg p-4 shadow-sm">
-                <div className="text-3xl mb-2">💰</div>
-                <h3 className="font-bold mb-1">Earn 10% Commission</h3>
-                <p className="text-sm text-gray-600">On every pool you create. Add 20% to your target, keep half!</p>
-                <p className="text-xs text-gray-400 mt-2">Example: 500K target → 100K commission</p>
-              </div>
-              <div className="bg-white rounded-lg p-4 shadow-sm">
-                <div className="text-3xl mb-2">🎁</div>
-                <h3 className="font-bold mb-1">Offer Discounts to Non-Winners</h3>
-                <p className="text-sm text-gray-600">Turn participants into customers with 5-50% discounts</p>
-                <p className="text-xs text-gray-400 mt-2">Example: 20% off for all participants</p>
-              </div>
-              <div className="bg-white rounded-lg p-4 shadow-sm">
-                <div className="text-3xl mb-2">📈</div>
-                <h3 className="font-bold mb-1">Grow Your Business</h3>
-                <p className="text-sm text-gray-600">Reach thousands of potential customers across Ethiopia</p>
-                <p className="text-xs text-gray-400 mt-2">Example: 500+ engaged participants per pool</p>
-              </div>
-            </div>
-            <Link href="/register">
-              <button className="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition">
-                Start Creating Pools →
-              </button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Values Section */}
-      <section className="container mx-auto px-4 py-12">
-        <h2 className="text-3xl font-bold text-center mb-8">Our Core Values</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="text-center p-4">
-            <div className="text-4xl mb-2">🔍</div>
-            <h3 className="font-bold mb-1">Transparency</h3>
-            <p className="text-sm text-gray-600">Every draw is verifiable and publicly auditable</p>
-          </div>
-          <div className="text-center p-4">
-            <div className="text-4xl mb-2">🤝</div>
-            <h3 className="font-bold mb-1">Community</h3>
-            <p className="text-sm text-gray-600">Powered by collective contributions from people like you</p>
-          </div>
-          <div className="text-center p-4">
-            <div className="text-4xl mb-2">💪</div>
-            <h3 className="font-bold mb-1">Empowerment</h3>
-            <p className="text-sm text-gray-600">Agents earn commissions, contributors win prizes</p>
-          </div>
-          <div className="text-center p-4">
-            <div className="text-4xl mb-2">📱</div>
-            <h3 className="font-bold mb-1">Innovation</h3>
-            <p className="text-sm text-gray-600">Seamless mobile payments with Telebirr & CBE Birr</p>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
+      {/* Join CTA */}
       <section className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-12">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-2xl md:text-3xl font-bold mb-4">Ready to Start Your Journey?</h2>
