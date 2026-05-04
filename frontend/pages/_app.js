@@ -8,7 +8,7 @@ import '../lib/i18n';
 import Footer from '../components/Footer';
 import ChatBot from '../components/ChatBot';
 import LanguageToggle from '../components/LanguageToggle';
-import GlobalAnnouncement from '../components/GlobalAnnouncement';
+// import GlobalAnnouncement from '../components/GlobalAnnouncement'; // REMOVED - Duplicate welcome banner
 
 const queryClient = new QueryClient();
 
@@ -18,7 +18,6 @@ function MyApp({ Component, pageProps }) {
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
-  // Prevent hydration mismatch by only rendering after mount
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -41,12 +40,10 @@ function MyApp({ Component, pageProps }) {
     };
   }, []);
 
-  // Don't render anything on server that depends on translations
   if (!mounted) {
     return null;
   }
 
-  // Full screen splash
   if (loading) {
     return (
       <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-green-800 via-green-600 to-blue-800 flex items-center justify-center z-[9999]">
@@ -74,7 +71,6 @@ function MyApp({ Component, pageProps }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <GlobalAnnouncement />
       <Component {...pageProps} session={session} />
       <Footer />
       <LanguageToggle />
