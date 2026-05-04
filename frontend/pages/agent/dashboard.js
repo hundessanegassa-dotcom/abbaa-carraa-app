@@ -1,662 +1,434 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import QRCode from 'qrcode.react';
 
 export default function AgentDashboard() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [agent, setAgent] = useState(null);
-  const [listings, setListings] = useState([]);
-  const [pools, setPools] = useState([]);
-  const [commissions, setCommissions] = useState([]);
-  const [participants, setParticipants] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('listings');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    category: 'other',
-    prize_type: 'physical',
-    cash_value: '',
-    discount_percentage: '',
-    location_city: '',
-    estimated_value: '',
-    image_url: ''
+  const [stats, setStats] = useState({
+    total_pools: 0,
+    active_pools: 0,
+    completed_pools: 0,
+    total_contributions: 0,
+    total_commission: 0,
+    pending_commission: 0,
+    paid_commission: 0,
+    total_participants: 0,
+    conversion_rate: 0,
+    avg_views: 0
   });
+  const [recentPools, setRecentPools] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedPoolForQR, setSelectedPoolForQR] = useState(null);
+  const [requestingPayout, setRequestingPayout] = useState(false);
 
   useEffect(() => {
     checkAgent();
   }, []);
 
   async function checkAgent() {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        router.push('/login?redirect=/agent/dashboard');
-        return;
-      }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push('/login');
+      return;
+    }
 
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, user_type')
+      .eq('id', user.id)
+      .single();
+
+    if (profile?.user_type !== 'agent') {
+      router.push('/dashboard');
+      return;
+    }
+
+    await loadAgentData(user.id);
+  }
+
+  async function loadAgentData(userId) {
+    try {
       // Get agent profile
-      const { data: agentData, error: agentError } = await supabase
+      const { data: agentData } = await supabase
         .from('agents')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .single();
 
-      if (agentError || !agentData) {
-        toast.error('You are not registered as an agent');
-        router.push('/agent/register');
-        return;
+      if (agentData) setAgent(agentData);
+
+      // Get pools stats
+      const { data: pools } = await supabase
+        .from('pools')
+        .select('*')
+        .eq('agent_id', agentData?.id)
+        .order('created_at', { ascending: false });
+
+      const activePools = pools?.filter(p => p.status === 'active') || [];
+      const completedPools = pools?.filter(p => p.status === 'completed') || [];
+      
+      // Get contributions stats
+      const poolIds = pools?.map(p => p.id) || [];
+      let totalContributions = 0;
+      let uniqueParticipants = 0;
+      let totalViews = 0;
+
+      if (poolIds.length > 0) {
+        const { data: contributions } = await supabase
+          .from('contributions')
+          .select('amount, user_id')
+          .in('pool_id', poolIds)
+          .eq('status', 'completed');
+
+        totalContributions = contributions?.reduce((sum, c) => sum + c.amount, 0) || 0;
+        uniqueParticipants = [...new Set(contributions?.map(c => c.user_id) || [])].length;
+
+        // Get pool views (if you have a views table)
+        const { data: views } = await supabase
+          .from('pool_views')
+          .select('pool_id')
+          .in('pool_id', poolIds);
+        
+        if (views) {
+          totalViews = views.length;
+          const avgViews = pools?.length ? (totalViews / pools.length).toFixed(1) : 0;
+          const conversionRate = totalViews > 0 ? ((uniqueParticipants / totalViews) * 100).toFixed(1) : 0;
+          setStats(prev => ({ ...prev, avg_views: avgViews, conversion_rate: conversionRate }));
+        }
       }
 
-      setAgent(agentData);
-      await loadListings(agentData.id);
-      await loadPools(agentData.id);
-      await loadCommissions(agentData.id);
-      await loadParticipants(agentData.id);
+      // Get commission stats
+      const { data: commissions } = await supabase
+        .from('commissions')
+        .select('amount, status')
+        .eq('agent_id', agentData?.id);
+
+      const pendingCommission = commissions?.filter(c => c.status === 'pending')?.reduce((sum, c) => sum + c.amount, 0) || 0;
+      const paidCommission = commissions?.filter(c => c.status === 'paid')?.reduce((sum, c) => sum + c.amount, 0) || 0;
+      const totalCommission = pendingCommission + paidCommission;
+
+      setStats({
+        total_pools: pools?.length || 0,
+        active_pools: activePools.length,
+        completed_pools: completedPools.length,
+        total_contributions: totalContributions,
+        total_commission: totalCommission,
+        pending_commission: pendingCommission,
+        paid_commission: paidCommission,
+        total_participants: uniqueParticipants,
+        avg_views: stats.avg_views,
+        conversion_rate: stats.conversion_rate
+      });
+
+      setRecentPools(pools?.slice(0, 5) || []);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error loading agent data:', error);
       toast.error('Failed to load dashboard');
     } finally {
       setLoading(false);
     }
   }
 
-  async function loadListings(agentId) {
-    const { data, error } = await supabase
-      .from('listings')
-      .select('*')
-      .eq('agent_id', agentId)
-      .order('created_at', { ascending: false });
+  async function requestCommissionPayout() {
+    if (stats.pending_commission <= 0) {
+      toast.error('No pending commission to withdraw');
+      return;
+    }
 
-    if (!error) setListings(data || []);
-  }
-
-  async function loadPools(agentId) {
-    const { data, error } = await supabase
-      .from('pools')
-      .select('*, profiles!winner_id(full_name)')
-      .eq('agent_id', agentId)
-      .order('created_at', { ascending: false });
-
-    if (!error) setPools(data || []);
-  }
-
-  async function loadCommissions(agentId) {
-    const { data, error } = await supabase
-      .from('commissions')
-      .select('*, pools(prize_name, target_amount)')
-      .eq('agent_id', agentId)
-      .order('created_at', { ascending: false });
-
-    if (!error) setCommissions(data || []);
-  }
-
-  async function loadParticipants(agentId) {
-    // Get all pools by this agent, then get participants
-    const { data: agentPools, error } = await supabase
-      .from('pools')
-      .select('id, prize_name')
-      .eq('agent_id', agentId);
-
-    if (error || !agentPools?.length) return;
-
-    const poolIds = agentPools.map(p => p.id);
-    const { data: contributions, error: contribError } = await supabase
-      .from('contributions')
-      .select('*, profiles(full_name, email, phone), pools(prize_name)')
-      .in('pool_id', poolIds)
-      .eq('status', 'completed')
-      .order('created_at', { ascending: false });
-
-    if (!contribError) setParticipants(contributions || []);
-  }
-
-  async function handleCreateListing(e) {
-    e.preventDefault();
-    setLoading(true);
-
+    setRequestingPayout(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { error } = await supabase
-        .from('listings')
-        .insert([{
-          agent_id: agent.id,
-          title: formData.title,
-          description: formData.description,
-          category: formData.category,
-          prize_type: formData.prize_type,
-          cash_value: formData.prize_type === 'cash' ? parseFloat(formData.cash_value) : null,
-          discount_percentage: formData.prize_type === 'discount' ? parseInt(formData.discount_percentage) : null,
-          location_city: formData.location_city,
-          estimated_value: parseFloat(formData.estimated_value),
-          image_url: formData.image_url || null,
-          status: 'active'
-        }]);
+        .from('commission_requests')
+        .insert({
+          agent_id: agent?.id,
+          user_id: user?.id,
+          amount: stats.pending_commission,
+          status: 'pending',
+          requested_at: new Date().toISOString()
+        });
 
       if (error) throw error;
-
-      toast.success('Listing created successfully!');
-      setShowCreateModal(false);
-      setFormData({
-        title: '',
-        description: '',
-        category: 'other',
-        prize_type: 'physical',
-        cash_value: '',
-        discount_percentage: '',
-        location_city: '',
-        estimated_value: '',
-        image_url: ''
-      });
-      await loadListings(agent.id);
+      
+      toast.success(`Payout request for ETB ${stats.pending_commission.toLocaleString()} submitted!`);
+      
+      // Update local state
+      setStats(prev => ({ ...prev, pending_commission: 0 }));
     } catch (error) {
-      toast.error(error.message);
+      console.error('Payout request error:', error);
+      toast.error('Failed to submit payout request');
     } finally {
-      setLoading(false);
+      setRequestingPayout(false);
     }
   }
-
-  async function createPoolFromListing(listing) {
-    try {
-      const targetAmount = listing.estimated_value;
-      const contributionAmount = Math.floor(targetAmount / 500); // Example: 500 participants
-
-      const { error } = await supabase
-        .from('pools')
-        .insert([{
-          name: `${listing.title} Prize Pool`,
-          description: listing.description,
-          prize_name: listing.title,
-          prize_description: listing.description,
-          prize_image_url: listing.image_url,
-          target_amount: targetAmount,
-          contribution_amount: contributionAmount,
-          current_amount: 0,
-          agent_id: agent.id,
-          listing_id: listing.id,
-          city: listing.location_city,
-          discount_for_participants: listing.discount_percentage || 0,
-          status: 'active',
-          is_featured: false
-        }]);
-
-      if (error) throw error;
-
-      toast.success('Prize pool created! Share it with your community.');
-      await loadPools(agent.id);
-    } catch (error) {
-      toast.error(error.message);
-    }
-  }
-
-  async function updatePoolDiscount(poolId, discountPercent) {
-    try {
-      const { error } = await supabase
-        .from('pools')
-        .update({ discount_for_participants: discountPercent })
-        .eq('id', poolId);
-
-      if (error) throw error;
-      toast.success('Discount updated!');
-      await loadPools(agent.id);
-    } catch (error) {
-      toast.error(error.message);
-    }
-  }
-
-  const totalCommissions = commissions.reduce((sum, c) => sum + (c.amount || 0), 0);
-  const pendingCommissions = commissions.filter(c => c.status === 'pending').reduce((sum, c) => sum + (c.amount || 0), 0);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="container mx-auto px-4">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-64 mb-8"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
+              ))}
+            </div>
+            <div className="h-64 bg-gray-200 rounded-lg mb-8"></div>
+            <div className="h-96 bg-gray-200 rounded-lg"></div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-      <nav className="bg-white shadow-md">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <Link href="/" className="text-2xl font-bold text-green-600">
-              Abbaa Carraa
-            </Link>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-600">Welcome, {agent?.business_name}</span>
-              <Link href="/" className="text-gray-600 hover:text-green-600">View Site</Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg shadow-lg p-6 mb-8">
-          <h1 className="text-3xl font-bold mb-2">Agent Dashboard</h1>
-          <p className="opacity-90">Manage your listings, track commissions, and engage with participants</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-            <div className="bg-white bg-opacity-20 rounded-lg p-3">
-              <p className="text-sm">Total Listings</p>
-              <p className="text-2xl font-bold">{listings.length}</p>
-            </div>
-            <div className="bg-white bg-opacity-20 rounded-lg p-3">
-              <p className="text-sm">Total Commissions</p>
-              <p className="text-2xl font-bold">ETB {totalCommissions.toLocaleString()}</p>
-            </div>
-            <div className="bg-white bg-opacity-20 rounded-lg p-3">
-              <p className="text-sm">Pending Payout</p>
-              <p className="text-2xl font-bold">ETB {pendingCommissions.toLocaleString()}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="flex space-x-8">
-            <button
-              onClick={() => setActiveTab('listings')}
-              className={`pb-4 px-1 font-medium transition ${
-                activeTab === 'listings' 
-                  ? 'border-b-2 border-green-600 text-green-600' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              📦 My Listings
-            </button>
-            <button
-              onClick={() => setActiveTab('pools')}
-              className={`pb-4 px-1 font-medium transition ${
-                activeTab === 'pools' 
-                  ? 'border-b-2 border-green-600 text-green-600' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              🎯 Prize Pools
-            </button>
-            <button
-              onClick={() => setActiveTab('participants')}
-              className={`pb-4 px-1 font-medium transition ${
-                activeTab === 'participants' 
-                  ? 'border-b-2 border-green-600 text-green-600' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              👥 Participants
-            </button>
-            <button
-              onClick={() => setActiveTab('commissions')}
-              className={`pb-4 px-1 font-medium transition ${
-                activeTab === 'commissions' 
-                  ? 'border-b-2 border-green-600 text-green-600' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              💰 Commissions
-            </button>
-          </nav>
-        </div>
-
-        {/* Listings Tab */}
-        {activeTab === 'listings' && (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="container mx-auto px-4">
+        {/* Header with Agent Info */}
+        <div className="flex justify-between items-center mb-8">
           <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Your Product Listings</h2>
+            <h1 className="text-3xl font-bold">Agent Dashboard</h1>
+            {agent && (
+              <p className="text-gray-500 mt-1">
+                Welcome back, {agent.business_name || agent.user_id?.slice(0, 8)}
+              </p>
+            )}
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-gray-500">Verification Status</p>
+            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+              agent?.verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+            }`}>
+              {agent?.verified ? '✓ Verified' : '⏳ Pending Verification'}
+            </span>
+          </div>
+        </div>
+        
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
+            <div className="text-2xl mb-2">📊</div>
+            <p className="text-2xl font-bold text-green-600">{stats.total_pools}</p>
+            <p className="text-gray-500">Total Pools</p>
+            <div className="text-sm text-gray-400 mt-1">
+              {stats.active_pools} active | {stats.completed_pools} completed
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
+            <div className="text-2xl mb-2">💰</div>
+            <p className="text-2xl font-bold text-green-600">ETB {stats.total_contributions.toLocaleString()}</p>
+            <p className="text-gray-500">Total Contributions</p>
+            <div className="text-sm text-gray-400 mt-1">{stats.total_participants} participants</div>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
+            <div className="text-2xl mb-2">💎</div>
+            <p className="text-2xl font-bold text-yellow-600">ETB {stats.total_commission.toLocaleString()}</p>
+            <p className="text-gray-500">Total Commission</p>
+            <div className="text-sm text-gray-400 mt-1">
+              {stats.pending_commission > 0 ? (
+                <span className="text-orange-600">{stats.pending_commission.toLocaleString()} ETB pending</span>
+              ) : (
+                'All paid'
+              )}
+            </div>
+            {stats.pending_commission > 0 && (
               <button
-                onClick={() => setShowCreateModal(true)}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                onClick={requestCommissionPayout}
+                disabled={requestingPayout}
+                className="mt-3 w-full bg-green-600 text-white py-1 rounded-lg text-sm hover:bg-green-700 disabled:bg-gray-400"
               >
-                + New Listing
+                {requestingPayout ? 'Processing...' : 'Request Payout →'}
               </button>
-            </div>
-
-            {listings.length === 0 ? (
-              <div className="bg-white rounded-lg shadow p-8 text-center">
-                <p className="text-gray-500 mb-4">You haven't created any listings yet.</p>
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="text-green-600 hover:text-green-700"
-                >
-                  Create your first listing →
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {listings.map((listing) => (
-                  <div key={listing.id} className="bg-white rounded-lg shadow-md overflow-hidden">
-                    {listing.image_url && (
-                      <img src={listing.image_url} alt={listing.title} className="w-full h-48 object-cover" />
-                    )}
-                    <div className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="text-xl font-bold text-green-600">{listing.title}</h3>
-                        <span className="text-xs bg-gray-100 px-2 py-1 rounded">{listing.category}</span>
-                      </div>
-                      <p className="text-gray-600 text-sm mb-3">{listing.description}</p>
-                      <div className="space-y-1 text-sm mb-4">
-                        <p><strong>📍 Location:</strong> {listing.location_city}</p>
-                        {listing.prize_type === 'cash' && (
-                          <p><strong>💰 Cash Prize:</strong> ETB {listing.cash_value?.toLocaleString()}</p>
-                        )}
-                        {listing.prize_type === 'discount' && (
-                          <p><strong>🎉 Discount:</strong> {listing.discount_percentage}% OFF</p>
-                        )}
-                        <p><strong>💎 Value:</strong> ETB {listing.estimated_value?.toLocaleString()}</p>
-                      </div>
-                      <button
-                        onClick={() => createPoolFromListing(listing)}
-                        className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
-                      >
-                        Create Prize Pool
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
             )}
           </div>
-        )}
-
-        {/* Pools Tab */}
-        {activeTab === 'pools' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-6">Your Prize Pools</h2>
-            {pools.length === 0 ? (
-              <div className="bg-white rounded-lg shadow p-8 text-center">
-                <p className="text-gray-500">No prize pools created yet.</p>
-                <p className="text-sm text-gray-400 mt-2">Create a listing first, then convert it to a prize pool.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {pools.map((pool) => {
-                  const progress = (pool.current_amount / pool.target_amount) * 100;
-                  return (
-                    <div key={pool.id} className="bg-white rounded-lg shadow p-4">
-                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-bold text-green-600">{pool.prize_name}</h3>
-                          <p className="text-sm text-gray-500">Created: {new Date(pool.created_at).toLocaleDateString()}</p>
-                          <div className="mt-2">
-                            <div className="flex justify-between text-sm mb-1">
-                              <span>Progress</span>
-                              <span>{progress.toFixed(1)}%</span>
-                            </div>
-                            <div className="bg-gray-200 rounded-full h-2 w-full md:w-64">
-                              <div className="bg-green-600 h-2 rounded-full" style={{ width: `${progress}%` }}></div>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                              ETB {pool.current_amount.toLocaleString()} / {pool.target_amount.toLocaleString()}
-                            </p>
-                          </div>
-                          {pool.discount_for_participants > 0 && (
-                            <p className="text-sm text-blue-600 mt-2">🎁 {pool.discount_for_participants}% discount for participants</p>
-                          )}
-                        </div>
-                        <div className="mt-4 md:mt-0 flex space-x-2">
-                          <input
-                            type="number"
-                            placeholder="Discount %"
-                            className="w-24 p-1 border rounded text-sm"
-                            onBlur={(e) => updatePoolDiscount(pool.id, parseInt(e.target.value) || 0)}
-                          />
-                          <span className="text-sm text-gray-500 self-center">
-                            {pool.status === 'completed' ? '✓ Completed' : `${pool.current_participants || 0} participants`}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Participants Tab */}
-        {activeTab === 'participants' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-6">Pool Participants</h2>
-            {participants.length === 0 ? (
-              <div className="bg-white rounded-lg shadow p-8 text-center">
-                <p className="text-gray-500">No participants yet.</p>
-                <p className="text-sm text-gray-400 mt-2">Share your prize pools to attract contributors.</p>
-              </div>
-            ) : (
-              <div className="bg-white rounded-lg shadow overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Participant</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pool</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {participants.map((participant) => (
-                      <tr key={participant.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <div className="font-medium">{participant.profiles?.full_name || 'Anonymous'}</div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm">{participant.profiles?.email}</div>
-                          <div className="text-xs text-gray-500">{participant.profiles?.phone}</div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm">{participant.pools?.prize_name}</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="font-semibold text-green-600">ETB {participant.amount?.toLocaleString()}</span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {new Date(participant.created_at).toLocaleDateString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Commissions Tab */}
-        {activeTab === 'commissions' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-6">Commission History</h2>
-            {commissions.length === 0 ? (
-              <div className="bg-white rounded-lg shadow p-8 text-center">
-                <p className="text-gray-500">No commissions yet.</p>
-                <p className="text-sm text-gray-400 mt-2">Commissions are earned when prize pools complete.</p>
-              </div>
-            ) : (
-              <div className="bg-white rounded-lg shadow overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pool</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rate</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {commissions.map((commission) => (
-                      <tr key={commission.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <div className="font-medium">{commission.pools?.prize_name}</div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="font-semibold text-green-600">ETB {commission.amount?.toLocaleString()}</span>
-                        </td>
-                        <td className="px-6 py-4">{commission.rate}%</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 text-xs rounded-full ${
-                            commission.status === 'paid' 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {commission.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {new Date(commission.created_at).toLocaleDateString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Create Listing Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-4">Create New Listing</h2>
-            <form onSubmit={handleCreateListing} className="space-y-4">
-              <div>
-                <label className="block text-gray-700 mb-2">Title *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
-                  className="w-full p-2 border rounded-lg"
-                  placeholder="e.g., Toyota Vitz 2018"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700 mb-2">Description *</label>
-                <textarea
-                  required
-                  rows={3}
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  className="w-full p-2 border rounded-lg"
-                  placeholder="Describe your product/prize"
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-gray-700 mb-2">Category *</label>
-                  <select
-                    required
-                    value={formData.category}
-                    onChange={(e) => setFormData({...formData, category: e.target.value})}
-                    className="w-full p-2 border rounded-lg"
-                  >
-                    <option value="car">Car</option>
-                    <option value="realestate">Real Estate</option>
-                    <option value="house">House</option>
-                    <option value="electronics">Electronics</option>
-                    <option value="furniture">Furniture</option>
-                    <option value="machinery">Machinery</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-gray-700 mb-2">Prize Type *</label>
-                  <select
-                    required
-                    value={formData.prize_type}
-                    onChange={(e) => setFormData({...formData, prize_type: e.target.value})}
-                    className="w-full p-2 border rounded-lg"
-                  >
-                    <option value="physical">Physical Product</option>
-                    <option value="cash">Cash Prize</option>
-                    <option value="discount">Discount Offer</option>
-                  </select>
-                </div>
-              </div>
-              {formData.prize_type === 'cash' && (
-                <div>
-                  <label className="block text-gray-700 mb-2">Cash Value (ETB) *</label>
-                  <input
-                    type="number"
-                    required
-                    value={formData.cash_value}
-                    onChange={(e) => setFormData({...formData, cash_value: e.target.value})}
-                    className="w-full p-2 border rounded-lg"
-                  />
-                </div>
-              )}
-              {formData.prize_type === 'discount' && (
-                <div>
-                  <label className="block text-gray-700 mb-2">Discount Percentage (%) *</label>
-                  <input
-                    type="number"
-                    required
-                    value={formData.discount_percentage}
-                    onChange={(e) => setFormData({...formData, discount_percentage: e.target.value})}
-                    className="w-full p-2 border rounded-lg"
-                    placeholder="e.g., 10 for 10% off"
-                  />
-                </div>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-gray-700 mb-2">City *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.location_city}
-                    onChange={(e) => setFormData({...formData, location_city: e.target.value})}
-                    className="w-full p-2 border rounded-lg"
-                    placeholder="Addis Ababa"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 mb-2">Estimated Value (ETB) *</label>
-                  <input
-                    type="number"
-                    required
-                    value={formData.estimated_value}
-                    onChange={(e) => setFormData({...formData, estimated_value: e.target.value})}
-                    className="w-full p-2 border rounded-lg"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-gray-700 mb-2">Image URL (optional)</label>
-                <input
-                  type="url"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({...formData, image_url: e.target.value})}
-                  className="w-full p-2 border rounded-lg"
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>
-              <div className="flex space-x-3 pt-4">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
-                >
-                  Create Listing
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
+            <div className="text-2xl mb-2">📈</div>
+            <p className="text-2xl font-bold text-green-600">{Math.round((stats.completed_pools / stats.total_pools) * 100) || 0}%</p>
+            <p className="text-gray-500">Completion Rate</p>
+            <div className="text-sm text-gray-400 mt-1">Success rate</div>
           </div>
         </div>
-      )}
+
+        {/* Performance Metrics */}
+        <div className="bg-white rounded-lg shadow p-6 mb-8">
+          <h2 className="text-xl font-bold mb-4">📈 Pool Performance</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="text-center p-4 bg-gray-50 rounded-lg">
+              <p className="text-gray-500 mb-1">Average Views per Pool</p>
+              <p className="text-2xl font-bold">{stats.avg_views || '--'}</p>
+              <p className="text-xs text-gray-400">Based on pool page visits</p>
+            </div>
+            <div className="text-center p-4 bg-gray-50 rounded-lg">
+              <p className="text-gray-500 mb-1">Conversion Rate (Views → Contributions)</p>
+              <p className="text-2xl font-bold">{stats.conversion_rate || '--'}%</p>
+              <p className="text-xs text-gray-400">Participants ÷ Views × 100</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Shareable QR Code for Pools */}
+        <div className="bg-white rounded-lg shadow p-6 mb-8">
+          <h2 className="text-xl font-bold mb-4">📱 Share Your Pools</h2>
+          <p className="text-gray-600 mb-4">Share your pools via WhatsApp, QR code, or social media.</p>
+          <div className="flex flex-wrap gap-4">
+            {recentPools.slice(0, 3).map(pool => (
+              <div key={pool.id} className="border rounded-lg p-4 text-center w-48">
+                <p className="text-sm font-semibold truncate">{pool.prize_name}</p>
+                <p className="text-xs text-gray-500 mb-2">ETB {pool.contribution_amount}/entry</p>
+                <button
+                  onClick={() => setSelectedPoolForQR(selectedPoolForQR === pool.id ? null : pool.id)}
+                  className="w-full bg-gray-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-gray-700 mb-2"
+                >
+                  {selectedPoolForQR === pool.id ? 'Hide QR' : 'Show QR Code'}
+                </button>
+                {selectedPoolForQR === pool.id && (
+                  <div className="mt-3 flex justify-center">
+                    <QRCode 
+                      value={`${window.location.origin}/pools/${pool.id}`}
+                      size={100}
+                      level="H"
+                    />
+                  </div>
+                )}
+                <button
+                  onClick={() => {
+                    const poolUrl = `${window.location.origin}/pools/${pool.id}`;
+                    const text = `🎁 Join my pool to win ${pool.prize_name}! Only ETB ${pool.contribution_amount} to enter. Let's win together!`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + poolUrl)}`, '_blank');
+                  }}
+                  className="w-full bg-green-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-green-700"
+                >
+                  Share via WhatsApp
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Recent Pools Table */}
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <h2 className="text-xl font-bold p-6 pb-0">📋 Recent Pools</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prize</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Target</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Raised</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Participants</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {recentPools.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                      No pools created yet. 
+                      <Link href="/create-pool" className="text-green-600 ml-2 hover:underline">
+                        Create your first pool →
+                      </Link>
+                    </td>
+                  </tr>
+                ) : (
+                  recentPools.map(pool => {
+                    const progress = (pool.current_amount / pool.target_amount) * 100;
+                    return (
+                      <tr key={pool.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 font-medium">{pool.prize_name}</td>
+                        <td className="px-6 py-4">ETB {pool.target_amount.toLocaleString()}</td>
+                        <td className="px-6 py-4">
+                          <div className="w-24">
+                            <div className="flex justify-between text-xs mb-1">
+                              <span>{Math.round(progress)}%</span>
+                            </div>
+                            <div className="bg-gray-200 rounded-full h-1.5">
+                              <div className="bg-green-600 h-1.5 rounded-full" style={{ width: `${Math.min(progress, 100)}%` }}></div>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">ETB {pool.current_amount.toLocaleString()}</div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">{pool.participants_count || 0}</td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            pool.status === 'active' ? 'bg-green-100 text-green-800' : 
+                            pool.status === 'completed' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {pool.status === 'active' ? '🟢 Active' : 
+                             pool.status === 'completed' ? '✅ Completed' : '⏸️ Pending'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <Link href={`/pools/${pool.id}`} className="text-green-600 hover:text-green-700 text-sm font-medium">
+                            View Details →
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Link href="/create-pool" className="bg-green-600 text-white rounded-lg p-6 text-center hover:bg-green-700 transition">
+            <div className="text-3xl mb-2">➕</div>
+            <h3 className="font-bold text-lg">Create New Pool</h3>
+            <p className="text-sm opacity-90">List a new prize and start earning</p>
+          </Link>
+          <Link href="/agent/listings" className="bg-blue-600 text-white rounded-lg p-6 text-center hover:bg-blue-700 transition">
+            <div className="text-3xl mb-2">📦</div>
+            <h3 className="font-bold text-lg">Manage Listings</h3>
+            <p className="text-sm opacity-90">View and edit your product listings</p>
+          </Link>
+          <Link href="/agent/participants" className="bg-purple-600 text-white rounded-lg p-6 text-center hover:bg-purple-700 transition">
+            <div className="text-3xl mb-2">👥</div>
+            <h3 className="font-bold text-lg">View Participants</h3>
+            <p className="text-sm opacity-90">See who joined your pools</p>
+          </Link>
+        </div>
+
+        {/* Tips for Success */}
+        <div className="mt-8 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-6">
+          <h3 className="font-bold text-lg mb-3">💡 Tips to Maximize Your Success</h3>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="flex items-start gap-2">
+              <span className="text-green-600">✓</span>
+              <p className="text-sm text-gray-700"><strong>Share your pools</strong> on social media and WhatsApp groups</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-green-600">✓</span>
+              <p className="text-sm text-gray-700"><strong>Offer discounts</strong> to non-winners to attract more participants</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-green-600">✓</span>
+              <p className="text-sm text-gray-700"><strong>Respond quickly</strong> to participant questions to build trust</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-green-600">✓</span>
+              <p className="text-sm text-gray-700"><strong>Create high-value prizes</strong> that attract more attention</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-green-600">✓</span>
+              <p className="text-sm text-gray-700"><strong>Add real images</strong> of your products (not just stock photos)</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-green-600">✓</span>
+              <p className="text-sm text-gray-700"><strong>Use QR codes</strong> to share pools in print materials or shops</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
