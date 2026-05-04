@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import { requestNotificationPermission, checkAndNotify } from '../utils/notifications';
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -11,10 +12,19 @@ export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [contributions, setContributions] = useState([]);
+  const [activeEntries, setActiveEntries] = useState([]);
+  const [recentWins, setRecentWins] = useState([]);
+  const [stats, setStats] = useState({
+    total_contributions: 0,
+    total_wins: 0,
+    active_entries: 0
+  });
   const [loading, setLoading] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
   useEffect(() => {
     checkUser();
+    checkNotificationPermission();
   }, []);
 
   async function checkUser() {
@@ -26,139 +36,364 @@ export default function Dashboard() {
     setUser(user);
     await fetchProfile(user.id);
     await fetchContributions(user.id);
+    await fetchActiveEntries(user.id);
+    await fetchRecentWins(user.id);
     setLoading(false);
   }
 
   async function fetchProfile(userId) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    if (data) setProfile(data);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+      
+      setStats({
+        total_contributions: data.total_contributions || 0,
+        total_wins: data.total_wins || 0,
+        active_entries: 0
+      });
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
   }
 
   async function fetchContributions(userId) {
-    const { data } = await supabase
-      .from('contributions')
-      .select('*, pools(*)')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(10);
-    if (data) setContributions(data);
+    try {
+      const { data, error } = await supabase
+        .from('contributions')
+        .select(`
+          *,
+          pools!inner (
+            id,
+            prize_name,
+            target_amount,
+            status
+          )
+        `)
+        .eq('user_id', userId)
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setContributions(data || []);
+      
+      // Update active entries count
+      const active = data?.filter(c => c.pools?.status === 'active').length || 0;
+      setStats(prev => ({ ...prev, active_entries: active }));
+    } catch (error) {
+      console.error('Error fetching contributions:', error);
+    }
+  }
+
+  async function fetchActiveEntries(userId) {
+    try {
+      const { data, error } = await supabase
+        .from('contributions')
+        .select(`
+          *,
+          pools!inner (
+            id,
+            prize_name,
+            target_amount,
+            current_amount,
+            status,
+            end_date
+          )
+        `)
+        .eq('user_id', userId)
+        .eq('status', 'completed')
+        .eq('pools.status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setActiveEntries(data || []);
+    } catch (error) {
+      console.error('Error fetching active entries:', error);
+    }
+  }
+
+  async function fetchRecentWins(userId) {
+    try {
+      const { data, error } = await supabase
+        .from('pools')
+        .select('*')
+        .eq('winner_id', userId)
+        .eq('status', 'completed')
+        .order('completed_at', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      setRecentWins(data || []);
+      
+      // Check for new win and show notification
+      if (data && data.length > 0 && profile?.last_notified_win !== data[0]?.id) {
+        const latestWin = data[0];
+        checkAndNotify(
+          { push_enabled: notificationsEnabled },
+          'win',
+          {
+            poolName: latestWin.prize_name,
+            prizeAmount: latestWin.target_amount,
+            poolUrl: `/pools/${latestWin.id}`
+          }
+        );
+        
+        // Update last notified win
+        await supabase
+          .from('profiles')
+          .update({ last_notified_win: latestWin.id })
+          .eq('id', userId);
+      }
+    } catch (error) {
+      console.error('Error fetching wins:', error);
+    }
+  }
+
+  async function checkNotificationPermission() {
+    const hasPermission = await requestNotificationPermission();
+    setNotificationsEnabled(hasPermission);
+    
+    if (hasPermission && user) {
+      await supabase
+        .from('profiles')
+        .update({ push_enabled: true })
+        .eq('id', user.id);
+    }
+  }
+
+  async function enableNotifications() {
+    const granted = await requestNotificationPermission();
+    if (granted) {
+      setNotificationsEnabled(true);
+      toast.success('Notifications enabled! You will now receive alerts for draws and wins.');
+      
+      if (user) {
+        await supabase
+          .from('profiles')
+          .update({ push_enabled: true })
+          .eq('id', user.id);
+      }
+    } else {
+      toast.error('Please allow notifications in your browser settings.');
+    }
   }
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    toast.success(t('common.logout_success'));
+    toast.success('Logged out successfully');
     router.push('/');
   }
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-md">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold text-green-600">
-            Abbaa Carraa
-          </Link>
-          <button onClick={handleLogout} className="text-red-600 hover:text-red-700">
-            {t('common.logout')}
-          </button>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="container mx-auto px-4 max-w-6xl">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <p className="text-gray-500 mt-1">
+              Welcome back, {profile?.full_name || user?.email?.split('@')[0]}
+            </p>
+          </div>
+          <div className="flex gap-3">
+            {!notificationsEnabled && (
+              <button
+                onClick={enableNotifications}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+              >
+                🔔 Enable Notifications
+              </button>
+            )}
+            {notificationsEnabled && (
+              <span className="bg-green-100 text-green-800 px-4 py-2 rounded-lg flex items-center gap-2 text-sm">
+                🔔 Notifications On
+              </span>
+            )}
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm"
+            >
+              Logout
+            </button>
+          </div>
         </div>
-      </nav>
 
-      <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">{t('common.dashboard')}</h1>
-        
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-gray-500 text-sm mb-2">{t('common.total_contributions')}</h3>
-            <p className="text-3xl font-bold text-green-600">
-              ETB {profile?.total_contributions?.toLocaleString() || 0}
-            </p>
+            <div className="text-2xl mb-2">💰</div>
+            <p className="text-2xl font-bold text-green-600">ETB {stats.total_contributions.toLocaleString()}</p>
+            <p className="text-gray-500">Total Contributions</p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-gray-500 text-sm mb-2">{t('common.total_wins')}</h3>
-            <p className="text-3xl font-bold text-blue-600">{profile?.total_wins || 0}</p>
+            <div className="text-2xl mb-2">🏆</div>
+            <p className="text-2xl font-bold text-yellow-600">{stats.total_wins}</p>
+            <p className="text-gray-500">Total Wins</p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-gray-500 text-sm mb-2">{t('common.active_entries')}</h3>
-            <p className="text-3xl font-bold text-purple-600">
-              {contributions.filter(c => c.status === 'completed').length}
-            </p>
+            <div className="text-2xl mb-2">🎯</div>
+            <p className="text-2xl font-bold text-blue-600">{stats.active_entries}</p>
+            <p className="text-gray-500">Active Entries</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-6 py-4 border-b bg-gray-50">
-            <h2 className="text-xl font-semibold">{t('common.recent_contributions')}</h2>
-          </div>
-          
-          {contributions.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <p>{t('common.no_contributions')}</p>
-              <Link href="/" className="text-green-600 mt-2 inline-block">
-                {t('common.browse_pools')} →
-              </Link>
-            </div>
-          ) : (
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Link href="/listings" className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 text-white hover:shadow-lg transition">
+            <div className="text-3xl mb-2">🎁</div>
+            <h3 className="font-bold text-lg">Browse Prize Pools</h3>
+            <p className="text-sm opacity-90">Find your chance to win amazing prizes</p>
+          </Link>
+          <Link href="/agent/register" className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg p-6 text-white hover:shadow-lg transition">
+            <div className="text-3xl mb-2">🤝</div>
+            <h3 className="font-bold text-lg">Become an Agent</h3>
+            <p className="text-sm opacity-90">Create pools and earn 10% commission</p>
+          </Link>
+          <Link href="/winners" className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg p-6 text-white hover:shadow-lg transition">
+            <div className="text-3xl mb-2">🏆</div>
+            <h3 className="font-bold text-lg">View Winners</h3>
+            <p className="text-sm opacity-90">See who won recent prizes</p>
+          </Link>
+        </div>
+
+        {/* Recent Wins */}
+        {recentWins.length > 0 && (
+          <div className="bg-white rounded-lg shadow mb-8">
+            <h2 className="text-xl font-bold p-6 pb-0">🏆 Recent Wins</h2>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('common.pool')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('common.amount')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('common.status')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('common.date')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prize</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {contributions.map((contrib) => (
-                    <tr key={contrib.id} className="hover:bg-gray-50">
+                  {recentWins.map(win => (
+                    <tr key={win.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 font-medium text-green-600">{win.prize_name}</td>
+                      <td className="px-6 py-4">ETB {win.target_amount.toLocaleString()}</td>
+                      <td className="px-6 py-4">{new Date(win.completed_at).toLocaleDateString()}</td>
                       <td className="px-6 py-4">
-                        <div className="font-medium">{contrib.pools?.prize_name || 'N/A'}</div>
-                        <div className="text-xs text-gray-500">{contrib.pools?.city || 'Addis Ababa'}</div>
-                      </td>
-                      <td className="px-6 py-4 font-semibold text-green-600">
-                        ETB {contrib.amount?.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          contrib.status === 'completed' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {contrib.status === 'completed' ? t('common.completed') : t('common.pending')}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {new Date(contrib.created_at).toLocaleDateString()}
+                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">✓ Claimed</span>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Link href="/listings" className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg text-center hover:from-green-600 hover:to-green-700 transition">
-            🎁 {t('common.browse_prizes')}
-          </Link>
-          <Link href="/winners" className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg text-center hover:from-blue-600 hover:to-blue-700 transition">
-            🏆 {t('common.view_winners')}
-          </Link>
-        </div>
-      </main>
+        {/* Active Entries */}
+        {activeEntries.length > 0 && (
+          <div className="bg-white rounded-lg shadow mb-8">
+            <h2 className="text-xl font-bold p-6 pb-0">🎯 Active Entries</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pool</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contribution</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Progress</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Days Left</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {activeEntries.map(entry => {
+                    const progress = (entry.pools.current_amount / entry.pools.target_amount) * 100;
+                    const daysLeft = Math.max(0, Math.ceil((new Date(entry.pools.end_date) - new Date()) / (1000 * 60 * 60 * 24)));
+                    return (
+                      <tr key={entry.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 font-medium">{entry.pools.prize_name}</td>
+                        <td className="px-6 py-4">ETB {entry.amount.toLocaleString()}</td>
+                        <td className="px-6 py-4">
+                          <div className="w-32">
+                            <div className="bg-gray-200 rounded-full h-2">
+                              <div className="bg-green-600 h-2 rounded-full" style={{ width: `${Math.min(progress, 100)}%` }}></div>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">{Math.round(progress)}%</p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">{daysLeft} days</td>
+                        <td className="px-6 py-4">
+                          <Link href={`/pools/${entry.pool_id}`} className="text-green-600 hover:text-green-700 text-sm">
+                            View Pool →
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Recent Contributions */}
+        {contributions.length > 0 && (
+          <div className="bg-white rounded-lg shadow">
+            <h2 className="text-xl font-bold p-6 pb-0">📊 Recent Contributions</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pool</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {contributions.map(contribution => (
+                    <tr key={contribution.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">{contribution.pools?.prize_name || 'Unknown Pool'}</td>
+                      <td className="px-6 py-4">ETB {contribution.amount.toLocaleString()}</td>
+                      <td className="px-6 py-4">{new Date(contribution.created_at).toLocaleDateString()}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          contribution.pools?.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {contribution.pools?.status === 'active' ? 'Active' : 'Completed'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {contributions.length === 0 && recentWins.length === 0 && (
+          <div className="bg-white rounded-lg shadow p-12 text-center">
+            <div className="text-6xl mb-4">🎁</div>
+            <h2 className="text-2xl font-bold mb-2">No Activity Yet</h2>
+            <p className="text-gray-500 mb-6">Start your journey by joining a prize pool!</p>
+            <Link href="/listings" className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700">
+              Browse Prize Pools →
+            </Link>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
