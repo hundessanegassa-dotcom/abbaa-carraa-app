@@ -7,19 +7,10 @@ import { useTranslation } from 'react-i18next';
 import { requestNotificationPermission, checkAndNotify } from '../utils/notifications';
 import LoyaltyPoints from '../components/LoyaltyPoints';
 
-// Inside the dashboard, add:
-<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-  <div className="md:col-span-2">
-    {/* existing stats cards */}
-  </div>
-  <div>
-    <LoyaltyPoints userId={user?.id} />
-  </div>
-</div>
 export default function Dashboard() {
   const { t } = useTranslation();
   const router = useRouter();
-  const [user, setUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null); // ← Renamed to avoid confusion
   const [profile, setProfile] = useState(null);
   const [contributions, setContributions] = useState([]);
   const [activeEntries, setActiveEntries] = useState([]);
@@ -43,7 +34,7 @@ export default function Dashboard() {
       router.push('/login');
       return;
     }
-    setUser(user);
+    setCurrentUser(user);
     await fetchProfile(user.id);
     await fetchContributions(user.id);
     await fetchActiveEntries(user.id);
@@ -93,7 +84,6 @@ export default function Dashboard() {
       if (error) throw error;
       setContributions(data || []);
       
-      // Update active entries count
       const active = data?.filter(c => c.pools?.status === 'active').length || 0;
       setStats(prev => ({ ...prev, active_entries: active }));
     } catch (error) {
@@ -140,26 +130,6 @@ export default function Dashboard() {
 
       if (error) throw error;
       setRecentWins(data || []);
-      
-      // Check for new win and show notification
-      if (data && data.length > 0 && profile?.last_notified_win !== data[0]?.id) {
-        const latestWin = data[0];
-        checkAndNotify(
-          { push_enabled: notificationsEnabled },
-          'win',
-          {
-            poolName: latestWin.prize_name,
-            prizeAmount: latestWin.target_amount,
-            poolUrl: `/pools/${latestWin.id}`
-          }
-        );
-        
-        // Update last notified win
-        await supabase
-          .from('profiles')
-          .update({ last_notified_win: latestWin.id })
-          .eq('id', userId);
-      }
     } catch (error) {
       console.error('Error fetching wins:', error);
     }
@@ -169,11 +139,11 @@ export default function Dashboard() {
     const hasPermission = await requestNotificationPermission();
     setNotificationsEnabled(hasPermission);
     
-    if (hasPermission && user) {
+    if (hasPermission && currentUser) {
       await supabase
         .from('profiles')
         .update({ push_enabled: true })
-        .eq('id', user.id);
+        .eq('id', currentUser.id);
     }
   }
 
@@ -181,13 +151,13 @@ export default function Dashboard() {
     const granted = await requestNotificationPermission();
     if (granted) {
       setNotificationsEnabled(true);
-      toast.success('Notifications enabled! You will now receive alerts for draws and wins.');
+      toast.success('Notifications enabled!');
       
-      if (user) {
+      if (currentUser) {
         await supabase
           .from('profiles')
           .update({ push_enabled: true })
-          .eq('id', user.id);
+          .eq('id', currentUser.id);
       }
     } else {
       toast.error('Please allow notifications in your browser settings.');
@@ -216,7 +186,7 @@ export default function Dashboard() {
           <div>
             <h1 className="text-3xl font-bold">Dashboard</h1>
             <p className="text-gray-500 mt-1">
-              Welcome back, {profile?.full_name || user?.email?.split('@')[0]}
+              Welcome back, {profile?.full_name || currentUser?.email?.split('@')[0]}
             </p>
           </div>
           <div className="flex gap-3">
@@ -242,8 +212,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Stats Cards and Loyalty Points */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-2xl mb-2">💰</div>
             <p className="text-2xl font-bold text-green-600">ETB {stats.total_contributions.toLocaleString()}</p>
@@ -258,6 +228,10 @@ export default function Dashboard() {
             <div className="text-2xl mb-2">🎯</div>
             <p className="text-2xl font-bold text-blue-600">{stats.active_entries}</p>
             <p className="text-gray-500">Active Entries</p>
+          </div>
+          {/* Loyalty Points Component - FIXED */}
+          <div>
+            <LoyaltyPoints userId={currentUser?.id} />
           </div>
         </div>
 
@@ -302,11 +276,11 @@ export default function Dashboard() {
                       <td className="px-6 py-4">{new Date(win.completed_at).toLocaleDateString()}</td>
                       <td className="px-6 py-4">
                         <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">✓ Claimed</span>
-                      </td>
-                    </tr>
+                       </td>
+                     </tr>
                   ))}
                 </tbody>
-              </table>
+               </table>
             </div>
           </div>
         )}
