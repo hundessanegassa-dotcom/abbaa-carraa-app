@@ -46,14 +46,14 @@ export default function PoolCard({ pool, featured = false }) {
   // Share Functions
   const shareOnWhatsApp = () => {
     const poolUrl = `${window.location.origin}/pools/${pool.id}`;
-    const text = `🎁 Join me to win ${pool.prize_name} on Abbaa Carraa! Only ETB ${formatPrice(pool.contribution_amount)} to enter.`;
+    const text = `🎁 ${t('common.join_me_to_win')} ${pool.prize_name} ${t('common.on_abbaa_carraa')}! ${t('pools.entry_fee')} ${formatPrice(pool.contribution_amount)} ${t('common.to_enter')}.`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + poolUrl)}`, '_blank');
     setShowShareMenu(false);
   };
 
   const shareOnTelegram = () => {
     const poolUrl = `${window.location.origin}/pools/${pool.id}`;
-    const text = `🎁 Join me to win ${pool.prize_name} on Abbaa Carraa! Only ETB ${formatPrice(pool.contribution_amount)} to enter.`;
+    const text = `🎁 ${t('common.join_me_to_win')} ${pool.prize_name} ${t('common.on_abbaa_carraa')}!`;
     window.open(`https://t.me/share/url?url=${encodeURIComponent(poolUrl)}&text=${encodeURIComponent(text)}`, '_blank');
     setShowShareMenu(false);
   };
@@ -67,7 +67,7 @@ export default function PoolCard({ pool, featured = false }) {
   const copyLink = () => {
     const poolUrl = `${window.location.origin}/pools/${pool.id}`;
     navigator.clipboard.writeText(poolUrl);
-    alert('Link copied!');
+    alert(t('common.link_copied'));
     setShowShareMenu(false);
   };
 
@@ -78,7 +78,7 @@ export default function PoolCard({ pool, featured = false }) {
           featured ? 'ring-2 ring-yellow-400' : ''
         }`}
       >
-        {/* Image Section - Smaller on mobile */}
+        {/* Image Section */}
         <div className="relative h-36 sm:h-44 md:h-48 overflow-hidden bg-gray-100">
           {pool.image_url && !imageError ? (
             <img 
@@ -94,42 +94,42 @@ export default function PoolCard({ pool, featured = false }) {
             </div>
           )}
           
-          {/* Featured Badge - Smaller on mobile */}
+          {/* Featured Badge */}
           {featured && (
             <div className="absolute top-2 right-2 bg-yellow-500 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-md">
-              ⭐ Featured
+              ⭐ {t('pools.featured')}
             </div>
           )}
           
-          {/* Status Badge - Smaller on mobile */}
+          {/* Status Badge */}
           {isCompleted ? (
             <div className="absolute top-2 left-2 bg-green-600 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-md">
-              ✅ Completed
+              ✅ {t('common.completed')}
             </div>
           ) : isActive ? (
             <div className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-md">
-              🔴 Active
+              🔴 {t('common.active')}
             </div>
           ) : (
             <div className="absolute top-2 left-2 bg-gray-500 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-md">
-              ⏸️ Pending
+              ⏸️ {t('common.pending')}
             </div>
           )}
         </div>
 
-        {/* Content Section - Compact on mobile */}
+        {/* Content Section */}
         <div className="p-3 sm:p-4">
           {/* Prize Name */}
           <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-800 mb-1 line-clamp-1">
             {pool.prize_name}
           </h3>
           
-          {/* Description - Hidden on very small screens? No, keep but smaller */}
+          {/* Description */}
           <p className="text-gray-500 text-xs sm:text-sm mb-2 line-clamp-2">
             {pool.description || t('pools.join_now')}
           </p>
 
-          {/* Progress Bar - Smaller */}
+          {/* Progress Bar */}
           <div className="mb-2">
             <div className="flex justify-between text-[10px] sm:text-xs text-gray-500 mb-0.5">
               <span>{t('pools.progress')}</span>
@@ -145,49 +145,50 @@ export default function PoolCard({ pool, featured = false }) {
             </div>
           </div>
 
-          {/* Stats - Compact grid on mobile */}
+          {/* Stats - Fully Translated */}
           <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mb-3 text-[11px] sm:text-xs">
             <div className="flex justify-between items-center">
-              <span className="text-gray-500">🏆 Winner:</span>
+              <span className="text-gray-500">🏆 {t('pools.winner_gets')}:</span>
               <span className="font-bold text-green-600 text-xs sm:text-sm">ETB {formatPrice(pool.target_amount)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-500">💰 Total:</span>
+              <span className="text-gray-500">💰 {t('pools.total_collection')}:</span>
               <div className="text-right">
                 <span className="font-semibold text-xs sm:text-sm">ETB {formatPrice(totalCollection)}</span>
+                <span className="text-[9px] text-gray-400 ml-0.5">({t('pools.incl_commission')})</span>
               </div>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-500">🎫 Entry:</span>
+              <span className="text-gray-500">🎫 {t('pools.entry_fee')}:</span>
               <span className="font-semibold text-xs sm:text-sm">ETB {formatPrice(pool.contribution_amount)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-500">👥 Joined:</span>
+              <span className="text-gray-500">👥 {t('pools.participants')}:</span>
               <span className="font-semibold">{pool.participants_count || 0}</span>
             </div>
             {daysLeft !== null && daysLeft > 0 && !isCompleted && (
               <div className="flex justify-between items-center col-span-2">
-                <span className="text-gray-500">⏰ Days left:</span>
+                <span className="text-gray-500">⏰ {t('pools.days_left')}:</span>
                 <span className={`font-semibold ${daysLeft < 7 ? 'text-red-600' : 'text-orange-600'}`}>
-                  {daysLeft} days
+                  {daysLeft} {t('pools.days_left')}
                 </span>
               </div>
             )}
           </div>
 
-          {/* Buttons - Stacked on mobile, side by side on desktop */}
+          {/* Buttons */}
           <div className="space-y-2">
             {isCompleted ? (
               <button
                 onClick={() => setShowWinnerModal(true)}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-1"
               >
-                🏆 View Winner
+                🏆 {t('common.view_winners')}
               </button>
             ) : isActive ? (
               <Link href={`/pools/${pool.id}`} prefetch={false}>
                 <button className="w-full bg-green-600 hover:bg-green-700 text-white py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-1">
-                  🎯 Join Now
+                  🎯 {t('pools.join_now')}
                 </button>
               </Link>
             ) : (
@@ -195,33 +196,33 @@ export default function PoolCard({ pool, featured = false }) {
                 disabled
                 className="w-full bg-gray-400 text-white py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm cursor-not-allowed"
               >
-                ⏳ Coming Soon
+                ⏳ {t('common.coming_soon')}
               </button>
             )}
 
-            {/* Share Button - Compact */}
+            {/* Share Button */}
             {isActive && (
               <div className="relative">
                 <button
                   onClick={() => setShowShareMenu(!showShareMenu)}
                   className="w-full bg-blue-500 hover:bg-blue-600 text-white py-1.5 rounded-lg text-xs sm:text-sm transition flex items-center justify-center gap-1"
                 >
-                  📤 Share
+                  📤 {t('common.share')}
                 </button>
                 
                 {showShareMenu && (
                   <div className="absolute bottom-full left-0 mb-2 w-full bg-white rounded-lg shadow-lg border overflow-hidden z-20">
                     <button onClick={shareOnWhatsApp} className="w-full px-3 py-2 text-left hover:bg-green-50 flex items-center gap-2 text-xs">
-                      <span className="text-green-600">📱</span> WhatsApp
+                      <span className="text-green-600">📱</span> {t('common.whatsapp')}
                     </button>
                     <button onClick={shareOnTelegram} className="w-full px-3 py-2 text-left hover:bg-blue-50 flex items-center gap-2 text-xs">
-                      <span className="text-blue-600">💬</span> Telegram
+                      <span className="text-blue-600">💬</span> {t('common.telegram')}
                     </button>
                     <button onClick={shareOnFacebook} className="w-full px-3 py-2 text-left hover:bg-blue-50 flex items-center gap-2 text-xs">
-                      <span className="text-blue-700">📘</span> Facebook
+                      <span className="text-blue-700">📘</span> {t('common.facebook')}
                     </button>
                     <button onClick={copyLink} className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-xs border-t">
-                      <span className="text-gray-600">🔗</span> Copy Link
+                      <span className="text-gray-600">🔗</span> {t('common.copy_link')}
                     </button>
                   </div>
                 )}
@@ -229,11 +230,11 @@ export default function PoolCard({ pool, featured = false }) {
             )}
           </div>
 
-          {/* Cash Equivalent Badge - Smaller */}
+          {/* Cash Equivalent Badge */}
           {isActive && (
             <div className="mt-2 text-center">
               <span className="text-[10px] sm:text-xs text-gray-400 flex items-center justify-center gap-0.5">
-                <span>💰</span> Cash Equivalent
+                <span>💰</span> {t('pools.cash_equivalent')}
               </span>
             </div>
           )}
