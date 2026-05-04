@@ -1,29 +1,30 @@
-import { useState, useMemo, lazy, Suspense } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
-
-// Lazy load WinnerModal to reduce initial bundle size
-const WinnerModal = lazy(() => import('./WinnerModal'));
+import WinnerModal from './WinnerModal';
 
 export default function PoolCard({ pool, featured = false }) {
   const { t } = useTranslation();
   const [showWinnerModal, setShowWinnerModal] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  // Memoize calculations to prevent re-renders
+  // Memoized calculations for performance
   const progress = useMemo(() => {
     return (pool.current_amount / pool.target_amount) * 100;
   }, [pool.current_amount, pool.target_amount]);
 
+  const totalCollection = useMemo(() => {
+    return pool.target_amount * 1.2; // Target + 20% commission
+  }, [pool.target_amount]);
+
   const isCompleted = pool.status === 'completed' && pool.winner_id;
   const isActive = pool.status === 'active';
 
-  const formatPrice = useMemo(() => (price) => {
+  const formatPrice = (price) => {
     return price?.toLocaleString() || '0';
-  }, []);
+  };
 
-  const getCategoryIcon = useMemo(() => (category) => {
+  const getCategoryIcon = (category) => {
     const icons = {
       vehicle: '🚗',
       machinery: '🏭',
@@ -33,13 +34,14 @@ export default function PoolCard({ pool, featured = false }) {
       other: '🎁'
     };
     return icons[category] || '🎁';
-  }, []);
+  };
 
-  const getDaysLeft = useMemo(() => {
+  const getDaysLeft = () => {
     if (!pool.end_date || isCompleted) return null;
-    const days = Math.max(0, Math.ceil((new Date(pool.end_date) - new Date()) / (1000 * 60 * 60 * 24)));
-    return days;
-  }, [pool.end_date, isCompleted]);
+    return Math.max(0, Math.ceil((new Date(pool.end_date) - new Date()) / (1000 * 60 * 60 * 24)));
+  };
+
+  const daysLeft = getDaysLeft();
 
   return (
     <>
@@ -48,14 +50,13 @@ export default function PoolCard({ pool, featured = false }) {
           featured ? 'ring-2 ring-yellow-400 ring-offset-2' : ''
         }`}
       >
-        {/* Image Section - Optimized with Next/Image */}
+        {/* Image Section */}
         <div className="relative h-48 overflow-hidden bg-gray-100">
           {pool.image_url && !imageError ? (
             <img 
               src={pool.image_url}
               alt={pool.prize_name}
               loading="lazy"
-              decoding="async"
               className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
               onError={() => setImageError(true)}
             />
@@ -67,22 +68,22 @@ export default function PoolCard({ pool, featured = false }) {
           
           {/* Featured Badge */}
           {featured && (
-            <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md z-10">
+            <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
               ⭐ {t('pools.featured') || 'Featured'}
             </div>
           )}
           
           {/* Status Badge */}
           {isCompleted ? (
-            <div className="absolute top-2 left-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md z-10">
+            <div className="absolute top-2 left-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
               ✅ {t('common.completed')}
             </div>
           ) : isActive ? (
-            <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md z-10">
+            <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
               🔴 {t('common.active')}
             </div>
           ) : (
-            <div className="absolute top-2 left-2 bg-gray-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md z-10">
+            <div className="absolute top-2 left-2 bg-gray-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
               ⏸️ {t('common.pending')}
             </div>
           )}
@@ -120,29 +121,41 @@ export default function PoolCard({ pool, featured = false }) {
             </div>
           </div>
 
-          {/* Pool Stats */}
+          {/* Pool Stats with Commission Breakdown */}
           <div className="space-y-2 mb-4">
+            {/* Winner Gets (Target Amount) */}
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-500">{t('pools.target_amount')}:</span>
-              <span className="font-semibold">ETB {formatPrice(pool.target_amount)}</span>
+              <span className="text-gray-500">🏆 {t('pools.winner_gets')}:</span>
+              <span className="font-bold text-green-600">ETB {formatPrice(pool.target_amount)}</span>
             </div>
+
+            {/* Total Collection (Target + 20% Commission) */}
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-500">{t('pools.current_amount')}:</span>
-              <span className="font-semibold text-green-600">ETB {formatPrice(pool.current_amount)}</span>
+              <span className="text-gray-500">💰 {t('pools.total_collection') || 'Total Collection'}:</span>
+              <div className="text-right">
+                <span className="font-semibold">ETB {formatPrice(totalCollection)}</span>
+                <span className="text-xs text-gray-400 ml-1">(incl. 20% commission)</span>
+              </div>
             </div>
+
+            {/* Entry Fee */}
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-500">{t('pools.entry_fee')}:</span>
+              <span className="text-gray-500">🎫 {t('pools.entry_fee')}:</span>
               <span className="font-semibold">ETB {formatPrice(pool.contribution_amount)}</span>
             </div>
+
+            {/* Participants */}
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-500">{t('pools.participants')}:</span>
+              <span className="text-gray-500">👥 {t('pools.participants')}:</span>
               <span className="font-semibold">{pool.participants_count || 0}</span>
             </div>
-            {getDaysLeft !== null && getDaysLeft > 0 && !isCompleted && (
+
+            {/* Days Left */}
+            {daysLeft !== null && daysLeft > 0 && !isCompleted && (
               <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-500">{t('pools.days_left')}:</span>
-                <span className={`font-semibold ${getDaysLeft < 7 ? 'text-red-600' : 'text-orange-600'}`}>
-                  {getDaysLeft} {t('pools.days_left')}
+                <span className="text-gray-500">⏰ {t('pools.days_left')}:</span>
+                <span className={`font-semibold ${daysLeft < 7 ? 'text-red-600' : 'text-orange-600'}`}>
+                  {daysLeft} {t('pools.days_left')}
                 </span>
               </div>
             )}
@@ -182,16 +195,12 @@ export default function PoolCard({ pool, featured = false }) {
         </div>
       </div>
 
-      {/* Winner Modal - Lazy loaded */}
-      {showWinnerModal && (
-        <Suspense fallback={null}>
-          <WinnerModal
-            poolId={pool.id}
-            isOpen={showWinnerModal}
-            onClose={() => setShowWinnerModal(false)}
-          />
-        </Suspense>
-      )}
+      {/* Winner Modal */}
+      <WinnerModal
+        poolId={pool.id}
+        isOpen={showWinnerModal}
+        onClose={() => setShowWinnerModal(false)}
+      />
     </>
   );
 }
