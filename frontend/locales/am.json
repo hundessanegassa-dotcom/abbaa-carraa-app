@@ -117,10 +117,7 @@
     "active": "ንቁ",
     "featured": "የተለየ",
     "close": "ዝጋ",
-    "featured_pools": "የተለዩ የእጣ መደቦች"
-  },
-  {
-  "common": {
+    "featured_pools": "የተለዩ የእጣ መደቦች",
     "share": "አጋራ",
     "whatsapp": "ዋትስአፕ",
     "telegram": "ቴሌግራም",
@@ -131,19 +128,6 @@
     "on_abbaa_carraa": "በabbaa carra",
     "to_enter": "ለመግባት"
   },
-  "pools": {
-    "featured": "የተለየ",
-    "winner_gets": "አሸናፊው የሚያገኘው",
-    "total_collection": "ጠቅላላ ስብስብ",
-    "incl_commission": "20% ኮሚሽን ጨምሮ",
-    "entry_fee": "የመግቢያ ክፍያ",
-    "participants": "ተሳታፊዎች",
-    "days_left": "የቀሩ ቀናት",
-    "progress": "እድገት",
-    "cash_equivalent": "የገንዘብ ተመጣጣኝ ዋስትና",
-    "join_now": "አሁን ይቀላቀሉ"
-  }
-}
   "stats": {
     "active_pools": "የእጣ መደቦች",
     "winners": "አሸናፊዎች",
@@ -171,7 +155,9 @@
     "seats": "መቀመጫዎች",
     "select_seats": "የመቀመጫ ብዛት ምረጥ",
     "total_amount": "ጠቅላላ መጠን",
-    "tickets": "ቲኬቶች"
+    "tickets": "ቲኬቶች",
+    "total_collection": "ጠቅላላ ስብስብ",
+    "incl_commission": "20% ኮሚሽን ጨምሮ"
   },
   "how_it_works": {
     "title": "Abbaa Carraa እንዴት ይሰራል",
