@@ -5,7 +5,17 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { requestNotificationPermission, checkAndNotify } from '../utils/notifications';
+import LoyaltyPoints from '../components/LoyaltyPoints';
 
+// Inside the dashboard, add:
+<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+  <div className="md:col-span-2">
+    {/* existing stats cards */}
+  </div>
+  <div>
+    <LoyaltyPoints userId={user?.id} />
+  </div>
+</div>
 export default function Dashboard() {
   const { t } = useTranslation();
   const router = useRouter();
