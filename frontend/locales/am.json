@@ -119,6 +119,31 @@
     "close": "ዝጋ",
     "featured_pools": "የተለዩ የእጣ መደቦች"
   },
+  {
+  "common": {
+    "share": "አጋራ",
+    "whatsapp": "ዋትስአፕ",
+    "telegram": "ቴሌግራም",
+    "facebook": "ፌስቡክ",
+    "copy_link": "ሊንክ ቅዳ",
+    "link_copied": "ሊንክ ተቀድቷል!",
+    "join_me_to_win": "ተቀላቀል",
+    "on_abbaa_carraa": "በabbaa carra",
+    "to_enter": "ለመግባት"
+  },
+  "pools": {
+    "featured": "የተለየ",
+    "winner_gets": "አሸናፊው የሚያገኘው",
+    "total_collection": "ጠቅላላ ስብስብ",
+    "incl_commission": "20% ኮሚሽን ጨምሮ",
+    "entry_fee": "የመግቢያ ክፍያ",
+    "participants": "ተሳታፊዎች",
+    "days_left": "የቀሩ ቀናት",
+    "progress": "እድገት",
+    "cash_equivalent": "የገንዘብ ተመጣጣኝ ዋስትና",
+    "join_now": "አሁን ይቀላቀሉ"
+  }
+}
   "stats": {
     "active_pools": "የእጣ መደቦች",
     "winners": "አሸናፊዎች",
