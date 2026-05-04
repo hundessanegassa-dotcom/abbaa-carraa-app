@@ -119,6 +119,31 @@
     "close": "Close",
     "featured_pools": "Featured Prize Pools"
   },
+  {
+  "common": {
+    "share": "Share",
+    "whatsapp": "WhatsApp",
+    "telegram": "Telegram",
+    "facebook": "Facebook",
+    "copy_link": "Copy Link",
+    "link_copied": "Link copied to clipboard!",
+    "join_me_to_win": "Join me to win",
+    "on_abbaa_carraa": "on Abbaa Carraa",
+    "to_enter": "to enter"
+  },
+  "pools": {
+    "featured": "Featured",
+    "winner_gets": "Winner Gets",
+    "total_collection": "Total Collection",
+    "incl_commission": "incl. 20% commission",
+    "entry_fee": "Entry Fee",
+    "participants": "Participants",
+    "days_left": "days left",
+    "progress": "Progress",
+    "cash_equivalent": "Cash Equivalent Guaranteed",
+    "join_now": "Join Now"
+  }
+}
   "stats": {
     "active_pools": "Prize Pools",
     "winners": "Winners",
