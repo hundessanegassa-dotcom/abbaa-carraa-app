@@ -9,13 +9,12 @@ export default function PoolCard({ pool, featured = false }) {
   const [imageError, setImageError] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
 
-  // Memoized calculations for performance
   const progress = useMemo(() => {
     return (pool.current_amount / pool.target_amount) * 100;
   }, [pool.current_amount, pool.target_amount]);
 
   const totalCollection = useMemo(() => {
-    return pool.target_amount * 1.2; // Target + 20% commission
+    return pool.target_amount * 1.2;
   }, [pool.target_amount]);
 
   const isCompleted = pool.status === 'completed' && pool.winner_id;
@@ -44,7 +43,7 @@ export default function PoolCard({ pool, featured = false }) {
 
   const daysLeft = getDaysLeft();
 
-  // Share functions
+  // Share Functions
   const shareOnWhatsApp = () => {
     const poolUrl = `${window.location.origin}/pools/${pool.id}`;
     const text = `🎁 Join me to win ${pool.prize_name} on Abbaa Carraa! Only ETB ${formatPrice(pool.contribution_amount)} to enter. Let's win together!`;
@@ -65,6 +64,13 @@ export default function PoolCard({ pool, featured = false }) {
     setShowShareMenu(false);
   };
 
+  const shareOnTwitter = () => {
+    const poolUrl = `${window.location.origin}/pools/${pool.id}`;
+    const text = `🎁 Join me to win ${pool.prize_name} on Abbaa Carraa!`;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(poolUrl)}`, '_blank');
+    setShowShareMenu(false);
+  };
+
   const copyLink = () => {
     const poolUrl = `${window.location.origin}/pools/${pool.id}`;
     navigator.clipboard.writeText(poolUrl);
@@ -79,7 +85,6 @@ export default function PoolCard({ pool, featured = false }) {
           featured ? 'ring-2 ring-yellow-400 ring-offset-2' : ''
         }`}
       >
-        {/* Image Section */}
         <div className="relative h-48 overflow-hidden bg-gray-100">
           {pool.image_url && !imageError ? (
             <img 
@@ -95,14 +100,12 @@ export default function PoolCard({ pool, featured = false }) {
             </div>
           )}
           
-          {/* Featured Badge */}
           {featured && (
             <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
               ⭐ {t('pools.featured') || 'Featured'}
             </div>
           )}
           
-          {/* Status Badge */}
           {isCompleted ? (
             <div className="absolute top-2 left-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
               ✅ {t('common.completed')}
@@ -118,19 +121,15 @@ export default function PoolCard({ pool, featured = false }) {
           )}
         </div>
 
-        {/* Content Section */}
         <div className="p-4">
-          {/* Prize Name */}
           <h3 className="text-lg font-bold text-gray-800 mb-1 line-clamp-1">
             {pool.prize_name}
           </h3>
           
-          {/* Description */}
           <p className="text-gray-500 text-sm mb-3 line-clamp-2">
             {pool.description || t('pools.join_now')}
           </p>
 
-          {/* Progress Bar */}
           <div className="mb-3">
             <div className="flex justify-between text-xs text-gray-500 mb-1">
               <span>{t('pools.progress')}</span>
@@ -143,43 +142,34 @@ export default function PoolCard({ pool, featured = false }) {
                 }`}
                 style={{ width: `${Math.min(progress, 100)}%` }}
                 role="progressbar"
-                aria-valuenow={Math.min(progress, 100)}
-                aria-valuemin={0}
-                aria-valuemax={100}
               />
             </div>
           </div>
 
-          {/* Pool Stats with Commission Breakdown */}
           <div className="space-y-2 mb-4">
-            {/* Winner Gets (Target Amount) */}
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-500">🏆 {t('pools.winner_gets')}:</span>
               <span className="font-bold text-green-600">ETB {formatPrice(pool.target_amount)}</span>
             </div>
 
-            {/* Total Collection (Target + 20% Commission) */}
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-500">💰 {t('pools.total_collection') || 'Total Collection'}:</span>
+              <span className="text-gray-500">💰 Total Collection:</span>
               <div className="text-right">
                 <span className="font-semibold">ETB {formatPrice(totalCollection)}</span>
                 <span className="text-xs text-gray-400 ml-1">(incl. 20% commission)</span>
               </div>
             </div>
 
-            {/* Entry Fee */}
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-500">🎫 {t('pools.entry_fee')}:</span>
               <span className="font-semibold">ETB {formatPrice(pool.contribution_amount)}</span>
             </div>
 
-            {/* Participants */}
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-500">👥 {t('pools.participants')}:</span>
               <span className="font-semibold">{pool.participants_count || 0}</span>
             </div>
 
-            {/* Days Left */}
             {daysLeft !== null && daysLeft > 0 && !isCompleted && (
               <div className="flex justify-between items-center text-sm">
                 <span className="text-gray-500">⏰ {t('pools.days_left')}:</span>
@@ -190,7 +180,6 @@ export default function PoolCard({ pool, featured = false }) {
             )}
           </div>
 
-          {/* Action Buttons */}
           <div className="space-y-2">
             {isCompleted ? (
               <button
@@ -214,7 +203,7 @@ export default function PoolCard({ pool, featured = false }) {
               </button>
             )}
 
-            {/* Social Share Button - Only for active pools */}
+            {/* Full Share Button with Menu */}
             {isActive && (
               <div className="relative">
                 <button
@@ -245,6 +234,12 @@ export default function PoolCard({ pool, featured = false }) {
                       <span className="text-blue-700">📘</span> Share on Facebook
                     </button>
                     <button
+                      onClick={shareOnTwitter}
+                      className="w-full px-4 py-2 text-left hover:bg-blue-50 flex items-center gap-2 text-sm"
+                    >
+                      <span className="text-blue-400">🐦</span> Share on Twitter
+                    </button>
+                    <button
                       onClick={copyLink}
                       className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-sm border-t"
                     >
@@ -256,7 +251,6 @@ export default function PoolCard({ pool, featured = false }) {
             )}
           </div>
 
-          {/* Cash Equivalent Guarantee Badge */}
           {isActive && (
             <div className="mt-3 text-center">
               <span className="text-xs text-gray-400 flex items-center justify-center gap-1">
@@ -267,7 +261,6 @@ export default function PoolCard({ pool, featured = false }) {
         </div>
       </div>
 
-      {/* Winner Modal */}
       <WinnerModal
         poolId={pool.id}
         isOpen={showWinnerModal}
