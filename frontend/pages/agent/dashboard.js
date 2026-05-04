@@ -17,9 +17,7 @@ export default function AgentDashboard() {
     total_commission: 0,
     pending_commission: 0,
     paid_commission: 0,
-    total_participants: 0,
-    conversion_rate: 0,
-    avg_views: 0
+    total_participants: 0
   });
   const [recentPools, setRecentPools] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -102,9 +100,7 @@ export default function AgentDashboard() {
         total_commission: totalCommission,
         pending_commission: pendingCommission,
         paid_commission: paidCommission,
-        total_participants: uniqueParticipants,
-        avg_views: 0,
-        conversion_rate: 0
+        total_participants: uniqueParticipants
       });
 
       setRecentPools(pools?.slice(0, 5) || []);
@@ -234,7 +230,7 @@ export default function AgentDashboard() {
           </div>
         </div>
 
-        {/* Share Your Pools - No QR Code Dependency */}
+        {/* Share Your Pools - No QR Code */}
         <div className="bg-white rounded-lg shadow p-6 mb-8">
           <h2 className="text-xl font-bold mb-4">📱 Share Your Pools</h2>
           <p className="text-gray-600 mb-4">Share your pools on WhatsApp or copy the link to promote on social media.</p>
@@ -323,7 +319,7 @@ export default function AgentDashboard() {
                             </div>
                             <div className="text-xs text-gray-500 mt-1">ETB {pool.current_amount.toLocaleString()}</div>
                           </div>
-                         </td>
+                        </td>
                         <td className="px-6 py-4">{pool.participants_count || 0}</td>
                         <td className="px-6 py-4">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -339,7 +335,7 @@ export default function AgentDashboard() {
                             View Details →
                           </Link>
                         </td>
-                      </tr>
+                       </tr>
                     );
                   })
                 )}
