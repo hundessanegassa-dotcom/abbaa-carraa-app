@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
@@ -10,7 +10,7 @@ import AdvertisingBanner from '../components/AdvertisingBanner';
 import SimpleFilters from '../components/SimpleFilters';
 import RoleBanners from '../components/RoleBanners';
 import CashEquivalentBanner from '../components/CashEquivalentBanner';
-import GlobalAnnouncement from '../components/GlobalAnnouncement';
+import CharityBanner from '../components/CharityBanner';
 
 export default function Home() {
   const { t, i18n } = useTranslation();
@@ -177,13 +177,12 @@ export default function Home() {
       </Head>
 
       <main suppressHydrationWarning>
-        {/* Compact Top Banners - Single line each */}
+        {/* Top Banners - Compact single line */}
         <CashEquivalentBanner />
-        <GlobalAnnouncement />
+        <CharityBanner />
 
         {/* Hero Section */}
         <section className="relative bg-gradient-to-r from-green-900/90 to-blue-900/90 text-white overflow-hidden mt-0">
-          {/* Background Image */}
           <div className="absolute inset-0 z-0">
             <img 
               src="/images/abbaa-carraa-bg.png"
