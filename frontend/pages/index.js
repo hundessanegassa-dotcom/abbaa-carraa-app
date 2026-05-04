@@ -11,6 +11,7 @@ import SimpleFilters from '../components/SimpleFilters';
 import RoleBanners from '../components/RoleBanners';
 import CashEquivalentBanner from '../components/CashEquivalentBanner';
 import CharityBanner from '../components/CharityBanner';
+import Testimonials from '../components/Testimonials';
 
 export default function Home() {
   const { t, i18n } = useTranslation();
@@ -27,7 +28,6 @@ export default function Home() {
   });
   const [error, setError] = useState(null);
 
-  // Optimized: Fetch all data in parallel with a timeout
   useEffect(() => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -177,7 +177,7 @@ export default function Home() {
       </Head>
 
       <main suppressHydrationWarning>
-        {/* Top Banners - Compact single line */}
+        {/* Top Banners */}
         <CashEquivalentBanner />
         <CharityBanner />
 
@@ -250,7 +250,6 @@ export default function Home() {
         <AdvertisingBanner />
         <SimpleFilters onFilterChange={applyFilters} />
 
-        {/* Filter Results Count */}
         {(activeFilters.category !== 'all' || activeFilters.city !== 'all') && (
           <div className="container mx-auto px-4 pb-2">
             <p className="text-sm text-gray-500">
@@ -261,7 +260,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Featured Pools */}
         {featuredPools.length > 0 && (
           <section className="container mx-auto px-4 py-8">
             <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
@@ -275,7 +273,6 @@ export default function Home() {
           </section>
         )}
 
-        {/* All Active Pools */}
         <section className="container mx-auto px-4 py-8">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
             {activeFilters.category !== 'all' || activeFilters.city !== 'all' 
@@ -301,7 +298,6 @@ export default function Home() {
           )}
         </section>
 
-        {/* Role Banners */}
         <section className="container mx-auto px-4 py-8">
           <RoleBanners />
         </section>
@@ -335,6 +331,9 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* Testimonials Section */}
+        <Testimonials />
 
         <NewsletterSubscribe />
       </main>
