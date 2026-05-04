@@ -117,10 +117,7 @@
     "active": "Aktiivii",
     "featured": "Filatamaa",
     "close": "Cufi",
-    "featured_pools": "Galmee Badhaasaa Filataman"
-  },
- {
-  "common": {
+    "featured_pools": "Galmee Badhaasaa Filataman",
     "share": "Qoodi",
     "whatsapp": "WhatsApp",
     "telegram": "Telegram",
@@ -131,19 +128,6 @@
     "on_abbaa_carraa": "Abbaa Carraa irratti",
     "to_enter": "seenuuf"
   },
-  "pools": {
-    "featured": "Filatamaa",
-    "winner_gets": "Mo'ataan kan Argatu",
-    "total_collection": "Waligalaa",
-    "incl_commission": "20% komishinii wajjin",
-    "entry_fee": "Kaffaltii Seensaa",
-    "participants": "Hirmaattoota",
-    "days_left": "guyyaa hafe",
-    "progress": "Waan Hojjetame",
-    "cash_equivalent": "Waadaa Gatii Walqixaa",
-    "join_now": "Amma Hirmaadhu"
-  }
-} 
   "stats": {
     "active_pools": "Galmee Badhaasaa",
     "winners": "Mo'attoota",
@@ -171,7 +155,9 @@
     "seats": "teessuma",
     "select_seats": "Lakkoofsa teessumaa filadhu",
     "total_amount": "Gatii Waligalaa",
-    "tickets": "Tiikeetii"
+    "tickets": "Tiikeetii",
+    "total_collection": "Waligalaa",
+    "incl_commission": "20% komishinii wajjin"
   },
   "how_it_works": {
     "title": "Abbaan Carraa Akkamitti Hojjeta",
