@@ -301,7 +301,12 @@ export default function Home() {
         <section className="container mx-auto px-4 py-8">
           <RoleBanners />
         </section>
-
+<section id="pools-section" className="container mx-auto px-4 py-8">
+  <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
+    ...
+  </h2>
+  {/* Your pool grid here */}
+</section>
         {/* How It Works */}
         <section className="bg-gray-100 py-12">
           <div className="container mx-auto px-4">
