@@ -31,25 +31,46 @@ export default function SimpleFilters({ onFilterChange }) {
     setCities(uniqueCities);
   }
 
-  // Fixed: Scroll to pools section
-  const scrollToPools = () => {
-    // Try multiple possible selectors for the pools section
-    const poolsSection = document.getElementById('pools-section') || 
-                         document.querySelector('section.pools-grid') ||
-                         document.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3');
+  // Fixed: Scroll to the pools grid section
+  const scrollToPoolsGrid = () => {
+    // Try multiple selectors to find the pools grid
+    const selectors = [
+      '#pools-grid',
+      '.pools-grid',
+      '.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3',
+      'section:has(.grid)',
+      '.featured-pools-section',
+      '.all-pools-section'
+    ];
     
-    if (poolsSection) {
-      const offset = 80; // Height of fixed navbar
-      const elementPosition = poolsSection.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - offset;
+    let targetElement = null;
+    
+    // Try each selector
+    for (const selector of selectors) {
+      targetElement = document.querySelector(selector);
+      if (targetElement) break;
+    }
+    
+    // If still not found, look for any grid that contains pool cards
+    if (!targetElement) {
+      targetElement = document.querySelector('.grid.gap-6');
+    }
+    
+    if (targetElement) {
+      const navbarHeight = 80;
+      const elementPosition = targetElement.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - navbarHeight;
       
       window.scrollTo({
         top: offsetPosition,
         behavior: 'smooth'
       });
     } else {
-      // Fallback: scroll down by 500px
-      window.scrollTo({ top: 500, behavior: 'smooth' });
+      // Fallback: scroll to the "All Active Pools" heading
+      const heading = document.querySelector('h2:contains("Active Pools")');
+      if (heading) {
+        heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
   };
 
@@ -64,8 +85,8 @@ export default function SimpleFilters({ onFilterChange }) {
       });
     }
     
-    // Scroll to pools after filter is applied
-    setTimeout(scrollToPools, 200);
+    // Give time for the DOM to update with filtered results, then scroll
+    setTimeout(scrollToPoolsGrid, 300);
   };
 
   const resetFilters = () => {
@@ -74,7 +95,7 @@ export default function SimpleFilters({ onFilterChange }) {
     if (onFilterChange) {
       onFilterChange({ category: 'all', city: 'all' });
     }
-    setTimeout(scrollToPools, 200);
+    setTimeout(scrollToPoolsGrid, 300);
   };
 
   const hasActiveFilters = selectedCity !== 'all' || selectedCategory !== 'all';
