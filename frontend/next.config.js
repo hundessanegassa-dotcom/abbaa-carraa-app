@@ -1,4 +1,70 @@
 /** @type {import('next').NextConfig} */
+const withPWA = require('next-pwa')({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === 'development',
+  runtimeCaching: [
+    {
+      urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'google-fonts',
+        expiration: {
+          maxEntries: 10,
+          maxAgeSeconds: 60 * 60 * 24 * 365,
+        },
+      },
+    },
+    {
+      urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'images',
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 60 * 60 * 24 * 30,
+        },
+      },
+    },
+    {
+      urlPattern: /^https:\/\/ruqfgsnhvrckbvibpsyu\.supabase\.co\/.*/i,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'supabase-api',
+        networkTimeoutSeconds: 10,
+        expiration: {
+          maxEntries: 100,
+          maxAgeSeconds: 60 * 60 * 24,
+        },
+      },
+    },
+    {
+      urlPattern: /\/api\/.*/i,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'api-cache',
+        networkTimeoutSeconds: 10,
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 60 * 60,
+        },
+      },
+    },
+    {
+      urlPattern: /\/_next\/static\/.*/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'next-static',
+        expiration: {
+          maxEntries: 100,
+          maxAgeSeconds: 60 * 60 * 24 * 30,
+        },
+      },
+    },
+  ],
+});
+
 const nextConfig = {
   reactStrictMode: true,
   
@@ -113,4 +179,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = withPWA(nextConfig);
