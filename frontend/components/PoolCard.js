@@ -43,17 +43,24 @@ export default function PoolCard({ pool, featured = false }) {
 
   const daysLeft = getDaysLeft();
 
-  // Share Functions
+  // Enhanced Share Functions with rich text
   const shareOnWhatsApp = () => {
     const poolUrl = `${window.location.origin}/pools/${pool.id}`;
-    const text = `🎁 ${t('common.join_me_to_win')} ${pool.prize_name} ${t('common.on_abbaa_carraa')}! ${t('pools.entry_fee')} ${formatPrice(pool.contribution_amount)} ${t('common.to_enter')}.`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + poolUrl)}`, '_blank');
+    const text = `🎁 *${pool.prize_name}*\n\n` +
+                 `💰 Entry Fee: ETB ${formatPrice(pool.contribution_amount)}\n` +
+                 `🏆 Winner Gets: ETB ${formatPrice(pool.target_amount)}\n` +
+                 `📅 ${daysLeft ? `${daysLeft} days left` : 'Ending soon'}\n\n` +
+                 `👉 Join here: ${poolUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
     setShowShareMenu(false);
   };
 
   const shareOnTelegram = () => {
     const poolUrl = `${window.location.origin}/pools/${pool.id}`;
-    const text = `🎁 ${t('common.join_me_to_win')} ${pool.prize_name} ${t('common.on_abbaa_carraa')}!`;
+    const text = `🎁 *${pool.prize_name}*\n\n` +
+                 `💰 Entry Fee: ETB ${formatPrice(pool.contribution_amount)}\n` +
+                 `🏆 Winner Gets: ETB ${formatPrice(pool.target_amount)}\n\n` +
+                 `${poolUrl}`;
     window.open(`https://t.me/share/url?url=${encodeURIComponent(poolUrl)}&text=${encodeURIComponent(text)}`, '_blank');
     setShowShareMenu(false);
   };
@@ -67,7 +74,7 @@ export default function PoolCard({ pool, featured = false }) {
   const copyLink = () => {
     const poolUrl = `${window.location.origin}/pools/${pool.id}`;
     navigator.clipboard.writeText(poolUrl);
-    alert(t('common.link_copied'));
+    alert('Link copied!');
     setShowShareMenu(false);
   };
 
@@ -97,22 +104,22 @@ export default function PoolCard({ pool, featured = false }) {
           {/* Featured Badge */}
           {featured && (
             <div className="absolute top-2 right-2 bg-yellow-500 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-md">
-              ⭐ {t('pools.featured')}
+              ⭐ Featured
             </div>
           )}
           
           {/* Status Badge */}
           {isCompleted ? (
             <div className="absolute top-2 left-2 bg-green-600 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-md">
-              ✅ {t('common.completed')}
+              ✅ Completed
             </div>
           ) : isActive ? (
             <div className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-md">
-              🔴 {t('common.active')}
+              🔴 Active
             </div>
           ) : (
             <div className="absolute top-2 left-2 bg-gray-500 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-md">
-              ⏸️ {t('common.pending')}
+              ⏸️ Pending
             </div>
           )}
         </div>
@@ -126,13 +133,13 @@ export default function PoolCard({ pool, featured = false }) {
           
           {/* Description */}
           <p className="text-gray-500 text-xs sm:text-sm mb-2 line-clamp-2">
-            {pool.description || t('pools.join_now')}
+            {pool.description || 'Join this pool for a chance to win!'}
           </p>
 
           {/* Progress Bar */}
           <div className="mb-2">
             <div className="flex justify-between text-[10px] sm:text-xs text-gray-500 mb-0.5">
-              <span>{t('pools.progress')}</span>
+              <span>Progress</span>
               <span>{Math.min(Math.round(progress), 100)}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2 overflow-hidden">
@@ -145,32 +152,32 @@ export default function PoolCard({ pool, featured = false }) {
             </div>
           </div>
 
-          {/* Stats - Fully Translated */}
+          {/* Stats */}
           <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mb-3 text-[11px] sm:text-xs">
             <div className="flex justify-between items-center">
-              <span className="text-gray-500">🏆 {t('pools.winner_gets')}:</span>
+              <span className="text-gray-500">🏆 Winner Gets:</span>
               <span className="font-bold text-green-600 text-xs sm:text-sm">ETB {formatPrice(pool.target_amount)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-500">💰 {t('pools.total_collection')}:</span>
+              <span className="text-gray-500">💰 Total Collection:</span>
               <div className="text-right">
                 <span className="font-semibold text-xs sm:text-sm">ETB {formatPrice(totalCollection)}</span>
-                <span className="text-[9px] text-gray-400 ml-0.5">({t('pools.incl_commission')})</span>
+                <span className="text-[9px] text-gray-400 ml-0.5">(incl. 20%)</span>
               </div>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-500">🎫 {t('pools.entry_fee')}:</span>
+              <span className="text-gray-500">🎫 Entry Fee:</span>
               <span className="font-semibold text-xs sm:text-sm">ETB {formatPrice(pool.contribution_amount)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-500">👥 {t('pools.participants')}:</span>
+              <span className="text-gray-500">👥 Participants:</span>
               <span className="font-semibold">{pool.participants_count || 0}</span>
             </div>
             {daysLeft !== null && daysLeft > 0 && !isCompleted && (
               <div className="flex justify-between items-center col-span-2">
-                <span className="text-gray-500">⏰ {t('pools.days_left')}:</span>
+                <span className="text-gray-500">⏰ Days left:</span>
                 <span className={`font-semibold ${daysLeft < 7 ? 'text-red-600' : 'text-orange-600'}`}>
-                  {daysLeft} {t('pools.days_left')}
+                  {daysLeft} days
                 </span>
               </div>
             )}
@@ -183,12 +190,12 @@ export default function PoolCard({ pool, featured = false }) {
                 onClick={() => setShowWinnerModal(true)}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-1"
               >
-                🏆 {t('common.view_winners')}
+                🏆 View Winner
               </button>
             ) : isActive ? (
               <Link href={`/pools/${pool.id}`} prefetch={false}>
                 <button className="w-full bg-green-600 hover:bg-green-700 text-white py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-1">
-                  🎯 {t('pools.join_now')}
+                  🎯 Join Now
                 </button>
               </Link>
             ) : (
@@ -196,7 +203,7 @@ export default function PoolCard({ pool, featured = false }) {
                 disabled
                 className="w-full bg-gray-400 text-white py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm cursor-not-allowed"
               >
-                ⏳ {t('common.coming_soon')}
+                ⏳ Coming Soon
               </button>
             )}
 
@@ -207,22 +214,22 @@ export default function PoolCard({ pool, featured = false }) {
                   onClick={() => setShowShareMenu(!showShareMenu)}
                   className="w-full bg-blue-500 hover:bg-blue-600 text-white py-1.5 rounded-lg text-xs sm:text-sm transition flex items-center justify-center gap-1"
                 >
-                  📤 {t('common.share')}
+                  📤 Share
                 </button>
                 
                 {showShareMenu && (
                   <div className="absolute bottom-full left-0 mb-2 w-full bg-white rounded-lg shadow-lg border overflow-hidden z-20">
                     <button onClick={shareOnWhatsApp} className="w-full px-3 py-2 text-left hover:bg-green-50 flex items-center gap-2 text-xs">
-                      <span className="text-green-600">📱</span> {t('common.whatsapp')}
+                      <span className="text-green-600">📱</span> WhatsApp
                     </button>
                     <button onClick={shareOnTelegram} className="w-full px-3 py-2 text-left hover:bg-blue-50 flex items-center gap-2 text-xs">
-                      <span className="text-blue-600">💬</span> {t('common.telegram')}
+                      <span className="text-blue-600">💬</span> Telegram
                     </button>
                     <button onClick={shareOnFacebook} className="w-full px-3 py-2 text-left hover:bg-blue-50 flex items-center gap-2 text-xs">
-                      <span className="text-blue-700">📘</span> {t('common.facebook')}
+                      <span className="text-blue-700">📘</span> Facebook
                     </button>
                     <button onClick={copyLink} className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-xs border-t">
-                      <span className="text-gray-600">🔗</span> {t('common.copy_link')}
+                      <span className="text-gray-600">🔗</span> Copy Link
                     </button>
                   </div>
                 )}
@@ -234,7 +241,7 @@ export default function PoolCard({ pool, featured = false }) {
           {isActive && (
             <div className="mt-2 text-center">
               <span className="text-[10px] sm:text-xs text-gray-400 flex items-center justify-center gap-0.5">
-                <span>💰</span> {t('pools.cash_equivalent')}
+                <span>💰</span> Cash Equivalent Guaranteed
               </span>
             </div>
           )}
