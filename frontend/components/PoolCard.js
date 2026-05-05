@@ -43,20 +43,18 @@ export default function PoolCard({ pool, featured = false }) {
 
   const daysLeft = getDaysLeft();
 
-  // Enhanced Share Functions with rich text
+  // Enhanced Share Functions with Abbaa Carraa header
   const shareOnWhatsApp = () => {
     const poolUrl = `${window.location.origin}/pools/${pool.id}`;
     
-    const message = `🎁 *GRAND PRIZE: ${pool.prize_name}*\n\n` +
+    const message = `*🏆 ABBAA CARRAA | ባለ እድል 🏆*\n\n` +
+                    `🎁 *GRAND PRIZE: ${pool.prize_name}*\n\n` +
                     `${pool.description || 'Join this amazing prize pool for a chance to win big!'}\n\n` +
                     `💰 *Entry Fee:* ETB ${formatPrice(pool.contribution_amount)}\n` +
                     `🏆 *Winner Gets:* ETB ${formatPrice(pool.target_amount)} (Cash Equivalent Guaranteed)\n\n` +
-                    `✨ *How to Join:*\n` +
-                    `1. Click the link below\n` +
-                    `2. Choose your seats\n` +
-                    `3. Pay via Telebirr/CBE Birr\n\n` +
                     `👉 *Join Here:* ${poolUrl}\n\n` +
-                    `*Your participation helps someone win, and 2% of income supports kidney & heart disease patients.* 💚`;
+                    `💚 *2% of income supports kidney & heart disease patients.*\n` +
+                    `✨ *Fair draws | Transparent | Community powered*`;
     
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
     setShowShareMenu(false);
@@ -65,12 +63,13 @@ export default function PoolCard({ pool, featured = false }) {
   const shareOnTelegram = () => {
     const poolUrl = `${window.location.origin}/pools/${pool.id}`;
     
-    const message = `🎁 *GRAND PRIZE: ${pool.prize_name}*\n\n` +
+    const message = `🏆 *ABBAA CARRAA | ባለ እድል* 🏆\n\n` +
+                    `🎁 *GRAND PRIZE: ${pool.prize_name}*\n\n` +
                     `${pool.description || 'Join this amazing prize pool for a chance to win big!'}\n\n` +
                     `💰 *Entry Fee:* ETB ${formatPrice(pool.contribution_amount)}\n` +
                     `🏆 *Winner Gets:* ETB ${formatPrice(pool.target_amount)} (Cash Equivalent Guaranteed)\n\n` +
                     `👉 *Join Here:* ${poolUrl}\n\n` +
-                    `💚 2% of income supports kidney & heart disease patients.`;
+                    `💚 *2% of income supports kidney & heart disease patients.*`;
     
     window.open(`https://t.me/share/url?url=${encodeURIComponent(poolUrl)}&text=${encodeURIComponent(message)}`, '_blank');
     setShowShareMenu(false);
@@ -78,9 +77,10 @@ export default function PoolCard({ pool, featured = false }) {
 
   const shareOnFacebook = () => {
     const poolUrl = `${window.location.origin}/pools/${pool.id}`;
-    const message = `🎁 I just joined the ${pool.prize_name} prize pool on Abbaa Carraa!\n\n` +
-                    `Entry Fee: ETB ${formatPrice(pool.contribution_amount)}\n` +
-                    `Winner Gets: ETB ${formatPrice(pool.target_amount)}\n\n` +
+    const message = `🏆 ABBAA CARRAA | ባለ እድል 🏆\n\n` +
+                    `🎁 GRAND PRIZE: ${pool.prize_name}\n` +
+                    `💰 Entry Fee: ETB ${formatPrice(pool.contribution_amount)}\n` +
+                    `🏆 Winner Gets: ETB ${formatPrice(pool.target_amount)}\n\n` +
                     `Join me for a chance to win!`;
     
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(poolUrl)}&quote=${encodeURIComponent(message)}`, '_blank');
@@ -89,8 +89,13 @@ export default function PoolCard({ pool, featured = false }) {
 
   const copyLink = () => {
     const poolUrl = `${window.location.origin}/pools/${pool.id}`;
-    navigator.clipboard.writeText(poolUrl);
-    alert('Link copied! Share it with your friends.');
+    const messageWithHeader = `🏆 ABBAA CARRAA | ባለ እድል 🏆\n\n` +
+                              `🎁 ${pool.prize_name}\n` +
+                              `💰 Entry Fee: ETB ${formatPrice(pool.contribution_amount)}\n` +
+                              `🏆 Winner Gets: ETB ${formatPrice(pool.target_amount)}\n\n` +
+                              `👉 Join: ${poolUrl}`;
+    navigator.clipboard.writeText(messageWithHeader);
+    alert('✨ Pool info copied! Share with your friends.');
     setShowShareMenu(false);
   };
 
@@ -142,12 +147,10 @@ export default function PoolCard({ pool, featured = false }) {
 
         {/* Content Section */}
         <div className="p-3 sm:p-4">
-          {/* Prize Name */}
           <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-800 mb-1 line-clamp-1">
             {pool.prize_name}
           </h3>
           
-          {/* Description */}
           <p className="text-gray-500 text-xs sm:text-sm mb-2 line-clamp-2">
             {pool.description || 'Join this pool for a chance to win!'}
           </p>
