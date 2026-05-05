@@ -2,64 +2,46 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 export default function CharityBanner() {
+  // Don't use localStorage on first render to avoid hydration mismatch
   const [dismissed, setDismissed] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     const dismissedBanner = localStorage.getItem('charity-banner-dismissed');
     if (dismissedBanner === 'true') {
-      setIsVisible(false);
+      setDismissed(true);
     }
   }, []);
 
   const handleDismiss = () => {
     setDismissed(true);
-    setIsVisible(false);
     localStorage.setItem('charity-banner-dismissed', 'true');
   };
 
-  if (!isVisible) return null;
+  // Always show on server, only hide on client if dismissed
+  if (isClient && dismissed) return null;
 
   return (
-    <div className="w-full bg-gradient-to-r from-red-600 via-pink-500 to-red-600 text-white z-50 relative">
-      <div className="relative">
-        <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
-        
-        {/* Increased padding for mobile, simplified layout */}
-        <div className="px-3 py-2 relative z-10">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-xs sm:text-sm">
-            {/* Icons row */}
-            <div className="flex items-center gap-1 order-1 sm:order-1">
-              <span className="text-base sm:text-lg animate-pulse">❤️</span>
-              <span className="text-base sm:text-lg">💚</span>
-              <span className="text-base sm:text-lg animate-pulse">❤️</span>
-            </div>
-            
-            {/* Text - simplified for mobile */}
-            <div className="text-center order-2 sm:order-2">
-              <span className="font-bold text-white">2% of ALL income</span>
-              <span className="mx-1">→</span>
-              <span className="font-semibold">Supporting kidney & heart disease</span>
-            </div>
-            
-            {/* Actions row */}
-            <div className="flex items-center gap-2 order-3 sm:order-3">
-              <Link href="/about#charity" className="bg-white/20 hover:bg-white/30 px-3 py-0.5 rounded-full text-xs font-semibold transition whitespace-nowrap">
-                Join Movement →
-              </Link>
-              <button 
-                onClick={handleDismiss}
-                className="text-white/60 hover:text-white transition text-xs"
-                aria-label="Dismiss"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
+    <div className="w-full bg-gradient-to-r from-red-600 via-pink-500 to-red-600 text-white" style={{ minHeight: '44px', display: 'block' }}>
+      <div className="flex flex-wrap items-center justify-center gap-2 px-3 py-2">
+        <div className="flex items-center gap-1">
+          <span className="text-sm">❤️</span>
+          <span className="text-sm">💚</span>
+          <span className="text-sm">❤️</span>
         </div>
+        <div className="text-center text-xs">
+          <span className="font-bold">2% of income</span>
+          <span> → </span>
+          <span>Fighting kidney & heart disease</span>
+        </div>
+        <Link href="/about#charity" className="bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded-full text-xs">
+          Join →
+        </Link>
+        <button onClick={handleDismiss} className="text-white/60 hover:text-white text-sm px-1">
+          ✕
+        </button>
       </div>
-      
-      <div className="h-0.5 bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
     </div>
   );
 }
