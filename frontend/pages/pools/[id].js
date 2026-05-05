@@ -61,35 +61,46 @@ export default function PoolDetail() {
 
   const progress = (pool.current_amount / pool.target_amount) * 100;
   
-  // Open Graph meta data
-  const pageTitle = `${pool.prize_name} - Win ETB ${pool.target_amount?.toLocaleString()} on Abbaa Carraa`;
+  // Facebook Open Graph Meta Data
+  const siteUrl = 'https://abbaa-carraa-ethiopia.vercel.app';
+  const pageUrl = `${siteUrl}/pools/${pool.id}`;
+  const pageTitle = `${pool.prize_name} - Win ETB ${pool.target_amount?.toLocaleString()} on Abbaa Carraa!`;
   const pageDescription = pool.description || `Join this prize pool to win ${pool.prize_name}. Only ETB ${pool.contribution_amount} per entry. Fair draw, cash equivalent guarantee.`;
-  const pageImage = pool.image_url || 'https://abbaa-carraa-ethiopia.vercel.app/images/abbaa-carraa-bg.png';
-  const pageUrl = `https://abbaa-carraa-ethiopia.vercel.app/pools/${pool.id}`;
+  const pageImage = pool.image_url || `${siteUrl}/images/abbaa-carraa-bg.png`;
+  
+  // Ensure image URL is absolute
+  const absoluteImageUrl = pageImage.startsWith('http') ? pageImage : `${siteUrl}${pageImage}`;
 
   return (
     <>
       <Head>
+        {/* Basic Meta Tags */}
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
         
-        {/* Open Graph / Social Media */}
+        {/* Facebook Open Graph (OG) Tags - CRITICAL for Facebook sharing */}
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
-        <meta property="og:image" content={pageImage} />
+        <meta property="og:image" content={absoluteImageUrl} />
+        <meta property="og:image:secure_url" content={absoluteImageUrl} />
+        <meta property="og:image:type" content="image/png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
         <meta property="og:url" content={pageUrl} />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="Abbaa Carraa" />
+        <meta property="og:locale" content="en_US" />
         
-        {/* Twitter Card */}
+        {/* Twitter Card Tags */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content={pageImage} />
+        <meta name="twitter:image" content={absoluteImageUrl} />
         
-        {/* Image dimensions for better preview */}
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
+        {/* Additional Facebook specific */}
+        <meta property="fb:app_id" content="YOUR_FB_APP_ID" /> {/* Optional: Add your Facebook App ID if you have one */}
+        
+        {/* WhatsApp/Telegram preview */}
         <meta property="og:image:alt" content={pool.prize_name} />
       </Head>
 
