@@ -31,6 +31,17 @@ export default function SimpleFilters({ onFilterChange }) {
     setCities(uniqueCities);
   }
 
+  // Smooth scroll to filters section
+  const scrollToFilters = () => {
+    const filtersSection = document.getElementById('filters-section');
+    if (filtersSection) {
+      filtersSection.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    }
+  };
+
   const handleFilterChange = (type, value) => {
     if (type === 'city') setSelectedCity(value);
     if (type === 'category') setSelectedCategory(value);
@@ -41,6 +52,9 @@ export default function SimpleFilters({ onFilterChange }) {
         city: type === 'city' ? value : selectedCity
       });
     }
+    
+    // Scroll to filters section after applying filter
+    setTimeout(scrollToFilters, 100);
   };
 
   const resetFilters = () => {
@@ -49,12 +63,14 @@ export default function SimpleFilters({ onFilterChange }) {
     if (onFilterChange) {
       onFilterChange({ category: 'all', city: 'all' });
     }
+    // Scroll to filters section after reset
+    setTimeout(scrollToFilters, 100);
   };
 
   const hasActiveFilters = selectedCity !== 'all' || selectedCategory !== 'all';
 
   return (
-    <div className="container mx-auto px-4 py-4">
+    <div id="filters-section" className="container mx-auto px-4 py-4 scroll-mt-20">
       {/* Mobile Toggle */}
       <div className="md:hidden mb-3">
         <button
