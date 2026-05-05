@@ -31,14 +31,25 @@ export default function SimpleFilters({ onFilterChange }) {
     setCities(uniqueCities);
   }
 
-  // Smooth scroll to filters section
-  const scrollToFilters = () => {
-    const filtersSection = document.getElementById('filters-section');
-    if (filtersSection) {
-      filtersSection.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start' 
+  // Fixed: Scroll to pools section
+  const scrollToPools = () => {
+    // Try multiple possible selectors for the pools section
+    const poolsSection = document.getElementById('pools-section') || 
+                         document.querySelector('section.pools-grid') ||
+                         document.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3');
+    
+    if (poolsSection) {
+      const offset = 80; // Height of fixed navbar
+      const elementPosition = poolsSection.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
       });
+    } else {
+      // Fallback: scroll down by 500px
+      window.scrollTo({ top: 500, behavior: 'smooth' });
     }
   };
 
@@ -53,8 +64,8 @@ export default function SimpleFilters({ onFilterChange }) {
       });
     }
     
-    // Scroll to filters section after applying filter
-    setTimeout(scrollToFilters, 100);
+    // Scroll to pools after filter is applied
+    setTimeout(scrollToPools, 200);
   };
 
   const resetFilters = () => {
@@ -63,15 +74,13 @@ export default function SimpleFilters({ onFilterChange }) {
     if (onFilterChange) {
       onFilterChange({ category: 'all', city: 'all' });
     }
-    // Scroll to filters section after reset
-    setTimeout(scrollToFilters, 100);
+    setTimeout(scrollToPools, 200);
   };
 
   const hasActiveFilters = selectedCity !== 'all' || selectedCategory !== 'all';
 
   return (
-    <div id="filters-section" className="container mx-auto px-4 py-4 scroll-mt-20">
-      {/* Mobile Toggle */}
+    <div className="container mx-auto px-4 py-4">
       <div className="md:hidden mb-3">
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -83,7 +92,6 @@ export default function SimpleFilters({ onFilterChange }) {
       </div>
 
       <div className={`${isOpen ? 'block' : 'hidden md:block'} space-y-3 md:space-y-0 md:flex md:flex-wrap md:gap-4 md:items-center`}>
-        {/* Category Filter */}
         <div className="flex flex-wrap gap-2">
           {categories.map(cat => (
             <button
@@ -101,7 +109,6 @@ export default function SimpleFilters({ onFilterChange }) {
           ))}
         </div>
 
-        {/* City Filter */}
         {cities.length > 0 && (
           <div className="flex flex-wrap gap-2">
             <button
@@ -130,7 +137,6 @@ export default function SimpleFilters({ onFilterChange }) {
           </div>
         )}
 
-        {/* Reset */}
         {hasActiveFilters && (
           <button
             onClick={resetFilters}
