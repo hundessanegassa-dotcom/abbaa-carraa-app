@@ -46,35 +46,51 @@ export default function PoolCard({ pool, featured = false }) {
   // Enhanced Share Functions with rich text
   const shareOnWhatsApp = () => {
     const poolUrl = `${window.location.origin}/pools/${pool.id}`;
-    const text = `🎁 *${pool.prize_name}*\n\n` +
-                 `💰 Entry Fee: ETB ${formatPrice(pool.contribution_amount)}\n` +
-                 `🏆 Winner Gets: ETB ${formatPrice(pool.target_amount)}\n` +
-                 `📅 ${daysLeft ? `${daysLeft} days left` : 'Ending soon'}\n\n` +
-                 `👉 Join here: ${poolUrl}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    
+    const message = `🎁 *GRAND PRIZE: ${pool.prize_name}*\n\n` +
+                    `${pool.description || 'Join this amazing prize pool for a chance to win big!'}\n\n` +
+                    `💰 *Entry Fee:* ETB ${formatPrice(pool.contribution_amount)}\n` +
+                    `🏆 *Winner Gets:* ETB ${formatPrice(pool.target_amount)} (Cash Equivalent Guaranteed)\n\n` +
+                    `✨ *How to Join:*\n` +
+                    `1. Click the link below\n` +
+                    `2. Choose your seats\n` +
+                    `3. Pay via Telebirr/CBE Birr\n\n` +
+                    `👉 *Join Here:* ${poolUrl}\n\n` +
+                    `*Your participation helps someone win, and 2% of income supports kidney & heart disease patients.* 💚`;
+    
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
     setShowShareMenu(false);
   };
 
   const shareOnTelegram = () => {
     const poolUrl = `${window.location.origin}/pools/${pool.id}`;
-    const text = `🎁 *${pool.prize_name}*\n\n` +
-                 `💰 Entry Fee: ETB ${formatPrice(pool.contribution_amount)}\n` +
-                 `🏆 Winner Gets: ETB ${formatPrice(pool.target_amount)}\n\n` +
-                 `${poolUrl}`;
-    window.open(`https://t.me/share/url?url=${encodeURIComponent(poolUrl)}&text=${encodeURIComponent(text)}`, '_blank');
+    
+    const message = `🎁 *GRAND PRIZE: ${pool.prize_name}*\n\n` +
+                    `${pool.description || 'Join this amazing prize pool for a chance to win big!'}\n\n` +
+                    `💰 *Entry Fee:* ETB ${formatPrice(pool.contribution_amount)}\n` +
+                    `🏆 *Winner Gets:* ETB ${formatPrice(pool.target_amount)} (Cash Equivalent Guaranteed)\n\n` +
+                    `👉 *Join Here:* ${poolUrl}\n\n` +
+                    `💚 2% of income supports kidney & heart disease patients.`;
+    
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(poolUrl)}&text=${encodeURIComponent(message)}`, '_blank');
     setShowShareMenu(false);
   };
 
   const shareOnFacebook = () => {
     const poolUrl = `${window.location.origin}/pools/${pool.id}`;
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(poolUrl)}`, '_blank');
+    const message = `🎁 I just joined the ${pool.prize_name} prize pool on Abbaa Carraa!\n\n` +
+                    `Entry Fee: ETB ${formatPrice(pool.contribution_amount)}\n` +
+                    `Winner Gets: ETB ${formatPrice(pool.target_amount)}\n\n` +
+                    `Join me for a chance to win!`;
+    
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(poolUrl)}&quote=${encodeURIComponent(message)}`, '_blank');
     setShowShareMenu(false);
   };
 
   const copyLink = () => {
     const poolUrl = `${window.location.origin}/pools/${pool.id}`;
     navigator.clipboard.writeText(poolUrl);
-    alert('Link copied!');
+    alert('Link copied! Share it with your friends.');
     setShowShareMenu(false);
   };
 
