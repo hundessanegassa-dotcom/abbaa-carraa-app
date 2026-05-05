@@ -4,9 +4,11 @@
   "description": "Community-driven prize and contribution platform for Ethiopia",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "display_override": ["window-controls-overlay", "standalone"],
   "theme_color": "#10b981",
+  "background_color": "#ffffff",
   "orientation": "portrait",
+  "scope": "/",
   "icons": [
     {
       "src": "/images/icon-72x72.png",
