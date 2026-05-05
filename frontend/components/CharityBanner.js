@@ -21,36 +21,40 @@ export default function CharityBanner() {
   if (!isVisible) return null;
 
   return (
-    <div className="w-full bg-gradient-to-r from-red-600 via-pink-500 to-red-600 text-white overflow-hidden">
+    <div className="w-full bg-gradient-to-r from-red-600 via-pink-500 to-red-600 text-white z-50 relative">
       <div className="relative">
         <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
         
-        <div className="container mx-auto px-3 py-2.5 relative z-10">
-          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs sm:text-sm">
-            <div className="flex items-center gap-1">
+        {/* Increased padding for mobile, simplified layout */}
+        <div className="px-3 py-2 relative z-10">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-xs sm:text-sm">
+            {/* Icons row */}
+            <div className="flex items-center gap-1 order-1 sm:order-1">
               <span className="text-base sm:text-lg animate-pulse">❤️</span>
               <span className="text-base sm:text-lg">💚</span>
               <span className="text-base sm:text-lg animate-pulse">❤️</span>
             </div>
             
-            <div className="text-center sm:text-left">
+            {/* Text - simplified for mobile */}
+            <div className="text-center order-2 sm:order-2">
               <span className="font-bold text-white">2% of ALL income</span>
               <span className="mx-1">→</span>
-              <span className="font-semibold">Supporting Ethiopians fighting kidney & heart disease</span>
+              <span className="font-semibold">Supporting kidney & heart disease</span>
             </div>
             
-            {/* Updated link to go to /about#charity section */}
-            <Link href="/about#charity" className="bg-white/20 hover:bg-white/30 px-3 py-0.5 rounded-full text-xs font-semibold transition whitespace-nowrap">
-              Join the Movement →
-            </Link>
-            
-            <button 
-              onClick={handleDismiss}
-              className="ml-1 text-white/60 hover:text-white transition text-xs"
-              aria-label="Dismiss"
-            >
-              ✕
-            </button>
+            {/* Actions row */}
+            <div className="flex items-center gap-2 order-3 sm:order-3">
+              <Link href="/about#charity" className="bg-white/20 hover:bg-white/30 px-3 py-0.5 rounded-full text-xs font-semibold transition whitespace-nowrap">
+                Join Movement →
+              </Link>
+              <button 
+                onClick={handleDismiss}
+                className="text-white/60 hover:text-white transition text-xs"
+                aria-label="Dismiss"
+              >
+                ✕
+              </button>
+            </div>
           </div>
         </div>
       </div>
