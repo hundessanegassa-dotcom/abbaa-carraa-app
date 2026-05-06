@@ -9,7 +9,7 @@ export default function Login() {
   const router = useRouter();
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
-  const [step, setStep] = useState('phone'); // 'phone' or 'otp'
+  const [step, setStep] = useState('phone');
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
@@ -26,8 +26,12 @@ export default function Login() {
 
   const sendOTP = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    if (!phone || phone.length < 9) {
+      toast.error('Please enter a valid phone number');
+      return;
+    }
     
+    setLoading(true);
     const formattedPhone = formatPhoneNumber(phone);
     
     const { error } = await supabase.auth.signInWithOtp({
@@ -38,10 +42,10 @@ export default function Login() {
       toast.error(error.message);
       setLoading(false);
     } else {
-      toast.success('OTP sent to your phone!');
+      toast.success('Verification code sent!');
       setStep('otp');
       setLoading(false);
-      setCountdown(30);
+      setCountdown(60);
       const timer = setInterval(() => {
         setCountdown((prev) => {
           if (prev <= 1) {
@@ -56,8 +60,12 @@ export default function Login() {
 
   const verifyOTP = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    if (!otp || otp.length < 6) {
+      toast.error('Please enter the 6-digit code');
+      return;
+    }
     
+    setLoading(true);
     const formattedPhone = formatPhoneNumber(phone);
     
     const { error } = await supabase.auth.verifyOtp({
@@ -70,7 +78,7 @@ export default function Login() {
       toast.error(error.message);
       setLoading(false);
     } else {
-      toast.success('Logged in successfully!');
+      toast.success('Welcome back!');
       router.push('/dashboard');
     }
   };
@@ -88,8 +96,8 @@ export default function Login() {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success('OTP resent!');
-      setCountdown(30);
+      toast.success('New code sent!');
+      setCountdown(60);
       const timer = setInterval(() => {
         setCountdown((prev) => {
           if (prev <= 1) {
@@ -121,15 +129,20 @@ export default function Login() {
     return (
       <>
         <Head>
-          <title>Verify OTP - Abbaa Carraa</title>
-          <meta name="description" content="Verify your phone number to login" />
+          <title>Verify Code - Abbaa Carraa</title>
+          <meta name="description" content="Enter verification code to login" />
+          <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         </Head>
         
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
-          <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4">
+          <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
             <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold text-green-600">Abbaa Carraa</h1>
-              <p className="text-gray-500 mt-2">Enter the verification code</p>
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">📱</span>
+              </div>
+              <h1 className="text-2xl font-bold text-gray-800">Verify Your Phone</h1>
+              <p className="text-gray-500 mt-2">Enter the 6-digit code sent to</p>
+              <p className="font-semibold text-green-600 mt-1">+251{phone.replace(/\D/g, '')}</p>
             </div>
             
             <form onSubmit={verifyOTP} className="space-y-6">
@@ -140,22 +153,19 @@ export default function Login() {
                   required
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="Enter 6-digit code"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent text-center text-2xl tracking-widest"
+                  placeholder="000000"
                   maxLength={6}
                   autoFocus
                 />
-                <p className="text-sm text-gray-500 mt-1">
-                  Code sent to +251{phone.replace(/\D/g, '')}
-                </p>
               </div>
               
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-gray-400"
+                className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold text-lg hover:bg-green-700 transition disabled:bg-gray-400"
               >
-                {loading ? 'Verifying...' : 'Verify & Login'}
+                {loading ? 'Verifying...' : 'Verify & Login →'}
               </button>
               
               <div className="text-center">
@@ -165,7 +175,7 @@ export default function Login() {
                   disabled={countdown > 0}
                   className="text-green-600 hover:text-green-700 text-sm disabled:text-gray-400"
                 >
-                  {countdown > 0 ? `Resend in ${countdown}s` : 'Resend Code'}
+                  {countdown > 0 ? `Resend code in ${countdown}s` : 'Resend Code'}
                 </button>
               </div>
               
@@ -175,7 +185,7 @@ export default function Login() {
                   onClick={() => setStep('phone')}
                   className="text-gray-500 hover:text-gray-600 text-sm"
                 >
-                  ← Back to phone number
+                  ← Use different number
                 </button>
               </div>
             </form>
@@ -189,21 +199,74 @@ export default function Login() {
     <>
       <Head>
         <title>Login - Abbaa Carraa</title>
-        <meta name="description" content="Login to Abbaa Carraa with phone or Google" />
+        <meta name="description" content="Login to Abbaa Carraa with your phone number" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </Head>
       
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-green-600">Abbaa Carraa</h1>
-            <p className="text-gray-500 mt-2">Welcome back!</p>
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">🎁</span>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-800">Welcome Back</h1>
+            <p className="text-gray-500 mt-2">Login to your Abbaa Carraa account</p>
           </div>
           
-          {/* Google Login Button */}
+          {/* Phone Login - Primary Method */}
+          <div className="bg-green-50 rounded-xl p-4 mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-green-600 text-lg">📱</span>
+              <h3 className="font-bold text-green-800">Login with Phone</h3>
+              <span className="bg-green-200 text-green-800 text-xs px-2 py-0.5 rounded-full ml-auto">Recommended</span>
+            </div>
+            
+            <form onSubmit={sendOTP} className="space-y-4">
+              <div>
+                <label className="block text-gray-700 mb-2 text-sm">Phone Number</label>
+                <div className="flex">
+                  <span className="inline-flex items-center px-4 rounded-l-xl border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
+                    +251
+                  </span>
+                  <input
+                    type="tel"
+                    required
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="flex-1 px-4 py-3 border rounded-r-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="912345678"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Enter your Ethiopian phone number
+                </p>
+              </div>
+              
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition disabled:bg-gray-400"
+              >
+                {loading ? 'Sending code...' : 'Send Verification Code →'}
+              </button>
+            </form>
+          </div>
+          
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-3 bg-white text-gray-400">or</span>
+            </div>
+          </div>
+          
+          {/* Google Login - Secondary Option */}
           <button
             onClick={signInWithGoogle}
             disabled={loading}
-            className="w-full bg-white border border-gray-300 text-gray-700 py-2.5 rounded-lg font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-3 mb-4"
+            className="w-full bg-white border border-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-3"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -214,53 +277,17 @@ export default function Login() {
             Continue with Google
           </button>
           
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Or continue with phone</span>
-            </div>
-          </div>
-          
-          {/* Phone Login Form */}
-          <form onSubmit={sendOTP} className="space-y-6">
-            <div>
-              <label className="block text-gray-700 mb-2">Phone Number</label>
-              <div className="flex">
-                <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
-                  +251
-                </span>
-                <input
-                  type="tel"
-                  required
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="flex-1 px-4 py-2 border rounded-r-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="912345678"
-                />
-              </div>
-              <p className="text-sm text-gray-500 mt-1">
-                Enter your Ethiopian phone number
-              </p>
-            </div>
-            
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-gray-400"
-            >
-              {loading ? 'Sending code...' : 'Send OTP'}
-            </button>
-          </form>
-          
-          <div className="mt-6 text-center text-sm text-gray-500">
-            <p>
+          <div className="mt-8 text-center">
+            <p className="text-gray-500 text-sm">
               Don't have an account?{' '}
-              <Link href="/register" className="text-green-600 hover:text-green-700 font-semibold">
-                Sign up
+              <Link href="/register" className="text-green-600 font-semibold hover:text-green-700">
+                Create Account
               </Link>
             </p>
+          </div>
+          
+          <div className="mt-6 text-center text-xs text-gray-400">
+            <p>By continuing, you agree to our Terms of Service and Privacy Policy.</p>
           </div>
         </div>
       </div>
