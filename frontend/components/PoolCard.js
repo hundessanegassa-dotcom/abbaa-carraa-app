@@ -43,7 +43,7 @@ export default function PoolCard({ pool, featured = false }) {
 
   const daysLeft = getDaysLeft();
 
-  // Enhanced Share Functions with Abbaa Carraa header
+  // Share Functions
   const shareOnWhatsApp = () => {
     const poolUrl = `${window.location.origin}/pools/${pool.id}`;
     
@@ -96,58 +96,54 @@ export default function PoolCard({ pool, featured = false }) {
     <>
       <div 
         className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300"
-        style={{ cursor: 'pointer' }}
-        onClick={() => {
-          if (isActive && !isCompleted) {
-            window.location.href = `/pools/${pool.id}`;
-          }
-        }}
       >
-        {/* Image Section */}
-        <div className="relative h-36 sm:h-44 md:h-48 overflow-hidden bg-gray-100">
-          {pool.image_url && !imageError ? (
-            <img 
-              src={pool.image_url}
-              alt={pool.prize_name}
-              loading="lazy"
-              className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-              onError={() => setImageError(true)}
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center">
-              <span className="text-4xl sm:text-5xl">{getCategoryIcon(pool.category)}</span>
-            </div>
-          )}
-          
-          {/* Featured Badge - Using translation */}
-          {featured && (
-            <div className="absolute top-2 right-2 bg-yellow-500 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-md z-10">
-              ⭐ {t('pools.featured') || 'Featured'}
-            </div>
-          )}
-          
-          {/* Status Badge - Using translation */}
-          {isCompleted ? (
-            <div className="absolute top-2 left-2 bg-green-600 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-md z-10">
-              ✅ {t('common.completed') || 'Completed'}
-            </div>
-          ) : isActive ? (
-            <div className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-md z-10">
-              🔴 {t('common.active') || 'Active'}
-            </div>
-          ) : (
-            <div className="absolute top-2 left-2 bg-gray-500 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-md z-10">
-              ⏸️ {t('common.pending') || 'Pending'}
-            </div>
-          )}
-        </div>
+        {/* Image Section - Clickable to pool details */}
+        <Link href={`/pools/${pool.id}`} className="block">
+          <div className="relative h-36 sm:h-44 md:h-48 overflow-hidden bg-gray-100 cursor-pointer">
+            {pool.image_url && !imageError ? (
+              <img 
+                src={pool.image_url}
+                alt={pool.prize_name}
+                loading="lazy"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center">
+                <span className="text-4xl sm:text-5xl">{getCategoryIcon(pool.category)}</span>
+              </div>
+            )}
+            
+            {featured && (
+              <div className="absolute top-2 right-2 bg-yellow-500 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-md z-10">
+                ⭐ {t('pools.featured') || 'Featured'}
+              </div>
+            )}
+            
+            {isCompleted ? (
+              <div className="absolute top-2 left-2 bg-green-600 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-md z-10">
+                ✅ {t('common.completed') || 'Completed'}
+              </div>
+            ) : isActive ? (
+              <div className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-md z-10">
+                🔴 {t('common.active') || 'Active'}
+              </div>
+            ) : (
+              <div className="absolute top-2 left-2 bg-gray-500 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-md z-10">
+                ⏸️ {t('common.pending') || 'Pending'}
+              </div>
+            )}
+          </div>
+        </Link>
 
         {/* Content Section */}
         <div className="p-3 sm:p-4">
-          {/* Prize Name */}
-          <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-800 mb-1 line-clamp-1">
-            {pool.prize_name}
-          </h3>
+          {/* Prize Name - Clickable */}
+          <Link href={`/pools/${pool.id}`} className="block">
+            <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-800 mb-1 line-clamp-1 hover:text-green-600 transition cursor-pointer">
+              {pool.prize_name}
+            </h3>
+          </Link>
           
           {/* Description */}
           <p className="text-gray-500 text-xs sm:text-sm mb-2 line-clamp-2">
@@ -170,7 +166,7 @@ export default function PoolCard({ pool, featured = false }) {
             </div>
           </div>
 
-          {/* Stats - All with fallback translations */}
+          {/* Stats */}
           <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mb-3 text-[11px] sm:text-xs">
             <div className="flex justify-between items-center">
               <span className="text-gray-500">{t('pools.winner_gets') || '🏆 Winner Gets'}:</span>
@@ -201,14 +197,11 @@ export default function PoolCard({ pool, featured = false }) {
             )}
           </div>
 
-          {/* Buttons */}
+          {/* Action Buttons - No conflict, properly isolated */}
           <div className="space-y-2">
             {isCompleted ? (
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowWinnerModal(true);
-                }}
+                onClick={() => setShowWinnerModal(true)}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-1 cursor-pointer"
               >
                 🏆 {t('common.view_winners') || 'View Winner'}
@@ -217,7 +210,6 @@ export default function PoolCard({ pool, featured = false }) {
               <Link href={`/pools/${pool.id}`} prefetch={false}>
                 <button 
                   className="w-full bg-green-600 hover:bg-green-700 text-white py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-1 cursor-pointer"
-                  onClick={(e) => e.stopPropagation()}
                 >
                   🎯 {t('pools.join_now') || 'Join Now'}
                 </button>
@@ -235,10 +227,7 @@ export default function PoolCard({ pool, featured = false }) {
             {isActive && (
               <div className="relative">
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowShareMenu(!showShareMenu);
-                  }}
+                  onClick={() => setShowShareMenu(!showShareMenu)}
                   className="w-full bg-blue-500 hover:bg-blue-600 text-white py-1.5 rounded-lg text-xs sm:text-sm transition flex items-center justify-center gap-1 cursor-pointer"
                 >
                   📤 {t('common.share') || 'Share'}
@@ -246,40 +235,16 @@ export default function PoolCard({ pool, featured = false }) {
                 
                 {showShareMenu && (
                   <div className="absolute bottom-full left-0 mb-2 w-full bg-white rounded-lg shadow-lg border overflow-hidden z-20">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        shareOnWhatsApp();
-                      }} 
-                      className="w-full px-3 py-2 text-left hover:bg-green-50 flex items-center gap-2 text-xs cursor-pointer"
-                    >
+                    <button onClick={shareOnWhatsApp} className="w-full px-3 py-2 text-left hover:bg-green-50 flex items-center gap-2 text-xs cursor-pointer">
                       <span className="text-green-600">📱</span> WhatsApp
                     </button>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        shareOnTelegram();
-                      }} 
-                      className="w-full px-3 py-2 text-left hover:bg-blue-50 flex items-center gap-2 text-xs cursor-pointer"
-                    >
+                    <button onClick={shareOnTelegram} className="w-full px-3 py-2 text-left hover:bg-blue-50 flex items-center gap-2 text-xs cursor-pointer">
                       <span className="text-blue-600">💬</span> Telegram
                     </button>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        shareOnFacebook();
-                      }} 
-                      className="w-full px-3 py-2 text-left hover:bg-blue-50 flex items-center gap-2 text-xs cursor-pointer"
-                    >
+                    <button onClick={shareOnFacebook} className="w-full px-3 py-2 text-left hover:bg-blue-50 flex items-center gap-2 text-xs cursor-pointer">
                       <span className="text-blue-700">📘</span> Facebook
                     </button>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        copyLink();
-                      }} 
-                      className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-xs border-t cursor-pointer"
-                    >
+                    <button onClick={copyLink} className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-xs border-t cursor-pointer">
                       <span className="text-gray-600">🔗</span> Copy Link
                     </button>
                   </div>
