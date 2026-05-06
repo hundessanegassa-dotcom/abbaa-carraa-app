@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import Head from 'next/head';
 import VoiceOTP from '../components/VoiceOTP';
+import AgreementModal from '../components/AgreementModal';
 
 export default function Register() {
   const router = useRouter();
@@ -13,12 +14,16 @@ export default function Register() {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showAgreement, setShowAgreement] = useState(false);
+
+  const isPoolCreator = (role) => ['agent', 'vendor', 'organization', 'admin'].includes(role);
+  const needsAgreement = (role) => isPoolCreator(role);
 
   const roles = [
-    { id: 'individual', name: 'Individual', icon: '👤', description: 'Join existing pools and win amazing prizes', color: 'from-green-500 to-teal-500' },
-    { id: 'agent', name: 'Agent', icon: '🤝', description: 'Create prize pools and earn 10% commission', color: 'from-yellow-500 to-orange-500' },
-    { id: 'vendor', name: 'Vendor', icon: '🏭', description: 'List your products as prizes and reach customers', color: 'from-purple-500 to-pink-500' },
-    { id: 'organization', name: 'Organization', icon: '🏢', description: 'Create private pools for your members', color: 'from-blue-500 to-cyan-500' }
+    { id: 'individual', name: 'Individual', icon: '👤', description: 'Join existing pools and win amazing prizes', color: 'from-green-500 to-teal-500', isCreator: false },
+    { id: 'agent', name: 'Agent', icon: '🤝', description: 'Create prize pools and earn 10% commission', color: 'from-yellow-500 to-orange-500', isCreator: true },
+    { id: 'vendor', name: 'Vendor', icon: '🏭', description: 'List your products as prizes and earn commission', color: 'from-purple-500 to-pink-500', isCreator: true },
+    { id: 'organization', name: 'Organization', icon: '🏢', description: 'Create private pools for your members', color: 'from-blue-500 to-cyan-500', isCreator: true }
   ];
 
   const formatPhoneNumber = (value) => {
@@ -41,7 +46,76 @@ export default function Register() {
     setStep('otp');
   };
 
-  const handleVerified = async () => {
+  const handleAgreementAccept = async () => {
+    setLoading(true);
+    const formattedPhone = formatPhoneNumber(phone);
+    
+    const { data, error } = await supabase.auth.signUp({
+      phone: formattedPhone,
+      password: Math.random().toString(36).slice(-12),
+      options: {
+        data: {
+          full_name: fullName,
+          user_type: selectedRole,
+        }
+      }
+    });
+    
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+      return;
+    }
+    
+    if (data.user) {
+      await supabase.from('profiles').upsert({
+        id: data.user.id,
+        full_name: fullName,
+        phone: formattedPhone,
+        user_type: selectedRole,
+        role: selectedRole === 'individual' ? 'user' : selectedRole,
+        agreement_accepted: true,
+        agreement_accepted_at: new Date().toISOString(),
+        agreement_type: selectedRole,
+        can_create_pool: isPoolCreator(selectedRole),
+        created_at: new Date().toISOString(),
+      });
+      
+      if (selectedRole === 'agent') {
+        await supabase.from('agents').insert({
+          user_id: data.user.id,
+          business_name: fullName,
+          verified: false,
+          commission_rate: 10,
+        });
+      } else if (selectedRole === 'vendor') {
+        await supabase.from('vendors').insert({
+          user_id: data.user.id,
+          business_name: fullName,
+          verified: false,
+        });
+      } else if (selectedRole === 'organization') {
+        await supabase.from('organizations').insert({
+          user_id: data.user.id,
+          business_name: fullName,
+          verified: false,
+        });
+      }
+    }
+    
+    toast.success(`Welcome! You registered as ${selectedRole}.`);
+    router.push('/dashboard');
+  };
+
+  const handleVerified = () => {
+    if (needsAgreement(selectedRole)) {
+      setShowAgreement(true);
+    } else {
+      completeRegistration();
+    }
+  };
+
+  const completeRegistration = async () => {
     setLoading(true);
     const formattedPhone = formatPhoneNumber(phone);
     
@@ -65,15 +139,6 @@ export default function Register() {
         role: selectedRole === 'individual' ? 'user' : selectedRole,
         created_at: new Date().toISOString(),
       });
-      
-      if (selectedRole === 'agent') {
-        await supabase.from('agents').insert({
-          user_id: data.user.id,
-          business_name: fullName,
-          verified: false,
-          commission_rate: 10,
-        });
-      }
     }
     
     toast.success(`Welcome! You registered as ${selectedRole}.`);
@@ -92,6 +157,16 @@ export default function Register() {
     }
   };
 
+  if (showAgreement) {
+    return (
+      <AgreementModal
+        role={selectedRole}
+        onAccept={handleAgreementAccept}
+        onDecline={() => setShowAgreement(false)}
+      />
+    );
+  }
+
   if (step === 'role') {
     return (
       <>
@@ -107,10 +182,19 @@ export default function Register() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               {roles.map((role) => (
-                <button key={role.id} onClick={() => { setSelectedRole(role.id); setStep('phone'); }} className={`bg-gradient-to-r ${role.color} rounded-xl p-6 text-white text-left hover:shadow-xl transition transform hover:-translate-y-1`}>
+                <button
+                  key={role.id}
+                  onClick={() => { setSelectedRole(role.id); setStep('phone'); }}
+                  className={`bg-gradient-to-r ${role.color} rounded-xl p-6 text-white text-left hover:shadow-xl transition transform hover:-translate-y-1`}
+                >
                   <div className="text-4xl mb-3">{role.icon}</div>
                   <h3 className="text-xl font-bold mb-2">{role.name}</h3>
                   <p className="text-sm opacity-90">{role.description}</p>
+                  {role.isCreator && (
+                    <div className="mt-2 text-xs bg-white/20 rounded-full px-2 py-0.5 inline-block">
+                      💰 Earn 10% commission
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
