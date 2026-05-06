@@ -182,48 +182,42 @@ export default function Home() {
           <CashEquivalentBanner />
           <CharityBanner />
 
-          {/* Hero Section - FIXED HEIGHT */}
-          <section className="relative bg-gradient-to-r from-green-900 to-blue-900 text-white overflow-hidden w-full">
-            <div className="absolute inset-0 z-0 bg-gradient-to-r from-green-900 to-blue-900">
+          {/* Hero Section - New Full Screen Hero */}
+          <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-green-900 to-blue-900">
+            {/* Background Image */}
+            <div className="absolute inset-0 z-0">
               <img 
                 src="/images/abbaa-carraa-bg.png"
                 alt="Abbaa Carraa Background"
-                className="w-full h-full object-cover object-top opacity-60"
+                className="w-full h-full object-cover object-center"
                 loading="eager"
                 fetchPriority="high"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
+                onError={(e) => e.target.style.display = 'none'}
               />
+              <div className="absolute inset-0 bg-black/45"></div>
             </div>
             
-            <div className="relative z-10 container mx-auto px-4 flex flex-col justify-between min-h-[60vh] sm:min-h-[65vh]">
-              <div className="flex-1"></div>
-              
-              <div className="text-center py-4 sm:py-6">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 drop-shadow-lg">
-                  <span className="text-yellow-300">{t('common.welcome')}</span>
-                </h1>
-                <p className="text-sm sm:text-base md:text-lg mb-6 max-w-2xl mx-auto drop-shadow-md px-3">
-                  {t('common.tagline')}
-                </p>
-              </div>
-              
-              <div className="pb-8 sm:pb-10">
-                <div className="flex flex-row gap-4 justify-center flex-wrap">
-                  <Link 
-                    href="/register" 
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-full font-semibold text-base transition-all shadow-lg active:scale-95 min-w-[140px] text-center"
-                  >
-                    {t('common.get_started')}
-                  </Link>
-                  <Link 
-                    href="/listings" 
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-full font-semibold text-base transition-all shadow-lg active:scale-95 min-w-[140px] text-center"
-                  >
-                    {t('common.browse_prizes')}
-                  </Link>
-                </div>
+            {/* Content */}
+            <div className="relative z-10 text-center text-white px-4 py-8 max-w-4xl mx-auto">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 drop-shadow-lg">
+                <span className="text-yellow-400">{t('common.welcome')}</span>
+              </h1>
+              <p className="text-sm sm:text-base md:text-lg max-w-2xl mx-auto mb-6 sm:mb-8 opacity-95 px-2">
+                {t('common.tagline')}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                <Link 
+                  href="/register" 
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 sm:px-8 sm:py-3 rounded-full font-semibold text-sm sm:text-base transition shadow-lg w-full sm:w-auto text-center"
+                >
+                  {t('common.get_started')}
+                </Link>
+                <Link 
+                  href="/listings" 
+                  className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-6 py-2.5 sm:px-8 sm:py-3 rounded-full font-semibold text-sm sm:text-base transition border border-white/30 w-full sm:w-auto text-center"
+                >
+                  {t('common.browse_prizes')}
+                </Link>
               </div>
             </div>
           </section>
