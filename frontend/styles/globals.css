@@ -1,240 +1,389 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* ========================================
+   GLOBAL STYLES - ABBAA CARRAA
+   Fixed for all phone screen sizes
+   ======================================== */
 
-/* ============================================
-   SMOOTH SCROLLING FOR ANCHOR LINKS
-   ============================================ */
+/* RESET & BASE - Fixes for all devices */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent; /* Removes grey tap highlight on mobile */
+}
+
+/* HTML and BODY - Full width fix */
 html {
+  width: 100%;
+  overflow-x: hidden;
   scroll-behavior: smooth;
 }
 
-/* Add scroll margin for fixed headers (so content doesn't hide behind navbar) */
-section[id],
-div[id] {
-  scroll-margin-top: 80px;
+body {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Specific scroll margin for filters section */
-#filters-section {
-  scroll-margin-top: 100px;
+/* Next.js root div - Ensures full height and width */
+#__next {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-/* ============================================
-   CUSTOM FONTS & TYPOGRAPHY
-   ============================================ */
-@layer base {
-  body {
-    @apply bg-gray-50 text-gray-900 antialiased;
-  }
-  
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  
-  ::-webkit-scrollbar-track {
-    @apply bg-gray-100 rounded-full;
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    @apply bg-green-500 rounded-full;
-  }
-  
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-green-600;
-  }
+/* Main wrapper for all pages */
+main {
+  flex: 1;
+  width: 100%;
 }
 
-/* ============================================
-   LINE CLAMP UTILITIES (for text truncation)
-   ============================================ */
-.line-clamp-1 {
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+/* ========================================
+   CONTAINER FIXES FOR MOBILE
+   ======================================== */
+
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* ============================================
-   ANIMATIONS
-   ============================================ */
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-@keyframes bounce-slow {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-.animate-shimmer {
-  animation: shimmer 2s infinite;
-}
-
-.animate-bounce-slow {
-  animation: bounce-slow 2s infinite;
-}
-
-/* ============================================
-   LOADING SPINNER
-   ============================================ */
-.loading-spinner {
-  border: 3px solid rgba(0, 0, 0, 0.1);
-  border-radius: 50%;
-  border-top-color: #10b981;
-  width: 40px;
-  height: 40px;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* ============================================
-   POOL CARD HOVER EFFECTS
-   ============================================ */
-.pool-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.pool-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-/* ============================================
-   PROGRESS BAR ANIMATION
-   ============================================ */
-.progress-bar {
-  transition: width 0.5s ease-in-out;
-}
-
-/* ============================================
-   RESPONSIVE UTILITIES
-   ============================================ */
+/* Responsive container padding for smaller phones */
 @media (max-width: 640px) {
   .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
   }
 }
 
-/* ============================================
-   PRINT STYLES (for receipts)
-   ============================================ */
-@media print {
-  .no-print {
-    display: none !important;
+/* ========================================
+   TOUCH & CLICK FIXES - Makes everything clickable
+   ======================================== */
+
+button,
+a,
+[role="button"],
+.clickable,
+.touch-target {
+  touch-action: manipulation;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Ensures buttons have minimum tap area (Apple recommendation: 44x44px) */
+button,
+a.button,
+.btn {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Remove default button styles but keep clickable */
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* ========================================
+   IMAGE FIXES - Prevents overflow
+   ======================================== */
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Fix for background images */
+.bg-cover-fix {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* ========================================
+   GRID & FLEX FIXES
+   ======================================== */
+
+/* Prevent grid from breaking on small screens */
+.grid {
+  display: grid;
+  gap: 1rem;
+}
+
+/* Responsive grid helper */
+.grid-responsive {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+/* ========================================
+   TYPOGRAPHY - Readable on all phones
+   ======================================== */
+
+html {
+  font-size: 16px; /* Base size - prevents zoom issues on input focus */
+}
+
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
   }
-  
-  body {
-    background: white;
-    padding: 0;
-    margin: 0;
-  }
-  
-  .print-friendly {
-    box-shadow: none;
-    border: 1px solid #ddd;
+}
+
+/* Prevent text from being too small on landscape mode */
+@media (max-width: 640px) and (orientation: landscape) {
+  html {
+    font-size: 12px;
   }
 }
 
-/* ============================================
-   FOCUS STYLES FOR ACCESSIBILITY
-   ============================================ */
-*:focus {
-  outline: 2px solid #10b981;
-  outline-offset: 2px;
+/* ========================================
+   SCROLLING & OVERFLOW FIXES
+   ======================================== */
+
+/* Smooth scrolling but not on reduced motion preference */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
-button:focus-visible,
-a:focus-visible {
-  outline: 2px solid #10b981;
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* ============================================
-   DISABLE FOCUS OUTLINE FOR MOUSE USERS
-   ============================================ */
-*:focus:not(:focus-visible) {
-  outline: none;
-}
-
-/* ============================================
-   RTL SUPPORT (for Arabic and other RTL languages)
-   ============================================ */
-html[dir="rtl"] {
-  direction: rtl;
-}
-
-html[dir="rtl"] .flex-row {
-  flex-direction: row-reverse;
-}
-
-/* ============================================
-   LANGUAGE SPECIFIC FONTS
-   ============================================ */
-/* Amharic, Tigrinya, Oromo, Somali, Afar, Hadiyya, Sidama, Wolayita */
-html[lang="am"] body,
-html[lang="ti"] body,
-html[lang="om"] body,
-html[lang="so"] body,
-html[lang="aa"] body,
-html[lang="hdy"] body,
-html[lang="sid"] body,
-html[lang="wal"] body {
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
-}
-
-/* ============================================
-   UTILITY CLASSES
-   ============================================ */
-.text-gradient-green {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.bg-gradient-green {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-}
-
-/* Hide scrollbar but keep functionality */
-.scrollbar-hide {
+/* Hide scrollbar for cleaner look on mobile (optional) */
+.hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-.scrollbar-hide::-webkit-scrollbar {
+.hide-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+/* Full width helper */
+.w-full {
+  width: 100%;
+}
+
+/* Full height helper */
+.h-full {
+  height: 100%;
+}
+
+/* Min height screen */
+.min-h-screen {
+  min-height: 100vh;
+}
+
+/* Flex column helper */
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+/* No overflow */
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.overflow-x-hidden {
+  overflow-x: hidden;
+}
+
+/* ========================================
+   ANIMATION FIXES
+   ======================================== */
+
+/* Reduced motion preference - important for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ========================================
+   FOCUS & ACCESSIBILITY
+   ======================================== */
+
+/* Visible focus for keyboard navigation */
+:focus-visible {
+  outline: 2px solid #16a34a;
+  outline-offset: 2px;
+}
+
+/* But better to remove default outline on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  :focus {
+    outline: none;
+  }
+}
+
+/* ========================================
+   MODAL & OVERLAY FIXES
+   ======================================== */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+}
+
+.modal-content {
+  position: relative;
+  z-index: 10000;
+}
+
+/* ========================================
+   LOADING STATE
+   ======================================== */
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #16a34a;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ========================================
+   CUSTOM SCROLLBAR (Optional - Nice to have)
+   ======================================== */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* ========================================
+   SAFE AREA FOR NOTCH PHONES
+   ======================================== */
+
+@supports (padding: max(0px)) {
+  .safe-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  .safe-left {
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+  
+  .safe-right {
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+/* ========================================
+   PREVENT ZOOM ON INPUT FOCUS (iOS fix)
+   ======================================== */
+
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  select,
+  textarea,
+  input {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+}
+
+/* ========================================
+   TAILWCSS OVERRIDES (if needed)
+   ======================================== */
+
+/* Ensure Tailwind's container doesn't break */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Override any Tailwind width issues */
+@layer base {
+  body {
+    @apply w-full overflow-x-hidden;
+  }
+  
+  #__next {
+    @apply w-full min-h-screen flex flex-col;
+  }
+}
+
+/* ========================================
+   RESPONSIVE BREAKPOINTS UTILITIES
+   ======================================== */
+
+/* Mobile first - this is already handled but adding helpers */
+.hide-on-mobile {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .hide-on-mobile {
+    display: none;
+  }
+}
+
+.show-on-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .show-on-mobile {
+    display: block;
+  }
+}
+
+/* ========================================
+   PRINT STYLES (Optional)
+   ======================================== */
+
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  
+  .no-print {
+    display: none;
+  }
 }
