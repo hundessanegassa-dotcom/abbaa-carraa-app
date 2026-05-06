@@ -4,14 +4,13 @@ import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import Head from 'next/head';
+import VoiceOTP from '../components/VoiceOTP';
 
 export default function Login() {
   const router = useRouter();
+  const [step, setStep] = useState('phone'); // 'phone' or 'otp'
   const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
-  const [step, setStep] = useState('phone');
   const [loading, setLoading] = useState(false);
-  const [countdown, setCountdown] = useState(0);
 
   const formatPhoneNumber = (value) => {
     let cleaned = value.replace(/\D/g, '');
@@ -24,16 +23,20 @@ export default function Login() {
     return cleaned;
   };
 
-  const sendOTP = async (e) => {
+  const handlePhoneSubmit = (e) => {
     e.preventDefault();
     if (!phone || phone.length < 9) {
       toast.error('Please enter a valid phone number');
       return;
     }
-    
+    setStep('otp');
+  };
+
+  const handleVerified = async () => {
     setLoading(true);
     const formattedPhone = formatPhoneNumber(phone);
     
+    // Sign in with OTP verification
     const { error } = await supabase.auth.signInWithOtp({
       phone: formattedPhone,
     });
@@ -41,74 +44,11 @@ export default function Login() {
     if (error) {
       toast.error(error.message);
       setLoading(false);
-    } else {
-      toast.success('Verification code sent!');
-      setStep('otp');
-      setLoading(false);
-      setCountdown(60);
-      const timer = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-  };
-
-  const verifyOTP = async (e) => {
-    e.preventDefault();
-    if (!otp || otp.length < 6) {
-      toast.error('Please enter the 6-digit code');
       return;
     }
     
-    setLoading(true);
-    const formattedPhone = formatPhoneNumber(phone);
-    
-    const { error } = await supabase.auth.verifyOtp({
-      phone: formattedPhone,
-      token: otp,
-      type: 'sms',
-    });
-    
-    if (error) {
-      toast.error(error.message);
-      setLoading(false);
-    } else {
-      toast.success('Welcome back!');
-      router.push('/dashboard');
-    }
-  };
-
-  const resendOTP = async () => {
-    if (countdown > 0) return;
-    
-    setLoading(true);
-    const formattedPhone = formatPhoneNumber(phone);
-    
-    const { error } = await supabase.auth.signInWithOtp({
-      phone: formattedPhone,
-    });
-    
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success('New code sent!');
-      setCountdown(60);
-      const timer = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    setLoading(false);
+    toast.success('Logged in successfully!');
+    router.push('/dashboard');
   };
 
   const signInWithGoogle = async () => {
@@ -125,76 +65,31 @@ export default function Login() {
     }
   };
 
+  // OTP Verification Step
   if (step === 'otp') {
     return (
       <>
         <Head>
-          <title>Verify Code - Abbaa Carraa</title>
-          <meta name="description" content="Enter verification code to login" />
+          <title>Verify Phone - Abbaa Carraa</title>
+          <meta name="description" content="Verify your phone number to login" />
           <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         </Head>
         
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4">
           <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-            <div className="text-center mb-8">
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">📱</span>
-              </div>
-              <h1 className="text-2xl font-bold text-gray-800">Verify Your Phone</h1>
-              <p className="text-gray-500 mt-2">Enter the 6-digit code sent to</p>
-              <p className="font-semibold text-green-600 mt-1">+251{phone.replace(/\D/g, '')}</p>
-            </div>
-            
-            <form onSubmit={verifyOTP} className="space-y-6">
-              <div>
-                <label className="block text-gray-700 mb-2">Verification Code</label>
-                <input
-                  type="text"
-                  required
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent text-center text-2xl tracking-widest"
-                  placeholder="000000"
-                  maxLength={6}
-                  autoFocus
-                />
-              </div>
-              
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold text-lg hover:bg-green-700 transition disabled:bg-gray-400"
-              >
-                {loading ? 'Verifying...' : 'Verify & Login →'}
-              </button>
-              
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={resendOTP}
-                  disabled={countdown > 0}
-                  className="text-green-600 hover:text-green-700 text-sm disabled:text-gray-400"
-                >
-                  {countdown > 0 ? `Resend code in ${countdown}s` : 'Resend Code'}
-                </button>
-              </div>
-              
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => setStep('phone')}
-                  className="text-gray-500 hover:text-gray-600 text-sm"
-                >
-                  ← Use different number
-                </button>
-              </div>
-            </form>
+            <VoiceOTP 
+              phone={phone} 
+              onVerified={handleVerified} 
+              onBack={() => setStep('phone')} 
+              isLogin={true}
+            />
           </div>
         </div>
       </>
     );
   }
 
+  // Phone Input Step
   return (
     <>
       <Head>
@@ -216,12 +111,12 @@ export default function Login() {
           {/* Phone Login - Primary Method */}
           <div className="bg-green-50 rounded-xl p-4 mb-6">
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-green-600 text-lg">📱</span>
+              <span className="text-green-600 text-lg">📞</span>
               <h3 className="font-bold text-green-800">Login with Phone</h3>
               <span className="bg-green-200 text-green-800 text-xs px-2 py-0.5 rounded-full ml-auto">Recommended</span>
             </div>
             
-            <form onSubmit={sendOTP} className="space-y-4">
+            <form onSubmit={handlePhoneSubmit} className="space-y-4">
               <div>
                 <label className="block text-gray-700 mb-2 text-sm">Phone Number</label>
                 <div className="flex">
@@ -247,7 +142,7 @@ export default function Login() {
                 disabled={loading}
                 className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition disabled:bg-gray-400"
               >
-                {loading ? 'Sending code...' : 'Send Verification Code →'}
+                {loading ? 'Processing...' : 'Continue with Phone →'}
               </button>
             </form>
           </div>
@@ -288,6 +183,7 @@ export default function Login() {
           
           <div className="mt-6 text-center text-xs text-gray-400">
             <p>By continuing, you agree to our Terms of Service and Privacy Policy.</p>
+            <p className="mt-1">💚 2% of income supports kidney & heart disease patients</p>
           </div>
         </div>
       </div>
