@@ -1,12 +1,3 @@
-import twilio from 'twilio';
-
-// Twilio credentials (add to your environment variables)
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
-
-const client = twilio(accountSid, authToken);
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -18,8 +9,30 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Phone number is required' });
   }
 
+  // Test mode - no Twilio required
+  const useTestMode = !process.env.TWILIO_ACCOUNT_SID || process.env.NODE_ENV === 'development';
+
+  if (useTestMode) {
+    const testOTP = Math.floor(100000 + Math.random() * 900000).toString();
+    console.log(`📱 TEST MODE - ${channel.toUpperCase()} OTP for ${phone}: ${testOTP}`);
+    
+    return res.status(200).json({
+      success: true,
+      message: `Test mode: ${channel === 'call' ? 'Voice call' : 'SMS'} - OTP: ${testOTP}`,
+      isTestMode: true,
+      testOTP: testOTP
+    });
+  }
+
   try {
-    // Format phone number (Ethiopia: +251XXXXXXXXX)
+    const twilio = require('twilio');
+    
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
+
+    const client = twilio(accountSid, authToken);
+
     let formattedPhone = phone.replace(/\D/g, '');
     if (formattedPhone.startsWith('0')) {
       formattedPhone = '251' + formattedPhone.substring(1);
@@ -29,12 +42,11 @@ export default async function handler(req, res) {
     }
     formattedPhone = `+${formattedPhone}`;
 
-    // Send verification via Twilio Verify API
     const verification = await client.verify.v2
       .services(verifyServiceSid)
       .verifications.create({
         to: formattedPhone,
-        channel: channel, // 'sms' or 'call'
+        channel: channel,
       });
 
     return res.status(200).json({
@@ -42,14 +54,13 @@ export default async function handler(req, res) {
       sid: verification.sid,
       channel: channel,
       message: channel === 'call' 
-        ? 'Voice call initiated! Answer to hear your verification code.'
+        ? 'Voice call initiated! Answer to hear your code.'
         : 'SMS sent with your verification code!'
     });
   } catch (error) {
     console.error('Twilio error:', error);
     return res.status(500).json({
-      error: error.message,
-      details: 'Failed to send verification code'
+      error: error.message || 'Failed to send verification code'
     });
   }
 }
