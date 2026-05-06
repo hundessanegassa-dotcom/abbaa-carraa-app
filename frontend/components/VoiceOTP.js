@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
 
 export default function VoiceOTP({ phone, onVerified, onBack, isLogin = false }) {
-  const router = useRouter();
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
-  const [channel, setChannel] = useState('sms'); // 'sms' or 'call'
+  const [channel, setChannel] = useState('sms');
   const [calling, setCalling] = useState(false);
 
   const formatPhoneNumber = (value) => {
@@ -30,40 +27,9 @@ export default function VoiceOTP({ phone, onVerified, onBack, isLogin = false })
     
     if (selectedChannel === 'call') {
       setCalling(true);
-      toast.loading('Initiating voice call...', { id: 'voice-call' });
     }
     
     try {
-      // For testing without Twilio (development mode)
-      if (process.env.NODE_ENV === 'development' || !process.env.NEXT_PUBLIC_TWILIO_ENABLED) {
-        // Generate a random test OTP
-        const testOTP = Math.floor(100000 + Math.random() * 900000).toString();
-        console.log(`📱 Test ${selectedChannel === 'call' ? 'Voice' : 'SMS'} OTP for ${formattedPhone}: ${testOTP}`);
-        sessionStorage.setItem('test_otp', testOTP);
-        sessionStorage.setItem('test_phone', formattedPhone);
-        
-        if (selectedChannel === 'call') {
-          toast.success(`Test Voice OTP: ${testOTP} (Check console)`, { id: 'voice-call' });
-        } else {
-          toast.success(`Test SMS OTP: ${testOTP} (Check console)`);
-        }
-        
-        setCountdown(60);
-        const timer = setInterval(() => {
-          setCountdown((prev) => {
-            if (prev <= 1) {
-              clearInterval(timer);
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-        setLoading(false);
-        setCalling(false);
-        return;
-      }
-      
-      // Production: Call your API endpoint
       const response = await fetch('/api/auth/send-voice-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -76,11 +42,16 @@ export default function VoiceOTP({ phone, onVerified, onBack, isLogin = false })
       const data = await response.json();
       
       if (response.ok) {
+        if (data.isTestMode && data.testOTP) {
+          toast.success(`Test OTP: ${data.testOTP}`, { duration: 10000 });
+        }
+        
         if (selectedChannel === 'call') {
-          toast.success('Voice call initiated! Answer to hear your code.', { id: 'voice-call' });
+          toast.success('Voice call initiated! Answer to hear your code.');
         } else {
           toast.success('SMS sent with your verification code!');
         }
+        
         setCountdown(60);
         const timer = setInterval(() => {
           setCountdown((prev) => {
@@ -92,19 +63,11 @@ export default function VoiceOTP({ phone, onVerified, onBack, isLogin = false })
           });
         }, 1000);
       } else {
-        if (selectedChannel === 'call') {
-          toast.error(data.error || 'Failed to initiate voice call', { id: 'voice-call' });
-        } else {
-          toast.error(data.error || 'Failed to send SMS');
-        }
+        toast.error(data.error || `Failed to send ${selectedChannel === 'call' ? 'voice call' : 'SMS'}`);
       }
     } catch (error) {
       console.error('Error sending OTP:', error);
-      if (selectedChannel === 'call') {
-        toast.error('Network error. Please try again.', { id: 'voice-call' });
-      } else {
-        toast.error('Network error. Please try again.');
-      }
+      toast.error('Network error. Please try again.');
     } finally {
       setLoading(false);
       setCalling(false);
@@ -121,26 +84,6 @@ export default function VoiceOTP({ phone, onVerified, onBack, isLogin = false })
     const formattedPhone = formatPhoneNumber(phone);
     
     try {
-      // Check if using test mode
-      const storedOTP = sessionStorage.getItem('test_otp');
-      const storedPhone = sessionStorage.getItem('test_phone');
-      
-      if (storedOTP && storedPhone === formattedPhone) {
-        if (otp === storedOTP) {
-          toast.success('Phone verified successfully!');
-          sessionStorage.removeItem('test_otp');
-          sessionStorage.removeItem('test_phone');
-          if (onVerified) onVerified();
-          setLoading(false);
-          return;
-        } else {
-          toast.error('Invalid verification code');
-          setLoading(false);
-          return;
-        }
-      }
-      
-      // Production verification
       const response = await fetch('/api/auth/verify-voice-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -168,7 +111,6 @@ export default function VoiceOTP({ phone, onVerified, onBack, isLogin = false })
     sendOTP(channel);
   };
 
-  // Auto-send SMS OTP on component mount
   useEffect(() => {
     sendOTP('sms');
   }, []);
@@ -194,7 +136,6 @@ export default function VoiceOTP({ phone, onVerified, onBack, isLogin = false })
         )}
       </div>
 
-      {/* Channel Selection Buttons */}
       <div className="flex gap-3">
         <button
           type="button"
@@ -206,8 +147,7 @@ export default function VoiceOTP({ phone, onVerified, onBack, isLogin = false })
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
-          <span className="text-lg">📱</span>
-          SMS
+          <span className="text-lg">📱</span> SMS
         </button>
         <button
           type="button"
@@ -219,12 +159,10 @@ export default function VoiceOTP({ phone, onVerified, onBack, isLogin = false })
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
-          <span className="text-lg">📞</span>
-          Voice Call
+          <span className="text-lg">📞</span> Voice Call
         </button>
       </div>
 
-      {/* OTP Input */}
       <div>
         <label className="block text-gray-700 mb-2 text-sm">
           {channel === 'call' ? 'Enter the code you heard' : 'Enter Verification Code'}
@@ -241,7 +179,6 @@ export default function VoiceOTP({ phone, onVerified, onBack, isLogin = false })
         />
       </div>
 
-      {/* Verify Button */}
       <button
         onClick={verifyOTP}
         disabled={loading}
@@ -257,7 +194,6 @@ export default function VoiceOTP({ phone, onVerified, onBack, isLogin = false })
         )}
       </button>
 
-      {/* Resend Button */}
       <div className="text-center">
         <button
           type="button"
@@ -269,24 +205,16 @@ export default function VoiceOTP({ phone, onVerified, onBack, isLogin = false })
         </button>
       </div>
 
-      {/* Help Text */}
       <div className="bg-blue-50 rounded-xl p-3">
         <p className="text-xs text-blue-700 text-center">
           {channel === 'call' ? (
-            <>
-              📞 <strong>Voice Call Instructions:</strong> Answer the call, listen to the automated voice,
-              and enter the 6-digit number you hear.
-            </>
+            <>📞 <strong>Voice Call:</strong> Answer the call, listen to the automated voice, and enter the 6-digit number you hear.</>
           ) : (
-            <>
-              📱 <strong>SMS Instructions:</strong> Check your phone for a text message with the 6-digit code.
-              Make sure you have network coverage.
-            </>
+            <>📱 <strong>SMS:</strong> Check your phone for a text message with the 6-digit code.</>
           )}
         </p>
       </div>
 
-      {/* Back Button */}
       <div className="text-center">
         <button
           type="button"
@@ -297,7 +225,6 @@ export default function VoiceOTP({ phone, onVerified, onBack, isLogin = false })
         </button>
       </div>
 
-      {/* Footer Note */}
       <div className="text-center text-xs text-gray-400">
         <p>💚 2% of income supports kidney & heart disease patients in Ethiopia</p>
       </div>
