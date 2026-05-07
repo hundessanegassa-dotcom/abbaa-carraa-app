@@ -12,12 +12,6 @@ export default function DashboardLayout({ children, title, subtitle, icon, bgGra
     router.push('/');
   };
 
-  const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: '📊' },
-    { name: 'Browse Prizes', href: '/listings', icon: '🎁' },
-    { name: 'My Profile', href: '/profile', icon: '👤' },
-  ];
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -32,12 +26,10 @@ export default function DashboardLayout({ children, title, subtitle, icon, bgGra
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="hidden md:flex items-center gap-2">
-                <span className="text-sm">Welcome, {profile?.full_name || user?.email?.split('@')[0] || 'User'}</span>
-                <button onClick={handleLogout} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-full text-sm transition">
-                  Logout
-                </button>
-              </div>
+              <span className="hidden md:inline text-sm">Welcome, {profile?.full_name || user?.email?.split('@')[0] || 'User'}</span>
+              <button onClick={handleLogout} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-full text-sm transition">
+                Logout
+              </button>
               <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden bg-white/20 p-2 rounded-lg">
                 ☰
               </button>
@@ -48,17 +40,11 @@ export default function DashboardLayout({ children, title, subtitle, icon, bgGra
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b shadow-lg">
-          <div className="container mx-auto px-4 py-3 space-y-2">
-            {navigation.map(item => (
-              <Link key={item.name} href={item.href} className="block py-2 text-gray-700 hover:text-green-600">
-                <span className="mr-2">{item.icon}</span> {item.name}
-              </Link>
-            ))}
-            <button onClick={handleLogout} className="block w-full text-left py-2 text-red-600">
-              🚪 Logout
-            </button>
-          </div>
+        <div className="md:hidden bg-white border-b shadow-lg p-4 space-y-2">
+          <Link href="/dashboard" className="block py-2 text-gray-700">📊 Dashboard</Link>
+          <Link href="/listings" className="block py-2 text-gray-700">🎁 Browse Prizes</Link>
+          <Link href="/profile" className="block py-2 text-gray-700">👤 My Profile</Link>
+          <button onClick={handleLogout} className="block w-full text-left py-2 text-red-600">🚪 Logout</button>
         </div>
       )}
 
