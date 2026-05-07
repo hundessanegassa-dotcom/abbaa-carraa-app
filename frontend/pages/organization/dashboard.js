@@ -20,7 +20,7 @@ export default function OrganizationDashboardPage() {
       .from('profiles')
       .select('user_type, role')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
     
     if (profile?.user_type !== 'organization' && profile?.role !== 'organization') {
       router.push('/dashboard');
