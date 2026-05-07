@@ -182,39 +182,45 @@ export default function Home() {
           <CashEquivalentBanner />
           <CharityBanner />
 
-          {/* Hero Section - New Full Screen Hero */}
-          <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-green-900 to-blue-900">
-            {/* Background Image */}
+          {/* Hero Section - Full background image visible on all devices */}
+          <section className="relative w-full min-h-[90vh] sm:min-h-screen flex items-center justify-center overflow-hidden">
+            {/* Background Image Container */}
             <div className="absolute inset-0 z-0">
-              <img 
-                src="/images/abbaa-carraa-bg.png"
-                alt="Abbaa Carraa Background"
-                className="w-full h-full object-cover object-center"
-                loading="eager"
-                fetchPriority="high"
-                onError={(e) => e.target.style.display = 'none'}
-              />
-              <div className="absolute inset-0 bg-black/45"></div>
+              {/* Using CSS background-image for better control on all devices */}
+              <div 
+                className="absolute inset-0 bg-no-repeat"
+                style={{
+                  backgroundImage: `url('/images/abbaa-carraa-bg.png')`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundAttachment: 'scroll',
+                }}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              ></div>
+              {/* Dark overlay for text readability */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/60"></div>
             </div>
             
             {/* Content */}
-            <div className="relative z-10 text-center text-white px-4 py-8 max-w-4xl mx-auto">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 drop-shadow-lg">
+            <div className="relative z-10 text-center text-white px-4 sm:px-6 py-12 sm:py-16 max-w-4xl mx-auto">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 drop-shadow-lg animate-fade-in">
                 <span className="text-yellow-400">{t('common.welcome')}</span>
               </h1>
-              <p className="text-sm sm:text-base md:text-lg max-w-2xl mx-auto mb-6 sm:mb-8 opacity-95 px-2">
+              <p className="text-base sm:text-lg md:text-xl max-w-2xl mx-auto mb-8 sm:mb-10 opacity-95 px-2 drop-shadow-md">
                 {t('common.tagline')}
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Link 
                   href="/register" 
-                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 sm:px-8 sm:py-3 rounded-full font-semibold text-sm sm:text-base transition shadow-lg w-full sm:w-auto text-center"
+                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 sm:px-10 sm:py-4 rounded-full font-semibold text-base sm:text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 w-full sm:w-auto text-center"
                 >
                   {t('common.get_started')}
                 </Link>
                 <Link 
                   href="/listings" 
-                  className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-6 py-2.5 sm:px-8 sm:py-3 rounded-full font-semibold text-sm sm:text-base transition border border-white/30 w-full sm:w-auto text-center"
+                  className="bg-white/20 backdrop-blur-md hover:bg-white/30 text-white px-8 py-3 sm:px-10 sm:py-4 rounded-full font-semibold text-base sm:text-lg transition-all duration-300 border border-white/40 hover:border-white/60 w-full sm:w-auto text-center"
                 >
                   {t('common.browse_prizes')}
                 </Link>
@@ -223,7 +229,7 @@ export default function Home() {
           </section>
 
           {/* Stats Counters */}
-          <div className="bg-white border-b border-gray-200 py-4">
+          <div className="bg-white border-b border-gray-200 py-4 sticky top-0 z-20 shadow-sm">
             <div className="container mx-auto px-4">
               <div className="flex flex-wrap justify-center items-center gap-6 md:gap-12">
                 <div className="text-center min-w-[80px]">
@@ -337,6 +343,23 @@ export default function Home() {
           <NewsletterSubscribe />
         </main>
       </div>
+
+      {/* Add custom animation CSS */}
+      <style jsx>{`
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.8s ease-out;
+        }
+      `}</style>
     </>
   );
 }
