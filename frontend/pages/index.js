@@ -182,54 +182,50 @@ export default function Home() {
           <CashEquivalentBanner />
           <CharityBanner />
 
-          {/* Hero Section - NO blank space above, content at top */}
-          <section className="relative w-full min-h-screen overflow-hidden">
-            {/* Background Image */}
-            <div className="absolute inset-0 z-0">
+          {/* Hero Section - Image only, no text on it */}
+          <section className="w-full bg-gradient-to-br from-green-900 to-blue-900">
+            <div className="w-full">
               <img 
                 src="/images/abbaa-carraa-bg.png"
                 alt="Abbaa Carraa Background"
-                className="w-full h-full object-contain md:object-cover"
-                style={{ objectPosition: 'top center' }}
+                className="w-full h-auto object-contain"
                 loading="eager"
                 fetchPriority="high"
                 onError={(e) => {
                   e.target.style.display = 'none';
                 }}
               />
-              {/* Dark overlay for text readability */}
-              <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60"></div>
             </div>
-            
-            {/* Content - Positioned at top with minimal padding */}
-            <div className="relative z-10 flex flex-col justify-start min-h-screen pt-8 sm:pt-12 md:pt-16">
-              <div className="text-center text-white px-4 sm:px-6 max-w-4xl mx-auto w-full">
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 drop-shadow-lg">
-                  <span className="text-yellow-400">{t('common.welcome')}</span>
-                </h1>
-                <p className="text-sm sm:text-base md:text-lg max-w-2xl mx-auto mb-6 sm:mb-8 opacity-95 px-2">
-                  {t('common.tagline')}
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-                  <Link 
-                    href="/register" 
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 sm:px-8 sm:py-3 rounded-full font-semibold text-sm sm:text-base transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 w-full sm:w-auto text-center"
-                  >
-                    {t('common.get_started')}
-                  </Link>
-                  <Link 
-                    href="/listings" 
-                    className="bg-white/20 backdrop-blur-md hover:bg-white/30 text-white px-6 py-2.5 sm:px-8 sm:py-3 rounded-full font-semibold text-sm sm:text-base transition-all duration-300 border border-white/40 hover:border-white/60 w-full sm:w-auto text-center"
-                  >
-                    {t('common.browse_prizes')}
-                  </Link>
-                </div>
+          </section>
+
+          {/* Welcome Text and Buttons - Positioned UNDER the image */}
+          <section className="w-full bg-white py-12 sm:py-16 md:py-20">
+            <div className="container mx-auto px-4 text-center">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-gray-800">
+                <span className="text-green-600">{t('common.welcome')}</span>
+              </h1>
+              <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto mb-8 sm:mb-10 px-2">
+                {t('common.tagline')}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <Link 
+                  href="/register" 
+                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 sm:px-10 sm:py-4 rounded-full font-semibold text-base sm:text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 w-full sm:w-auto text-center"
+                >
+                  {t('common.get_started')}
+                </Link>
+                <Link 
+                  href="/listings" 
+                  className="bg-gray-100 hover:bg-gray-200 text-green-700 px-8 py-3 sm:px-10 sm:py-4 rounded-full font-semibold text-base sm:text-lg transition-all duration-300 border border-green-300 w-full sm:w-auto text-center"
+                >
+                  {t('common.browse_prizes')}
+                </Link>
               </div>
             </div>
           </section>
 
           {/* Stats Counters */}
-          <div className="bg-white border-b border-gray-200 py-4 shadow-sm relative z-10">
+          <div className="bg-white border-t border-gray-200 py-4 shadow-sm">
             <div className="container mx-auto px-4">
               <div className="flex flex-wrap justify-center items-center gap-6 md:gap-12">
                 <div className="text-center min-w-[80px]">
