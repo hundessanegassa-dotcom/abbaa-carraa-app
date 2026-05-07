@@ -17,7 +17,7 @@ export default function Register() {
   const [showAgreement, setShowAgreement] = useState(false);
 
   const isPoolCreator = (role) => ['agent', 'vendor', 'organization', 'admin'].includes(role);
-  const needsAgreement = (role) => true; // All roles need to accept agreement
+  const needsAgreement = (role) => true; // ALL roles need agreement
 
   const roles = [
     { id: 'individual', name: 'Individual', icon: '👤', description: 'Join existing pools and win amazing prizes', color: 'from-green-500 to-teal-500', isCreator: false },
@@ -106,50 +106,22 @@ export default function Register() {
     toast.success(`Welcome! You registered as ${selectedRole}.`);
     
     // Redirect to role-specific dashboard
-    const dashboardRoute = selectedRole === 'individual' ? '/dashboard' : `/${selectedRole}`;
-    router.push(dashboardRoute);
+    if (selectedRole === 'individual') {
+      router.push('/dashboard');
+    } else if (selectedRole === 'agent') {
+      router.push('/agent/dashboard');
+    } else if (selectedRole === 'vendor') {
+      router.push('/vendor/dashboard');
+    } else if (selectedRole === 'organization') {
+      router.push('/organization/dashboard');
+    } else {
+      router.push('/dashboard');
+    }
   };
 
   const handleVerified = () => {
-    // All roles must accept agreement
+    // ALL roles must accept agreement
     setShowAgreement(true);
-  };
-
-  const completeRegistration = async () => {
-    setLoading(true);
-    const formattedPhone = formatPhoneNumber(phone);
-    
-    const { data, error } = await supabase.auth.signUp({
-      phone: formattedPhone,
-      password: Math.random().toString(36).slice(-12),
-      options: {
-        data: {
-          full_name: fullName,
-          user_type: selectedRole,
-        }
-      }
-    });
-    
-    if (error) {
-      toast.error(error.message);
-      setLoading(false);
-      return;
-    }
-    
-    if (data.user) {
-      await supabase.from('profiles').upsert({
-        id: data.user.id,
-        full_name: fullName,
-        phone: formattedPhone,
-        user_type: selectedRole,
-        role: selectedRole === 'individual' ? 'user' : selectedRole,
-        created_at: new Date().toISOString(),
-      });
-    }
-    
-    toast.success(`Welcome! You registered as ${selectedRole}.`);
-    const dashboardRoute = selectedRole === 'individual' ? '/dashboard' : `/${selectedRole}`;
-    router.push(dashboardRoute);
   };
 
   const signInWithGoogle = async () => {
@@ -206,7 +178,6 @@ export default function Register() {
               ))}
             </div>
             
-            {/* Charity Info Banner */}
             <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl border border-red-200">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">💚</span>
