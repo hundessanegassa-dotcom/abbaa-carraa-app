@@ -28,14 +28,15 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
       
       if (!user) throw new Error('User not found');
 
-      // Update profile
+      // Update profile with agreement acceptance
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
           agreement_accepted: true,
           agreement_accepted_at: new Date().toISOString(),
           agreement_type: role,
-          can_create_pool: true
+          can_create_pool: role !== 'individual', // Only non-individual can create pools
+          role: role === 'individual' ? 'user' : role
         })
         .eq('id', user.id);
 
@@ -47,7 +48,7 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
         .insert({
           user_id: user.id,
           agreement_type: role,
-          version: '1.0',
+          version: '1.0.0',
           ip_address: '',
           user_agent: navigator.userAgent,
           signature_type: 'checkbox'
@@ -55,7 +56,7 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
 
       if (legalError) console.error('Legal acceptance error:', legalError);
 
-      toast.success('Agreement accepted! You can now create pools.');
+      toast.success(`Agreement accepted! Welcome as ${role}.`);
       if (onAccept) onAccept();
     } catch (error) {
       console.error('Acceptance error:', error);
@@ -66,11 +67,12 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
   };
 
   const handleDecline = () => {
-    toast.error('You must accept the agreement to create pools');
+    toast.error('You must accept the agreement to continue');
     if (onDecline) onDecline();
   };
 
   const roleTitles = {
+    individual: 'Individual Participant Agreement',
     agent: 'Agent Agreement',
     vendor: 'Vendor Agreement',
     organization: 'Organization Pool Creator Agreement',
@@ -78,6 +80,7 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
   };
 
   const roleColors = {
+    individual: 'from-green-500 to-teal-500',
     agent: 'from-yellow-500 to-orange-500',
     vendor: 'from-purple-500 to-pink-500',
     organization: 'from-blue-500 to-cyan-500',
@@ -93,11 +96,61 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
             <h2 className="text-2xl font-bold">{roleTitles[role]}</h2>
             <button onClick={handleDecline} className="text-white/80 hover:text-white">✕</button>
           </div>
-          <p className="text-sm opacity-90 mt-1">Last Updated: May 2026</p>
+          <p className="text-sm opacity-90 mt-1">Last Updated: May 2026 | Version 1.0.0</p>
         </div>
 
         {/* Agreement Content */}
         <div className="flex-1 overflow-y-auto p-6" onScroll={handleScroll}>
+          
+          {/* INDIVIDUAL AGREEMENT */}
+          {role === 'individual' && (
+            <div className="space-y-4 text-gray-700">
+              <h3 className="text-lg font-bold text-gray-900">1. PARTICIPATION TERMS</h3>
+              <div className="bg-green-50 p-4 rounded-lg">
+                <p className="font-semibold">How It Works:</p>
+                <ul className="list-disc list-inside text-sm mt-2 space-y-1">
+                  <li>Choose a prize pool you want to join</li>
+                  <li>Make a contribution (minimum varies by pool)</li>
+                  <li>Get your ticket number(s)</li>
+                  <li>Wait for the live draw</li>
+                  <li>Winner announced - you could win amazing prizes!</li>
+                </ul>
+              </div>
+
+              <h3 className="text-lg font-bold text-gray-900 mt-4">2. CONTRIBUTION & CHARITY</h3>
+              <ul className="list-disc list-inside text-sm space-y-1">
+                <li>💰 <strong>2% of every contribution</strong> supports Ethiopians fighting kidney & heart disease</li>
+                <li>Contributions are final and non-refundable</li>
+                <li>Minimum contribution amount set by pool creator</li>
+                <li>Maximum contribution per pool: 100,000 ETB</li>
+              </ul>
+
+              <h3 className="text-lg font-bold text-gray-900 mt-4">3. WINNER SELECTION</h3>
+              <ul className="list-disc list-inside text-sm space-y-1">
+                <li>Draws are conducted live and transparently</li>
+                <li>Winners selected using blockchain-verified random algorithm</li>
+                <li>Winner announced on platform and notified via SMS/Email</li>
+                <li>Prizes delivered within 14 days of draw</li>
+              </ul>
+
+              <h3 className="text-lg font-bold text-gray-900 mt-4">4. YOUR RIGHTS</h3>
+              <ul className="list-disc list-inside text-sm space-y-1">
+                <li>14-day cooling-off period for first-time contributors</li>
+                <li>Right to dispute resolution through platform mediation</li>
+                <li>View all your contributions and tickets in dashboard</li>
+                <li>Earn badges for participation and wins</li>
+              </ul>
+
+              <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                <p className="text-sm text-yellow-800">
+                  💚 <strong>Every Contribution Saves a Life:</strong> 2% of all contributions go directly to support 
+                  Ethiopians fighting kidney disease and heart disease. Together, we make a difference!
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* AGENT AGREEMENT */}
           {role === 'agent' && (
             <div className="space-y-4 text-gray-700">
               <h3 className="text-lg font-bold text-gray-900">1. COMMISSION STRUCTURE</h3>
@@ -149,9 +202,17 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
                 <li>Third: Federal Court of Ethiopia</li>
                 <li>Governing Law: Federal Democratic Republic of Ethiopia</li>
               </ul>
+
+              <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                <p className="text-sm text-green-800">
+                  💚 <strong>Charity Contribution:</strong> 2% of all platform income (including your commission) 
+                  supports kidney and heart disease treatment in Ethiopia.
+                </p>
+              </div>
             </div>
           )}
 
+          {/* VENDOR AGREEMENT */}
           {role === 'vendor' && (
             <div className="space-y-4 text-gray-700">
               <h3 className="text-lg font-bold text-gray-900">1. COMMISSION STRUCTURE</h3>
@@ -195,9 +256,16 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
                 <li>Must provide business license for large payouts</li>
                 <li>Compliance with Ethiopian Consumer Protection Law</li>
               </ul>
+
+              <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                <p className="text-sm text-green-800">
+                  💚 <strong>Charity Contribution:</strong> 2% of all platform income supports kidney and heart disease treatment.
+                </p>
+              </div>
             </div>
           )}
 
+          {/* ORGANIZATION AGREEMENT */}
           {role === 'organization' && (
             <div className="space-y-4 text-gray-700">
               <h3 className="text-lg font-bold text-gray-900">1. COMMISSION STRUCTURE</h3>
@@ -234,9 +302,16 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
                 <li>Cannot share member information with third parties</li>
                 <li>Data breaches must be reported within 24 hours</li>
               </ul>
+
+              <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                <p className="text-sm text-green-800">
+                  💚 <strong>Charity Contribution:</strong> 2% of all platform income supports kidney and heart disease treatment.
+                </p>
+              </div>
             </div>
           )}
 
+          {/* ADMIN AGREEMENT */}
           {role === 'admin' && (
             <div className="space-y-4 text-gray-700">
               <h3 className="text-lg font-bold text-gray-900">1. COMMISSION STRUCTURE</h3>
@@ -257,6 +332,7 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
                 <li>Create system-wide announcements</li>
                 <li>Access to all platform analytics</li>
                 <li>Ability to verify agents/vendors</li>
+                <li>Create featured pools that appear on homepage</li>
               </ul>
 
               <h3 className="text-lg font-bold text-gray-900 mt-4">3. OVERSIGHT RESPONSIBILITIES</h3>
@@ -265,10 +341,19 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
                 <li>Verify agent/vendor applications</li>
                 <li>Maintain platform integrity</li>
                 <li>Respond to user disputes</li>
+                <li>Manage charity funds (2% for health)</li>
               </ul>
+
+              <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                <p className="text-sm text-green-800">
+                  💚 <strong>Charity Oversight:</strong> Admin is responsible for ensuring 2% of all income 
+                  goes to the kidney and heart disease treatment fund.
+                </p>
+              </div>
             </div>
           )}
 
+          {/* Common Legal Notice */}
           <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
             <p className="text-sm text-yellow-800">
               ⚖️ <strong>Legal Notice:</strong> This agreement is governed by the laws of the Federal Democratic Republic of Ethiopia. 
