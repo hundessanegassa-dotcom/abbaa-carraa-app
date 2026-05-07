@@ -23,7 +23,7 @@ export default function AdminDashboard() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push('/login'); return; }
     setUser(user);
-    const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+    const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybesingle();
     setProfile(profile);
     if (profile?.role !== 'admin') { router.push('/dashboard'); return; }
     await loadData();
