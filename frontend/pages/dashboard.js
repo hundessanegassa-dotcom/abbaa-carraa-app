@@ -19,12 +19,25 @@ export default function Dashboard() {
       return;
     }
 
-    // Get user profile to determine role
-    const { data: profile } = await supabase
+    // Get user profile to determine role - FIXED: use maybeSingle instead of single
+    const { data: profile, error } = await supabase
       .from('profiles')
       .select('user_type, role')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();  // CHANGED: from .single() to .maybeSingle()
+
+    // If no profile exists, create one
+    if (!profile) {
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert([{ id: user.id, user_type: 'individual', role: 'user' }]);
+      
+      if (insertError) {
+        console.error('Error creating profile:', insertError);
+      }
+      setLoading(false);
+      return;
+    }
 
     // Redirect to role-specific dashboard
     if (profile?.user_type === 'agent' || profile?.role === 'agent') {
@@ -40,7 +53,6 @@ export default function Dashboard() {
       router.push('/admin/dashboard');
       return;
     } else {
-      // Individual user stays on dashboard
       setLoading(false);
     }
   }
