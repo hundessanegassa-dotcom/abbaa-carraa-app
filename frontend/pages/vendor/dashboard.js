@@ -20,7 +20,7 @@ export default function VendorDashboardPage() {
       .from('profiles')
       .select('user_type, role')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
     
     if (profile?.user_type !== 'vendor' && profile?.role !== 'vendor') {
       router.push('/dashboard');
