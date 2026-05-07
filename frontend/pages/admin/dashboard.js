@@ -10,7 +10,10 @@ export default function AdminDashboard() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
-  const [stats, setStats] = useState({ total_users: 0, total_agents: 0, total_vendors: 0, total_organizations: 0, total_pools: 0, active_pools: 0, total_volume: 0, charity_total: 0, lives_impacted: 0 });
+  const [stats, setStats] = useState({ 
+    total_users: 0, total_agents: 0, total_vendors: 0, total_organizations: 0, 
+    total_pools: 0, active_pools: 0, total_volume: 0, charity_total: 0, lives_impacted: 0 
+  });
   const [myPools, setMyPools] = useState([]);
   const [allPools, setAllPools] = useState([]);
   const [pendingAgents, setPendingAgents] = useState([]);
@@ -23,7 +26,13 @@ export default function AdminDashboard() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push('/login'); return; }
     setUser(user);
-    const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybesingle();
+    
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle();
+    
     setProfile(profile);
     if (profile?.role !== 'admin') { router.push('/dashboard'); return; }
     await loadData();
@@ -44,9 +53,17 @@ export default function AdminDashboard() {
     const total_volume = contributions?.reduce((sum, c) => sum + c.amount, 0) || 0;
     const charity_total = total_volume * 0.02;
     
-    setStats({ total_users: total_users || 0, total_agents: total_agents || 0, total_vendors: total_vendors || 0, 
-      total_organizations: total_organizations || 0, total_pools, active_pools, total_volume, charity_total, 
-      lives_impacted: Math.floor(charity_total / 100) });
+    setStats({ 
+      total_users: total_users || 0, 
+      total_agents: total_agents || 0, 
+      total_vendors: total_vendors || 0, 
+      total_organizations: total_organizations || 0, 
+      total_pools, 
+      active_pools, 
+      total_volume, 
+      charity_total, 
+      lives_impacted: Math.floor(charity_total / 100) 
+    });
     
     setMyPools(pools?.filter(p => p.created_by === user?.id) || []);
     setAllPools(pools || []);
@@ -115,7 +132,6 @@ export default function AdminDashboard() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
@@ -134,7 +150,6 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* My Pools Tab */}
         {activeTab === 'my-pools' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold">💰 My Personal Pools (20% Commission)</h2></div>
@@ -142,21 +157,19 @@ export default function AdminDashboard() {
               {myPools.length === 0 ? (
                 <div className="text-center py-8"><p className="text-gray-400">No pools created yet</p><button onClick={createPool} className="mt-2 text-red-600">Create your first pool →</button></div>
               ) : (
-                <table className="w-full"><thead className="bg-gray-50"><tr><th className="px-4 py-2 text-left">Prize</th><th className="px-4 py-2 text-left">Target</th><th className="px-4 py-2 text-left">Raised</th><th className="px-4 py-2 text-left">Your 20%</th><th className="px-4 py-2 text-left">Status</th><th className="px-4 py-2 text-left">Action</th></tr></thead><tbody>{myPools.map(pool => (<tr key={pool.id} className="border-b"><td className="px-4 py-2">{pool.prize_name}</td><td className="px-4 py-2">ETB {pool.target_amount?.toLocaleString()}</td><td className="px-4 py-2">ETB {pool.current_amount?.toLocaleString()}</td><td className="px-4 py-2 font-bold text-green-600">ETB {(pool.target_amount * 0.20)?.toLocaleString()}</td><td className="px-4 py-2"><span className={`px-2 py-1 rounded-full text-xs ${pool.status === 'active' ? 'bg-green-100' : 'bg-gray-100'}`}>{pool.status}</span></td><td className="px-4 py-2"><Link href={`/pools/${pool.id}`} className="text-red-600 text-sm">View</Link></td></tr>))}</tbody>｜｜DSML｜｜
+                <table className="w-full"><thead className="bg-gray-50"><tr><th className="px-4 py-2 text-left">Prize</th><th className="px-4 py-2 text-left">Target</th><th className="px-4 py-2 text-left">Raised</th><th className="px-4 py-2 text-left">Your 20%</th><th className="px-4 py-2 text-left">Status</th><th className="px-4 py-2 text-left">Action</th></tr></thead><tbody>{myPools.map(pool => (<tr key={pool.id} className="border-b"><td className="px-4 py-2">{pool.prize_name}</td><td className="px-4 py-2">ETB {pool.target_amount?.toLocaleString()}</td><td className="px-4 py-2">ETB {pool.current_amount?.toLocaleString()}</td><td className="px-4 py-2 font-bold text-green-600">ETB {(pool.target_amount * 0.20)?.toLocaleString()}</td><td className="px-4 py-2"><span className={`px-2 py-1 rounded-full text-xs ${pool.status === 'active' ? 'bg-green-100' : 'bg-gray-100'}`}>{pool.status}</span></td><td className="px-4 py-2"><Link href={`/pools/${pool.id}`} className="text-red-600 text-sm">View</Link></td></tr>))}</tbody></table>
               )}
               <button onClick={createPool} className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg">+ Create New Pool</button>
             </div>
           </div>
         )}
 
-        {/* All Pools Tab */}
         {activeTab === 'all-pools' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden p-4">
             <table className="w-full"><thead><tr><th className="text-left py-2">Prize</th><th className="text-left py-2">Created By</th><th className="text-left py-2">Target</th><th className="text-left py-2">Status</th><th className="text-left py-2">Action</th></tr></thead><tbody>{allPools.map(p => (<tr key={p.id} className="border-b"><td className="py-2">{p.prize_name}</td><td className="py-2">{p.created_by === user?.id ? 'Admin' : 'User'}</td><td className="py-2">ETB {p.target_amount?.toLocaleString()}</td><td className="py-2">{p.status}</td><td className="py-2"><Link href={`/pools/${p.id}`} className="text-red-600 text-sm">View</Link></td></tr>))}</tbody></table>
           </div>
         )}
 
-        {/* Approvals Tab */}
         {activeTab === 'approvals' && (
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-md p-4"><h3 className="font-bold mb-3">Pending Agents ({pendingAgents.length})</h3>{pendingAgents.map(a => (<div key={a.id} className="flex justify-between items-center border-b py-2"><span>{a.profiles?.full_name} ({a.business_name})</span><div><button onClick={() => verifyAgent(a.id, true)} className="bg-green-600 text-white px-2 py-1 rounded text-sm mr-2">Approve</button><button onClick={() => verifyAgent(a.id, false)} className="bg-red-600 text-white px-2 py-1 rounded text-sm">Reject</button></div></div>))}</div>
@@ -164,21 +177,18 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Users Tab */}
         {activeTab === 'users' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden p-4">
             <table className="w-full"><thead><tr><th className="text-left py-2">Name</th><th className="text-left py-2">Email</th><th className="text-left py-2">Role</th><th className="text-left py-2">Action</th></tr></thead><tbody>{users.map(u => (<tr key={u.id} className="border-b"><td className="py-2">{u.full_name}</td><td className="py-2">{u.email}</td><td className="py-2"><span className={`px-2 py-1 rounded-full text-xs ${u.role === 'admin' ? 'bg-red-100' : 'bg-gray-100'}`}>{u.role || 'user'}</span></td><td className="py-2">{u.role !== 'admin' && <select onChange={(e) => updateUserRole(u.id, e.target.value)} className="border rounded px-2 py-1 text-sm"><option value="user">User</option><option value="agent">Agent</option><option value="vendor">Vendor</option><option value="organization">Organization</option></select>}</td></tr>))}</tbody></table>
           </div>
         )}
 
-        {/* Featured Tab */}
         {activeTab === 'featured' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden p-4">
             <table className="w-full"><thead><tr><th className="text-left py-2">Prize</th><th className="text-left py-2">Featured</th><th className="text-left py-2">Action</th></tr></thead><tbody>{allPools.map(p => (<tr key={p.id} className="border-b"><td className="py-2">{p.prize_name}</td><td className="py-2">{p.is_featured ? '⭐ Featured' : 'Not featured'}</td><td className="py-2"><button onClick={() => toggleFeaturedPool(p.id, p.is_featured)} className={`px-3 py-1 rounded text-sm ${p.is_featured ? 'bg-gray-300' : 'bg-yellow-500 text-white'}`}>{p.is_featured ? 'Remove' : 'Feature'}</button></td></tr>))}</tbody></table>
           </div>
         )}
 
-        {/* Charity Tab */}
         {activeTab === 'charity' && (
           <div className="bg-gradient-to-r from-red-500 to-pink-500 rounded-xl p-8 text-white text-center">
             <h2 className="text-3xl font-bold mb-4">💚 2% for Health</h2>
