@@ -35,7 +35,7 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
           agreement_accepted: true,
           agreement_accepted_at: new Date().toISOString(),
           agreement_type: role,
-          can_create_pool: role !== 'individual', // Only non-individual can create pools
+          can_create_pool: role !== 'individual',
           role: role === 'individual' ? 'user' : role
         })
         .eq('id', user.id);
@@ -102,7 +102,7 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
         {/* Agreement Content */}
         <div className="flex-1 overflow-y-auto p-6" onScroll={handleScroll}>
           
-          {/* INDIVIDUAL AGREEMENT */}
+          {/* ============ INDIVIDUAL AGREEMENT ============ */}
           {role === 'individual' && (
             <div className="space-y-4 text-gray-700">
               <h3 className="text-lg font-bold text-gray-900">1. PARTICIPATION TERMS</h3>
@@ -150,7 +150,7 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
             </div>
           )}
 
-          {/* AGENT AGREEMENT */}
+          {/* ============ AGENT AGREEMENT ============ */}
           {role === 'agent' && (
             <div className="space-y-4 text-gray-700">
               <h3 className="text-lg font-bold text-gray-900">1. COMMISSION STRUCTURE</h3>
@@ -212,7 +212,7 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
             </div>
           )}
 
-          {/* VENDOR AGREEMENT */}
+          {/* ============ VENDOR AGREEMENT ============ */}
           {role === 'vendor' && (
             <div className="space-y-4 text-gray-700">
               <h3 className="text-lg font-bold text-gray-900">1. COMMISSION STRUCTURE</h3>
@@ -265,7 +265,7 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
             </div>
           )}
 
-          {/* ORGANIZATION AGREEMENT */}
+          {/* ============ ORGANIZATION AGREEMENT ============ */}
           {role === 'organization' && (
             <div className="space-y-4 text-gray-700">
               <h3 className="text-lg font-bold text-gray-900">1. COMMISSION STRUCTURE</h3>
@@ -311,7 +311,7 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
             </div>
           )}
 
-          {/* ADMIN AGREEMENT */}
+          {/* ============ ADMIN AGREEMENT ============ */}
           {role === 'admin' && (
             <div className="space-y-4 text-gray-700">
               <h3 className="text-lg font-bold text-gray-900">1. COMMISSION STRUCTURE</h3>
