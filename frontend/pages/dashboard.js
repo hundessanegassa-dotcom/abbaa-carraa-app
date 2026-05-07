@@ -19,18 +19,18 @@ export default function Dashboard() {
       return;
     }
 
-    // Get user profile to determine role - FIXED: use maybeSingle instead of single
+    // Get user profile to determine role
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('user_type, role')
       .eq('id', user.id)
-      .maybeSingle();  // CHANGED: from .single() to .maybeSingle()
+      .maybeSingle();
 
     // If no profile exists, create one
     if (!profile) {
       const { error: insertError } = await supabase
         .from('profiles')
-        .insert([{ id: user.id, user_type: 'individual', role: 'user' }]);
+        .insert([{ id: user.id, user_type: 'individual', role: 'user', full_name: user.email?.split('@')[0] || 'User' }]);
       
       if (insertError) {
         console.error('Error creating profile:', insertError);
