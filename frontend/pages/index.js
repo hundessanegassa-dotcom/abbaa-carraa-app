@@ -1,3 +1,4 @@
+// Trigger redeploy - May 7 2026
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
