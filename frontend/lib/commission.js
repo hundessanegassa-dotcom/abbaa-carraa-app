@@ -1,5 +1,5 @@
 export function calculateCommission(targetAmount, isAdmin = false) {
-  const commissionRate = 0.20; // 20% total commission
+  const commissionRate = isAdmin ? 0.20 : 0.20; // 20% total commission
   const totalCommission = targetAmount * commissionRate;
   
   if (isAdmin) {
@@ -7,7 +7,7 @@ export function calculateCommission(targetAmount, isAdmin = false) {
     return {
       targetAmount: targetAmount,
       totalCommission: totalCommission,
-      creatorCommission: totalCommission,
+      creatorCommission: totalCommission, // 100% of commission
       platformCommission: 0,
       totalCollection: targetAmount + totalCommission,
       creatorRate: 20,
@@ -18,8 +18,8 @@ export function calculateCommission(targetAmount, isAdmin = false) {
     return {
       targetAmount: targetAmount,
       totalCommission: totalCommission,
-      creatorCommission: targetAmount * 0.10,
-      platformCommission: targetAmount * 0.10,
+      creatorCommission: targetAmount * 0.10, // 10% of target
+      platformCommission: targetAmount * 0.10, // 10% of target
       totalCollection: targetAmount + totalCommission,
       creatorRate: 10,
       platformRate: 10
