@@ -20,7 +20,7 @@ export default function AgentDashboardPage() {
       .from('profiles')
       .select('user_type, role')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
     
     if (profile?.user_type !== 'agent' && profile?.role !== 'agent') {
       router.push('/dashboard');
