@@ -10,9 +10,9 @@ export default function AdminDashboard() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
-  const [stats, setStats] = useState({ 
-    total_users: 0, total_agents: 0, total_vendors: 0, total_organizations: 0, 
-    total_pools: 0, active_pools: 0, total_volume: 0, charity_total: 0, lives_impacted: 0 
+  const [stats, setStats] = useState({
+    total_users: 0, total_agents: 0, total_vendors: 0, total_organizations: 0,
+    total_pools: 0, active_pools: 0, total_volume: 0, charity_total: 0, lives_impacted: 0
   });
   const [myPools, setMyPools] = useState([]);
   const [allPools, setAllPools] = useState([]);
@@ -26,13 +26,11 @@ export default function AdminDashboard() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push('/login'); return; }
     setUser(user);
-    
     const { data: profile } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .maybeSingle();
-    
     setProfile(profile);
     if (profile?.role !== 'admin') { router.push('/dashboard'); return; }
     await loadData();
@@ -40,7 +38,6 @@ export default function AdminDashboard() {
   }
 
   async function loadData() {
-    // Get stats
     const { count: total_users } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
     const { count: total_agents } = await supabase.from('agents').select('*', { count: 'exact', head: true });
     const { count: total_vendors } = await supabase.from('vendors').select('*', { count: 'exact', head: true });
@@ -53,23 +50,18 @@ export default function AdminDashboard() {
     const total_volume = contributions?.reduce((sum, c) => sum + c.amount, 0) || 0;
     const charity_total = total_volume * 0.02;
     
-    setStats({ 
-      total_users: total_users || 0, 
-      total_agents: total_agents || 0, 
-      total_vendors: total_vendors || 0, 
-      total_organizations: total_organizations || 0, 
-      total_pools, 
-      active_pools, 
-      total_volume, 
-      charity_total, 
-      lives_impacted: Math.floor(charity_total / 100) 
+    setStats({
+      total_users: total_users || 0, total_agents: total_agents || 0,
+      total_vendors: total_vendors || 0, total_organizations: total_organizations || 0,
+      total_pools, active_pools, total_volume, charity_total,
+      lives_impacted: Math.floor(charity_total / 100)
     });
     
     setMyPools(pools?.filter(p => p.created_by === user?.id) || []);
     setAllPools(pools || []);
     
-    const { data: agents } = await supabase.from('agents').select('*, profiles(full_name, email)').eq('verified', false);
-    const { data: vendors } = await supabase.from('vendors').select('*, profiles(full_name, email)').eq('verified', false);
+    const { data: agents } = await supabase.from('agents').select('*, profiles!user_id(full_name, email)').eq('verified', false);
+    const { data: vendors } = await supabase.from('vendors').select('*, profiles!user_id(full_name, email)').eq('verified', false);
     setPendingAgents(agents || []);
     setPendingVendors(vendors || []);
     
@@ -166,7 +158,7 @@ export default function AdminDashboard() {
 
         {activeTab === 'all-pools' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden p-4">
-            <table className="w-full"><thead><tr><th className="text-left py-2">Prize</th><th className="text-left py-2">Created By</th><th className="text-left py-2">Target</th><th className="text-left py-2">Status</th><th className="text-left py-2">Action</th></tr></thead><tbody>{allPools.map(p => (<tr key={p.id} className="border-b"><td className="py-2">{p.prize_name}</td><td className="py-2">{p.created_by === user?.id ? 'Admin' : 'User'}</td><td className="py-2">ETB {p.target_amount?.toLocaleString()}</td><td className="py-2">{p.status}</td><td className="py-2"><Link href={`/pools/${p.id}`} className="text-red-600 text-sm">View</Link></td></tr>))}</tbody></table>
+            <table className="w-full"><thead><tr><th className="text-left py-2">Prize</th><th className="text-left py-2">Created By</th><th className="text-left py-2">Target</th><th className="text-left py-2">Status</th><th className="text-left py-2">Action</th></tr></thead><tbody>{allPools.map(p => (<tr key={p.id} className="border-b"><td className="py-2">{p.prize_name}</td><td className="py-2">{p.created_by === user?.id ? 'Admin' : 'User'}</td><td className="py-2">ETB {p.target_amount?.toLocaleString()}</td><td className="py-2">{p.status}</td><td className="py-2"><Link href={`/pools/${p.id}`} className="text-red-600 text-sm">View</Link></td></table>))}</tbody></td>
           </div>
         )}
 
@@ -185,7 +177,7 @@ export default function AdminDashboard() {
 
         {activeTab === 'featured' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden p-4">
-            <table className="w-full"><thead><tr><th className="text-left py-2">Prize</th><th className="text-left py-2">Featured</th><th className="text-left py-2">Action</th></tr></thead><tbody>{allPools.map(p => (<tr key={p.id} className="border-b"><td className="py-2">{p.prize_name}</td><td className="py-2">{p.is_featured ? '⭐ Featured' : 'Not featured'}</td><td className="py-2"><button onClick={() => toggleFeaturedPool(p.id, p.is_featured)} className={`px-3 py-1 rounded text-sm ${p.is_featured ? 'bg-gray-300' : 'bg-yellow-500 text-white'}`}>{p.is_featured ? 'Remove' : 'Feature'}</button></td></tr>))}</tbody></table>
+            <table className="w-full"><thead></tr><th className="text-left py-2">Prize</th><th className="text-left py-2">Featured</th><th className="text-left py-2">Action</th></tr></thead><tbody>{allPools.map(p => (<tr key={p.id} className="border-b"><td className="py-2">{p.prize_name}</td><td className="py-2">{p.is_featured ? '⭐ Featured' : 'Not featured'}</td><td className="py-2"><button onClick={() => toggleFeaturedPool(p.id, p.is_featured)} className={`px-3 py-1 rounded text-sm ${p.is_featured ? 'bg-gray-300' : 'bg-yellow-500 text-white'}`}>{p.is_featured ? 'Remove' : 'Feature'}</button></td></td>))}</tbody>\\amat
           </div>
         )}
 
