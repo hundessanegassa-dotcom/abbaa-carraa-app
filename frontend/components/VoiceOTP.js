@@ -1,232 +1,163 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
-export default function VoiceOTP({ phone, onVerified, onBack, isLogin = false }) {
+export default function VoiceOTP({ phone, onVerified, onBack }) {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
-  const [countdown, setCountdown] = useState(0);
-  const [channel, setChannel] = useState('sms');
-  const [calling, setCalling] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [canResend, setCanResend] = useState(false);
+  const inputRef = useRef(null);
 
-  const formatPhoneNumber = (value) => {
-    let cleaned = value.replace(/\D/g, '');
-    if (cleaned.startsWith('0')) {
-      cleaned = '251' + cleaned.substring(1);
+  useEffect(() => {
+    startTimer();
+    requestOtp();
+    // Focus on OTP input
+    if (inputRef.current) {
+      inputRef.current.focus();
     }
-    if (!cleaned.startsWith('251')) {
-      cleaned = '251' + cleaned;
+  }, []);
+
+  // Auto-detect OTP from SMS (works on mobile)
+  useEffect(() => {
+    if ('OTPCredential' in window) {
+      const abortController = new AbortController();
+      
+      const getOtp = async () => {
+        try {
+          const content = await navigator.credentials.get({
+            otp: { transport: ['sms'] },
+            signal: abortController.signal
+          });
+          if (content?.code) {
+            setOtp(content.code);
+            // Auto-submit if OTP detected
+            setTimeout(() => {
+              handleVerify(content.code);
+            }, 500);
+          }
+        } catch (err) {
+          console.log('OTP detection not supported or failed:', err);
+        }
+      };
+      
+      getOtp();
+      
+      return () => abortController.abort();
     }
-    return cleaned;
+  }, []);
+
+  const startTimer = () => {
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setCanResend(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
   };
 
-  const sendOTP = async (selectedChannel) => {
+  const requestOtp = async () => {
     setLoading(true);
-    setChannel(selectedChannel);
-    
-    const formattedPhone = formatPhoneNumber(phone);
-    
-    if (selectedChannel === 'call') {
-      setCalling(true);
-    }
-    
     try {
-      const response = await fetch('/api/auth/send-voice-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          phone: formattedPhone, 
-          channel: selectedChannel 
-        }),
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: `+251${phone}`,
       });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        if (data.isTestMode && data.testOTP) {
-          toast.success(`Test OTP: ${data.testOTP}`, { duration: 10000 });
-        }
-        
-        if (selectedChannel === 'call') {
-          toast.success('Voice call initiated! Answer to hear your code.');
-        } else {
-          toast.success('SMS sent with your verification code!');
-        }
-        
-        setCountdown(60);
-        const timer = setInterval(() => {
-          setCountdown((prev) => {
-            if (prev <= 1) {
-              clearInterval(timer);
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-      } else {
-        toast.error(data.error || `Failed to send ${selectedChannel === 'call' ? 'voice call' : 'SMS'}`);
-      }
+      if (error) throw error;
+      toast.success('OTP sent! Check your SMS or listen for voice call');
     } catch (error) {
-      console.error('Error sending OTP:', error);
-      toast.error('Network error. Please try again.');
+      toast.error(error.message);
     } finally {
       setLoading(false);
-      setCalling(false);
     }
   };
 
-  const verifyOTP = async () => {
-    if (!otp || otp.length < 6) {
-      toast.error('Please enter the 6-digit code');
+  const handleVerify = async (code = otp) => {
+    if (!code || code.length < 6) {
+      toast.error('Please enter 6-digit OTP');
       return;
     }
     
     setLoading(true);
-    const formattedPhone = formatPhoneNumber(phone);
-    
     try {
-      const response = await fetch('/api/auth/verify-voice-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: formattedPhone, code: otp }),
+      const { error } = await supabase.auth.verifyOtp({
+        phone: `+251${phone}`,
+        token: code,
+        type: 'sms',
       });
       
-      const data = await response.json();
-      
-      if (response.ok) {
-        toast.success('Phone verified successfully!');
-        if (onVerified) onVerified();
-      } else {
-        toast.error(data.error || 'Invalid verification code');
-      }
+      if (error) throw error;
+      toast.success('Phone verified successfully!');
+      onVerified();
     } catch (error) {
-      console.error('Verification error:', error);
-      toast.error('Verification failed. Please try again.');
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const resendOTP = () => {
-    if (countdown > 0) return;
-    sendOTP(channel);
+  const handleResend = () => {
+    if (!canResend) return;
+    setCanResend(false);
+    setTimeLeft(60);
+    requestOtp();
+    startTimer();
   };
 
-  useEffect(() => {
-    sendOTP('sms');
-  }, []);
-
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-          <span className="text-3xl">{channel === 'call' ? '📞' : '📱'}</span>
-        </div>
-        <h2 className="text-xl font-bold text-gray-800">
-          {channel === 'call' ? 'Answer Your Phone' : 'Verify Your Phone'}
-        </h2>
-        <p className="text-gray-500 text-sm mt-1">
-          {channel === 'call' 
-            ? 'We are calling you with your verification code'
-            : `Enter the 6-digit code sent to +251${phone.replace(/\D/g, '')}`}
+    <div className="text-center">
+      <div className="mb-4">
+        <div className="text-5xl mb-3">📞</div>
+        <h2 className="text-2xl font-bold text-gray-800">Verify Your Phone</h2>
+        <p className="text-gray-500 text-sm mt-2">
+          We sent a 6-digit code to <strong>+251{phone}</strong>
         </p>
-        {calling && (
-          <p className="text-green-600 text-xs mt-2 animate-pulse">
-            📞 Calling... Answer your phone!
-          </p>
-        )}
+        <p className="text-xs text-gray-400 mt-1">
+          📱 The code will auto-fill from your SMS (Android/iPhone)
+        </p>
       </div>
 
-      <div className="flex gap-3">
-        <button
-          type="button"
-          onClick={() => sendOTP('sms')}
-          disabled={loading || countdown > 0}
-          className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2 ${
-            channel === 'sms'
-              ? 'bg-green-600 text-white shadow-md'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          }`}
-        >
-          <span className="text-lg">📱</span> SMS
-        </button>
-        <button
-          type="button"
-          onClick={() => sendOTP('call')}
-          disabled={loading || countdown > 0}
-          className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2 ${
-            channel === 'call'
-              ? 'bg-green-600 text-white shadow-md'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          }`}
-        >
-          <span className="text-lg">📞</span> Voice Call
-        </button>
-      </div>
-
-      <div>
-        <label className="block text-gray-700 mb-2 text-sm">
-          {channel === 'call' ? 'Enter the code you heard' : 'Enter Verification Code'}
-        </label>
+      <div className="mb-6">
         <input
+          ref={inputRef}
           type="text"
-          required
+          maxLength="6"
+          placeholder="Enter 6-digit code"
           value={otp}
-          onChange={(e) => setOtp(e.target.value)}
-          className="w-full px-4 py-3 border border-gray-300 rounded-xl text-center text-2xl tracking-widest focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          placeholder="000000"
-          maxLength={6}
-          autoFocus
+          onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+          className="w-full text-center text-2xl tracking-widest px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+          autoComplete="one-time-code"
         />
       </div>
 
       <button
-        onClick={verifyOTP}
-        disabled={loading}
-        className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold text-lg hover:bg-green-700 transition disabled:bg-gray-400 flex items-center justify-center gap-2"
+        onClick={() => handleVerify()}
+        disabled={loading || otp.length < 6}
+        className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition disabled:bg-gray-400"
       >
-        {loading ? (
-          <>
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-            Verifying...
-          </>
-        ) : (
-          'Verify & Continue →'
-        )}
+        {loading ? 'Verifying...' : 'Verify & Continue →'}
       </button>
 
-      <div className="text-center">
+      <div className="mt-4 flex justify-between items-center">
+        <button onClick={onBack} className="text-gray-500 text-sm hover:text-gray-700">
+          ← Back
+        </button>
         <button
-          type="button"
-          onClick={resendOTP}
-          disabled={countdown > 0}
-          className={`text-green-600 text-sm transition ${countdown > 0 ? 'text-gray-400 cursor-not-allowed' : 'hover:text-green-700'}`}
+          onClick={handleResend}
+          disabled={!canResend}
+          className={`text-sm ${canResend ? 'text-green-600 hover:text-green-700' : 'text-gray-400'}`}
         >
-          {countdown > 0 ? `Resend code in ${countdown}s` : 'Resend Code'}
+          {canResend ? 'Resend Code' : `Resend in ${timeLeft}s`}
         </button>
       </div>
 
-      <div className="bg-blue-50 rounded-xl p-3">
-        <p className="text-xs text-blue-700 text-center">
-          {channel === 'call' ? (
-            <>📞 <strong>Voice Call:</strong> Answer the call, listen to the automated voice, and enter the 6-digit number you hear.</>
-          ) : (
-            <>📱 <strong>SMS:</strong> Check your phone for a text message with the 6-digit code.</>
-          )}
-        </p>
-      </div>
-
-      <div className="text-center">
-        <button
-          type="button"
-          onClick={onBack}
-          className="text-gray-500 hover:text-gray-600 text-sm transition"
-        >
-          ← Use different number
-        </button>
-      </div>
-
-      <div className="text-center text-xs text-gray-400">
-        <p>💚 2% of income supports kidney & heart disease patients in Ethiopia</p>
+      <div className="mt-4 text-xs text-gray-400">
+        <p>📞 Voice OTP call will arrive if SMS fails</p>
+        <p>🤖 Code can auto-fill from SMS on supported devices</p>
       </div>
     </div>
   );
