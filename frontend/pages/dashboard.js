@@ -15,7 +15,7 @@ export default function Dashboard() {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      router.push('/login');
+      router.replace('/login');
       return;
     }
 
@@ -26,11 +26,10 @@ export default function Dashboard() {
       .eq('id', user.id)
       .maybeSingle();
 
-    // Check if user is admin (BOTH conditions must be met)
+    // Check if user is admin
     const isAdmin = profile?.role === 'admin' || profile?.user_type === 'admin';
     
     if (isAdmin) {
-      // Verify admin is in admins table
       const { data: adminCheck } = await supabase
         .from('admins')
         .select('is_active')
@@ -39,7 +38,6 @@ export default function Dashboard() {
         .maybeSingle();
       
       if (adminCheck) {
-        // Use replace instead of push to avoid back button issues
         router.replace('/admin/dashboard');
         return;
       }
