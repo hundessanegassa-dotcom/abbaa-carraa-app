@@ -2,7 +2,11 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "git": {
-    "deploymentEnabled": true
-  }
+  "outputDirectory": ".next",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ]
 }
