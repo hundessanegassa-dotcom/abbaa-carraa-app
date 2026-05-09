@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import DashboardLayout from' ../DashboardLayout';
+import DashboardLayout from '../DashboardLayout';
 
 export default function OrganizationDashboard() {
   const router = useRouter();
