@@ -17,7 +17,6 @@ export default function Register() {
   const [showAgreement, setShowAgreement] = useState(false);
 
   const isPoolCreator = (role) => ['agent', 'vendor', 'organization', 'admin'].includes(role);
-  const needsAgreement = (role) => true; // ALL roles need agreement
 
   const roles = [
     { id: 'individual', name: 'Individual', icon: '👤', description: 'Join existing pools and win amazing prizes', color: 'from-green-500 to-teal-500', isCreator: false },
@@ -68,7 +67,8 @@ export default function Register() {
     }
     
     if (data.user) {
-      await supabase.from('profiles').upsert({
+      // Save profile with role
+      const { error: profileError } = await supabase.from('profiles').upsert({
         id: data.user.id,
         full_name: fullName,
         phone: formattedPhone,
@@ -81,6 +81,12 @@ export default function Register() {
         created_at: new Date().toISOString(),
       });
       
+      if (profileError) {
+        console.error('Profile save error:', profileError);
+        toast.error('Error saving profile');
+      }
+      
+      // Create role-specific record
       if (selectedRole === 'agent') {
         await supabase.from('agents').insert({
           user_id: data.user.id,
@@ -120,7 +126,7 @@ export default function Register() {
   };
 
   const handleVerified = () => {
-    // ALL roles must accept agreement
+    console.log('OTP verified, showing agreement for role:', selectedRole);
     setShowAgreement(true);
   };
 
@@ -136,12 +142,17 @@ export default function Register() {
     }
   };
 
+  // Show agreement modal if needed
   if (showAgreement) {
+    console.log('Rendering AgreementModal for role:', selectedRole);
     return (
       <AgreementModal
         role={selectedRole}
         onAccept={handleAgreementAccept}
-        onDecline={() => setShowAgreement(false)}
+        onDecline={() => {
+          console.log('Agreement declined');
+          setShowAgreement(false);
+        }}
       />
     );
   }
@@ -149,14 +160,14 @@ export default function Register() {
   if (step === 'role') {
     return (
       <>
-        <Head><title>Join Abbaa Carraa - Choose Your Role</title></Head>
+        <Head><title>Join - Choose Your Role</title></Head>
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4">
           <div className="max-w-4xl w-full">
             <div className="text-center mb-8">
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl">🎁</span>
               </div>
-              <h1 className="text-3xl font-bold text-gray-800">Join Abbaa Carraa</h1>
+              <h1 className="text-3xl font-bold text-gray-800">Join Digital ETA</h1>
               <p className="text-gray-500 mt-2">Choose how you want to participate</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -219,7 +230,7 @@ export default function Register() {
   if (step === 'phone') {
     return (
       <>
-        <Head><title>Register - Abbaa Carraa</title></Head>
+        <Head><title>Register - Digital ETA</title></Head>
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4">
           <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
             <div className="flex items-center gap-3 mb-6">
@@ -293,7 +304,7 @@ export default function Register() {
 
   return (
     <>
-      <Head><title>Verify Phone - Abbaa Carraa</title></Head>
+      <Head><title>Verify Phone - Digital ETA</title></Head>
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
           <VoiceOTP phone={phone} onVerified={handleVerified} onBack={() => setStep('phone')} />
