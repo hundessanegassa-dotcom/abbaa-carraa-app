@@ -2,11 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
-export default function VoiceOTP({ phone, onVerified, onBack }) {
+export default function VoiceOTP({ phone, onVerified, onBack, isLogin = false }) {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
   const [canResend, setCanResend] = useState(false);
+  const [isVoiceCall, setIsVoiceCall] = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -18,7 +19,7 @@ export default function VoiceOTP({ phone, onVerified, onBack }) {
     }
   }, []);
 
-  // Auto-detect OTP from SMS (works on mobile)
+  // Auto-detect OTP from SMS (works on mobile devices)
   useEffect(() => {
     if ('OTPCredential' in window) {
       const abortController = new AbortController();
@@ -32,6 +33,7 @@ export default function VoiceOTP({ phone, onVerified, onBack }) {
           if (content?.code) {
             setOtp(content.code);
             // Auto-submit if OTP detected
+            toast.success('OTP detected! Verifying...');
             setTimeout(() => {
               handleVerify(content.code);
             }, 500);
@@ -64,11 +66,15 @@ export default function VoiceOTP({ phone, onVerified, onBack }) {
   const requestOtp = async () => {
     setLoading(true);
     try {
+      const method = isVoiceCall ? 'phone' : 'sms';
       const { error } = await supabase.auth.signInWithOtp({
         phone: `+251${phone}`,
+        options: {
+          channel: method
+        }
       });
       if (error) throw error;
-      toast.success('OTP sent! Check your SMS or listen for voice call');
+      toast.success(`OTP sent via ${isVoiceCall ? 'voice call' : 'SMS'}!`);
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -91,7 +97,7 @@ export default function VoiceOTP({ phone, onVerified, onBack }) {
       });
       
       if (error) throw error;
-      toast.success('Phone verified successfully!');
+      toast.success(isLogin ? 'Logged in successfully!' : 'Phone verified successfully!');
       onVerified();
     } catch (error) {
       toast.error(error.message);
@@ -108,16 +114,20 @@ export default function VoiceOTP({ phone, onVerified, onBack }) {
     startTimer();
   };
 
+  const toggleVoiceCall = () => {
+    setIsVoiceCall(!isVoiceCall);
+  };
+
   return (
     <div className="text-center">
       <div className="mb-4">
         <div className="text-5xl mb-3">📞</div>
         <h2 className="text-2xl font-bold text-gray-800">Verify Your Phone</h2>
         <p className="text-gray-500 text-sm mt-2">
-          We sent a 6-digit code to <strong>+251{phone}</strong>
+          We sent a 6-digit code to <strong className="text-green-600">+251{phone}</strong>
         </p>
         <p className="text-xs text-gray-400 mt-1">
-          📱 The code will auto-fill from your SMS (Android/iPhone)
+          {isVoiceCall ? '📞 Check your voicemail for the code' : '📱 The code will auto-fill from your SMS'}
         </p>
       </div>
 
@@ -146,18 +156,28 @@ export default function VoiceOTP({ phone, onVerified, onBack }) {
         <button onClick={onBack} className="text-gray-500 text-sm hover:text-gray-700">
           ← Back
         </button>
-        <button
-          onClick={handleResend}
-          disabled={!canResend}
-          className={`text-sm ${canResend ? 'text-green-600 hover:text-green-700' : 'text-gray-400'}`}
-        >
-          {canResend ? 'Resend Code' : `Resend in ${timeLeft}s`}
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={toggleVoiceCall}
+            className="text-blue-500 text-sm hover:text-blue-600"
+          >
+            {isVoiceCall ? '📱 Use SMS' : '📞 Voice Call'}
+          </button>
+          <button
+            onClick={handleResend}
+            disabled={!canResend}
+            className={`text-sm ${canResend ? 'text-green-600 hover:text-green-700' : 'text-gray-400'}`}
+          >
+            {canResend ? 'Resend Code' : `Resend in ${timeLeft}s`}
+          </button>
+        </div>
       </div>
 
       <div className="mt-4 text-xs text-gray-400">
-        <p>📞 Voice OTP call will arrive if SMS fails</p>
-        <p>🤖 Code can auto-fill from SMS on supported devices</p>
+        <p className="mb-1">💡 Tips:</p>
+        <p>• The code auto-fills from SMS on Android/iPhone</p>
+        <p>• Switch to "Voice Call" if you didn't receive SMS</p>
+        <p>• Check your spam folder if using SMS</p>
       </div>
     </div>
   );
