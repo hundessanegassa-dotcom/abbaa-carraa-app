@@ -19,45 +19,41 @@ export default function Dashboard() {
       return;
     }
 
-    // Get user profile with role
-    const { data: profile, error } = await supabase
+    // Get user profile
+    const { data: profile } = await supabase
       .from('profiles')
-      .select('user_type, role, is_admin_verified')
+      .select('user_type, role')
       .eq('id', user.id)
       .maybeSingle();
 
-    // Security: Check if admin role is legitimate
+    // Check if user is admin (BOTH conditions must be met)
     const isAdmin = profile?.role === 'admin' || profile?.user_type === 'admin';
     
     if (isAdmin) {
-      // Additional security check for admin
+      // Verify admin is in admins table
       const { data: adminCheck } = await supabase
         .from('admins')
-        .select('id, is_active')
+        .select('is_active')
         .eq('user_id', user.id)
-        .single();
+        .eq('is_active', true)
+        .maybeSingle();
       
-      // Only allow access if admin is verified in admins table
-      if (adminCheck?.is_active === true) {
-        router.push('/admin/dashboard');
-        return;
-      } else {
-        // If someone tried to manually set role to admin without proper record
-        console.error('Unauthorized admin access attempt');
-        router.push('/dashboard');
+      if (adminCheck) {
+        // Use replace instead of push to avoid back button issues
+        router.replace('/admin/dashboard');
         return;
       }
     }
 
     // Redirect other roles
     if (profile?.user_type === 'agent') {
-      router.push('/agent/dashboard');
+      router.replace('/agent/dashboard');
       return;
     } else if (profile?.user_type === 'vendor') {
-      router.push('/vendor/dashboard');
+      router.replace('/vendor/dashboard');
       return;
     } else if (profile?.user_type === 'organization') {
-      router.push('/organization/dashboard');
+      router.replace('/organization/dashboard');
       return;
     } else {
       setLoading(false);
