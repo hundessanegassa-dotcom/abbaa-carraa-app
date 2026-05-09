@@ -34,74 +34,63 @@ export default function AdminDashboard() {
   }, []);
 
   async function checkAdminAccess() {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-    
-    setUser(user);
-    
-    // Get profile
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
-    
-    setProfile(profile);
-    
-    // SECURITY: Verify admin status from admins table
-    const { data: adminRecord, error: adminError } = await supabase
-      .from('admins')
-      .select('id, role, is_active, created_at')
-      .eq('user_id', user.id)
-      .eq('is_active', true)
-      .maybeSingle();
-    
-    // Log the access attempt for security
-    await supabase
-      .from('admin_logs')
-      .insert({
-        admin_id: adminRecord?.id,
-        action: adminRecord ? 'ADMIN_ACCESS_ATTEMPT' : 'UNAUTHORIZED_ACCESS_ATTEMPT',
-        details: { 
-          email: user.email,
-          ip: await getClientIp(),
-          timestamp: new Date().toISOString()
-        },
-        ip_address: await getClientIp()
-      })
-      .catch(console.error);
-    
-    if (!adminRecord || adminError) {
-      // Unauthorized access
-      console.error('Unauthorized admin access attempt from:', user.email);
-      toast.error('Access denied. Admin privileges required.');
-      router.push('/dashboard');
-      return;
-    }
-    
-    setAdminRecord(adminRecord);
-    
-    // Update last login
-    await supabase
-      .from('admins')
-      .update({ last_login: new Date().toISOString() })
-      .eq('id', adminRecord.id);
-    
-    // Fix profile inconsistency if needed
-    if (profile?.role !== 'admin') {
-      await supabase
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        console.error('No user found:', userError);
+        router.replace('/login');
+        return;
+      }
+      
+      setUser(user);
+      
+      // Get profile
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .update({ role: 'admin', user_type: 'admin' })
-        .eq('id', user.id);
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      if (profileError) {
+        console.error('Profile error:', profileError);
+      }
+      
+      setProfile(profile);
+      
+      // Check if user is admin in profiles table
+      const isProfileAdmin = profile?.role === 'admin' || profile?.user_type === 'admin';
+      
+      if (!isProfileAdmin) {
+        console.log('User is not admin by profile:', profile?.role, profile?.user_type);
+        router.replace('/dashboard');
+        return;
+      }
+      
+      // Verify admin in admins table
+      const { data: adminRecord, error: adminError } = await supabase
+        .from('admins')
+        .select('id, role, is_active')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .maybeSingle();
+      
+      if (adminError || !adminRecord) {
+        console.error('Not an admin by admins table:', adminError);
+        router.replace('/dashboard');
+        return;
+      }
+      
+      setAdminRecord(adminRecord);
+      setIsAuthorized(true);
+      await loadData();
+      
+    } catch (error) {
+      console.error('Admin check error:', error);
+      router.replace('/dashboard');
+    } finally {
+      setLoading(false);
     }
-    
-    setIsAuthorized(true);
-    await loadData();
-    setLoading(false);
   }
 
   async function getClientIp() {
@@ -115,47 +104,66 @@ export default function AdminDashboard() {
   }
 
   async function loadData() {
-    const { count: total_users } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
-    const { count: total_agents } = await supabase.from('agents').select('*', { count: 'exact', head: true });
-    const { count: total_vendors } = await supabase.from('vendors').select('*', { count: 'exact', head: true });
-    const { count: total_organizations } = await supabase.from('organizations').select('*', { count: 'exact', head: true });
-    const { data: pools } = await supabase.from('pools').select('*');
-    const { data: contributions } = await supabase.from('contributions').select('amount').eq('status', 'completed');
-    
-    const total_pools = pools?.length || 0;
-    const active_pools = pools?.filter(p => p.status === 'active')?.length || 0;
-    const total_volume = contributions?.reduce((sum, c) => sum + (c.amount || 0), 0) || 0;
-    const charity_total = total_volume * 0.02;
-    
-    setStats({
-      total_users: total_users || 0,
-      total_agents: total_agents || 0,
-      total_vendors: total_vendors || 0,
-      total_organizations: total_organizations || 0,
-      total_pools: total_pools,
-      active_pools: active_pools,
-      total_volume: total_volume,
-      charity_total: charity_total,
-      lives_impacted: Math.floor(charity_total / 100)
-    });
-    
-    setMyPools(pools?.filter(p => p.created_by === user?.id) || []);
-    setAllPools(pools || []);
-    
-    const { data: agents } = await supabase
-      .from('agents')
-      .select('*, profiles!user_id(full_name, email)')
-      .eq('verified', false);
-    setPendingAgents(agents || []);
-    
-    const { data: vendors } = await supabase
-      .from('vendors')
-      .select('*, profiles!user_id(full_name, email)')
-      .eq('verified', false);
-    setPendingVendors(vendors || []);
-    
-    const { data: usersData } = await supabase.from('profiles').select('*').limit(50);
-    setUsers(usersData || []);
+    try {
+      // Get counts
+      const { count: total_users } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+      const { count: total_agents } = await supabase.from('agents').select('*', { count: 'exact', head: true });
+      const { count: total_vendors } = await supabase.from('vendors').select('*', { count: 'exact', head: true });
+      const { count: total_organizations } = await supabase.from('organizations').select('*', { count: 'exact', head: true });
+      
+      // Get pools and contributions
+      const { data: pools } = await supabase.from('pools').select('*');
+      const { data: contributions } = await supabase.from('contributions').select('amount').eq('status', 'completed');
+      
+      const total_pools = pools?.length || 0;
+      const active_pools = pools?.filter(p => p.status === 'active')?.length || 0;
+      const total_volume = contributions?.reduce((sum, c) => sum + (c.amount || 0), 0) || 0;
+      const charity_total = total_volume * 0.02;
+      
+      setStats({
+        total_users: total_users || 0,
+        total_agents: total_agents || 0,
+        total_vendors: total_vendors || 0,
+        total_organizations: total_organizations || 0,
+        total_pools: total_pools,
+        active_pools: active_pools,
+        total_volume: total_volume,
+        charity_total: charity_total,
+        lives_impacted: Math.floor(charity_total / 100)
+      });
+      
+      setMyPools(pools?.filter(p => p.created_by === user?.id) || []);
+      setAllPools(pools || []);
+      
+      // Get pending approvals
+      const { data: agents } = await supabase
+        .from('agents')
+        .select('*, profiles!user_id(full_name, email)')
+        .eq('verified', false);
+      setPendingAgents(agents || []);
+      
+      const { data: vendors } = await supabase
+        .from('vendors')
+        .select('*, profiles!user_id(full_name, email)')
+        .eq('verified', false);
+      setPendingVendors(vendors || []);
+      
+      // Get recent users
+      const { data: usersData } = await supabase.from('profiles').select('*').limit(50);
+      setUsers(usersData || []);
+      
+      // Log successful admin access
+      await supabase.from('admin_logs').insert({
+        admin_id: adminRecord?.id,
+        action: 'ADMIN_ACCESS',
+        details: { page: 'admin_dashboard', timestamp: new Date().toISOString() },
+        ip_address: await getClientIp()
+      }).catch(console.error);
+      
+    } catch (error) {
+      console.error('Error loading data:', error);
+      toast.error('Failed to load dashboard data');
+    }
   }
 
   async function verifyAgent(agentId, verified) {
@@ -168,13 +176,12 @@ export default function AdminDashboard() {
     } else {
       toast.success(`Agent ${verified ? 'approved' : 'rejected'}`);
       
-      // Log admin action
       await supabase.from('admin_logs').insert({
         admin_id: adminRecord?.id,
         action: verified ? 'AGENT_APPROVED' : 'AGENT_REJECTED',
         details: { agent_id: agentId },
         ip_address: await getClientIp()
-      });
+      }).catch(console.error);
       
       loadData();
     }
@@ -195,7 +202,7 @@ export default function AdminDashboard() {
         action: verified ? 'VENDOR_APPROVED' : 'VENDOR_REJECTED',
         details: { vendor_id: vendorId },
         ip_address: await getClientIp()
-      });
+      }).catch(console.error);
       
       loadData();
     }
@@ -216,7 +223,7 @@ export default function AdminDashboard() {
         action: 'USER_ROLE_CHANGED',
         details: { user_id: userId, new_role: newRole },
         ip_address: await getClientIp()
-      });
+      }).catch(console.error);
       
       loadData();
     }
@@ -235,9 +242,9 @@ export default function AdminDashboard() {
       await supabase.from('admin_logs').insert({
         admin_id: adminRecord?.id,
         action: !isFeatured ? 'POOL_FEATURED' : 'POOL_UNFEATURED',
-        details: { pool_id: poolId, pool_name: allPools.find(p => p.id === poolId)?.prize_name },
+        details: { pool_id: poolId },
         ip_address: await getClientIp()
-      });
+      }).catch(console.error);
       
       loadData();
     }
@@ -249,8 +256,11 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">Verifying admin access...</p>
+        </div>
       </div>
     );
   }
@@ -261,7 +271,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header with Security Badge */}
+      {/* Header */}
       <div className="bg-gradient-to-r from-red-600 to-rose-600 text-white py-6">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center flex-wrap gap-4">
@@ -274,7 +284,7 @@ export default function AdminDashboard() {
             </div>
             <div className="flex gap-3">
               <div className="bg-red-700/50 rounded-lg px-3 py-1 text-xs">
-                <span>🛡️ Admin ID: {adminRecord?.role}</span>
+                <span>🛡️ {adminRecord?.role || 'Admin'}</span>
               </div>
               <button onClick={createPool} className="bg-white text-red-600 px-6 py-2 rounded-full font-semibold hover:bg-gray-100 transition">
                 + Create My Pool (20%)
@@ -410,7 +420,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* All Pools Tab - Keep existing */}
+        {/* All Pools Tab */}
         {activeTab === 'all-pools' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden p-6">
             <h2 className="font-bold text-gray-800 mb-4">🌊 All Platform Pools</h2>
@@ -429,7 +439,7 @@ export default function AdminDashboard() {
                   {allPools.map(pool => (
                     <tr key={pool.id} className="border-b hover:bg-gray-50">
                       <td className="px-4 py-3">{pool.prize_name}</td>
-                      <td className="px-4 py-3">{pool.created_by === user?.id ? 'Admin' : pool.created_by}</td>
+                      <td className="px-4 py-3">{pool.created_by === user?.id ? 'Admin' : 'User'}</td>
                       <td className="px-4 py-3">ETB {pool.target_amount?.toLocaleString()}</td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded-full text-xs ${pool.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
@@ -447,7 +457,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Approvals Tab - Keep existing */}
+        {/* Approvals Tab */}
         {activeTab === 'approvals' && (
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-md p-6">
@@ -495,7 +505,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Users Tab - Keep existing */}
+        {/* Users Tab */}
         {activeTab === 'users' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden p-6">
             <h2 className="font-bold text-gray-800 mb-4">👥 Platform Users</h2>
@@ -594,4 +604,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-    
