@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
@@ -15,6 +15,7 @@ export default function Register() {
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [showAgreement, setShowAgreement] = useState(false);
+  const [isGoogleFlow, setIsGoogleFlow] = useState(false); // Track if this is Google registration
 
   const isPoolCreator = (role) => ['agent', 'vendor', 'organization', 'admin'].includes(role);
 
@@ -32,6 +33,7 @@ export default function Register() {
     return cleaned;
   };
 
+  // Handle phone registration - after OTP verified, show agreement
   const handlePhoneSubmit = (e) => {
     e.preventDefault();
     if (!fullName.trim()) {
@@ -45,7 +47,8 @@ export default function Register() {
     setStep('otp');
   };
 
-  const handleAgreementAccept = async () => {
+  // Phone registration final step - after agreement accepted
+  const handlePhoneAgreementAccept = async () => {
     setLoading(true);
     const formattedPhone = formatPhoneNumber(phone);
     
@@ -67,8 +70,7 @@ export default function Register() {
     }
     
     if (data.user) {
-      // Save profile with role
-      const { error: profileError } = await supabase.from('profiles').upsert({
+      await supabase.from('profiles').upsert({
         id: data.user.id,
         full_name: fullName,
         phone: formattedPhone,
@@ -81,12 +83,6 @@ export default function Register() {
         created_at: new Date().toISOString(),
       });
       
-      if (profileError) {
-        console.error('Profile save error:', profileError);
-        toast.error('Error saving profile');
-      }
-      
-      // Create role-specific record
       if (selectedRole === 'agent') {
         await supabase.from('agents').insert({
           user_id: data.user.id,
@@ -114,22 +110,112 @@ export default function Register() {
     // Redirect to role-specific dashboard
     if (selectedRole === 'individual') {
       router.push('/dashboard');
-    } else if (selectedRole === 'agent') {
-      router.push('/agent/dashboard');
-    } else if (selectedRole === 'vendor') {
-      router.push('/vendor/dashboard');
-    } else if (selectedRole === 'organization') {
-      router.push('/organization/dashboard');
     } else {
-      router.push('/dashboard');
+      router.push(`/${selectedRole}/dashboard`);
     }
   };
 
+  // Voice OTP verified callback
   const handleVerified = () => {
     console.log('OTP verified, showing agreement for role:', selectedRole);
     setShowAgreement(true);
+    setIsGoogleFlow(false); // This is phone flow
   };
 
+  // ============ GOOGLE LOGIN FLOW ============
+  
+  // Step 1: User selects role and clicks Google button
+  const startGoogleRegistration = () => {
+    if (!selectedRole) {
+      toast.error('Please select a role first');
+      return;
+    }
+    setIsGoogleFlow(true);
+    setShowAgreement(true); // Show agreement FIRST
+  };
+
+  // Step 2: After agreement accepted, proceed with Google OAuth
+  const handleGoogleAgreementAccept = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/register/callback`,
+      },
+    });
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+    }
+    // No need to setLoading false here - redirect happens
+  };
+
+  // Step 3: After Google redirect, save the user profile with role
+  useEffect(() => {
+    const checkGoogleCallback = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user && isGoogleFlow && router.pathname.includes('/register/callback')) {
+        // Check if profile already exists
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+        
+        if (!existingProfile) {
+          // Save profile with selected role
+          await supabase.from('profiles').insert({
+            id: user.id,
+            full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
+            email: user.email,
+            user_type: selectedRole,
+            role: selectedRole === 'individual' ? 'user' : selectedRole,
+            agreement_accepted: true,
+            agreement_accepted_at: new Date().toISOString(),
+            agreement_type: selectedRole,
+            can_create_pool: isPoolCreator(selectedRole),
+            created_at: new Date().toISOString(),
+          });
+          
+          // Create role-specific record
+          if (selectedRole === 'agent') {
+            await supabase.from('agents').insert({
+              user_id: user.id,
+              business_name: user.user_metadata?.full_name || user.email?.split('@')[0],
+              verified: false,
+              commission_rate: 10,
+            });
+          } else if (selectedRole === 'vendor') {
+            await supabase.from('vendors').insert({
+              user_id: user.id,
+              business_name: user.user_metadata?.full_name || user.email?.split('@')[0],
+              verified: false,
+            });
+          } else if (selectedRole === 'organization') {
+            await supabase.from('organizations').insert({
+              user_id: user.id,
+              business_name: user.user_metadata?.full_name || user.email?.split('@')[0],
+              verified: false,
+            });
+          }
+        }
+        
+        toast.success(`Welcome! You registered as ${selectedRole}.`);
+        
+        // Redirect to role-specific dashboard
+        if (selectedRole === 'individual') {
+          router.replace('/dashboard');
+        } else {
+          router.replace(`/${selectedRole}/dashboard`);
+        }
+      }
+    };
+    
+    checkGoogleCallback();
+  }, [router, selectedRole, isGoogleFlow]);
+
+  // Regular Google sign-in (for existing users)
   const signInWithGoogle = async () => {
     setLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
@@ -142,25 +228,27 @@ export default function Register() {
     }
   };
 
-  // Show agreement modal if needed
+  // Agreement Modal - different handlers based on flow
   if (showAgreement) {
-    console.log('Rendering AgreementModal for role:', selectedRole);
+    const onAcceptHandler = isGoogleFlow ? handleGoogleAgreementAccept : handlePhoneAgreementAccept;
+    
     return (
       <AgreementModal
         role={selectedRole}
-        onAccept={handleAgreementAccept}
+        onAccept={onAcceptHandler}
         onDecline={() => {
-          console.log('Agreement declined');
           setShowAgreement(false);
+          setIsGoogleFlow(false);
         }}
       />
     );
   }
 
+  // ============ ROLE SELECTION SCREEN ============
   if (step === 'role') {
     return (
       <>
-        <Head><title>Join - Choose Your Role</title></Head>
+        <Head><title>Join Digital ETA - Choose Your Role</title></Head>
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4">
           <div className="max-w-4xl w-full">
             <div className="text-center mb-8">
@@ -170,12 +258,13 @@ export default function Register() {
               <h1 className="text-3xl font-bold text-gray-800">Join Digital ETA</h1>
               <p className="text-gray-500 mt-2">Choose how you want to participate</p>
             </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               {roles.map((role) => (
                 <button
                   key={role.id}
-                  onClick={() => { setSelectedRole(role.id); setStep('phone'); }}
-                  className={`bg-gradient-to-r ${role.color} rounded-xl p-6 text-white text-left hover:shadow-xl transition transform hover:-translate-y-1`}
+                  onClick={() => { setSelectedRole(role.id); }}
+                  className={`bg-gradient-to-r ${role.color} rounded-xl p-6 text-white text-left hover:shadow-xl transition transform hover:-translate-y-1 ${selectedRole === role.id ? 'ring-4 ring-white' : ''}`}
                 >
                   <div className="text-4xl mb-3">{role.icon}</div>
                   <h3 className="text-xl font-bold mb-2">{role.name}</h3>
@@ -189,15 +278,14 @@ export default function Register() {
               ))}
             </div>
             
-            <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl border border-red-200">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">💚</span>
-                <div>
-                  <p className="font-semibold text-red-700">2% for Health</p>
-                  <p className="text-xs text-gray-600">Every contribution helps Ethiopians fighting kidney & heart disease</p>
-                </div>
-              </div>
-            </div>
+            {/* Phone Registration Button */}
+            <button
+              onClick={() => setStep('phone')}
+              disabled={!selectedRole}
+              className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition disabled:bg-gray-400 mb-4"
+            >
+              Continue with Phone → {selectedRole && `(${roles.find(r => r.id === selectedRole)?.name})`}
+            </button>
             
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
@@ -208,7 +296,12 @@ export default function Register() {
               </div>
             </div>
             
-            <button onClick={signInWithGoogle} disabled={loading} className="w-full bg-white border border-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-3">
+            {/* Google Registration Button - Now with role + agreement */}
+            <button 
+              onClick={startGoogleRegistration} 
+              disabled={!selectedRole || loading} 
+              className="w-full bg-white border border-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-3 disabled:opacity-50"
+            >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -216,8 +309,10 @@ export default function Register() {
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
               </svg>
               Continue with Google
+              {selectedRole && <span className="text-xs">({roles.find(r => r.id === selectedRole)?.name})</span>}
             </button>
             
+            {/* Login Link for existing users */}
             <div className="mt-8 text-center">
               <p className="text-gray-500 text-sm">Already have an account? <Link href="/login" className="text-green-600 font-semibold">Sign In</Link></p>
             </div>
@@ -227,6 +322,7 @@ export default function Register() {
     );
   }
 
+  // ============ PHONE NUMBER INPUT SCREEN ============
   if (step === 'phone') {
     return (
       <>
@@ -281,27 +377,13 @@ export default function Register() {
                 </button>
               </form>
             </div>
-            
-            <div className="text-center">
-              <button 
-                onClick={signInWithGoogle} 
-                className="w-full bg-white border border-gray-300 text-gray-700 py-2 rounded-xl font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-2"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                </svg>
-                Continue with Google
-              </button>
-            </div>
           </div>
         </div>
       </>
     );
   }
 
+  // ============ VOICE OTP VERIFICATION SCREEN ============
   return (
     <>
       <Head><title>Verify Phone - Digital ETA</title></Head>
