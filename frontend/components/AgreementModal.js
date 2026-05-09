@@ -6,19 +6,10 @@ import toast from 'react-hot-toast';
 export default function AgreementModal({ role, onAccept, onDecline }) {
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [scrolledToBottom, setScrolledToBottom] = useState(false);
-
-  const handleScroll = (e) => {
-    const element = e.target;
-    const isBottom = Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight) < 10;
-    if (isBottom) {
-      setScrolledToBottom(true);
-    }
-  };
 
   const handleAccept = async () => {
-    if (!accepted || !scrolledToBottom) {
-      toast.error('Please read the entire agreement and check "I Agree"');
+    if (!accepted) {
+      toast.error('Please check "I Agree" to continue');
       return;
     }
 
@@ -99,8 +90,8 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
           <p className="text-sm opacity-90 mt-1">Last Updated: May 2026 | Version 1.0.0</p>
         </div>
 
-        {/* Agreement Content */}
-        <div className="flex-1 overflow-y-auto p-6" onScroll={handleScroll}>
+        {/* Agreement Content - Removed scroll requirement */}
+        <div className="flex-1 overflow-y-auto p-6">
           
           {/* ============ INDIVIDUAL AGREEMENT ============ */}
           {role === 'individual' && (
@@ -379,7 +370,7 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
           <div className="flex gap-3">
             <button
               onClick={handleAccept}
-              disabled={!accepted || !scrolledToBottom || loading}
+              disabled={!accepted || loading}
               className="flex-1 bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition disabled:bg-gray-400"
             >
               {loading ? 'Processing...' : '✓ I Agree & Continue'}
@@ -391,12 +382,6 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
               Decline
             </button>
           </div>
-
-          {!scrolledToBottom && (
-            <p className="text-xs text-gray-400 text-center mt-3">
-              📜 Please scroll to the bottom to read the full agreement
-            </p>
-          )}
         </div>
       </div>
     </div>
