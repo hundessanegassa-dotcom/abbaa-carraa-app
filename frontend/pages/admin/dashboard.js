@@ -9,6 +9,7 @@ export default function AdminDashboard() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState({
     total_users: 0,
@@ -26,19 +27,23 @@ export default function AdminDashboard() {
   const [pendingAgents, setPendingAgents] = useState([]);
   const [pendingVendors, setPendingVendors] = useState([]);
   const [users, setUsers] = useState([]);
+  const [adminRecord, setAdminRecord] = useState(null);
 
   useEffect(() => {
-    checkAdmin();
+    checkAdminAccess();
   }, []);
 
-  async function checkAdmin() {
+  async function checkAdminAccess() {
     const { data: { user } } = await supabase.auth.getUser();
+    
     if (!user) {
       router.push('/login');
       return;
     }
+    
     setUser(user);
     
+    // Get profile
     const { data: profile } = await supabase
       .from('profiles')
       .select('*')
@@ -47,13 +52,66 @@ export default function AdminDashboard() {
     
     setProfile(profile);
     
-    if (profile?.role !== 'admin') {
+    // SECURITY: Verify admin status from admins table
+    const { data: adminRecord, error: adminError } = await supabase
+      .from('admins')
+      .select('id, role, is_active, created_at')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .maybeSingle();
+    
+    // Log the access attempt for security
+    await supabase
+      .from('admin_logs')
+      .insert({
+        admin_id: adminRecord?.id,
+        action: adminRecord ? 'ADMIN_ACCESS_ATTEMPT' : 'UNAUTHORIZED_ACCESS_ATTEMPT',
+        details: { 
+          email: user.email,
+          ip: await getClientIp(),
+          timestamp: new Date().toISOString()
+        },
+        ip_address: await getClientIp()
+      })
+      .catch(console.error);
+    
+    if (!adminRecord || adminError) {
+      // Unauthorized access
+      console.error('Unauthorized admin access attempt from:', user.email);
+      toast.error('Access denied. Admin privileges required.');
       router.push('/dashboard');
       return;
     }
     
+    setAdminRecord(adminRecord);
+    
+    // Update last login
+    await supabase
+      .from('admins')
+      .update({ last_login: new Date().toISOString() })
+      .eq('id', adminRecord.id);
+    
+    // Fix profile inconsistency if needed
+    if (profile?.role !== 'admin') {
+      await supabase
+        .from('profiles')
+        .update({ role: 'admin', user_type: 'admin' })
+        .eq('id', user.id);
+    }
+    
+    setIsAuthorized(true);
     await loadData();
     setLoading(false);
+  }
+
+  async function getClientIp() {
+    try {
+      const res = await fetch('https://api.ipify.org?format=json');
+      const data = await res.json();
+      return data.ip;
+    } catch {
+      return 'unknown';
+    }
   }
 
   async function loadData() {
@@ -109,6 +167,15 @@ export default function AdminDashboard() {
       toast.error('Failed to update agent');
     } else {
       toast.success(`Agent ${verified ? 'approved' : 'rejected'}`);
+      
+      // Log admin action
+      await supabase.from('admin_logs').insert({
+        admin_id: adminRecord?.id,
+        action: verified ? 'AGENT_APPROVED' : 'AGENT_REJECTED',
+        details: { agent_id: agentId },
+        ip_address: await getClientIp()
+      });
+      
       loadData();
     }
   }
@@ -122,6 +189,14 @@ export default function AdminDashboard() {
       toast.error('Failed to update vendor');
     } else {
       toast.success(`Vendor ${verified ? 'approved' : 'rejected'}`);
+      
+      await supabase.from('admin_logs').insert({
+        admin_id: adminRecord?.id,
+        action: verified ? 'VENDOR_APPROVED' : 'VENDOR_REJECTED',
+        details: { vendor_id: vendorId },
+        ip_address: await getClientIp()
+      });
+      
       loadData();
     }
   }
@@ -135,6 +210,14 @@ export default function AdminDashboard() {
       toast.error('Failed to update user role');
     } else {
       toast.success('User role updated');
+      
+      await supabase.from('admin_logs').insert({
+        admin_id: adminRecord?.id,
+        action: 'USER_ROLE_CHANGED',
+        details: { user_id: userId, new_role: newRole },
+        ip_address: await getClientIp()
+      });
+      
       loadData();
     }
   }
@@ -148,6 +231,14 @@ export default function AdminDashboard() {
       toast.error('Failed to update featured status');
     } else {
       toast.success(`Pool ${!isFeatured ? 'featured' : 'removed'}`);
+      
+      await supabase.from('admin_logs').insert({
+        admin_id: adminRecord?.id,
+        action: !isFeatured ? 'POOL_FEATURED' : 'POOL_UNFEATURED',
+        details: { pool_id: poolId, pool_name: allPools.find(p => p.id === poolId)?.prize_name },
+        ip_address: await getClientIp()
+      });
+      
       loadData();
     }
   }
@@ -164,17 +255,27 @@ export default function AdminDashboard() {
     );
   }
 
+  if (!isAuthorized) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Header with Security Badge */}
       <div className="bg-gradient-to-r from-red-600 to-rose-600 text-white py-6">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center flex-wrap gap-4">
             <div>
-              <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+                <span className="bg-red-800 text-white text-xs px-3 py-1 rounded-full">🔒 Secure Area</span>
+              </div>
               <p className="text-red-100 mt-1">Welcome, {profile?.full_name || 'Admin'}</p>
             </div>
             <div className="flex gap-3">
+              <div className="bg-red-700/50 rounded-lg px-3 py-1 text-xs">
+                <span>🛡️ Admin ID: {adminRecord?.role}</span>
+              </div>
               <button onClick={createPool} className="bg-white text-red-600 px-6 py-2 rounded-full font-semibold hover:bg-gray-100 transition">
                 + Create My Pool (20%)
               </button>
@@ -202,6 +303,13 @@ export default function AdminDashboard() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
+        {/* Security Notice */}
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-6">
+          <p className="text-green-800 text-sm flex items-center gap-2">
+            <span>✅</span> You are logged in as an authorized administrator. All actions are logged for security.
+          </p>
+        </div>
+
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
@@ -302,7 +410,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* All Pools Tab */}
+        {/* All Pools Tab - Keep existing */}
         {activeTab === 'all-pools' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden p-6">
             <h2 className="font-bold text-gray-800 mb-4">🌊 All Platform Pools</h2>
@@ -339,7 +447,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Approvals Tab */}
+        {/* Approvals Tab - Keep existing */}
         {activeTab === 'approvals' && (
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-md p-6">
@@ -387,7 +495,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Users Tab */}
+        {/* Users Tab - Keep existing */}
         {activeTab === 'users' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden p-6">
             <h2 className="font-bold text-gray-800 mb-4">👥 Platform Users</h2>
@@ -445,24 +553,21 @@ export default function AdminDashboard() {
                   <tr>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Prize Name</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Created By</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Featured Status</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Target</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Featured</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {allPools.map(pool => (
                     <tr key={pool.id} className="border-b hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium">{pool.prize_name}</td>
-                      <td className="px-4 py-3">{pool.created_by === user?.id ? 'Admin' : pool.created_by}</td>
+                      <td className="px-4 py-3">{pool.prize_name}</td>
+                      <td className="px-4 py-3">{pool.created_by === user?.id ? 'Admin' : 'User'}</td>
+                      <td className="px-4 py-3">ETB {pool.target_amount?.toLocaleString()}</td>
+                      <td className="px-4 py-3"><span className={`px-2 py-1 rounded-full text-xs ${pool.status === 'active' ? 'bg-green-100' : 'bg-gray-100'}`}>{pool.status}</span></td>
                       <td className="px-4 py-3">{pool.is_featured ? '⭐ Featured' : 'Not featured'}</td>
-                      <td className="px-4 py-3">
-                        <button 
-                          onClick={() => toggleFeaturedPool(pool.id, pool.is_featured)} 
-                          className={`px-3 py-1 rounded text-sm ${pool.is_featured ? 'bg-gray-300 text-gray-700 hover:bg-gray-400' : 'bg-yellow-500 text-white hover:bg-yellow-600'}`}
-                        >
-                          {pool.is_featured ? 'Remove' : 'Feature'}
-                        </button>
-                      </td>
+                      <td className="px-4 py-3"><button onClick={() => toggleFeaturedPool(pool.id, pool.is_featured)} className={`px-3 py-1 rounded text-sm ${pool.is_featured ? 'bg-gray-300' : 'bg-yellow-500 text-white'}`}>{pool.is_featured ? 'Remove' : 'Feature'}</button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -474,24 +579,19 @@ export default function AdminDashboard() {
         {/* Charity Tab */}
         {activeTab === 'charity' && (
           <div className="bg-gradient-to-r from-red-500 to-pink-500 rounded-xl p-8 text-white text-center">
-            <div className="mb-6">
-              <span className="text-6xl">💚</span>
+            <h2 className="text-3xl font-bold mb-4">💚 2% for Health</h2>
+            <p className="text-xl">Total Raised for Charity: ETB {Math.floor(stats.charity_total).toLocaleString()}</p>
+            <p className="text-lg mt-2">Lives Impacted: {stats.lives_impacted}</p>
+            <p className="text-sm mt-4">Supporting Ethiopians fighting kidney disease and heart disease</p>
+            <div className="mt-6 bg-white/20 rounded-lg p-4 inline-block">
+              <p className="font-semibold">Commercial Bank of Ethiopia</p>
+              <p>Abbaa Carraa Health Foundation</p>
+              <p className="text-sm">Reference: "Health Support"</p>
             </div>
-            <h2 className="text-3xl font-bold mb-4">2% for Health</h2>
-            <p className="text-xl mb-2">Total Raised for Charity: <strong>ETB {Math.floor(stats.charity_total).toLocaleString()}</strong></p>
-            <p className="text-lg mb-6">Lives Impacted: <strong>{stats.lives_impacted}</strong></p>
-            <p className="text-base mb-4">Supporting Ethiopians fighting <strong>kidney disease</strong> and <strong>heart disease</strong></p>
-            <div className="mt-6 bg-white/20 rounded-lg p-4 inline-block text-left">
-              <p className="font-semibold mb-1">🏦 Direct Donation Information:</p>
-              <p className="text-sm">Commercial Bank of Ethiopia</p>
-              <p className="text-sm">Account Name: Abbaa Carraa Health Foundation</p>
-              <p className="text-sm font-mono">Account Number: 1000XXXXXX</p>
-              <p className="text-sm">Reference: "Health Support - [Your Name]"</p>
-            </div>
-            <p className="text-sm mt-6 opacity-80">💚 Every contribution saves a life</p>
           </div>
         )}
       </div>
     </div>
   );
 }
+    
