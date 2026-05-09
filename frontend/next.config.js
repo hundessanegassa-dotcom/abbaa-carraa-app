@@ -4,7 +4,9 @@ const withPWA = require('next-pwa')({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
+  // Remove font caching - this is causing the 404 error
   runtimeCaching: [
+    // Supabase API calls
     {
       urlPattern: /^https:\/\/ruqfgsnhvrckbvibpsyu\.supabase\.co\/rest\/v1\/pools.*/i,
       handler: 'StaleWhileRevalidate',
@@ -12,7 +14,7 @@ const withPWA = require('next-pwa')({
         cacheName: 'pools-cache',
         expiration: {
           maxEntries: 50,
-          maxAgeSeconds: 7 * 24 * 60 * 60 // 7 days
+          maxAgeSeconds: 7 * 24 * 60 * 60
         }
       }
     },
@@ -28,6 +30,7 @@ const withPWA = require('next-pwa')({
         }
       }
     },
+    // Images caching
     {
       urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
       handler: 'CacheFirst',
@@ -39,6 +42,7 @@ const withPWA = require('next-pwa')({
         }
       }
     },
+    // Next.js static files
     {
       urlPattern: /\/_next\/static\/.*/i,
       handler: 'CacheFirst',
@@ -49,18 +53,8 @@ const withPWA = require('next-pwa')({
           maxAgeSeconds: 30 * 24 * 60 * 60
         }
       }
-    },
-    {
-      urlPattern: /\/.*/i,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'pages-cache',
-        expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 24 * 60 * 60
-        }
-      }
     }
+    // REMOVED the font caching and generic page caching that cause issues
   ]
 });
 
@@ -79,6 +73,8 @@ const nextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
+  // Disable font optimization to prevent preload errors
+  optimizeFonts: false,
 };
 
 module.exports = withPWA(nextConfig);
