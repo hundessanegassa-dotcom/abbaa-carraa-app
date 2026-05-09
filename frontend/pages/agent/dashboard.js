@@ -22,7 +22,10 @@ export default function AgentDashboardPage() {
       .eq('id', user.id)
       .maybeSingle();
     
+    console.log('Agent dashboard access check:', profile);
+    
     if (profile?.user_type !== 'agent' && profile?.role !== 'agent') {
+      console.log('Not an agent, redirecting to dashboard');
       router.push('/dashboard');
     }
   }
