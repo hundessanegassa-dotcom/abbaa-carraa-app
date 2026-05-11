@@ -30,8 +30,11 @@ export default function Register() {
   const handleGoogleAgreementAccept = async () => {
     setLoading(true);
     
-    // Store the selected role for after Google login
+    // Store the selected role AND agreement acceptance for after Google login
     sessionStorage.setItem('pendingRole', selectedRole);
+    sessionStorage.setItem('agreementAccepted', 'true');
+    sessionStorage.setItem('agreementType', selectedRole);
+    sessionStorage.setItem('agreementAcceptedAt', new Date().toISOString());
     
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -44,7 +47,6 @@ export default function Register() {
       toast.error(error.message);
       setLoading(false);
     }
-    // No need to setLoading false - page redirects
   };
 
   if (showAgreement) {
