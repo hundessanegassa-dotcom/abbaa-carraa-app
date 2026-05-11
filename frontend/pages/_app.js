@@ -26,18 +26,15 @@ function MyApp({ Component, pageProps }) {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      setLoading(false);
     });
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
     
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1500);
-    
     return () => {
       subscription.unsubscribe();
-      clearTimeout(timer);
     };
   }, []);
 
@@ -58,13 +55,13 @@ function MyApp({ Component, pageProps }) {
             />
           </div>
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mt-4 sm:mt-6 mb-1 sm:mb-2">Abbaa Carraa Ethio</h1>
-          <p className="text-white/80 text-xs sm:text-sm md:text-base">{t('common.loading')}</p>
+          <p className="text-white/80 text-xs sm:text-sm md:text-base">{t('common.loading') || 'Loading...'}</p>
           <div className="mt-6 sm:mt-8 flex justify-center gap-2">
             <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-bounce"></div>
             <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
             <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
           </div>
-          <p className="text-white/60 text-[10px] sm:text-xs mt-6 sm:mt-8">{t('common.loading')}...</p>
+          <p className="text-white/60 text-[10px] sm:text-xs mt-6 sm:mt-8">{t('common.loading') || 'Loading...'}</p>
         </div>
       </div>
     );
@@ -78,7 +75,7 @@ function MyApp({ Component, pageProps }) {
         
         {/* Main Content */}
         <main className="flex-grow">
-          <Component {...pageProps} session={session} />
+          <Component {...pageProps} />
         </main>
         
         {/* Footer */}
