@@ -30,14 +30,14 @@ export default function AuthCallback() {
     // Check if profile already exists
     const { data: existingProfile } = await supabase
       .from('profiles')
-      .select('id')
+      .select('id, user_type, role')
       .eq('id', user.id)
       .maybeSingle();
 
-    let profile;
+    let userType = pendingRole;
     
     if (!existingProfile) {
-      // Create new profile with agreement acceptance
+      // Create new profile
       const { data: newProfile, error: insertError } = await supabase
         .from('profiles')
         .insert({
@@ -62,40 +62,48 @@ export default function AuthCallback() {
         return;
       }
       
-      profile = newProfile;
+      userType = newProfile.user_type;
       
-      // Create role-specific record
+      // Create role-specific record based on pendingRole
       if (pendingRole === 'agent') {
-        await supabase.from('agents').insert({
+        const { error: agentError } = await supabase.from('agents').insert({
           user_id: user.id,
           business_name: user.user_metadata?.full_name || user.email?.split('@')[0],
+          email: user.email,
           verified: false,
           commission_rate: 10,
+          created_at: new Date().toISOString()
         });
+        if (agentError) console.error('Agent creation error:', agentError);
+        else console.log('Agent record created successfully');
+        
       } else if (pendingRole === 'vendor') {
-        await supabase.from('vendors').insert({
+        const { error: vendorError } = await supabase.from('vendors').insert({
           user_id: user.id,
           business_name: user.user_metadata?.full_name || user.email?.split('@')[0],
+          email: user.email,
           verified: false,
+          created_at: new Date().toISOString()
         });
+        if (vendorError) console.error('Vendor creation error:', vendorError);
+        
       } else if (pendingRole === 'organization') {
-        await supabase.from('organizations').insert({
+        const { error: orgError } = await supabase.from('organizations').insert({
           user_id: user.id,
           business_name: user.user_metadata?.full_name || user.email?.split('@')[0],
+          email: user.email,
           verified: false,
+          created_at: new Date().toISOString()
         });
+        if (orgError) console.error('Organization creation error:', orgError);
       }
       
       toast.success(`Welcome! You registered as ${pendingRole}.`);
       
     } else {
-      // Existing user - just get profile
-      const { data: existing } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      profile = existing;
+      // Existing user - use their existing type
+      userType = existingProfile.user_type || existingProfile.role || pendingRole;
+      toast.success(`Welcome back, ${user.user_metadata?.full_name || user.email?.split('@')[0]}!`);
     }
     
     // Clear session storage
@@ -105,7 +113,7 @@ export default function AuthCallback() {
     sessionStorage.removeItem('agreementAcceptedAt');
     
     // Redirect based on role
-    const userType = profile?.user_type || pendingRole;
+    console.log('Redirecting user type:', userType);
     
     switch (userType) {
       case 'agent':
