@@ -4,13 +4,11 @@ import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import Head from 'next/head';
-import AgreementModal from '../components/AgreementModal';
 
 export default function Register() {
   const router = useRouter();
   const [selectedRole, setSelectedRole] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showAgreement, setShowAgreement] = useState(false);
 
   const roles = [
     { id: 'individual', name: 'Individual', icon: '👤', description: 'Join existing pools and win amazing prizes', color: 'from-green-500 to-teal-500' },
@@ -19,24 +17,15 @@ export default function Register() {
     { id: 'organization', name: 'Organization', icon: '🏢', description: 'Create private pools for your members', color: 'from-blue-500 to-cyan-500' }
   ];
 
-  // Start Google registration - show agreement first
   const startGoogleRegistration = () => {
     if (!selectedRole) {
       toast.error('Please select a role first');
       return;
     }
-    setShowAgreement(true);
-  };
-
-  // After agreement accepted, proceed with Google login
-  const handleAgreementAccept = async () => {
-    setLoading(true);
     
-    // Store the selected role for after Google login
+    setLoading(true);
+    // Store the selected role only - agreement will come after Google login
     sessionStorage.setItem('pendingRole', selectedRole);
-    sessionStorage.setItem('agreementAccepted', 'true');
-    sessionStorage.setItem('agreementType', selectedRole);
-    sessionStorage.setItem('agreementAcceptedAt', new Date().toISOString());
     
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -49,18 +38,7 @@ export default function Register() {
       toast.error(error.message);
       setLoading(false);
     }
-    // No need to setLoading false - page redirects
   };
-
-  if (showAgreement) {
-    return (
-      <AgreementModal
-        role={selectedRole}
-        onAccept={handleAgreementAccept}
-        onDecline={() => setShowAgreement(false)}
-      />
-    );
-  }
 
   return (
     <>
