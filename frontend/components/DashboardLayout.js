@@ -12,6 +12,10 @@ export default function DashboardLayout({ children, title, subtitle, icon, bgGra
     router.push('/');
   };
 
+  // Safe access to user properties
+  const userName = profile?.full_name || user?.email?.split('@')[0] || 'User';
+  const userInitial = userName?.[0]?.toUpperCase() || 'U';
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -26,7 +30,7 @@ export default function DashboardLayout({ children, title, subtitle, icon, bgGra
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className="hidden md:inline text-sm">Welcome, {profile?.full_name || user?.email?.split('@')[0] || 'User'}</span>
+              <span className="hidden md:inline text-sm">Welcome, {userName}</span>
               <button onClick={handleLogout} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-full text-sm transition">
                 Logout
               </button>
@@ -43,7 +47,7 @@ export default function DashboardLayout({ children, title, subtitle, icon, bgGra
         <div className="md:hidden bg-white border-b shadow-lg p-4 space-y-2">
           <Link href="/dashboard" className="block py-2 text-gray-700">📊 Dashboard</Link>
           <Link href="/listings" className="block py-2 text-gray-700">🎁 Browse Prizes</Link>
-          <Link href="/profile" className="block py-2 text-gray-700">👤 My Profile</Link>
+          <Link href="/profile" className="block py-2 text-gray-700">👤 Profile</Link>
           <button onClick={handleLogout} className="block w-full text-left py-2 text-red-600">🚪 Logout</button>
         </div>
       )}
