@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import DashboardLayout from '../components/DashboardLayout';
@@ -11,6 +12,7 @@ export default function SettingsPage() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState({
     language: 'am',
     email_notifications: true,
@@ -31,17 +33,15 @@ export default function SettingsPage() {
       return;
     }
     setUser(user);
-    await fetchProfile(user.id);
-    await fetchSettings(user.id);
-  }
-
-  async function fetchProfile(userId) {
-    const { data } = await supabase
+    
+    const { data: profile } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', userId)
+      .eq('id', user.id)
       .maybeSingle();
-    setProfile(data);
+    setProfile(profile);
+    
+    await fetchSettings(user.id);
   }
 
   async function fetchSettings(userId) {
@@ -65,6 +65,7 @@ export default function SettingsPage() {
   }
 
   async function saveSettings() {
+    setSaving(true);
     const { error } = await supabase
       .from('user_settings')
       .upsert({
@@ -84,6 +85,7 @@ export default function SettingsPage() {
       toast.success('Settings saved!');
       i18n.changeLanguage(settings.language);
     }
+    setSaving(false);
   }
 
   const handleToggle = (key) => {
@@ -93,7 +95,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600"></div>
       </div>
     );
   }
@@ -107,6 +109,16 @@ export default function SettingsPage() {
       user={user}
       profile={profile}
     >
+      {/* Back to Dashboard */}
+      <div className="mb-4 flex justify-between items-center">
+        <Link href="/dashboard" className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+          ← Back to Dashboard
+        </Link>
+        <Link href="/notifications" className="text-sm text-blue-600 hover:underline">
+          📋 View notifications →
+        </Link>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Language Settings */}
         <div className="bg-white rounded-2xl shadow-md p-6">
@@ -184,6 +196,15 @@ export default function SettingsPage() {
                 <div className={`w-5 h-5 rounded-full bg-white transform transition ${settings.whatsapp_notifications ? 'translate-x-6' : 'translate-x-1'}`}></div>
               </button>
             </label>
+            <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div><span className="font-medium">📨 Telegram Notifications</span><p className="text-xs text-gray-500">Get updates on Telegram</p></div>
+              <button
+                onClick={() => handleToggle('telegram_notifications')}
+                className={`w-12 h-6 rounded-full transition ${settings.telegram_notifications ? 'bg-green-600' : 'bg-gray-300'}`}
+              >
+                <div className={`w-5 h-5 rounded-full bg-white transform transition ${settings.telegram_notifications ? 'translate-x-6' : 'translate-x-1'}`}></div>
+              </button>
+            </label>
           </div>
         </div>
 
@@ -193,20 +214,14 @@ export default function SettingsPage() {
             <span>🔒</span> Privacy & Security
           </h3>
           <div className="space-y-3">
-            <button
-              onClick={() => router.push('/privacy')}
-              className="w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
-            >
+            <Link href="/privacy" className="block w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
               <span className="font-medium">📜 Privacy Policy</span>
               <p className="text-xs text-gray-500">Read how we protect your data</p>
-            </button>
-            <button
-              onClick={() => router.push('/terms')}
-              className="w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
-            >
+            </Link>
+            <Link href="/terms" className="block w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
               <span className="font-medium">⚖️ Terms & Conditions</span>
               <p className="text-xs text-gray-500">Review our terms of service</p>
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -219,7 +234,7 @@ export default function SettingsPage() {
             <button
               onClick={async () => {
                 if (confirm('Download your data?')) {
-                  toast.success('Data export requested');
+                  toast.success('Data export requested. You will receive an email shortly.');
                 }
               }}
               className="w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
@@ -229,8 +244,8 @@ export default function SettingsPage() {
             </button>
             <button
               onClick={async () => {
-                if (confirm('Are you sure you want to delete your account? This cannot be undone.')) {
-                  toast.error('Contact support to delete account');
+                if (confirm('Are you sure you want to delete your account? This cannot be undone. All your data will be permanently removed.')) {
+                  toast.error('Contact support to delete account: support@abbaacarraa.com');
                 }
               }}
               className="w-full text-left p-3 bg-red-50 rounded-lg hover:bg-red-100 transition"
@@ -246,9 +261,10 @@ export default function SettingsPage() {
       <div className="mt-6">
         <button
           onClick={saveSettings}
-          className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition"
+          disabled={saving}
+          className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition disabled:opacity-50"
         >
-          Save All Settings
+          {saving ? 'Saving...' : 'Save All Settings'}
         </button>
       </div>
     </DashboardLayout>
