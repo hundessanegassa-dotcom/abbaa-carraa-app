@@ -6,7 +6,6 @@ import Link from 'next/link';
 import Head from 'next/head';
 
 export default function Register() {
-  const router = useRouter();
   const [selectedRole, setSelectedRole] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -24,7 +23,6 @@ export default function Register() {
     }
     
     setLoading(true);
-    // Store the selected role only - agreement will come after Google login
     sessionStorage.setItem('pendingRole', selectedRole);
     
     const { error } = await supabase.auth.signInWithOAuth({
