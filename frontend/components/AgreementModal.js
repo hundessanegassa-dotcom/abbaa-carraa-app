@@ -7,6 +7,36 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Download agreement as PDF/txt
+  const downloadAgreement = () => {
+    try {
+      // Get the agreement content element
+      const agreementElement = document.querySelector('.agreement-content');
+      if (!agreementElement) {
+        toast.error('Unable to download agreement');
+        return;
+      }
+      
+      // Get the text content
+      const agreementText = agreementElement.innerText;
+      
+      // Create a blob and download
+      const blob = new Blob([agreementText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${roleTitles[role].replace(/\s/g, '_')}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('Agreement downloaded successfully!');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download agreement');
+    }
+  };
+
   const handleAccept = async () => {
     if (!accepted) {
       toast.error('Please check "I Agree" to continue');
@@ -17,9 +47,15 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user) throw new Error('User not found');
+      // If user is not logged in (Google flow), just call onAccept without saving
+      if (!user) {
+        toast.success('Agreement accepted! Please continue with Google login.');
+        if (onAccept) onAccept();
+        setLoading(false);
+        return;
+      }
 
-      // Update profile with agreement acceptance
+      // User is logged in (phone flow) - save agreement to database
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -63,11 +99,11 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
   };
 
   const roleTitles = {
-    individual: 'Individual Participant Agreement',
-    agent: 'Agent Agreement',
-    vendor: 'Vendor Agreement',
-    organization: 'Organization Pool Creator Agreement',
-    admin: 'Admin Agreement'
+    individual: 'Individual_Participant_Agreement',
+    agent: 'Agent_Agreement',
+    vendor: 'Vendor_Agreement',
+    organization: 'Organization_Pool_Creator_Agreement',
+    admin: 'Admin_Agreement'
   };
 
   const roleColors = {
@@ -78,25 +114,45 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
     admin: 'from-red-500 to-rose-500'
   };
 
+  const roleDisplayTitles = {
+    individual: 'Individual Participant Agreement',
+    agent: 'Agent Agreement',
+    vendor: 'Vendor Agreement',
+    organization: 'Organization Pool Creator Agreement',
+    admin: 'Admin Agreement'
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col">
-        {/* Header */}
+        {/* Header with Download Button */}
         <div className={`bg-gradient-to-r ${roleColors[role]} p-6 rounded-t-2xl text-white`}>
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">{roleTitles[role]}</h2>
-            <button onClick={handleDecline} className="text-white/80 hover:text-white">✕</button>
+            <h2 className="text-2xl font-bold">{roleDisplayTitles[role]}</h2>
+            <div className="flex gap-3">
+              <button 
+                onClick={downloadAgreement}
+                className="text-white/80 hover:text-white flex items-center gap-1 text-sm"
+                title="Download Agreement"
+              >
+                📄 Download
+              </button>
+              <button onClick={handleDecline} className="text-white/80 hover:text-white">✕</button>
+            </div>
           </div>
           <p className="text-sm opacity-90 mt-1">Last Updated: May 2026 | Version 1.0.0</p>
         </div>
 
-        {/* Agreement Content - Removed scroll requirement */}
-        <div className="flex-1 overflow-y-auto p-6">
+        {/* Agreement Content - Added class for download */}
+        <div className="flex-1 overflow-y-auto p-6 agreement-content">
           
           {/* ============ INDIVIDUAL AGREEMENT ============ */}
           {role === 'individual' && (
             <div className="space-y-4 text-gray-700">
-              <h3 className="text-lg font-bold text-gray-900">1. PARTICIPATION TERMS</h3>
+              <h3 className="text-lg font-bold text-gray-900">ABBAA CARRAA – INDIVIDUAL PARTICIPANT AGREEMENT</h3>
+              <p className="text-sm text-gray-500">Last Updated: May 2026</p>
+              
+              <h3 className="text-lg font-bold text-gray-900 mt-4">1. PARTICIPATION TERMS</h3>
               <div className="bg-green-50 p-4 rounded-lg">
                 <p className="font-semibold">How It Works:</p>
                 <ul className="list-disc list-inside text-sm mt-2 space-y-1">
@@ -138,13 +194,22 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
                   Ethiopians fighting kidney disease and heart disease. Together, we make a difference!
                 </p>
               </div>
+              
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg text-sm text-gray-600">
+                <p><strong>Digital ETA Platform</strong></p>
+                <p>Email: support@digitaleta.com</p>
+                <p>© 2026 Digital ETA. All rights reserved.</p>
+              </div>
             </div>
           )}
 
           {/* ============ AGENT AGREEMENT ============ */}
           {role === 'agent' && (
             <div className="space-y-4 text-gray-700">
-              <h3 className="text-lg font-bold text-gray-900">1. COMMISSION STRUCTURE</h3>
+              <h3 className="text-lg font-bold text-gray-900">ABBAA CARRAA – AGENT AGREEMENT</h3>
+              <p className="text-sm text-gray-500">Last Updated: May 2026</p>
+              
+              <h3 className="text-lg font-bold text-gray-900 mt-4">1. COMMISSION STRUCTURE</h3>
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="font-semibold">Example Calculation:</p>
                 <ul className="list-disc list-inside text-sm mt-2 space-y-1">
@@ -188,7 +253,7 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
 
               <h3 className="text-lg font-bold text-gray-900 mt-4">6. DISPUTE RESOLUTION</h3>
               <ul className="list-disc list-inside text-sm space-y-1">
-                <li>First: Platform mediation (contact support@abbaacarraa.com)</li>
+                <li>First: Platform mediation (contact support@digitaleta.com)</li>
                 <li>Second: Arbitration in Addis Ababa</li>
                 <li>Third: Federal Court of Ethiopia</li>
                 <li>Governing Law: Federal Democratic Republic of Ethiopia</li>
@@ -200,13 +265,22 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
                   supports kidney and heart disease treatment in Ethiopia.
                 </p>
               </div>
+              
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg text-sm text-gray-600">
+                <p><strong>Digital ETA Platform</strong></p>
+                <p>Email: support@digitaleta.com</p>
+                <p>© 2026 Digital ETA. All rights reserved.</p>
+              </div>
             </div>
           )}
 
           {/* ============ VENDOR AGREEMENT ============ */}
           {role === 'vendor' && (
             <div className="space-y-4 text-gray-700">
-              <h3 className="text-lg font-bold text-gray-900">1. COMMISSION STRUCTURE</h3>
+              <h3 className="text-lg font-bold text-gray-900">ABBAA CARRAA – VENDOR AGREEMENT</h3>
+              <p className="text-sm text-gray-500">Last Updated: May 2026</p>
+              
+              <h3 className="text-lg font-bold text-gray-900 mt-4">1. COMMISSION STRUCTURE</h3>
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="font-semibold">Example Calculation:</p>
                 <ul className="list-disc list-inside text-sm mt-2 space-y-1">
@@ -253,13 +327,22 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
                   💚 <strong>Charity Contribution:</strong> 2% of all platform income supports kidney and heart disease treatment.
                 </p>
               </div>
+              
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg text-sm text-gray-600">
+                <p><strong>Digital ETA Platform</strong></p>
+                <p>Email: support@digitaleta.com</p>
+                <p>© 2026 Digital ETA. All rights reserved.</p>
+              </div>
             </div>
           )}
 
           {/* ============ ORGANIZATION AGREEMENT ============ */}
           {role === 'organization' && (
             <div className="space-y-4 text-gray-700">
-              <h3 className="text-lg font-bold text-gray-900">1. COMMISSION STRUCTURE</h3>
+              <h3 className="text-lg font-bold text-gray-900">ABBAA CARRAA – ORGANIZATION POOL CREATOR AGREEMENT</h3>
+              <p className="text-sm text-gray-500">Last Updated: May 2026</p>
+              
+              <h3 className="text-lg font-bold text-gray-900 mt-4">1. COMMISSION STRUCTURE</h3>
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="font-semibold">Example Calculation:</p>
                 <ul className="list-disc list-inside text-sm mt-2 space-y-1">
@@ -299,13 +382,22 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
                   💚 <strong>Charity Contribution:</strong> 2% of all platform income supports kidney and heart disease treatment.
                 </p>
               </div>
+              
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg text-sm text-gray-600">
+                <p><strong>Digital ETA Platform</strong></p>
+                <p>Email: support@digitaleta.com</p>
+                <p>© 2026 Digital ETA. All rights reserved.</p>
+              </div>
             </div>
           )}
 
           {/* ============ ADMIN AGREEMENT ============ */}
           {role === 'admin' && (
             <div className="space-y-4 text-gray-700">
-              <h3 className="text-lg font-bold text-gray-900">1. COMMISSION STRUCTURE</h3>
+              <h3 className="text-lg font-bold text-gray-900">ABBAA CARRAA – ADMIN AGREEMENT</h3>
+              <p className="text-sm text-gray-500">Last Updated: May 2026</p>
+              
+              <h3 className="text-lg font-bold text-gray-900 mt-4">1. COMMISSION STRUCTURE</h3>
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="font-semibold">Example Calculation:</p>
                 <ul className="list-disc list-inside text-sm mt-2 space-y-1">
@@ -341,6 +433,12 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
                   goes to the kidney and heart disease treatment fund.
                 </p>
               </div>
+              
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg text-sm text-gray-600">
+                <p><strong>Digital ETA Platform</strong></p>
+                <p>Email: support@digitaleta.com</p>
+                <p>© 2026 Digital ETA. All rights reserved.</p>
+              </div>
             </div>
           )}
 
@@ -363,7 +461,7 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
               className="w-5 h-5 text-green-600 rounded focus:ring-green-500"
             />
             <span className="text-gray-700">
-              I have read and agree to the <span className="font-semibold">{roleTitles[role]}</span>
+              I have read and agree to the <span className="font-semibold">{roleDisplayTitles[role]}</span>
             </span>
           </label>
 
