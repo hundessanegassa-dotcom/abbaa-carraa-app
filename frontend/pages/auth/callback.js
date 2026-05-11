@@ -1,11 +1,14 @@
-
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
+import AgreementModal from '../../components/AgreementModal';
 
 export default function AuthCallback() {
   const router = useRouter();
+  const [showAgreement, setShowAgreement] = useState(false);
+  const [pendingRole, setPendingRole] = useState(null);
+  const [tempUser, setTempUser] = useState(null);
 
   useEffect(() => {
     handleCallback();
@@ -21,101 +24,98 @@ export default function AuthCallback() {
     }
 
     const user = session.user;
+    const storedRole = sessionStorage.getItem('pendingRole') || 'individual';
     
-    // Get stored registration data
-    const pendingRole = sessionStorage.getItem('pendingRole') || 'individual';
-    const agreementAccepted = sessionStorage.getItem('agreementAccepted') === 'true';
-    const agreementType = sessionStorage.getItem('agreementType') || pendingRole;
-    const agreementAcceptedAt = sessionStorage.getItem('agreementAcceptedAt') || new Date().toISOString();
-
-    // Check if profile already exists
+    // Check if user already has a profile and has accepted agreement
     const { data: existingProfile } = await supabase
       .from('profiles')
-      .select('id, user_type, role')
+      .select('id, user_type, agreement_accepted')
       .eq('id', user.id)
       .maybeSingle();
-
-    let userType = pendingRole;
     
-    if (!existingProfile) {
-      // Create new profile
-      const { data: newProfile, error: insertError } = await supabase
-        .from('profiles')
-        .insert({
-          id: user.id,
-          email: user.email,
-          full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
-          user_type: pendingRole,
-          role: pendingRole === 'individual' ? 'user' : pendingRole,
-          agreement_accepted: agreementAccepted,
-          agreement_accepted_at: agreementAcceptedAt,
-          agreement_type: agreementType,
-          can_create_pool: pendingRole !== 'individual',
-          created_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-      
-      if (insertError) {
-        console.error('Profile creation error:', insertError);
-        toast.error('Failed to create profile');
-        router.push('/register');
-        return;
-      }
-      
-      userType = newProfile.user_type;
-      
-      // Create role-specific record based on pendingRole
-      if (pendingRole === 'agent') {
-        const { error: agentError } = await supabase.from('agents').insert({
-          user_id: user.id,
-          business_name: user.user_metadata?.full_name || user.email?.split('@')[0],
-          email: user.email,
-          verified: false,
-          commission_rate: 10,
-          created_at: new Date().toISOString()
-        });
-        if (agentError) console.error('Agent creation error:', agentError);
-        else console.log('Agent record created successfully');
-        
-      } else if (pendingRole === 'vendor') {
-        const { error: vendorError } = await supabase.from('vendors').insert({
-          user_id: user.id,
-          business_name: user.user_metadata?.full_name || user.email?.split('@')[0],
-          email: user.email,
-          verified: false,
-          created_at: new Date().toISOString()
-        });
-        if (vendorError) console.error('Vendor creation error:', vendorError);
-        
-      } else if (pendingRole === 'organization') {
-        const { error: orgError } = await supabase.from('organizations').insert({
-          user_id: user.id,
-          business_name: user.user_metadata?.full_name || user.email?.split('@')[0],
-          email: user.email,
-          verified: false,
-          created_at: new Date().toISOString()
-        });
-        if (orgError) console.error('Organization creation error:', orgError);
-      }
-      
-      toast.success(`Welcome! You registered as ${pendingRole}.`);
-      
-    } else {
-      // Existing user - use their existing type
-      userType = existingProfile.user_type || existingProfile.role || pendingRole;
-      toast.success(`Welcome back, ${user.user_metadata?.full_name || user.email?.split('@')[0]}!`);
+    // If user already exists and has accepted agreement, go directly to dashboard
+    if (existingProfile && existingProfile.agreement_accepted === true) {
+      sessionStorage.removeItem('pendingRole');
+      const userType = existingProfile.user_type || storedRole;
+      redirectToDashboard(userType);
+      return;
     }
     
-    // Clear session storage
+    // If user exists but hasn't accepted agreement, show agreement
+    if (existingProfile && existingProfile.agreement_accepted === false) {
+      setPendingRole(existingProfile.user_type || storedRole);
+      setTempUser(user);
+      setShowAgreement(true);
+      return;
+    }
+    
+    // New user - show agreement first, then create profile after acceptance
+    setPendingRole(storedRole);
+    setTempUser(user);
+    setShowAgreement(true);
+  }
+
+  async function handleAgreementAccept() {
+    // Create/update profile with agreement acceptance
+    const { error: upsertError } = await supabase
+      .from('profiles')
+      .upsert({
+        id: tempUser.id,
+        email: tempUser.email,
+        full_name: tempUser.user_metadata?.full_name || tempUser.email?.split('@')[0],
+        user_type: pendingRole,
+        role: pendingRole === 'individual' ? 'user' : pendingRole,
+        agreement_accepted: true,
+        agreement_accepted_at: new Date().toISOString(),
+        agreement_type: pendingRole,
+        can_create_pool: pendingRole !== 'individual',
+        created_at: new Date().toISOString(),
+      });
+    
+    if (upsertError) {
+      console.error('Profile error:', upsertError);
+      toast.error('Failed to save profile');
+      router.push('/register');
+      return;
+    }
+    
+    // Create role-specific record
+    if (pendingRole === 'agent') {
+      await supabase.from('agents').upsert({
+        user_id: tempUser.id,
+        business_name: tempUser.user_metadata?.full_name || tempUser.email?.split('@')[0],
+        email: tempUser.email,
+        verified: false,
+        commission_rate: 10,
+        created_at: new Date().toISOString()
+      });
+      console.log('Agent record created for:', tempUser.email);
+      
+    } else if (pendingRole === 'vendor') {
+      await supabase.from('vendors').upsert({
+        user_id: tempUser.id,
+        business_name: tempUser.user_metadata?.full_name || tempUser.email?.split('@')[0],
+        email: tempUser.email,
+        verified: false,
+        created_at: new Date().toISOString()
+      });
+      
+    } else if (pendingRole === 'organization') {
+      await supabase.from('organizations').upsert({
+        user_id: tempUser.id,
+        business_name: tempUser.user_metadata?.full_name || tempUser.email?.split('@')[0],
+        email: tempUser.email,
+        verified: false,
+        created_at: new Date().toISOString()
+      });
+    }
+    
+    toast.success(`Welcome! You registered as ${pendingRole}.`);
     sessionStorage.removeItem('pendingRole');
-    sessionStorage.removeItem('agreementAccepted');
-    sessionStorage.removeItem('agreementType');
-    sessionStorage.removeItem('agreementAcceptedAt');
-    
-    // Redirect based on role
-    console.log('Redirecting user type:', userType);
-    
+    redirectToDashboard(pendingRole);
+  }
+
+  function redirectToDashboard(userType) {
     switch (userType) {
       case 'agent':
         router.replace('/agent/dashboard');
@@ -134,10 +134,24 @@ export default function AuthCallback() {
     }
   }
 
+  // Show agreement modal after Google login
+  if (showAgreement) {
+    return (
+      <AgreementModal
+        role={pendingRole}
+        onAccept={handleAgreementAccept}
+        onDecline={() => {
+          toast.error('You must accept the agreement to continue');
+          router.push('/register');
+        }}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
-      <p className="text-gray-600">Completing your registration...</p>
+      <p className="text-gray-600">Loading...</p>
     </div>
   );
 }
