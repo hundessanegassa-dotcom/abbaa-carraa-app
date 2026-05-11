@@ -5,7 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import '../lib/i18n';
-import Navbar from '../components/Navbar';        // ADD THIS - NEW
+import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ChatBot from '../components/ChatBot';
 import LanguageToggle from '../components/LanguageToggle';
@@ -52,19 +52,19 @@ function MyApp({ Component, pageProps }) {
           <div className="flex justify-center">
             <img 
               src="/images/abbaa carraa.png"
-              alt="Abbaa Carraa"
-              className="w-32 h-32 sm:w-48 sm:h-48 object-cover rounded-2xl shadow-2xl animate-pulse"
+              alt="Abbaa Carraa Ethio"
+              className="w-24 h-24 sm:w-32 sm:h-32 md:w-48 md:h-48 object-cover rounded-2xl shadow-2xl animate-pulse"
               onError={(e) => e.target.style.display = 'none'}
             />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mt-6 mb-2">Abbaa Carraa</h1>
-          <p className="text-white/80 text-sm sm:text-base">{t('common.loading')}</p>
-          <div className="mt-8 flex justify-center gap-2">
-            <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
-            <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-            <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mt-4 sm:mt-6 mb-1 sm:mb-2">Abbaa Carraa Ethio</h1>
+          <p className="text-white/80 text-xs sm:text-sm md:text-base">{t('common.loading')}</p>
+          <div className="mt-6 sm:mt-8 flex justify-center gap-2">
+            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-bounce"></div>
+            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
           </div>
-          <p className="text-white/60 text-xs mt-8">{t('common.loading')}...</p>
+          <p className="text-white/60 text-[10px] sm:text-xs mt-6 sm:mt-8">{t('common.loading')}...</p>
         </div>
       </div>
     );
@@ -73,7 +73,7 @@ function MyApp({ Component, pageProps }) {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen flex flex-col">
-        {/* Navbar - ADDED at the top */}
+        {/* Navbar */}
         <Navbar />
         
         {/* Main Content */}
@@ -87,7 +87,7 @@ function MyApp({ Component, pageProps }) {
         {/* Floating Components */}
         <LanguageToggle />
         <ChatBot />
-        <Toaster position="top-right" />
+        <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
       </div>
     </QueryClientProvider>
   );
