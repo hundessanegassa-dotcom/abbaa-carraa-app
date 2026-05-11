@@ -15,6 +15,9 @@ export default function Navbar() {
   const [userType, setUserType] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [hasAgentApplication, setHasAgentApplication] = useState(false);
+  const [hasVendorApplication, setHasVendorApplication] = useState(false);
+  const [hasOrgApplication, setHasOrgApplication] = useState(false);
 
   useEffect(() => {
     getUser();
@@ -38,6 +41,28 @@ export default function Navbar() {
         .maybeSingle();
       setUserRole(profile?.role);
       setUserType(profile?.user_type);
+      
+      // Check for existing applications
+      const { data: agentCheck } = await supabase
+        .from('agents')
+        .select('id, verified')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      setHasAgentApplication(!!agentCheck);
+      
+      const { data: vendorCheck } = await supabase
+        .from('vendors')
+        .select('id, verified')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      setHasVendorApplication(!!vendorCheck);
+      
+      const { data: orgCheck } = await supabase
+        .from('organizations')
+        .select('id, verified')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      setHasOrgApplication(!!orgCheck);
     }
   }
 
@@ -55,12 +80,38 @@ export default function Navbar() {
     return '/dashboard';
   };
 
-  // Check if user can create pools (Agent, Vendor, Organization, Admin)
-  const canCreatePool = user && (userType === 'agent' || userType === 'vendor' || userType === 'organization' || userRole === 'admin');
+  // Determine what "Create" action to show
+  const getCreateAction = () => {
+    if (userType === 'agent') return { text: 'Create Pool', link: '/create-pool', icon: '📦' };
+    if (userType === 'vendor') return { text: 'List Product', link: '/vendor/listings/create', icon: '🏪' };
+    if (userType === 'organization') return { text: 'Create Private Pool', link: '/create-pool?type=private', icon: '🏊' };
+    if (userRole === 'admin') return { text: 'Create Pool (20%)', link: '/create-pool', icon: '👑' };
+    return null;
+  };
+
+  // Determine what "Become" links to show
+  const getBecomeLinks = () => {
+    const links = [];
+    const isIndividual = !userType || userType === 'individual';
+    
+    if (isIndividual && !hasAgentApplication) {
+      links.push({ text: '🤝 Become Agent', link: '/become-agent', color: 'text-yellow-600' });
+    }
+    if (isIndividual && !hasVendorApplication) {
+      links.push({ text: '🏪 Become Vendor', link: '/become-vendor', color: 'text-purple-600' });
+    }
+    if (isIndividual && !hasOrgApplication) {
+      links.push({ text: '🏢 Become Organization', link: '/become-organization', color: 'text-cyan-600' });
+    }
+    return links;
+  };
+
+  const createAction = getCreateAction();
+  const becomeLinks = getBecomeLinks();
 
   return (
     <>
-      {/* Top Announcement Bar - Mobile Responsive */}
+      {/* Top Announcement Bar */}
       <div className="bg-gradient-to-r from-green-600 to-teal-600 text-white text-center py-1.5 sm:py-2 text-[10px] sm:text-sm">
         <div className="container mx-auto px-2 sm:px-4">
           <span>💚 2% of every contribution supports kidney & heart disease treatment</span>
@@ -72,7 +123,7 @@ export default function Navbar() {
         <div className="container mx-auto px-2 sm:px-4">
           <div className="flex justify-between items-center h-14 sm:h-16">
             
-            {/* Logo - Mobile Responsive */}
+            {/* Logo */}
             <Link href="/" className="flex items-center gap-1.5 sm:gap-2 group">
               <div className="w-7 h-7 sm:w-10 sm:h-10 bg-gradient-to-r from-green-500 to-teal-500 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition">
                 <span className="text-white text-base sm:text-xl">🎁</span>
@@ -87,18 +138,17 @@ export default function Navbar() {
               </div>
             </Link>
             
-            {/* Desktop Navigation - Hidden on mobile */}
+            {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-1">
-              <Link href="/" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> {t('common.home')} </Link>
+              <Link href="/" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🏠 {t('common.home')} </Link>
               <Link href="/listings" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🎁 Browse Prizes </Link>
               <Link href="/winners" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🏆 Winners </Link>
-              <Link href="/about" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> ℹ️ About </Link>
-              <Link href="/faq" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> ❓ FAQ </Link>
+              <Link href="/how-it-works" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🎯 How It Works </Link>
               
-              {/* Create Pool/List Button - for users who can create */}
-              {canCreatePool && (
-                <Link href="/create-pool" className="ml-2 bg-gradient-to-r from-green-500 to-teal-500 text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:shadow-lg transition transform hover:scale-105">
-                  + {userType === 'vendor' ? 'List Product' : 'Create Pool'}
+              {/* Create Action - Dynamic based on role */}
+              {user && createAction && (
+                <Link href={createAction.link} className="ml-2 bg-gradient-to-r from-green-500 to-teal-500 text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:shadow-lg transition transform hover:scale-105 flex items-center gap-1">
+                  <span>+</span> {createAction.text}
                 </Link>
               )}
             </div>
@@ -114,27 +164,53 @@ export default function Navbar() {
                     <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-bold">
                       {user.email?.[0]?.toUpperCase() || 'U'}
                     </div>
-                    <span className="hidden lg:inline text-xs sm:text-sm font-medium text-gray-700 max-w-[80px] truncate">
-                      {user.email?.split('@')[0]}
+                    <span className="hidden lg:inline text-xs sm:text-sm font-medium text-gray-700 max-w-[80px] truncate capitalize">
+                      {userType || 'User'}
                     </span>
                     <svg className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
+                  
                   {/* Dropdown Menu */}
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                     <div className="p-2">
+                      <div className="px-3 py-2 border-b mb-1">
+                        <p className="text-sm font-semibold text-gray-800 capitalize">{userType || 'Individual'}</p>
+                        <p className="text-xs text-gray-500">{user.email}</p>
+                      </div>
                       <Link href={getDashboardLink()} className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded-lg transition">
                         <span>📊</span> Dashboard
                       </Link>
                       <Link href="/profile" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded-lg transition">
                         <span>👤</span> Profile
                       </Link>
-                      {canCreatePool && (
-                        <Link href="/create-pool" className="flex items-center gap-2 px-3 py-2 text-sm text-green-600 hover:bg-green-50 rounded-lg transition">
-                          <span>➕</span> {userType === 'vendor' ? 'List Product' : 'Create Pool'}
+                      <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded-lg transition">
+                        <span>⚙️</span> Settings
+                      </Link>
+                      <Link href="/notifications" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded-lg transition">
+                        <span>🔔</span> Notifications
+                      </Link>
+                      
+                      {/* Become Links in Dropdown */}
+                      {becomeLinks.length > 0 && (
+                        <>
+                          <div className="border-t my-1"></div>
+                          {becomeLinks.map((link, idx) => (
+                            <Link key={idx} href={link.link} className={`flex items-center gap-2 px-3 py-2 text-sm ${link.color} hover:bg-gray-50 rounded-lg transition`}>
+                              <span>{link.text.split(' ')[0]}</span> {link.text}
+                            </Link>
+                          ))}
+                        </>
+                      )}
+                      
+                      {/* Create Action in Dropdown */}
+                      {createAction && (
+                        <Link href={createAction.link} className="flex items-center gap-2 px-3 py-2 text-sm text-green-600 hover:bg-green-50 rounded-lg transition mt-1 border-t pt-2">
+                          <span>➕</span> {createAction.text}
                         </Link>
                       )}
+                      
                       <div className="border-t my-1"></div>
                       <button onClick={handleLogout} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition">
                         <span>🚪</span> {t('common.logout')}
@@ -165,25 +241,34 @@ export default function Navbar() {
             </button>
           </div>
 
-          {/* Mobile Navigation Menu - Responsive */}
+          {/* Mobile Navigation Menu */}
           {mobileMenuOpen && (
             <div className="md:hidden pb-3 space-y-1 animate-fadeIn">
               <Link href="/" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🏠 Home </Link>
               <Link href="/listings" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🎁 Browse Prizes </Link>
               <Link href="/winners" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🏆 Winners </Link>
-              <Link href="/about" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> ℹ️ About </Link>
-              <Link href="/faq" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> ❓ FAQ </Link>
+              <Link href="/how-it-works" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🎯 How It Works </Link>
               
               {user && (
                 <>
                   <Link href={getDashboardLink()} className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 📊 Dashboard </Link>
                   
-                  {/* Create Pool/List Product in Mobile Menu */}
-                  {canCreatePool && (
-                    <Link href="/create-pool" className="block py-2 px-3 text-center bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-lg text-sm font-semibold mt-2" onClick={() => setMobileMenuOpen(false)}>
-                      + {userType === 'vendor' ? 'List Product' : 'Create Pool'}
+                  {/* Create Action in Mobile */}
+                  {createAction && (
+                    <Link href={createAction.link} className="block py-2 px-3 text-center bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-lg text-sm font-semibold mt-2" onClick={() => setMobileMenuOpen(false)}>
+                      + {createAction.text}
                     </Link>
                   )}
+                  
+                  {/* Become Links in Mobile */}
+                  {becomeLinks.map((link, idx) => (
+                    <Link key={idx} href={link.link} className={`block py-2 px-3 text-sm ${link.color} hover:bg-gray-50 rounded-lg`} onClick={() => setMobileMenuOpen(false)}>
+                      {link.text}
+                    </Link>
+                  ))}
+                  
+                  <Link href="/profile" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 👤 Profile </Link>
+                  <Link href="/settings" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> ⚙️ Settings </Link>
                   
                   <button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} className="block w-full text-left py-2 px-3 text-sm text-red-600 hover:bg-red-50 rounded-lg mt-1">
                     🚪 Logout
