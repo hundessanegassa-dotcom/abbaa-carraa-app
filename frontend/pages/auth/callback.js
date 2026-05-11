@@ -26,14 +26,12 @@ export default function AuthCallback() {
     const user = session.user;
     const storedRole = sessionStorage.getItem('pendingRole') || 'individual';
     
-    // Check if user already has a profile and has accepted agreement
     const { data: existingProfile } = await supabase
       .from('profiles')
       .select('id, user_type, agreement_accepted')
       .eq('id', user.id)
       .maybeSingle();
     
-    // If user already exists and has accepted agreement, go directly to dashboard
     if (existingProfile && existingProfile.agreement_accepted === true) {
       sessionStorage.removeItem('pendingRole');
       const userType = existingProfile.user_type || storedRole;
@@ -41,7 +39,6 @@ export default function AuthCallback() {
       return;
     }
     
-    // If user exists but hasn't accepted agreement, show agreement
     if (existingProfile && existingProfile.agreement_accepted === false) {
       setPendingRole(existingProfile.user_type || storedRole);
       setTempUser(user);
@@ -49,14 +46,12 @@ export default function AuthCallback() {
       return;
     }
     
-    // New user - show agreement first, then create profile after acceptance
     setPendingRole(storedRole);
     setTempUser(user);
     setShowAgreement(true);
   }
 
   async function handleAgreementAccept() {
-    // Create/update profile with agreement acceptance
     const { error: upsertError } = await supabase
       .from('profiles')
       .upsert({
@@ -69,7 +64,7 @@ export default function AuthCallback() {
         agreement_accepted_at: new Date().toISOString(),
         agreement_type: pendingRole,
         can_create_pool: pendingRole !== 'individual',
-        created_at: new Date().toISOString(),
+        created_at: new Date().toISOString()
       });
     
     if (upsertError) {
@@ -79,7 +74,6 @@ export default function AuthCallback() {
       return;
     }
     
-    // Create role-specific record
     if (pendingRole === 'agent') {
       await supabase.from('agents').upsert({
         user_id: tempUser.id,
@@ -89,8 +83,6 @@ export default function AuthCallback() {
         commission_rate: 10,
         created_at: new Date().toISOString()
       });
-      console.log('Agent record created for:', tempUser.email);
-      
     } else if (pendingRole === 'vendor') {
       await supabase.from('vendors').upsert({
         user_id: tempUser.id,
@@ -99,7 +91,6 @@ export default function AuthCallback() {
         verified: false,
         created_at: new Date().toISOString()
       });
-      
     } else if (pendingRole === 'organization') {
       await supabase.from('organizations').upsert({
         user_id: tempUser.id,
@@ -134,7 +125,6 @@ export default function AuthCallback() {
     }
   }
 
-  // Show agreement modal after Google login
   if (showAgreement) {
     return (
       <AgreementModal
