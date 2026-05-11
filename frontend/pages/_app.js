@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import '../lib/i18n';
+import Navbar from '../components/Navbar';        // ADD THIS - NEW
 import Footer from '../components/Footer';
 import ChatBot from '../components/ChatBot';
 import LanguageToggle from '../components/LanguageToggle';
@@ -71,11 +72,23 @@ function MyApp({ Component, pageProps }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Component {...pageProps} session={session} />
-      <Footer />
-      <LanguageToggle />
-      <ChatBot />
-      <Toaster position="top-right" />
+      <div className="min-h-screen flex flex-col">
+        {/* Navbar - ADDED at the top */}
+        <Navbar />
+        
+        {/* Main Content */}
+        <main className="flex-grow">
+          <Component {...pageProps} session={session} />
+        </main>
+        
+        {/* Footer */}
+        <Footer />
+        
+        {/* Floating Components */}
+        <LanguageToggle />
+        <ChatBot />
+        <Toaster position="top-right" />
+      </div>
     </QueryClientProvider>
   );
 }
