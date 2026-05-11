@@ -55,6 +55,9 @@ export default function Navbar() {
     return '/dashboard';
   };
 
+  // Check if user can create pools (Agent, Vendor, Organization, Admin)
+  const canCreatePool = user && (userType === 'agent' || userType === 'vendor' || userType === 'organization' || userRole === 'admin');
+
   return (
     <>
       {/* Top Announcement Bar - Mobile Responsive */}
@@ -87,14 +90,15 @@ export default function Navbar() {
             {/* Desktop Navigation - Hidden on mobile */}
             <div className="hidden md:flex items-center space-x-1">
               <Link href="/" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> {t('common.home')} </Link>
-              <Link href="/listings" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> {t('common.browse_prizes')} </Link>
-              <Link href="/winners" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> {t('common.winners')} </Link>
-              <Link href="/about" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> {t('common.about')} </Link>
-              <Link href="/faq" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> {t('common.faq')} </Link>
+              <Link href="/listings" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🎁 Browse Prizes </Link>
+              <Link href="/winners" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🏆 Winners </Link>
+              <Link href="/about" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> ℹ️ About </Link>
+              <Link href="/faq" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> ❓ FAQ </Link>
               
-              {user && (
-                <Link href="/create-pool" className="ml-2 bg-gradient-to-r from-green-500 to-teal-500 text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:shadow-lg transition">
-                  + {t('common.create_pool')}
+              {/* Create Pool/List Button - for users who can create */}
+              {canCreatePool && (
+                <Link href="/create-pool" className="ml-2 bg-gradient-to-r from-green-500 to-teal-500 text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:shadow-lg transition transform hover:scale-105">
+                  + {userType === 'vendor' ? 'List Product' : 'Create Pool'}
                 </Link>
               )}
             </div>
@@ -126,6 +130,11 @@ export default function Navbar() {
                       <Link href="/profile" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded-lg transition">
                         <span>👤</span> Profile
                       </Link>
+                      {canCreatePool && (
+                        <Link href="/create-pool" className="flex items-center gap-2 px-3 py-2 text-sm text-green-600 hover:bg-green-50 rounded-lg transition">
+                          <span>➕</span> {userType === 'vendor' ? 'List Product' : 'Create Pool'}
+                        </Link>
+                      )}
                       <div className="border-t my-1"></div>
                       <button onClick={handleLogout} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition">
                         <span>🚪</span> {t('common.logout')}
@@ -159,25 +168,32 @@ export default function Navbar() {
           {/* Mobile Navigation Menu - Responsive */}
           {mobileMenuOpen && (
             <div className="md:hidden pb-3 space-y-1 animate-fadeIn">
-              <Link href="/" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🏠 {t('common.home')} </Link>
-              <Link href="/listings" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🎁 {t('common.browse_prizes')} </Link>
-              <Link href="/winners" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🏆 {t('common.winners')} </Link>
-              <Link href="/about" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> ℹ️ {t('common.about')} </Link>
-              <Link href="/faq" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> ❓ {t('common.faq')} </Link>
+              <Link href="/" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🏠 Home </Link>
+              <Link href="/listings" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🎁 Browse Prizes </Link>
+              <Link href="/winners" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🏆 Winners </Link>
+              <Link href="/about" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> ℹ️ About </Link>
+              <Link href="/faq" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> ❓ FAQ </Link>
               
               {user && (
                 <>
                   <Link href={getDashboardLink()} className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 📊 Dashboard </Link>
-                  <Link href="/create-pool" className="block py-2 px-3 text-center bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-lg text-sm font-semibold mt-2" onClick={() => setMobileMenuOpen(false)}> + {t('common.create_pool')} </Link>
+                  
+                  {/* Create Pool/List Product in Mobile Menu */}
+                  {canCreatePool && (
+                    <Link href="/create-pool" className="block py-2 px-3 text-center bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-lg text-sm font-semibold mt-2" onClick={() => setMobileMenuOpen(false)}>
+                      + {userType === 'vendor' ? 'List Product' : 'Create Pool'}
+                    </Link>
+                  )}
+                  
                   <button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} className="block w-full text-left py-2 px-3 text-sm text-red-600 hover:bg-red-50 rounded-lg mt-1">
-                    🚪 {t('common.logout')}
+                    🚪 Logout
                   </button>
                 </>
               )}
               
               {!user && (
                 <div className="flex gap-2 pt-2">
-                  <Link href="/login" className="flex-1 text-center border border-green-600 text-green-600 py-2 rounded-lg text-sm" onClick={() => setMobileMenuOpen(false)}> {t('common.login')} </Link>
+                  <Link href="/login" className="flex-1 text-center border border-green-600 text-green-600 py-2 rounded-lg text-sm" onClick={() => setMobileMenuOpen(false)}> Login </Link>
                   <Link href="/register" className="flex-1 text-center bg-gradient-to-r from-green-500 to-teal-500 text-white py-2 rounded-lg text-sm font-semibold" onClick={() => setMobileMenuOpen(false)}> Register </Link>
                 </div>
               )}
