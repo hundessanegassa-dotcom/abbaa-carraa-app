@@ -19,6 +19,7 @@ export default function Register() {
     { id: 'organization', name: 'Organization', icon: '🏢', description: 'Create private pools for your members', color: 'from-blue-500 to-cyan-500' }
   ];
 
+  // Start Google registration - show agreement first
   const startGoogleRegistration = () => {
     if (!selectedRole) {
       toast.error('Please select a role first');
@@ -27,10 +28,11 @@ export default function Register() {
     setShowAgreement(true);
   };
 
-  const handleGoogleAgreementAccept = async () => {
+  // After agreement accepted, proceed with Google login
+  const handleAgreementAccept = async () => {
     setLoading(true);
     
-    // Store the selected role AND agreement acceptance for after Google login
+    // Store the selected role for after Google login
     sessionStorage.setItem('pendingRole', selectedRole);
     sessionStorage.setItem('agreementAccepted', 'true');
     sessionStorage.setItem('agreementType', selectedRole);
@@ -47,13 +49,14 @@ export default function Register() {
       toast.error(error.message);
       setLoading(false);
     }
+    // No need to setLoading false - page redirects
   };
 
   if (showAgreement) {
     return (
       <AgreementModal
         role={selectedRole}
-        onAccept={handleGoogleAgreementAccept}
+        onAccept={handleAgreementAccept}
         onDecline={() => setShowAgreement(false)}
       />
     );
