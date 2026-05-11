@@ -51,6 +51,7 @@ export default function BecomeAgent() {
         router.push('/agent/dashboard');
       } else {
         toast('Your agent application is pending review', { icon: '⏳' });
+        router.push('/dashboard');
       }
       return;
     }
@@ -85,7 +86,7 @@ export default function BecomeAgent() {
       toast.error('Failed to submit application');
       console.error(error);
     } else {
-      toast.success('Application submitted! We will review it soon.');
+      toast.success('Application submitted! Admin will review it soon.');
       router.push('/dashboard');
     }
     setApplying(false);
@@ -94,7 +95,7 @@ export default function BecomeAgent() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-600"></div>
       </div>
     );
   }
@@ -102,7 +103,7 @@ export default function BecomeAgent() {
   return (
     <>
       <Head><title>Become an Agent - Abbaa Carraa Ethio</title></Head>
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-12">
+      <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 py-12">
         <div className="container mx-auto px-4 max-w-4xl">
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
             {/* Header */}
@@ -116,9 +117,9 @@ export default function BecomeAgent() {
             <div className="p-6 border-b">
               <h2 className="font-bold text-gray-800 mb-3">What you get:</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="bg-green-50 rounded-xl p-3 text-center"><div className="text-2xl mb-1">💰</div><p className="font-semibold">10% Commission</p><p className="text-xs text-gray-500">On every pool you create</p></div>
-                <div className="bg-green-50 rounded-xl p-3 text-center"><div className="text-2xl mb-1">📦</div><p className="font-semibold">No Fees</p><p className="text-xs text-gray-500">No listing or upfront costs</p></div>
-                <div className="bg-green-50 rounded-xl p-3 text-center"><div className="text-2xl mb-1">🏆</div><p className="font-semibold">Support</p><p className="text-xs text-gray-500">Priority assistance</p></div>
+                <div className="bg-yellow-50 rounded-xl p-3 text-center"><div className="text-2xl mb-1">💰</div><p className="font-semibold">10% Commission</p><p className="text-xs text-gray-500">On every pool you create</p></div>
+                <div className="bg-yellow-50 rounded-xl p-3 text-center"><div className="text-2xl mb-1">📦</div><p className="font-semibold">No Fees</p><p className="text-xs text-gray-500">No listing or upfront costs</p></div>
+                <div className="bg-yellow-50 rounded-xl p-3 text-center"><div className="text-2xl mb-1">🏆</div><p className="font-semibold">Support</p><p className="text-xs text-gray-500">Priority assistance</p></div>
               </div>
             </div>
 
@@ -152,6 +153,13 @@ export default function BecomeAgent() {
                 {applying ? 'Submitting...' : 'Submit Application →'}
               </button>
             </form>
+
+            <div className="p-6 border-t text-center bg-gray-50">
+              <p className="text-gray-600 text-sm">
+                Already an agent? 
+                <Link href="/agent/dashboard" className="text-yellow-600 font-semibold ml-1">Go to Dashboard →</Link>
+              </p>
+            </div>
           </div>
         </div>
       </div>
