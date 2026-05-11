@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import toast from 'react-hot-toast';
 import DashboardLayout from '../components/DashboardLayout';
 
@@ -10,6 +11,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [stats, setStats] = useState({ contributions: 0, wins: 0, pools: 0 });
   const [formData, setFormData] = useState({
     full_name: '',
     phone: '',
@@ -32,6 +34,7 @@ export default function ProfilePage() {
     }
     setUser(user);
     await fetchProfile(user.id);
+    await fetchStats(user.id);
   }
 
   async function fetchProfile(userId) {
@@ -54,6 +57,34 @@ export default function ProfilePage() {
       });
     }
     setLoading(false);
+  }
+
+  async function fetchStats(userId) {
+    // Get contributions
+    const { data: contributions } = await supabase
+      .from('contributions')
+      .select('amount')
+      .eq('user_id', userId)
+      .eq('status', 'completed');
+    
+    // Get wins
+    const { data: wins } = await supabase
+      .from('pools')
+      .select('id')
+      .eq('winner_id', userId);
+    
+    // Get pools created
+    const { data: pools } = await supabase
+      .from('pools')
+      .select('id')
+      .eq('created_by', userId);
+    
+    setStats({
+      contributions: contributions?.length || 0,
+      total_amount: contributions?.reduce((sum, c) => sum + c.amount, 0) || 0,
+      wins: wins?.length || 0,
+      pools: pools?.length || 0
+    });
   }
 
   async function handleSubmit(e) {
@@ -89,7 +120,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -103,6 +134,13 @@ export default function ProfilePage() {
       user={user}
       profile={profile}
     >
+      {/* Back to Dashboard */}
+      <div className="mb-4">
+        <Link href="/dashboard" className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+          ← Back to Dashboard
+        </Link>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Form */}
         <div className="lg:col-span-2">
@@ -193,7 +231,30 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Social/Contact Links */}
+          {/* Activity Stats */}
+          <div className="bg-white rounded-2xl shadow-md p-6">
+            <h3 className="font-bold text-gray-800 mb-3">Your Activity</h3>
+            <div className="grid grid-cols-2 gap-3 text-center">
+              <div className="bg-green-50 rounded-xl p-2">
+                <p className="text-2xl font-bold text-green-600">{stats.contributions}</p>
+                <p className="text-xs text-gray-500">Contributions</p>
+              </div>
+              <div className="bg-yellow-50 rounded-xl p-2">
+                <p className="text-2xl font-bold text-yellow-600">{stats.wins}</p>
+                <p className="text-xs text-gray-500">Wins</p>
+              </div>
+              <div className="bg-blue-50 rounded-xl p-2">
+                <p className="text-2xl font-bold text-blue-600">{stats.pools}</p>
+                <p className="text-xs text-gray-500">Pools Created</p>
+              </div>
+              <div className="bg-purple-50 rounded-xl p-2">
+                <p className="text-sm font-bold text-purple-600">ETB {stats.total_amount?.toLocaleString()}</p>
+                <p className="text-xs text-gray-500">Total Contributed</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Contact Preferences */}
           <div className="bg-white rounded-2xl shadow-md p-6">
             <h3 className="font-bold text-gray-800 mb-3">Contact Preferences</h3>
             <div className="space-y-3">
@@ -220,6 +281,9 @@ export default function ProfilePage() {
                 />
               </div>
             </div>
+            <Link href="/settings" className="inline-block mt-3 text-blue-600 text-sm hover:underline">
+              ⚙️ More settings →
+            </Link>
           </div>
         </div>
       </div>
