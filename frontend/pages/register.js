@@ -17,7 +17,7 @@ export default function Register() {
     { id: 'organization', name: 'Organization', icon: '🏢', description: 'Create private pools for your members', color: 'from-blue-500 to-cyan-500' }
   ];
 
-  const startGoogleRegistration = () => {
+  const startGoogleRegistration = async () => {
     if (!selectedRole) {
       toast.error('Please select a role first');
       return;
