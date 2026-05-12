@@ -7,6 +7,9 @@ import toast from 'react-hot-toast';
 import LanguageToggle from './LanguageToggle';
 import NotificationBell from './NotificationBell';
 
+// Check if running on client side
+const isClient = typeof window !== 'undefined';
+
 export default function Navbar() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -21,9 +24,11 @@ export default function Navbar() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getUser();
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    if (isClient) {
+      getUser();
+      window.addEventListener('scroll', handleScroll);
+      return () => window.removeEventListener('scroll', handleScroll);
+    }
   }, []);
 
   const handleScroll = () => {
