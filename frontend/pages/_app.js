@@ -9,7 +9,6 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ChatBot from '../components/ChatBot';
 import LanguageToggle from '../components/LanguageToggle';
-// import GlobalAnnouncement from '../components/GlobalAnnouncement'; // REMOVED - Duplicate welcome banner
 
 const queryClient = new QueryClient();
 
@@ -24,20 +23,29 @@ function MyApp({ Component, pageProps }) {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
-    
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+      } catch (error) {
+        console.error('Auth error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
-    
+
     return () => {
-      subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, []);
 
+  // Prevent hydration mismatch
   if (!mounted) {
     return null;
   }
@@ -70,18 +78,11 @@ function MyApp({ Component, pageProps }) {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen flex flex-col">
-        {/* Navbar */}
         <Navbar />
-        
-        {/* Main Content */}
         <main className="flex-grow">
-          <Component {...pageProps} />
+          <Component {...pageProps} session={session} />
         </main>
-        
-        {/* Footer */}
         <Footer />
-        
-        {/* Floating Components */}
         <LanguageToggle />
         <ChatBot />
         <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
