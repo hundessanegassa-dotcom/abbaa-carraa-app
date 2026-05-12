@@ -9,6 +9,7 @@ export default function AuthCallback() {
   const [showAgreement, setShowAgreement] = useState(false);
   const [pendingRole, setPendingRole] = useState(null);
   const [tempUser, setTempUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     handleCallback();
@@ -26,12 +27,14 @@ export default function AuthCallback() {
     const user = session.user;
     const storedRole = sessionStorage.getItem('pendingRole') || 'individual';
     
+    // Check if user already has a profile and has accepted agreement
     const { data: existingProfile } = await supabase
       .from('profiles')
       .select('id, user_type, agreement_accepted')
       .eq('id', user.id)
       .maybeSingle();
     
+    // If user already exists and has accepted agreement, go directly to dashboard
     if (existingProfile && existingProfile.agreement_accepted === true) {
       sessionStorage.removeItem('pendingRole');
       const userType = existingProfile.user_type || storedRole;
@@ -39,19 +42,29 @@ export default function AuthCallback() {
       return;
     }
     
+    // User exists but hasn't accepted agreement - MUST SHOW AGREEMENT
     if (existingProfile && existingProfile.agreement_accepted === false) {
       setPendingRole(existingProfile.user_type || storedRole);
       setTempUser(user);
       setShowAgreement(true);
+      setLoading(false);
       return;
     }
     
-    setPendingRole(storedRole);
-    setTempUser(user);
-    setShowAgreement(true);
+    // New user - MUST SHOW AGREEMENT before creating profile
+    if (!existingProfile) {
+      setPendingRole(storedRole);
+      setTempUser(user);
+      setShowAgreement(true);
+      setLoading(false);
+      return;
+    }
   }
 
   async function handleAgreementAccept() {
+    setLoading(true);
+    
+    // Create or update profile with agreement acceptance
     const { error: upsertError } = await supabase
       .from('profiles')
       .upsert({
@@ -64,7 +77,7 @@ export default function AuthCallback() {
         agreement_accepted_at: new Date().toISOString(),
         agreement_type: pendingRole,
         can_create_pool: pendingRole !== 'individual',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       });
     
     if (upsertError) {
@@ -74,6 +87,7 @@ export default function AuthCallback() {
       return;
     }
     
+    // Create role-specific record
     if (pendingRole === 'agent') {
       await supabase.from('agents').upsert({
         user_id: tempUser.id,
@@ -125,6 +139,15 @@ export default function AuthCallback() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    );
+  }
+
   if (showAgreement) {
     return (
       <AgreementModal
@@ -138,10 +161,5 @@ export default function AuthCallback() {
     );
   }
 
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
-      <p className="text-gray-600">Loading...</p>
-    </div>
-  );
+  return null;
 }
