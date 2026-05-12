@@ -9,16 +9,27 @@ export default function ChatBot() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [user, setUser] = useState(null);
+  const [mounted, setMounted] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     getCurrentUser();
     scrollToBottom();
-  }, [messages]);
+  }, [messages, mounted]);
 
   const getCurrentUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    } catch (error) {
+      console.error('Error getting user:', error);
+      setUser(null);
+    }
   };
 
   const scrollToBottom = () => {
@@ -157,6 +168,10 @@ export default function ChatBot() {
     { text: "2% charity?", emoji: "💚" }
   ];
 
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <>
       {/* Chat Button */}
@@ -272,31 +287,15 @@ export default function ChatBot() {
 
       <style jsx>{`
         @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateX(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
+          from { opacity: 0; transform: translateX(-10px); }
+          to { opacity: 1; transform: translateX(0); }
         }
-        .animate-slide-up {
-          animation: slideUp 0.3s ease-out;
-        }
-        .animate-fade-in {
-          animation: fadeIn 0.2s ease-out;
-        }
+        .animate-slide-up { animation: slideUp 0.3s ease-out; }
+        .animate-fade-in { animation: fadeIn 0.2s ease-out; }
       `}</style>
     </>
   );
