@@ -25,41 +25,27 @@ const resources = {
   sid: { translation: sid }
 };
 
-// Flag to track initialization
-let initialized = false;
-
-const initI18n = () => {
-  if (!initialized && typeof window !== 'undefined') {
-    initialized = true;
-    i18n
-      .use(LanguageDetector)
-      .use(initReactI18next)
-      .init({
-        resources,
-        fallbackLng: 'en',
-        debug: false,
-        interpolation: {
-          escapeValue: false,
-        },
-        detection: {
-          order: ['localStorage', 'cookie', 'navigator', 'htmlTag'],
-          caches: ['localStorage'],
-        },
-        react: {
-          useSuspense: false,
-          bindI18n: 'languageChanged',
-          bindI18nStore: '',
-        },
-        initImmediately: false,
-      });
-  }
-  return i18n;
-};
-
-// For client-side use
+// Only initialize i18n on client side (prevents SSR errors)
 if (typeof window !== 'undefined') {
-  initI18n();
+  i18n
+    .use(LanguageDetector)
+    .use(initReactI18next)
+    .init({
+      resources,
+      fallbackLng: 'en',
+      debug: false,
+      interpolation: {
+        escapeValue: false,
+      },
+      detection: {
+        order: ['localStorage', 'cookie', 'navigator', 'htmlTag'],
+        caches: ['localStorage'],
+      },
+      react: {
+        useSuspense: false,
+      },
+      initImmediately: false,
+    });
 }
 
 export default i18n;
-export { initI18n };
