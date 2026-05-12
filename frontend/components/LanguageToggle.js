@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 export default function LanguageToggle() {
   const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const dropdownRef = useRef(null);
 
   const languages = [
@@ -20,10 +20,12 @@ export default function LanguageToggle() {
   ];
 
   useEffect(() => {
-    setMounted(true);
+    setIsClient(true);
   }, []);
 
   useEffect(() => {
+    if (!isClient) return;
+    
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsOpen(false);
@@ -31,7 +33,7 @@ export default function LanguageToggle() {
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [isClient]);
 
   const changeLanguage = (langCode) => {
     i18n.changeLanguage(langCode);
@@ -41,8 +43,8 @@ export default function LanguageToggle() {
 
   const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
 
-  if (!mounted) {
-    return <div className="w-10 h-10"></div>;
+  if (!isClient) {
+    return <div className="w-16 h-8"></div>;
   }
 
   return (
