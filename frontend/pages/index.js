@@ -1,344 +1,105 @@
-// Trigger redeploy - May 7 2026
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { supabase } from '../lib/supabase';
-import { useTranslation } from 'react-i18next';
-import PoolCard from '../components/PoolCard';
-import NewsletterSubscribe from '../components/NewsletterSubscribe';
-import MovingAd from '../components/MovingAd';
-import AdvertisingBanner from '../components/AdvertisingBanner';
-import SimpleFilters from '../components/SimpleFilters';
-import RoleBanners from '../components/RoleBanners';
-import CashEquivalentBanner from '../components/CashEquivalentBanner';
-import CharityBanner from '../components/CharityBanner';
-import Testimonials from '../components/Testimonials';
 
 export default function Home() {
-  const { t, i18n } = useTranslation();
-  const [pools, setPools] = useState([]);
-  const [filteredPools, setFilteredPools] = useState([]);
-  const [featuredPools, setFeaturedPools] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeFilters, setActiveFilters] = useState({ category: 'all', city: 'all' });
-  const [stats, setStats] = useState({
-    total_pools: 0,
-    total_winners: 0,
-    total_agents: 0,
-    total_raised: 0
-  });
-  const [error, setError] = useState(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-    const loadData = async () => {
-      try {
-        setError(null);
-        await Promise.all([fetchStats(), fetchPools()]);
-      } catch (err) {
-        if (err.name !== 'AbortError') {
-          console.error('Loading error:', err);
-          setError('Failed to load data. Please refresh the page.');
-        }
-      } finally {
-        clearTimeout(timeoutId);
-        setLoading(false);
-      }
-    };
-
-    loadData();
-
-    return () => {
-      controller.abort();
-      clearTimeout(timeoutId);
-    };
+    setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (pools.length > 0) {
-      applyFilters(activeFilters);
-    } else {
-      setFilteredPools(pools);
-    }
-  }, [pools, activeFilters]);
-
-  async function fetchStats() {
-    try {
-      const results = await Promise.allSettled([
-        supabase.from('pools').select('*', { count: 'exact', head: true }),
-        supabase.from('pools').select('*', { count: 'exact', head: true }).not('winner_id', 'is', null),
-        supabase.from('agents').select('*', { count: 'exact', head: true }),
-        supabase.from('contributions').select('amount').eq('status', 'completed')
-      ]);
-      
-      const total_pools = results[0]?.value?.count || 0;
-      const total_winners = results[1]?.value?.count || 0;
-      const total_agents = results[2]?.value?.count || 0;
-      const contributions = results[3]?.value?.data || [];
-      const total_raised = contributions.reduce((sum, c) => sum + (c.amount || 0), 0);
-      
-      setStats({ total_pools, total_winners, total_agents, total_raised });
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-    }
-  }
-
-  async function fetchPools() {
-    try {
-      const { data, error } = await supabase
-        .from('pools')
-        .select('*')
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-      setPools(data || []);
-      setFeaturedPools(data?.filter(pool => pool.is_featured === true) || []);
-    } catch (error) {
-      console.error('Error loading pools:', error);
-      setError('Could not load prize pools. Please try again.');
-    }
-  }
-
-  const applyFilters = (filters) => {
-    setActiveFilters(filters);
-    let filtered = [...pools];
-    
-    if (filters.category !== 'all') {
-      const categoryKeywords = {
-        vehicle: ['car', 'truck', 'v8', 'sino', 'toyota', 'motorcycle', 'bike', 'vitara'],
-        machinery: ['excavator', 'loader', 'block machine', 'tractor', 'machine', 'cnc'],
-        electronics: ['laptop', 'phone', 'computer', 'tv', 'dell', 'iphone', 'samsung'],
-        property: ['house', 'home', 'villa', 'apartment', 'land'],
-        furniture: ['furniture', 'sofa', 'bed', 'table', 'chair', 'cabinet']
-      };
-      const keywords = categoryKeywords[filters.category] || [];
-      filtered = filtered.filter(pool => 
-        keywords.some(keyword => 
-          pool.prize_name?.toLowerCase().includes(keyword) || 
-          pool.description?.toLowerCase().includes(keyword)
-        )
-      );
-    }
-
-    if (filters.city !== 'all') {
-      filtered = filtered.filter(pool => pool.city === filters.city);
-    }
-    
-    setFilteredPools(filtered);
-  };
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <div className="text-red-500 text-6xl mb-4">⚠️</div>
-        <h2 className="text-xl font-bold mb-2">Something went wrong</h2>
-        <p className="text-gray-500 mb-4">{error}</p>
-        <button 
-          onClick={() => window.location.reload()} 
-          className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
-        >
-          Refresh Page
-        </button>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse">
-            <div className="h-64 bg-gray-200 rounded-lg mb-8"></div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-20 bg-gray-200 rounded-lg"></div>
-              ))}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-80 bg-gray-200 rounded-lg"></div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  if (!mounted) {
+    return null;
   }
 
   return (
     <>
       <Head>
-        <title>Abbaa Carraa - {t('common.tagline')}</title>
-        <meta name="description" content={t('common.tagline')} />
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=yes" />
+        <title>Abbaa Carraa Ethio</title>
+        <meta name="description" content="Win amazing prizes through community savings" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <div className="min-h-screen flex flex-col w-full overflow-x-hidden">
-        <main suppressHydrationWarning className="flex-1 w-full">
-          {/* Top Banners */}
-          <CashEquivalentBanner />
-          <CharityBanner />
-
-          {/* Hero Section - Image only, no text on it */}
-          <section className="w-full bg-gradient-to-br from-green-900 to-blue-900">
-            <div className="w-full">
-              <img 
-                src="/images/abbaa-carraa-bg.png"
-                alt="Abbaa Carraa Background"
-                className="w-full h-auto object-contain"
-                loading="eager"
-                fetchPriority="high"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
-              />
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+        {/* Simple Navbar test */}
+        <div className="bg-white shadow-md py-4 px-6 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+              <span className="text-white text-sm">🎁</span>
             </div>
-          </section>
+            <span className="font-bold text-green-600">Abbaa Carraa Ethio</span>
+          </div>
+          <div className="flex gap-4">
+            <Link href="/login" className="text-gray-600 hover:text-green-600">Login</Link>
+            <Link href="/register" className="bg-green-600 text-white px-4 py-1 rounded-full text-sm">Register</Link>
+          </div>
+        </div>
 
-          {/* Welcome Text and Buttons - Positioned UNDER the image */}
-          <section className="w-full bg-white py-12 sm:py-16 md:py-20">
-            <div className="container mx-auto px-4 text-center">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-gray-800">
-                <span className="text-green-600">{t('common.welcome')}</span>
-              </h1>
-              <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto mb-8 sm:mb-10 px-2">
-                {t('common.tagline')}
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <Link 
-                  href="/register" 
-                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 sm:px-10 sm:py-4 rounded-full font-semibold text-base sm:text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 w-full sm:w-auto text-center"
-                >
-                  {t('common.get_started')}
-                </Link>
-                <Link 
-                  href="/listings" 
-                  className="bg-gray-100 hover:bg-gray-200 text-green-700 px-8 py-3 sm:px-10 sm:py-4 rounded-full font-semibold text-base sm:text-lg transition-all duration-300 border border-green-300 w-full sm:w-auto text-center"
-                >
-                  {t('common.browse_prizes')}
-                </Link>
-              </div>
+        {/* Hero Section */}
+        <div className="bg-gradient-to-r from-green-600 to-teal-600 text-white py-20">
+          <div className="container mx-auto px-4 text-center">
+            <div className="inline-block w-24 h-24 bg-white/20 rounded-2xl flex items-center justify-center mb-6 mx-auto">
+              <span className="text-5xl">🎁</span>
             </div>
-          </section>
-
-          {/* Stats Counters */}
-          <div className="bg-white border-t border-gray-200 py-4 shadow-sm">
-            <div className="container mx-auto px-4">
-              <div className="flex flex-wrap justify-center items-center gap-6 md:gap-12">
-                <div className="text-center min-w-[80px]">
-                  <div className="text-xl md:text-2xl font-bold text-green-600">{stats.total_pools}+</div>
-                  <div className="text-xs text-gray-500">{t('stats.active_pools')}</div>
-                </div>
-                <div className="text-center min-w-[80px]">
-                  <div className="text-xl md:text-2xl font-bold text-green-600">{stats.total_winners}+</div>
-                  <div className="text-xs text-gray-500">{t('stats.winners')}</div>
-                </div>
-                <div className="text-center min-w-[80px]">
-                  <div className="text-xl md:text-2xl font-bold text-green-600">{stats.total_agents}+</div>
-                  <div className="text-xs text-gray-500">{t('stats.agents')}</div>
-                </div>
-                <div className="text-center min-w-[80px]">
-                  <div className="text-xl md:text-2xl font-bold text-green-600">ETB {Math.floor(stats.total_raised / 1000)}K+</div>
-                  <div className="text-xs text-gray-500">{t('stats.raised')}</div>
-                </div>
-              </div>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+              Welcome to <span className="text-yellow-300">Abbaa Carraa Ethio</span>
+            </h1>
+            <p className="text-lg md:text-xl max-w-2xl mx-auto mb-8">
+              Win amazing prizes while supporting health initiatives in Ethiopia
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/register" className="bg-white text-green-600 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition">
+                Get Started
+              </Link>
+              <Link href="/listings" className="bg-white/20 hover:bg-white/30 px-8 py-3 rounded-full font-semibold transition">
+                Browse Prizes
+              </Link>
             </div>
           </div>
+        </div>
 
-          <MovingAd />
-          <AdvertisingBanner />
-          <SimpleFilters onFilterChange={applyFilters} />
-
-          {(activeFilters.category !== 'all' || activeFilters.city !== 'all') && (
-            <div className="container mx-auto px-4 py-2">
-              <p className="text-sm text-gray-500">
-                {t('common.showing')} {filteredPools.length} {t('common.of')} {pools.length} {t('common.active_pools')}
-                {activeFilters.category !== 'all' && <span className="ml-1">• {t('filters.category')}: {activeFilters.category}</span>}
-                {activeFilters.city !== 'all' && <span className="ml-1">• {t('filters.city')}: {activeFilters.city}</span>}
-              </p>
+        {/* Simple Stats */}
+        <div className="container mx-auto px-4 py-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="bg-white rounded-2xl p-6 text-center shadow-md">
+              <div className="text-3xl mb-2">🎯</div>
+              <div className="text-2xl font-bold text-green-600">50+</div>
+              <p className="text-gray-500">Active Pools</p>
             </div>
-          )}
-
-          {/* Featured Pools */}
-          {featuredPools.length > 0 && (
-            <section className="container mx-auto px-4 py-8">
-              <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
-                ⭐ {t('pools.featured_pools')}
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {featuredPools.map(pool => (
-                  <PoolCard key={pool.id} pool={pool} featured={true} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* All Active Pools */}
-          <section id="pools-grid" className="container mx-auto px-4 py-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
-              {activeFilters.category !== 'all' || activeFilters.city !== 'all' 
-                ? t('filters.title') 
-                : t('pools.active_pools')}
-            </h2>
-            {filteredPools.length === 0 ? (
-              <div className="text-center py-12 bg-gray-50 rounded-lg">
-                <p className="text-gray-500 mb-4">{t('pools.no_pools')}</p>
-                <button 
-                  onClick={() => applyFilters({ category: 'all', city: 'all' })} 
-                  className="text-green-600 hover:text-green-700"
-                >
-                  {t('common.clear_filters')} →
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredPools.map(pool => (
-                  <PoolCard key={pool.id} pool={pool} />
-                ))}
-              </div>
-            )}
-          </section>
-
-          <section className="container mx-auto px-4 py-8">
-            <RoleBanners />
-          </section>
-
-          <section className="bg-gray-100 py-12">
-            <div className="container mx-auto px-4">
-              <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">{t('how_it_works.title')}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-                <div>
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl font-bold text-green-600">1</span>
-                  </div>
-                  <h3 className="font-bold text-lg mb-2">{t('how_it_works.find_pool')}</h3>
-                  <p className="text-gray-600">{t('how_it_works.find_pool_desc')}</p>
-                </div>
-                <div>
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl font-bold text-green-600">2</span>
-                  </div>
-                  <h3 className="font-bold text-lg mb-2">{t('how_it_works.contribute')}</h3>
-                  <p className="text-gray-600">{t('how_it_works.contribute_desc')}</p>
-                </div>
-                <div>
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl font-bold text-green-600">3</span>
-                  </div>
-                  <h3 className="font-bold text-lg mb-2">{t('how_it_works.win')}</h3>
-                  <p className="text-gray-600">{t('how_it_works.win_desc')}</p>
-                </div>
-              </div>
+            <div className="bg-white rounded-2xl p-6 text-center shadow-md">
+              <div className="text-3xl mb-2">🏆</div>
+              <div className="text-2xl font-bold text-green-600">100+</div>
+              <p className="text-gray-500">Happy Winners</p>
             </div>
-          </section>
+            <div className="bg-white rounded-2xl p-6 text-center shadow-md">
+              <div className="text-3xl mb-2">🤝</div>
+              <div className="text-2xl font-bold text-green-600">20+</div>
+              <p className="text-gray-500">Agents</p>
+            </div>
+            <div className="bg-white rounded-2xl p-6 text-center shadow-md">
+              <div className="text-3xl mb-2">💚</div>
+              <div className="text-2xl font-bold text-green-600">2%</div>
+              <p className="text-gray-500">For Health</p>
+            </div>
+          </div>
+        </div>
 
-          <Testimonials />
-          <NewsletterSubscribe />
-        </main>
+        {/* Charity Section */}
+        <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white py-12">
+          <div className="container mx-auto px-4 text-center">
+            <div className="text-5xl mb-4">💚</div>
+            <h2 className="text-2xl font-bold mb-2">2% for Health</h2>
+            <p className="max-w-2xl mx-auto">
+              Every contribution helps Ethiopians fighting kidney disease and heart disease
+            </p>
+          </div>
+        </div>
+
+        {/* Simple Footer */}
+        <div className="bg-gray-900 text-white py-6 text-center text-sm">
+          <p>© 2026 Abbaa Carraa Ethio. All rights reserved.</p>
+        </div>
       </div>
     </>
   );
