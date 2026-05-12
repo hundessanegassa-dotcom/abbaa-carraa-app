@@ -1,6 +1,5 @@
 import '../styles/globals.css';
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
 import { Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
@@ -13,18 +12,13 @@ import LanguageToggle from '../components/LanguageToggle';
 const queryClient = new QueryClient();
 
 function MyApp({ Component, pageProps }) {
-  const [isReady, setIsReady] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Initialize i18n on client side only
-    const init = async () => {
-      setIsReady(true);
-    };
-    init();
+    setMounted(true);
   }, []);
 
-  // Don't render anything until client-side is ready
-  if (!isReady) {
+  if (!mounted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
