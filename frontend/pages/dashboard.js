@@ -6,7 +6,10 @@ import IndividualDashboard from '../components/dashboards/IndividualDashboard';
 export default function Dashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-
+if (profile && profile.agreement_accepted !== true) {
+  toast.error('Please accept the terms and conditions first.');
+  return router.push('/register');
+}
   useEffect(() => {
     checkUserAndRedirect();
   }, []);
