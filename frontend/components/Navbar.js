@@ -18,6 +18,7 @@ export default function Navbar() {
   const [hasAgentApplication, setHasAgentApplication] = useState(false);
   const [hasVendorApplication, setHasVendorApplication] = useState(false);
   const [hasOrgApplication, setHasOrgApplication] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     getUser();
@@ -30,45 +31,52 @@ export default function Navbar() {
   };
 
   async function getUser() {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
-    
-    if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role, user_type')
-        .eq('id', user.id)
-        .maybeSingle();
-      setUserRole(profile?.role);
-      setUserType(profile?.user_type);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
       
-      // Check for existing applications
-      const { data: agentCheck } = await supabase
-        .from('agents')
-        .select('id, verified')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      setHasAgentApplication(!!agentCheck);
-      
-      const { data: vendorCheck } = await supabase
-        .from('vendors')
-        .select('id, verified')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      setHasVendorApplication(!!vendorCheck);
-      
-      const { data: orgCheck } = await supabase
-        .from('organizations')
-        .select('id, verified')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      setHasOrgApplication(!!orgCheck);
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role, user_type')
+          .eq('id', user.id)
+          .maybeSingle();
+        setUserRole(profile?.role || null);
+        setUserType(profile?.user_type || null);
+        
+        // Check for existing applications
+        const { data: agentCheck } = await supabase
+          .from('agents')
+          .select('id, verified')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        setHasAgentApplication(!!agentCheck);
+        
+        const { data: vendorCheck } = await supabase
+          .from('vendors')
+          .select('id, verified')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        setHasVendorApplication(!!vendorCheck);
+        
+        const { data: orgCheck } = await supabase
+          .from('organizations')
+          .select('id, verified')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        setHasOrgApplication(!!orgCheck);
+      }
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
     }
   }
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    toast.success(t('common.logout_success'));
+    toast.success(t('common.logout_success') || 'Logged out successfully');
     router.push('/');
   }
 
@@ -82,6 +90,7 @@ export default function Navbar() {
 
   // Determine what "Create" action to show
   const getCreateAction = () => {
+    if (!user) return null;
     if (userType === 'agent') return { text: 'Create Pool', link: '/create-pool', icon: '📦' };
     if (userType === 'vendor') return { text: 'List Product', link: '/vendor/listings/create', icon: '🏪' };
     if (userType === 'organization') return { text: 'Create Private Pool', link: '/create-pool?type=private', icon: '🏊' };
@@ -92,6 +101,7 @@ export default function Navbar() {
   // Determine what "Become" links to show
   const getBecomeLinks = () => {
     const links = [];
+    if (!user) return links;
     const isIndividual = !userType || userType === 'individual';
     
     if (isIndividual && !hasAgentApplication) {
@@ -108,6 +118,13 @@ export default function Navbar() {
 
   const createAction = getCreateAction();
   const becomeLinks = getBecomeLinks();
+
+  // Don't render navbar until user data is loaded
+  if (isLoading) {
+    return (
+      <div className="bg-white shadow-md h-14 sm:h-16"></div>
+    );
+  }
 
   return (
     <>
@@ -140,7 +157,7 @@ export default function Navbar() {
             
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-1">
-              <Link href="/" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🏠 {t('common.home')} </Link>
+              <Link href="/" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🏠 {t('common.home') || 'Home'} </Link>
               <Link href="/listings" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🎁 Browse Prizes </Link>
               <Link href="/winners" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🏆 Winners </Link>
               <Link href="/how-it-works" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🎯 How It Works </Link>
@@ -213,14 +230,14 @@ export default function Navbar() {
                       
                       <div className="border-t my-1"></div>
                       <button onClick={handleLogout} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition">
-                        <span>🚪</span> {t('common.logout')}
+                        <span>🚪</span> {t('common.logout') || 'Logout'}
                       </button>
                     </div>
                   </div>
                 </div>
               ) : (
                 <div className="flex gap-1 sm:gap-2">
-                  <Link href="/login" className="text-xs sm:text-sm text-gray-600 hover:text-green-600 transition px-2 py-1"> {t('common.login')} </Link>
+                  <Link href="/login" className="text-xs sm:text-sm text-gray-600 hover:text-green-600 transition px-2 py-1"> {t('common.login') || 'Login'} </Link>
                   <Link href="/register" className="bg-gradient-to-r from-green-500 to-teal-500 text-white px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-semibold hover:shadow-lg transition"> Register </Link>
                 </div>
               )}
@@ -268,7 +285,7 @@ export default function Navbar() {
                   ))}
                   
                   <Link href="/profile" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 👤 Profile </Link>
-                  <Link href="/settings" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> ⚙️ Settings </Link>
+                  <Link href="/settings" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() → setMobileMenuOpen(false)}> ⚙️ Settings </Link>
                   
                   <button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} className="block w-full text-left py-2 px-3 text-sm text-red-600 hover:bg-red-50 rounded-lg mt-1">
                     🚪 Logout
