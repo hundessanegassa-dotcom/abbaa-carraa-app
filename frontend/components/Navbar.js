@@ -1,3 +1,24 @@
+// Add at the beginning of Navbar component
+const [isLoading, setIsLoading] = useState(true);
+
+// In getUser function, add finally
+async function getUser() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+    // ... rest of your existing code
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    setUser(null);
+  } finally {
+    setIsLoading(false);
+  }
+}
+
+// At the return, add loading check
+if (isLoading) {
+  return <div className="bg-white shadow-md h-14 sm:h-16"></div>;
+}
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
