@@ -78,12 +78,18 @@ export default function Navbar() {
     }
   }
 
-<Link 
-  href="/logout" 
-  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition"
->
-  <span>🚪</span> {t('common.logout') || 'Logout'}
-</Link>
+  async function handleLogout() {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.clear();
+      toast.success(t('common.logout_success') || 'Logged out successfully');
+      router.push('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to logout. Please try again.');
+    }
   }
 
   const getDashboardLink = () => {
@@ -138,6 +144,7 @@ export default function Navbar() {
       <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-white shadow-md'}`}>
         <div className="container mx-auto px-2 sm:px-4">
           <div className="flex justify-between items-center h-14 sm:h-16">
+            {/* Logo */}
             <Link href="/" className="flex items-center gap-1.5 sm:gap-2 group">
               <div className="w-7 h-7 sm:w-10 sm:h-10 bg-gradient-to-r from-green-500 to-teal-500 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition">
                 <span className="text-white text-base sm:text-xl">🎁</span>
@@ -150,6 +157,7 @@ export default function Navbar() {
               </div>
             </Link>
             
+            {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-1">
               <Link href="/" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🏠 {t('common.home') || 'Home'} </Link>
               <Link href="/listings" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🎁 Browse Prizes </Link>
@@ -163,6 +171,7 @@ export default function Navbar() {
               )}
             </div>
             
+            {/* Right side icons */}
             <div className="flex items-center gap-1 sm:gap-2">
               <NotificationBell />
               <LanguageToggle />
@@ -232,6 +241,7 @@ export default function Navbar() {
               )}
             </div>
 
+            {/* Mobile menu button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="md:hidden p-1.5 rounded-lg text-gray-600 hover:bg-gray-100 transition"
@@ -246,6 +256,7 @@ export default function Navbar() {
             </button>
           </div>
 
+          {/* Mobile Navigation Menu */}
           {mobileMenuOpen && (
             <div className="md:hidden pb-3 space-y-1 animate-fadeIn">
               <Link href="/" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🏠 Home </Link>
