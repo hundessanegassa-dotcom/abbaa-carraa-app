@@ -1,24 +1,3 @@
-// Add at the beginning of Navbar component
-const [isLoading, setIsLoading] = useState(true);
-
-// In getUser function, add finally
-async function getUser() {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
-    // ... rest of your existing code
-  } catch (error) {
-    console.error('Error fetching user:', error);
-    setUser(null);
-  } finally {
-    setIsLoading(false);
-  }
-}
-
-// At the return, add loading check
-if (isLoading) {
-  return <div className="bg-white shadow-md h-14 sm:h-16"></div>;
-}
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
@@ -152,7 +131,6 @@ export default function Navbar() {
       <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-white shadow-md'}`}>
         <div className="container mx-auto px-2 sm:px-4">
           <div className="flex justify-between items-center h-14 sm:h-16">
-            
             <Link href="/" className="flex items-center gap-1.5 sm:gap-2 group">
               <div className="w-7 h-7 sm:w-10 sm:h-10 bg-gradient-to-r from-green-500 to-teal-500 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition">
                 <span className="text-white text-base sm:text-xl">🎁</span>
@@ -241,7 +219,7 @@ export default function Navbar() {
                 </div>
               ) : (
                 <div className="flex gap-1 sm:gap-2">
-                  <Link href="/login" className="text-xs sm:text-sm text-gray-600 hover:text-green-600 transition px-2 py-1"> {t('common.login') || 'Login'} </Link>
+                  <Link href="/login" className="text-xs sm:text-sm text-gray-600 hover:text-green-600 transition px-2 py-1"> Login </Link>
                   <Link href="/register" className="bg-gradient-to-r from-green-500 to-teal-500 text-white px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-semibold hover:shadow-lg transition"> Register </Link>
                 </div>
               )}
