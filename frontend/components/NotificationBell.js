@@ -10,15 +10,16 @@ export default function NotificationBell() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const dropdownRef = useRef(null);
 
+  // Only run on client side
   useEffect(() => {
-    setMounted(true);
+    setIsClient(true);
   }, []);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!isClient) return;
     
     fetchNotifications();
     subscribeToNotifications();
@@ -33,71 +34,82 @@ export default function NotificationBell() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [mounted]);
+  }, [isClient]);
 
   async function fetchNotifications() {
-    if (!mounted) return;
+    if (!isClient) return;
     
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    setLoading(true);
-    const { data } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(20);
+      setLoading(true);
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
 
-    setNotifications(data || []);
-    setUnreadCount(data?.filter(n => !n.is_read).length || 0);
-    setLoading(false);
+      setNotifications(data || []);
+      setUnreadCount(data?.filter(n => !n.is_read).length || 0);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function subscribeToNotifications() {
-    const { data: { user } } = supabase.auth.getUser();
-    if (!user) return;
+    if (!isClient) return;
+    
+    try {
+      const { data: { user } } = supabase.auth.getUser();
+      if (!user) return;
 
-    supabase
-      .channel('notifications')
-      .on('postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
-        (payload) => {
-          const newNotification = payload.new;
-          setNotifications(prev => [newNotification, ...prev]);
-          setUnreadCount(prev => prev + 1);
-          
-          toast.custom((t) => (
-            <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}>
-              <div className="flex-1 w-0 p-4">
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 pt-0.5">
-                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                      {getNotificationIcon(newNotification.type)}
+      supabase
+        .channel('notifications')
+        .on('postgres_changes', 
+          { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+          (payload) => {
+            const newNotification = payload.new;
+            setNotifications(prev => [newNotification, ...prev]);
+            setUnreadCount(prev => prev + 1);
+            
+            toast.custom((t) => (
+              <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}>
+                <div className="flex-1 w-0 p-4">
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0 pt-0.5">
+                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                        {getNotificationIcon(newNotification.type)}
+                      </div>
+                    </div>
+                    <div className="ml-3 flex-1">
+                      <p className="text-sm font-medium text-gray-900">{newNotification.title}</p>
+                      <p className="mt-1 text-sm text-gray-500">{newNotification.message}</p>
                     </div>
                   </div>
-                  <div className="ml-3 flex-1">
-                    <p className="text-sm font-medium text-gray-900">{newNotification.title}</p>
-                    <p className="mt-1 text-sm text-gray-500">{newNotification.message}</p>
-                  </div>
+                </div>
+                <div className="flex border-l border-gray-200">
+                  <button
+                    onClick={() => {
+                      toast.dismiss(t.id);
+                      markAsRead(newNotification.id, newNotification.link_url);
+                    }}
+                    className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-green-600 hover:text-green-500 focus:outline-none"
+                  >
+                    View
+                  </button>
                 </div>
               </div>
-              <div className="flex border-l border-gray-200">
-                <button
-                  onClick={() => {
-                    toast.dismiss(t.id);
-                    markAsRead(newNotification.id, newNotification.link_url);
-                  }}
-                  className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-green-600 hover:text-green-500 focus:outline-none"
-                >
-                  View
-                </button>
-              </div>
-            </div>
-          ), { duration: 5000 });
-        }
-      )
-      .subscribe();
+            ), { duration: 5000 });
+          }
+        )
+        .subscribe();
+    } catch (error) {
+      console.error('Error subscribing to notifications:', error);
+    }
   }
 
   function getNotificationIcon(type) {
@@ -110,73 +122,79 @@ export default function NotificationBell() {
   }
 
   async function markAsRead(id, link) {
-    const { error } = await supabase
-      .from('notifications')
-      .update({ is_read: true, read_at: new Date().toISOString() })
-      .eq('id', id);
-    
-    if (error) {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      setNotifications(prev => 
+        prev.map(n => n.id === id ? { ...n, is_read: true } : n)
+      );
+      
+      if (link) {
+        setTimeout(() => {
+          router.push(link);
+          setShowDropdown(false);
+        }, 100);
+      }
+    } catch (error) {
       console.error('Error marking as read:', error);
-      return;
-    }
-    
-    setUnreadCount(prev => Math.max(0, prev - 1));
-    setNotifications(prev => 
-      prev.map(n => n.id === id ? { ...n, is_read: true } : n)
-    );
-    
-    if (link) {
-      setTimeout(() => {
-        router.push(link);
-        setShowDropdown(false);
-      }, 100);
     }
   }
 
   async function markAllAsRead() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
-    if (unreadIds.length === 0) {
-      toast('No unread notifications', { icon: '🔔' });
-      return;
-    }
+      const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
+      if (unreadIds.length === 0) {
+        toast('No unread notifications', { icon: '🔔' });
+        return;
+      }
 
-    const { error } = await supabase
-      .from('notifications')
-      .update({ is_read: true, read_at: new Date().toISOString() })
-      .in('id', unreadIds);
-    
-    if (error) {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .in('id', unreadIds);
+      
+      if (error) throw error;
+      
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setUnreadCount(0);
+      toast.success(`Marked ${unreadIds.length} notifications as read`);
+    } catch (error) {
+      console.error('Error marking all as read:', error);
       toast.error('Failed to mark all as read');
-      return;
     }
-    
-    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-    setUnreadCount(0);
-    toast.success(`Marked ${unreadIds.length} notifications as read`);
   }
 
   async function deleteNotification(id) {
-    const { error } = await supabase
-      .from('notifications')
-      .delete()
-      .eq('id', id);
-    
-    if (error) {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setNotifications(prev => prev.filter(n => n.id !== id));
+      if (!notifications.find(n => n.id === id)?.is_read) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+      toast.success('Notification removed');
+    } catch (error) {
+      console.error('Error deleting notification:', error);
       toast.error('Failed to delete notification');
-      return;
     }
-    
-    setNotifications(prev => prev.filter(n => n.id !== id));
-    if (!notifications.find(n => n.id === id)?.is_read) {
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    }
-    toast.success('Notification removed');
   }
 
   const formatTime = (timestamp) => {
+    if (!timestamp) return '';
     const date = new Date(timestamp);
     const now = new Date();
     const diffMs = now - date;
@@ -191,7 +209,8 @@ export default function NotificationBell() {
     return date.toLocaleDateString();
   };
 
-  if (!mounted) {
+  // Don't render anything during SSR
+  if (!isClient) {
     return <div className="relative w-8 h-8"></div>;
   }
 
@@ -249,7 +268,11 @@ export default function NotificationBell() {
             ) : (
               <div className="divide-y">
                 {notifications.map(notif => (
-                  <div key={notif.id} onClick={() => markAsRead(notif.id, notif.link_url)} className={`p-3 hover:bg-gray-50 cursor-pointer transition-all duration-150 ${!notif.is_read ? 'bg-green-50/30 border-l-4 border-l-green-500' : ''}`}>
+                  <div
+                    key={notif.id}
+                    onClick={() => markAsRead(notif.id, notif.link_url)}
+                    className={`p-3 hover:bg-gray-50 cursor-pointer transition-all duration-150 ${!notif.is_read ? 'bg-green-50/30 border-l-4 border-l-green-500' : ''}`}
+                  >
                     <div className="flex gap-3">
                       <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${!notif.is_read ? 'bg-green-100' : 'bg-gray-100'}`}>
                         <span className="text-lg">{getNotificationIcon(notif.type)}</span>
@@ -257,7 +280,12 @@ export default function NotificationBell() {
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start gap-2">
                           <p className={`text-sm ${!notif.is_read ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>{notif.title}</p>
-                          <button onClick={(e) => { e.stopPropagation(); deleteNotification(notif.id); }} className="text-gray-300 hover:text-red-500 transition flex-shrink-0">✕</button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); deleteNotification(notif.id); }}
+                            className="text-gray-300 hover:text-red-500 transition flex-shrink-0"
+                          >
+                            ✕
+                          </button>
                         </div>
                         <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{notif.message}</p>
                         <div className="flex items-center gap-2 mt-1.5">
