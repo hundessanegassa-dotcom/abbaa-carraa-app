@@ -78,7 +78,7 @@ export default function Navbar() {
     }
   }
 
-  async function handleLogout() {
+ async function handleLogout() {
     await supabase.auth.signOut();
     toast.success(t('common.logout_success') || 'Logged out successfully');
     router.push('/');
