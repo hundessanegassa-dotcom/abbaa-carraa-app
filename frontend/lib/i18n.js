@@ -25,7 +25,7 @@ const resources = {
   sid: { translation: sid }
 };
 
-// Only initialize i18n on client side (prevents SSR errors)
+// Only initialize on client side to prevent SSR issues
 if (typeof window !== 'undefined') {
   i18n
     .use(LanguageDetector)
