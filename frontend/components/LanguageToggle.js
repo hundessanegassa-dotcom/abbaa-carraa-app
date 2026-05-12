@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 export default function LanguageToggle() {
   const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef(null);
 
-  // All 9 Ethiopian languages
   const languages = [
     { code: 'en', name: 'English', flag: '🇬🇧', nativeName: 'English' },
     { code: 'am', name: 'Amharic', flag: '🇪🇹', nativeName: 'አማርኛ' },
@@ -19,13 +19,9 @@ export default function LanguageToggle() {
     { code: 'sid', name: 'Sidama', flag: '🇪🇹', nativeName: 'Sidaamu Afoo' }
   ];
 
-  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
-
-  const changeLanguage = (langCode) => {
-    i18n.changeLanguage(langCode);
-    localStorage.setItem('language', langCode);
-    setIsOpen(false);
-  };
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -37,23 +33,35 @@ export default function LanguageToggle() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const changeLanguage = (langCode) => {
+    i18n.changeLanguage(langCode);
+    localStorage.setItem('language', langCode);
+    setIsOpen(false);
+  };
+
+  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
+
+  if (!mounted) {
+    return <div className="w-10 h-10"></div>;
+  }
+
   return (
-    <div className="fixed top-4 right-4 z-50" ref={dropdownRef}>
+    <div className="relative ml-2" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-2 shadow-md hover:shadow-lg transition-all duration-200"
+        className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 rounded-full px-3 py-1.5 transition-all duration-200"
       >
-        <span className="text-xl">{currentLanguage.flag}</span>
-        <span className="text-sm font-medium text-gray-700 hidden sm:inline">
+        <span className="text-base">{currentLanguage.flag}</span>
+        <span className="text-xs font-medium text-gray-700 hidden sm:inline">
           {currentLanguage.nativeName}
         </span>
-        <svg className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className={`w-3 h-3 text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden min-w-[200px] max-h-96 overflow-y-auto z-50">
+        <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden min-w-[180px] max-h-96 overflow-y-auto z-50">
           {languages.map((lang) => (
             <button
               key={lang.code}
@@ -64,7 +72,7 @@ export default function LanguageToggle() {
                   : 'text-gray-700 hover:bg-gray-50'
               }`}
             >
-              <span className="text-lg">{lang.flag}</span>
+              <span className="text-base">{lang.flag}</span>
               <span>{lang.nativeName}</span>
               {i18n.language === lang.code && (
                 <svg className="w-4 h-4 ml-auto text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
