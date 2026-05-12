@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../lib/i18n';
 
-// Dynamically import components that use browser-only APIs (prevents SSR hydration errors)
+// Dynamically import components that use browser-only APIs
 const Navbar = dynamic(() => import('../components/Navbar'), { ssr: false });
 const Footer = dynamic(() => import('../components/Footer'), { ssr: false });
 const ChatBot = dynamic(() => import('../components/ChatBot'), { ssr: false });
@@ -21,14 +21,11 @@ function MyApp({ Component, pageProps }) {
     setMounted(true);
   }, []);
 
-  // Return loading state during SSR to prevent hydration mismatches
   if (!mounted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-500">Loading...</p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+        <p className="text-gray-500">Loading...</p>
       </div>
     );
   }
