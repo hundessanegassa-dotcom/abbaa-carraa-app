@@ -44,7 +44,6 @@ export default function Navbar() {
         setUserRole(profile?.role || null);
         setUserType(profile?.user_type || null);
         
-        // Check for existing applications
         const { data: agentCheck } = await supabase
           .from('agents')
           .select('id, verified')
@@ -88,7 +87,6 @@ export default function Navbar() {
     return '/dashboard';
   };
 
-  // Determine what "Create" action to show
   const getCreateAction = () => {
     if (!user) return null;
     if (userType === 'agent') return { text: 'Create Pool', link: '/create-pool', icon: '📦' };
@@ -98,7 +96,6 @@ export default function Navbar() {
     return null;
   };
 
-  // Determine what "Become" links to show
   const getBecomeLinks = () => {
     const links = [];
     if (!user) return links;
@@ -119,28 +116,22 @@ export default function Navbar() {
   const createAction = getCreateAction();
   const becomeLinks = getBecomeLinks();
 
-  // Don't render navbar until user data is loaded
   if (isLoading) {
-    return (
-      <div className="bg-white shadow-md h-14 sm:h-16"></div>
-    );
+    return <div className="bg-white shadow-md h-14 sm:h-16"></div>;
   }
 
   return (
     <>
-      {/* Top Announcement Bar */}
       <div className="bg-gradient-to-r from-green-600 to-teal-600 text-white text-center py-1.5 sm:py-2 text-[10px] sm:text-sm">
         <div className="container mx-auto px-2 sm:px-4">
           <span>💚 2% of every contribution supports kidney & heart disease treatment</span>
         </div>
       </div>
 
-      {/* Main Navbar */}
       <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-white shadow-md'}`}>
         <div className="container mx-auto px-2 sm:px-4">
           <div className="flex justify-between items-center h-14 sm:h-16">
             
-            {/* Logo */}
             <Link href="/" className="flex items-center gap-1.5 sm:gap-2 group">
               <div className="w-7 h-7 sm:w-10 sm:h-10 bg-gradient-to-r from-green-500 to-teal-500 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition">
                 <span className="text-white text-base sm:text-xl">🎁</span>
@@ -149,20 +140,16 @@ export default function Navbar() {
                 <span className="font-bold text-sm sm:text-xl bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
                   Abbaa Carraa
                 </span>
-                <span className="text-[8px] sm:text-[10px] text-gray-400 block -mt-0.5 sm:-mt-1">
-                  Ethio
-                </span>
+                <span className="text-[8px] sm:text-[10px] text-gray-400 block -mt-0.5 sm:-mt-1">Ethio</span>
               </div>
             </Link>
             
-            {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-1">
               <Link href="/" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🏠 {t('common.home') || 'Home'} </Link>
               <Link href="/listings" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🎁 Browse Prizes </Link>
               <Link href="/winners" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🏆 Winners </Link>
               <Link href="/how-it-works" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🎯 How It Works </Link>
               
-              {/* Create Action - Dynamic based on role */}
               {user && createAction && (
                 <Link href={createAction.link} className="ml-2 bg-gradient-to-r from-green-500 to-teal-500 text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:shadow-lg transition transform hover:scale-105 flex items-center gap-1">
                   <span>+</span> {createAction.text}
@@ -170,7 +157,6 @@ export default function Navbar() {
               )}
             </div>
             
-            {/* Right side icons */}
             <div className="flex items-center gap-1 sm:gap-2">
               <NotificationBell />
               <LanguageToggle />
@@ -189,7 +175,6 @@ export default function Navbar() {
                     </svg>
                   </button>
                   
-                  {/* Dropdown Menu */}
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                     <div className="p-2">
                       <div className="px-3 py-2 border-b mb-1">
@@ -209,7 +194,6 @@ export default function Navbar() {
                         <span>🔔</span> Notifications
                       </Link>
                       
-                      {/* Become Links in Dropdown */}
                       {becomeLinks.length > 0 && (
                         <>
                           <div className="border-t my-1"></div>
@@ -221,7 +205,6 @@ export default function Navbar() {
                         </>
                       )}
                       
-                      {/* Create Action in Dropdown */}
                       {createAction && (
                         <Link href={createAction.link} className="flex items-center gap-2 px-3 py-2 text-sm text-green-600 hover:bg-green-50 rounded-lg transition mt-1 border-t pt-2">
                           <span>➕</span> {createAction.text}
@@ -243,7 +226,6 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Mobile menu button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="md:hidden p-1.5 rounded-lg text-gray-600 hover:bg-gray-100 transition"
@@ -258,7 +240,6 @@ export default function Navbar() {
             </button>
           </div>
 
-          {/* Mobile Navigation Menu */}
           {mobileMenuOpen && (
             <div className="md:hidden pb-3 space-y-1 animate-fadeIn">
               <Link href="/" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🏠 Home </Link>
@@ -270,14 +251,12 @@ export default function Navbar() {
                 <>
                   <Link href={getDashboardLink()} className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 📊 Dashboard </Link>
                   
-                  {/* Create Action in Mobile */}
                   {createAction && (
                     <Link href={createAction.link} className="block py-2 px-3 text-center bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-lg text-sm font-semibold mt-2" onClick={() => setMobileMenuOpen(false)}>
                       + {createAction.text}
                     </Link>
                   )}
                   
-                  {/* Become Links in Mobile */}
                   {becomeLinks.map((link, idx) => (
                     <Link key={idx} href={link.link} className={`block py-2 px-3 text-sm ${link.color} hover:bg-gray-50 rounded-lg`} onClick={() => setMobileMenuOpen(false)}>
                       {link.text}
@@ -285,7 +264,7 @@ export default function Navbar() {
                   ))}
                   
                   <Link href="/profile" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 👤 Profile </Link>
-                  <Link href="/settings" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() → setMobileMenuOpen(false)}> ⚙️ Settings </Link>
+                  <Link href="/settings" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> ⚙️ Settings </Link>
                   
                   <button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} className="block w-full text-left py-2 px-3 text-sm text-red-600 hover:bg-red-50 rounded-lg mt-1">
                     🚪 Logout
