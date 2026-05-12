@@ -1,5 +1,40 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useTranslation } 'react-i18next';
+import WinnerModal from './WinnerModal';
+
+export default function PoolCard({ pool, featured = false }) {
+  const { t } = useTranslation();
+  const [showWinnerModal, setShowWinnerModal] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Add this to prevent SSR issues
+  useState(() => {
+    setMounted(true);
+  }, []);
+
+  // Rest of your existing code...
+  // Make sure all your existing functionality remains the same
+
+  // If not mounted, return a placeholder
+  if (!mounted) {
+    return (
+      <div className="bg-white rounded-xl overflow-hidden shadow-md">
+        <div className="h-36 sm:h-44 md:h-48 bg-gray-200 animate-pulse"></div>
+        <div className="p-3 sm:p-4">
+          <div className="h-4 bg-gray-200 rounded mb-2 animate-pulse"></div>
+          <div className="h-3 bg-gray-200 rounded mb-2 animate-pulse"></div>
+          <div className="h-2 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // ... rest of your existing PoolCard code continues here
+import { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import WinnerModal from './WinnerModal';
 
