@@ -5,7 +5,10 @@ import OrganizationDashboard from '../../components/dashboards/OrganizationDashb
 
 export default function OrganizationDashboardPage() {
   const router = useRouter();
-
+if (profile && profile.agreement_accepted !== true) {
+  toast.error('Please accept the terms and conditions first.');
+  return router.push('/register');
+}
   useEffect(() => {
     checkAccess();
   }, []);
