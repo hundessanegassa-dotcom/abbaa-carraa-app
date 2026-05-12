@@ -4,7 +4,6 @@ const withPWA = require('next-pwa')({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
-  // Remove font caching - this is causing the 404 error
   runtimeCaching: [
     // Supabase API calls
     {
@@ -54,12 +53,13 @@ const withPWA = require('next-pwa')({
         }
       }
     }
-    // REMOVED the font caching and generic page caching that cause issues
   ]
 });
 
 const nextConfig = {
   reactStrictMode: true,
+  
+  // Image optimization - ADD THESE
   images: {
     formats: ['image/avif', 'image/webp'],
     domains: [
@@ -67,14 +67,75 @@ const nextConfig = {
       'lh3.googleusercontent.com',
       'avatars.githubusercontent.com',
     ],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 60,
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
-  compress: true,
+  
+  compression: true, // Already have compress: true
   swcMinify: true,
+  
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
-  // Disable font optimization to prevent preload errors
+  
   optimizeFonts: false,
+  
+  // ADD THESE NEW OPTIMIZATIONS
+  poweredByHeader: false, // Remove X-Powered-By header for security
+  generateEtags: true, // Enable ETags for better caching
+  
+  // On-demand entries for faster dev
+  onDemandEntries: {
+    maxInactiveAge: 25 * 1000,
+    pagesBufferLength: 2,
+  },
+  
+  // Configure for faster production builds
+  productionBrowserSourceMaps: false,
+  
+  // Experimental features for faster loading
+  experimental: {
+    optimizeCss: true,
+    scrollRestoration: true,
+    legacyBrowsers: false,
+    browsersListForSwc: true,
+  },
+  
+  // Cache headers for static assets
+  async headers() {
+    return [
+      {
+        source: '/_next/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/images/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400, stale-while-revalidate=604800',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 module.exports = withPWA(nextConfig);
