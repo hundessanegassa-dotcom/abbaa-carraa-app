@@ -10,13 +10,19 @@ export default function NotificationBell() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    
     fetchNotifications();
     subscribeToNotifications();
     
-    // Close dropdown when clicking outside
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowDropdown(false);
@@ -27,9 +33,11 @@ export default function NotificationBell() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [mounted]);
 
   async function fetchNotifications() {
+    if (!mounted) return;
+    
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
@@ -59,7 +67,6 @@ export default function NotificationBell() {
           setNotifications(prev => [newNotification, ...prev]);
           setUnreadCount(prev => prev + 1);
           
-          // Show toast for real-time notification
           toast.custom((t) => (
             <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}>
               <div className="flex-1 w-0 p-4">
@@ -95,31 +102,11 @@ export default function NotificationBell() {
 
   function getNotificationIcon(type) {
     const icons = {
-      winner: '🏆',
-      draw: '🎲',
-      pool: '🎁',
-      payment: '💰',
-      commission: '💎',
-      charity: '💚',
-      reminder: '⏰',
-      system: '📢',
+      winner: '🏆', draw: '🎲', pool: '🎁', payment: '💰',
+      commission: '💎', charity: '💚', reminder: '⏰', system: '📢',
       default: '🔔'
     };
     return icons[type] || icons.default;
-  }
-
-  function getNotificationColor(type) {
-    const colors = {
-      winner: 'bg-yellow-100 border-yellow-200',
-      draw: 'bg-purple-100 border-purple-200',
-      pool: 'bg-blue-100 border-blue-200',
-      payment: 'bg-green-100 border-green-200',
-      commission: 'bg-orange-100 border-orange-200',
-      charity: 'bg-red-100 border-red-200',
-      reminder: 'bg-indigo-100 border-indigo-200',
-      default: 'bg-gray-100 border-gray-200'
-    };
-    return colors[type] || colors.default;
   }
 
   async function markAsRead(id, link) {
@@ -204,6 +191,10 @@ export default function NotificationBell() {
     return date.toLocaleDateString();
   };
 
+  if (!mounted) {
+    return <div className="relative w-8 h-8"></div>;
+  }
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -226,7 +217,6 @@ export default function NotificationBell() {
 
       {showDropdown && (
         <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border z-50 overflow-hidden animate-slide-down">
-          {/* Header */}
           <div className="flex justify-between items-center p-3 border-b bg-gradient-to-r from-gray-50 to-white">
             <div className="flex items-center gap-2">
               <span className="text-lg">🔔</span>
@@ -238,16 +228,12 @@ export default function NotificationBell() {
               )}
             </div>
             {unreadCount > 0 && (
-              <button
-                onClick={markAllAsRead}
-                className="text-xs text-green-600 hover:text-green-700 font-medium"
-              >
+              <button onClick={markAllAsRead} className="text-xs text-green-600 hover:text-green-700 font-medium">
                 Mark all read
               </button>
             )}
           </div>
 
-          {/* Notifications List */}
           <div className="max-h-96 overflow-y-auto">
             {loading ? (
               <div className="p-8 text-center">
@@ -258,41 +244,25 @@ export default function NotificationBell() {
               <div className="p-8 text-center">
                 <div className="text-5xl mb-3">🔔</div>
                 <p className="text-gray-400 text-sm">No notifications yet</p>
-                <p className="text-xs text-gray-300 mt-1">Check back later for updates!</p>
+                <p className="text-xs text-gray-300 mt-1">Check back later!</p>
               </div>
             ) : (
               <div className="divide-y">
                 {notifications.map(notif => (
-                  <div
-                    key={notif.id}
-                    onClick={() => markAsRead(notif.id, notif.link_url)}
-                    className={`p-3 hover:bg-gray-50 cursor-pointer transition-all duration-150 ${!notif.is_read ? 'bg-green-50/30 border-l-4 border-l-green-500' : ''}`}
-                  >
+                  <div key={notif.id} onClick={() => markAsRead(notif.id, notif.link_url)} className={`p-3 hover:bg-gray-50 cursor-pointer transition-all duration-150 ${!notif.is_read ? 'bg-green-50/30 border-l-4 border-l-green-500' : ''}`}>
                     <div className="flex gap-3">
                       <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${!notif.is_read ? 'bg-green-100' : 'bg-gray-100'}`}>
                         <span className="text-lg">{getNotificationIcon(notif.type)}</span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start gap-2">
-                          <p className={`text-sm ${!notif.is_read ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
-                            {notif.title}
-                          </p>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteNotification(notif.id);
-                            }}
-                            className="text-gray-300 hover:text-red-500 transition flex-shrink-0"
-                          >
-                            ✕
-                          </button>
+                          <p className={`text-sm ${!notif.is_read ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>{notif.title}</p>
+                          <button onClick={(e) => { e.stopPropagation(); deleteNotification(notif.id); }} className="text-gray-300 hover:text-red-500 transition flex-shrink-0">✕</button>
                         </div>
                         <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{notif.message}</p>
                         <div className="flex items-center gap-2 mt-1.5">
                           <p className="text-[10px] text-gray-400">{formatTime(notif.created_at)}</p>
-                          {!notif.is_read && (
-                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                          )}
+                          {!notif.is_read && <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>}
                         </div>
                       </div>
                     </div>
@@ -302,11 +272,10 @@ export default function NotificationBell() {
             )}
           </div>
 
-          {/* Footer */}
           {notifications.length > 0 && (
             <div className="p-2 border-t bg-gray-50 text-center">
               <Link href="/notifications" className="text-xs text-green-600 hover:text-green-700">
-                View all notifications →
+                View all →
               </Link>
             </div>
           )}
@@ -315,18 +284,10 @@ export default function NotificationBell() {
 
       <style jsx>{`
         @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-        .animate-slide-down {
-          animation: slideDown 0.2s ease-out;
-        }
+        .animate-slide-down { animation: slideDown 0.2s ease-out; }
       `}</style>
     </div>
   );
