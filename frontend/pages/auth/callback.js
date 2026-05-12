@@ -1,3 +1,4 @@
+// pages/auth/callback.js
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
@@ -34,31 +35,25 @@ export default function AuthCallback() {
       .eq('id', user.id)
       .maybeSingle();
     
-    // If user already exists and has accepted agreement, go directly to dashboard
+    // If user exists and has accepted agreement, go to dashboard
     if (existingProfile && existingProfile.agreement_accepted === true) {
       sessionStorage.removeItem('pendingRole');
       const userType = existingProfile.user_type || storedRole;
-      redirectToDashboard(userType);
-      return;
+      return redirectToDashboard(userType);
     }
     
-    // User exists but hasn't accepted agreement - MUST SHOW AGREEMENT
-    if (existingProfile && existingProfile.agreement_accepted === false) {
+    // If user exists but agreement is missing/false, force agreement
+    if (existingProfile && existingProfile.agreement_accepted !== true) {
       setPendingRole(existingProfile.user_type || storedRole);
       setTempUser(user);
-      setShowAgreement(true);
-      setLoading(false);
-      return;
+      return setShowAgreement(true);
     }
     
-    // New user - MUST SHOW AGREEMENT before creating profile
-    if (!existingProfile) {
-      setPendingRole(storedRole);
-      setTempUser(user);
-      setShowAgreement(true);
-      setLoading(false);
-      return;
-    }
+    // New user: show agreement
+    setPendingRole(storedRole);
+    setTempUser(user);
+    setShowAgreement(true);
+    setLoading(false);
   }
 
   async function handleAgreementAccept() {
@@ -83,8 +78,7 @@ export default function AuthCallback() {
     if (upsertError) {
       console.error('Profile error:', upsertError);
       toast.error('Failed to save profile');
-      router.push('/register');
-      return;
+      return router.push('/register');
     }
     
     // Create role-specific record
@@ -121,22 +115,15 @@ export default function AuthCallback() {
   }
 
   function redirectToDashboard(userType) {
-    switch (userType) {
-      case 'agent':
-        router.replace('/agent/dashboard');
-        break;
-      case 'vendor':
-        router.replace('/vendor/dashboard');
-        break;
-      case 'organization':
-        router.replace('/organization/dashboard');
-        break;
-      case 'admin':
-        router.replace('/admin/dashboard');
-        break;
-      default:
-        router.replace('/dashboard');
-    }
+    const dashboards = {
+      agent: '/agent/dashboard',
+      vendor: '/vendor/dashboard',
+      organization: '/organization/dashboard',
+      admin: '/admin/dashboard',
+      user: '/dashboard',
+    };
+    const path = dashboards[userType] || '/dashboard';
+    router.replace(path);
   }
 
   if (loading) {
