@@ -28,7 +28,10 @@ export default function AdminDashboard() {
   const [pendingVendors, setPendingVendors] = useState([]);
   const [users, setUsers] = useState([]);
   const [adminRecord, setAdminRecord] = useState(null);
-
+if (profile && profile.agreement_accepted !== true) {
+  toast.error('Please accept the terms and conditions first.');
+  return router.push('/register');
+}
   useEffect(() => {
     checkAdminAccess();
   }, []);
