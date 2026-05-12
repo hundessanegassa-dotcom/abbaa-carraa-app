@@ -78,10 +78,12 @@ export default function Navbar() {
     }
   }
 
- async function handleLogout() {
-    await supabase.auth.signOut();
-    toast.success(t('common.logout_success') || 'Logged out successfully');
-    router.push('/');
+<Link 
+  href="/logout" 
+  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition"
+>
+  <span>🚪</span> {t('common.logout') || 'Logout'}
+</Link>
   }
 
   const getDashboardLink = () => {
