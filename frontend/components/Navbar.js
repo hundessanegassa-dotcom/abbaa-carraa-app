@@ -77,21 +77,19 @@ export default function Navbar() {
       setIsLoading(false);
     }
   }
-
-  async function handleLogout() {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      localStorage.removeItem('supabase.auth.token');
-      sessionStorage.clear();
-      toast.success(t('common.logout_success') || 'Logged out successfully');
-      router.push('/');
-    } catch (error) {
-      console.error('Logout error:', error);
-      toast.error('Failed to logout. Please try again.');
-    }
+const handleLogout = async () => {
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    localStorage.clear();
+    sessionStorage.clear();
+    toast.success('Logged out successfully');
+    router.push('/');
+  } catch (error) {
+    console.error('Logout error:', error);
+    toast.error('Failed to logout');
   }
-
+};
   const getDashboardLink = () => {
     if (userType === 'agent') return '/agent/dashboard';
     if (userType === 'vendor') return '/vendor/dashboard';
