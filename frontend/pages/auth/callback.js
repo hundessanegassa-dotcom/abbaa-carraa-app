@@ -1,4 +1,3 @@
-// pages/auth/callback.js
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
@@ -28,7 +27,7 @@ export default function AuthCallback() {
     const user = session.user;
     const storedRole = sessionStorage.getItem('pendingRole') || 'individual';
     
-    // Check if user already has a profile and has accepted agreement
+    // Check if user already has accepted agreement
     const { data: existingProfile } = await supabase
       .from('profiles')
       .select('id, user_type, agreement_accepted')
@@ -38,18 +37,11 @@ export default function AuthCallback() {
     // If user exists and has accepted agreement, go to dashboard
     if (existingProfile && existingProfile.agreement_accepted === true) {
       sessionStorage.removeItem('pendingRole');
-      const userType = existingProfile.user_type || storedRole;
-      return redirectToDashboard(userType);
+      redirectToDashboard(existingProfile.user_type || storedRole);
+      return;
     }
     
-    // If user exists but agreement is missing/false, force agreement
-    if (existingProfile && existingProfile.agreement_accepted !== true) {
-      setPendingRole(existingProfile.user_type || storedRole);
-      setTempUser(user);
-      return setShowAgreement(true);
-    }
-    
-    // New user: show agreement
+    // Show agreement for all new users or those who haven't accepted
     setPendingRole(storedRole);
     setTempUser(user);
     setShowAgreement(true);
@@ -59,7 +51,6 @@ export default function AuthCallback() {
   async function handleAgreementAccept() {
     setLoading(true);
     
-    // Create or update profile with agreement acceptance
     const { error: upsertError } = await supabase
       .from('profiles')
       .upsert({
@@ -78,7 +69,8 @@ export default function AuthCallback() {
     if (upsertError) {
       console.error('Profile error:', upsertError);
       toast.error('Failed to save profile');
-      return router.push('/register');
+      router.push('/register');
+      return;
     }
     
     // Create role-specific record
@@ -115,22 +107,19 @@ export default function AuthCallback() {
   }
 
   function redirectToDashboard(userType) {
-    const dashboards = {
-      agent: '/agent/dashboard',
-      vendor: '/vendor/dashboard',
-      organization: '/organization/dashboard',
-      admin: '/admin/dashboard',
-      user: '/dashboard',
-    };
-    const path = dashboards[userType] || '/dashboard';
-    router.replace(path);
+    switch (userType) {
+      case 'agent': router.replace('/agent/dashboard'); break;
+      case 'vendor': router.replace('/vendor/dashboard'); break;
+      case 'organization': router.replace('/organization/dashboard'); break;
+      case 'admin': router.replace('/admin/dashboard'); break;
+      default: router.replace('/dashboard');
+    }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
-        <p className="text-gray-600">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
       </div>
     );
   }
