@@ -200,44 +200,71 @@ export default function Home() {
           <CashEquivalentBanner />
           <CharityBanner />
 
-          {/* Hero Section - Image only, no text on it */}
-          <section className="w-full bg-gradient-to-br from-green-900 to-blue-900">
-            <div className="w-full">
-              <img 
-                src="/images/abbaa-carraa-bg.png"
-                alt="Abbaa Carraa Background"
-                className="w-full h-auto object-contain"
-                loading="eager"
-                fetchPriority="high"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
-              />
+          {/* ============ NEW ATTRACTIVE HERO SECTION ============ */}
+          <section className="relative bg-gradient-to-r from-green-800 via-green-700 to-teal-700 text-white overflow-hidden">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-10 left-10 w-20 h-20 border-2 border-white rounded-full"></div>
+              <div className="absolute bottom-20 right-20 w-40 h-40 border-2 border-white rounded-full"></div>
+              <div className="absolute top-1/2 left-1/3 w-16 h-16 border-2 border-white rounded-lg"></div>
+              <div className="absolute bottom-1/3 left-10 w-12 h-12 border-2 border-white rounded-full"></div>
             </div>
-          </section>
-
-          {/* Welcome Text and Buttons - Positioned UNDER the image */}
-          <section className="w-full bg-white py-12 sm:py-16 md:py-20">
-            <div className="container mx-auto px-4 text-center">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-gray-800">
-                <span className="text-green-600">{t('common.welcome')}</span>
-              </h1>
-              <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto mb-8 sm:mb-10 px-2">
-                {t('common.tagline')}
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <Link 
-                  href="/register" 
-                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 sm:px-10 sm:py-4 rounded-full font-semibold text-base sm:text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 w-full sm:w-auto text-center"
-                >
-                  {t('common.get_started')}
-                </Link>
-                <Link 
-                  href="/listings" 
-                  className="bg-gray-100 hover:bg-gray-200 text-green-700 px-8 py-3 sm:px-10 sm:py-4 rounded-full font-semibold text-base sm:text-lg transition-all duration-300 border border-green-300 w-full sm:w-auto text-center"
-                >
-                  {t('common.browse_prizes')}
-                </Link>
+            
+            <div className="container mx-auto px-4 py-16 md:py-24 relative z-10">
+              <div className="text-center max-w-4xl mx-auto">
+                {/* Animated Badge */}
+                <div className="inline-block bg-yellow-500 text-gray-900 px-4 py-1 rounded-full text-sm font-semibold mb-6 animate-pulse">
+                  🔥 Ethiopia's #1 Prize Platform
+                </div>
+                
+                {/* Main Title */}
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+                  <span className="text-yellow-400">Abbaa Carraa</span>
+                  <span className="block text-2xl sm:text-3xl md:text-4xl text-white/90 mt-2">
+                    Your Ethiopian Digital Eta
+                  </span>
+                </h1>
+                
+                {/* Tagline */}
+                <p className="text-base sm:text-lg md:text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+                  Win cars, houses, machinery, and electronics! 2% supports kidney & heart disease patients.
+                </p>
+                
+                {/* Buttons */}
+                <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+                  <Link 
+                    href="/register" 
+                    className="bg-yellow-500 hover:bg-yellow-600 text-gray-900 px-8 py-3 rounded-full font-bold text-lg transition transform hover:scale-105 shadow-lg"
+                  >
+                    🎁 Start Winning Now
+                  </Link>
+                  <Link 
+                    href="/listings" 
+                    className="bg-white/20 hover:bg-white/30 backdrop-blur-sm px-8 py-3 rounded-full font-semibold text-lg transition border border-white/30"
+                  >
+                    👑 Become an Agent (10% Commission)
+                  </Link>
+                </div>
+                
+                {/* Trust Badges */}
+                <div className="flex flex-wrap justify-center gap-6 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-yellow-400">✓</span>
+                    <span>Cash Equivalent Guarantee</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-yellow-400">✓</span>
+                    <span>Blockchain Verified Draw</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-yellow-400">✓</span>
+                    <span>24/7 Customer Support</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-yellow-400">✓</span>
+                    <span>💚 2% for Health</span>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
