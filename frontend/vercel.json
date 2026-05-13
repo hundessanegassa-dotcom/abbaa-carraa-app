@@ -3,10 +3,9 @@
   "installCommand": "npm install",
   "framework": "nextjs",
   "outputDirectory": ".next",
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
+  "git": {
+    "deploymentEnabled": {
+      "main": true
     }
-  ]
+  }
 }
