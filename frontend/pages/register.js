@@ -1,21 +1,23 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import Head from 'next/head';
 
 export default function Register() {
+  const router = useRouter();
   const [selectedRole, setSelectedRole] = useState('');
   const [loading, setLoading] = useState(false);
 
   const roles = [
-    { id: 'individual', name: 'Individual', icon: '👤', description: 'Join existing pools and win amazing prizes', color: 'from-green-500 to-teal-500' },
-    { id: 'agent', name: 'Agent', icon: '🤝', description: 'Create prize pools and earn 10% commission', color: 'from-yellow-500 to-orange-500' },
-    { id: 'vendor', name: 'Vendor', icon: '🏭', description: 'List your products as prizes and earn commission', color: 'from-purple-500 to-pink-500' },
-    { id: 'organization', name: 'Organization', icon: '🏢', description: 'Create private pools for your members', color: 'from-blue-500 to-cyan-500' }
+    { id: 'individual', name: 'Individual', icon: '👤', description: 'Join pools and win amazing prizes', color: 'from-green-500 to-teal-500' },
+    { id: 'agent', name: 'Agent', icon: '🤝', description: 'Create pools and earn 10% commission', color: 'from-yellow-500 to-orange-500' },
+    { id: 'vendor', name: 'Vendor', icon: '🏪', description: 'List products and earn commission', color: 'from-purple-500 to-pink-500' },
+    { id: 'organization', name: 'Organization', icon: '🏢', description: 'Create private pools for members', color: 'from-blue-500 to-cyan-500' }
   ];
 
-  const startGoogleRegistration = async () => {
+  const startRegistration = async () => {
     if (!selectedRole) {
       toast.error('Please select a role first');
       return;
@@ -27,8 +29,8 @@ export default function Register() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`
-      }
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
     
     if (error) {
@@ -39,14 +41,14 @@ export default function Register() {
 
   return (
     <>
-      <Head><title>Register - Digital ETA</title></Head>
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4">
-        <div className="max-w-4xl w-full">
+      <Head><title>Register - Abbaa Carraa</title></Head>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4">
+        <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-3xl">🎁</span>
             </div>
-            <h1 className="text-3xl font-bold text-gray-800">Join Digital ETA</h1>
+            <h1 className="text-3xl font-bold text-gray-800">Join Abbaa Carraa</h1>
             <p className="text-gray-500 mt-2">Choose how you want to participate</p>
           </div>
           
@@ -70,7 +72,7 @@ export default function Register() {
           </div>
           
           <button 
-            onClick={startGoogleRegistration} 
+            onClick={startRegistration} 
             disabled={!selectedRole || loading} 
             className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition disabled:bg-gray-400 flex items-center justify-center gap-3"
           >
@@ -86,10 +88,6 @@ export default function Register() {
           
           <div className="mt-8 text-center">
             <p className="text-gray-500 text-sm">Already have an account? <Link href="/login" className="text-green-600 font-semibold">Sign In</Link></p>
-          </div>
-          
-          <div className="mt-6 text-center text-xs text-gray-400">
-            <p>💚 2% of all contributions support kidney & heart disease patients</p>
           </div>
         </div>
       </div>
