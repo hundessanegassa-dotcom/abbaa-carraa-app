@@ -387,3 +387,49 @@ html {
     display: none;
   }
 }
+/* Add to the end of your globals.css file */
+
+/* Mobile optimizations for hero section */
+@media (max-width: 640px) {
+  .hero-image {
+    max-height: 30vh;
+    object-fit: contain;
+  }
+}
+
+/* Smooth hover effects */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Gradient text utility */
+.gradient-text {
+  background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Button hover animations */
+.btn-hover-effect {
+  transition: all 0.3s ease;
+}
+
+.btn-hover-effect:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Trust badge icons */
+.trust-badge-icon {
+  transition: transform 0.2s ease;
+}
+
+.trust-badge-icon:hover {
+  transform: scale(1.1);
+}
