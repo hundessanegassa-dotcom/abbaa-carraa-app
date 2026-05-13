@@ -16,94 +16,113 @@ export default function AuthCallback() {
   }, []);
 
   async function handleCallback() {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    
-    if (error || !session) {
-      toast.error('Authentication failed');
-      router.push('/login');
-      return;
-    }
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error || !session) {
+        toast.error('Authentication failed');
+        router.push('/login');
+        return;
+      }
 
-    const user = session.user;
-    const storedRole = sessionStorage.getItem('pendingRole') || 'individual';
-    
-    // Check if user already has accepted agreement
-    const { data: existingProfile } = await supabase
-      .from('profiles')
-      .select('id, user_type, agreement_accepted')
-      .eq('id', user.id)
-      .maybeSingle();
-    
-    // If user exists and has accepted agreement, go to dashboard
-    if (existingProfile && existingProfile.agreement_accepted === true) {
-      sessionStorage.removeItem('pendingRole');
-      redirectToDashboard(existingProfile.user_type || storedRole);
-      return;
+      const user = session.user;
+      const storedRole = sessionStorage.getItem('pendingRole') || 'individual';
+      
+      // Check if user already has a profile
+      let { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      // If profile exists and agreement accepted, go to dashboard
+      if (existingProfile && existingProfile.agreement_accepted === true) {
+        sessionStorage.removeItem('pendingRole');
+        redirectToDashboard(existingProfile.user_type || storedRole);
+        return;
+      }
+      
+      // If profile exists but no agreement, update it
+      if (existingProfile && existingProfile.agreement_accepted !== true) {
+        setPendingRole(existingProfile.user_type || storedRole);
+        setTempUser(user);
+        setShowAgreement(true);
+        setLoading(false);
+        return;
+      }
+      
+      // New user - show agreement
+      setPendingRole(storedRole);
+      setTempUser(user);
+      setShowAgreement(true);
+      setLoading(false);
+      
+    } catch (err) {
+      console.error('Callback error:', err);
+      toast.error('Something went wrong');
+      router.push('/login');
     }
-    
-    // Show agreement for all new users or those who haven't accepted
-    setPendingRole(storedRole);
-    setTempUser(user);
-    setShowAgreement(true);
-    setLoading(false);
   }
 
   async function handleAgreementAccept() {
     setLoading(true);
     
-    const { error: upsertError } = await supabase
-      .from('profiles')
-      .upsert({
-        id: tempUser.id,
-        email: tempUser.email,
-        full_name: tempUser.user_metadata?.full_name || tempUser.email?.split('@')[0],
-        user_type: pendingRole,
-        role: pendingRole === 'individual' ? 'user' : pendingRole,
-        agreement_accepted: true,
-        agreement_accepted_at: new Date().toISOString(),
-        agreement_type: pendingRole,
-        can_create_pool: pendingRole !== 'individual',
-        created_at: new Date().toISOString(),
-      });
-    
-    if (upsertError) {
-      console.error('Profile error:', upsertError);
-      toast.error('Failed to save profile');
+    try {
+      // Create or update profile with agreement acceptance
+      const { error: upsertError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: tempUser.id,
+          email: tempUser.email,
+          full_name: tempUser.user_metadata?.full_name || tempUser.email?.split('@')[0],
+          user_type: pendingRole,
+          role: pendingRole === 'individual' ? 'user' : pendingRole,
+          agreement_accepted: true,
+          agreement_accepted_at: new Date().toISOString(),
+          agreement_type: pendingRole,
+          can_create_pool: pendingRole !== 'individual',
+          created_at: new Date().toISOString(),
+        });
+      
+      if (upsertError) throw upsertError;
+      
+      // Create role-specific record
+      if (pendingRole === 'agent') {
+        await supabase.from('agents').upsert({
+          user_id: tempUser.id,
+          business_name: tempUser.user_metadata?.full_name || tempUser.email?.split('@')[0],
+          email: tempUser.email,
+          verified: false,
+          commission_rate: 10,
+          created_at: new Date().toISOString()
+        });
+      } else if (pendingRole === 'vendor') {
+        await supabase.from('vendors').upsert({
+          user_id: tempUser.id,
+          business_name: tempUser.user_metadata?.full_name || tempUser.email?.split('@')[0],
+          email: tempUser.email,
+          verified: false,
+          created_at: new Date().toISOString()
+        });
+      } else if (pendingRole === 'organization') {
+        await supabase.from('organizations').upsert({
+          user_id: tempUser.id,
+          business_name: tempUser.user_metadata?.full_name || tempUser.email?.split('@')[0],
+          email: tempUser.email,
+          verified: false,
+          created_at: new Date().toISOString()
+        });
+      }
+      
+      toast.success(`Welcome! You registered as ${pendingRole}.`);
+      sessionStorage.removeItem('pendingRole');
+      redirectToDashboard(pendingRole);
+      
+    } catch (err) {
+      console.error('Agreement accept error:', err);
+      toast.error('Failed to save profile. Please try again.');
       router.push('/register');
-      return;
     }
-    
-    // Create role-specific record
-    if (pendingRole === 'agent') {
-      await supabase.from('agents').upsert({
-        user_id: tempUser.id,
-        business_name: tempUser.user_metadata?.full_name || tempUser.email?.split('@')[0],
-        email: tempUser.email,
-        verified: false,
-        commission_rate: 10,
-        created_at: new Date().toISOString()
-      });
-    } else if (pendingRole === 'vendor') {
-      await supabase.from('vendors').upsert({
-        user_id: tempUser.id,
-        business_name: tempUser.user_metadata?.full_name || tempUser.email?.split('@')[0],
-        email: tempUser.email,
-        verified: false,
-        created_at: new Date().toISOString()
-      });
-    } else if (pendingRole === 'organization') {
-      await supabase.from('organizations').upsert({
-        user_id: tempUser.id,
-        business_name: tempUser.user_metadata?.full_name || tempUser.email?.split('@')[0],
-        email: tempUser.email,
-        verified: false,
-        created_at: new Date().toISOString()
-      });
-    }
-    
-    toast.success(`Welcome! You registered as ${pendingRole}.`);
-    sessionStorage.removeItem('pendingRole');
-    redirectToDashboard(pendingRole);
   }
 
   function redirectToDashboard(userType) {
