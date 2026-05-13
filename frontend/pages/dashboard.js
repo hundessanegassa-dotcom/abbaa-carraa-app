@@ -2,14 +2,12 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
 import IndividualDashboard from '../components/dashboards/IndividualDashboard';
+import toast from 'react-hot-toast';
 
 export default function Dashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-if (profile && profile.agreement_accepted !== true) {
-  toast.error('Please accept the terms and conditions first.');
-  return router.push('/register');
-}
+
   useEffect(() => {
     checkUserAndRedirect();
   }, []);
@@ -25,9 +23,16 @@ if (profile && profile.agreement_accepted !== true) {
     // Get user profile
     const { data: profile } = await supabase
       .from('profiles')
-      .select('user_type, role')
+      .select('user_type, role, agreement_accepted')
       .eq('id', user.id)
       .maybeSingle();
+
+    // Check agreement acceptance
+    if (profile && profile.agreement_accepted !== true) {
+      toast.error('Please accept the terms and conditions first.');
+      router.replace('/register');
+      return;
+    }
 
     // Check if user is admin
     const isAdmin = profile?.role === 'admin' || profile?.user_type === 'admin';
