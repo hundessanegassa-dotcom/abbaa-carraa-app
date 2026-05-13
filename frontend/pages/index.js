@@ -200,49 +200,58 @@ export default function Home() {
           <CashEquivalentBanner />
           <CharityBanner />
 
-         {/* Hero Section with Background Image */}
-<section className="relative w-full bg-gradient-to-br from-green-900 to-blue-900 overflow-hidden">
-  {/* Background Image */}
-  <div className="absolute inset-0 z-0">
-    <img 
-      src="/images/abbaa-carraa-bg.png"
-      alt="Abbaa Carraa Background"
-      className="w-full h-full object-cover object-center"
-      loading="eager"
-      fetchPriority="high"
-      onError={(e) => {
-        e.target.style.display = 'none';
-      }}
-    />
-    <div className="absolute inset-0 bg-black/50"></div>
-  </div>
-  
-  {/* Content */}
-  <div className="relative z-10 container mx-auto px-4 py-16 md:py-24 text-center text-white">
-    <div className="inline-block bg-yellow-500 text-gray-900 px-4 py-1 rounded-full text-sm font-semibold mb-6 animate-pulse">
-      🔥 Ethiopia's #1 Prize Platform
-    </div>
-    <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4">
-      <span className="text-yellow-400">Abbaa Carraa</span>
-    </h1>
-    <p className="text-lg sm:text-xl max-w-2xl mx-auto mb-8 text-white/90">
-      Win cars, houses, machinery, and electronics! 2% supports kidney & heart disease patients.
-    </p>
-    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-      <Link href="/register" className="bg-yellow-500 hover:bg-yellow-600 text-gray-900 px-8 py-3 rounded-full font-bold transition transform hover:scale-105 shadow-lg">
-        🎁 Start Winning Now
-      </Link>
-      <Link href="/register" className="bg-white/20 hover:bg-white/30 backdrop-blur-sm px-8 py-3 rounded-full font-semibold transition border border-white/30">
-        👑 Become an Agent (10% Commission)
-      </Link>
-    </div>
-    <div className="flex flex-wrap justify-center gap-6 mt-8 text-sm">
-      <div className="flex items-center gap-2"><span className="text-yellow-400">✓</span> Cash Equivalent Guarantee</div>
-      <div className="flex items-center gap-2"><span className="text-yellow-400">✓</span> Blockchain Verified Draw</div>
-      <div className="flex items-center gap-2"><span className="text-yellow-400">✓</span> 💚 2% for Health</div>
-    </div>
-  </div>
-</section>
+          {/* Hero Section with Background Image */}
+          <section className="relative w-full bg-gradient-to-br from-green-900 to-blue-900 overflow-hidden">
+            {/* Background Image */}
+            <div className="absolute inset-0 z-0">
+              <img 
+                src="/images/abbaa-carraa-bg.png"
+                alt="Abbaa Carraa Background"
+                className="w-full h-full object-cover object-center"
+                loading="eager"
+                fetchPriority="high"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
+              <div className="absolute inset-0 bg-black/50"></div>
+            </div>
+            
+            {/* Content */}
+            <div className="relative z-10 container mx-auto px-4 py-12 sm:py-16 md:py-20 lg:py-24 text-center text-white">
+              <div className="inline-block bg-yellow-500 text-gray-900 px-3 py-1 sm:px-4 sm:py-1 rounded-full text-xs sm:text-sm font-semibold mb-4 sm:mb-6 animate-pulse">
+                🔥 Ethiopia's #1 Prize Platform
+              </div>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4">
+                <span className="text-yellow-400">Abbaa Carraa</span>
+                <span className="block text-lg sm:text-xl md:text-2xl lg:text-3xl text-white/80 mt-1 sm:mt-2">
+                  Win Amazing Prizes
+                </span>
+              </h1>
+              <p className="text-sm sm:text-base md:text-lg max-w-2xl mx-auto mb-6 sm:mb-8 text-white/90 px-2">
+                Win cars, houses, machinery, and electronics! 2% supports kidney & heart disease patients.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
+                <Link 
+                  href="/register" 
+                  className="bg-yellow-500 hover:bg-yellow-600 text-gray-900 px-6 sm:px-8 py-2 sm:py-3 rounded-full font-bold text-sm sm:text-base transition transform hover:scale-105 shadow-lg"
+                >
+                  🎁 Start Winning Now
+                </Link>
+                <Link 
+                  href="/register" 
+                  className="bg-white/20 hover:bg-white/30 backdrop-blur-sm px-6 sm:px-8 py-2 sm:py-3 rounded-full font-semibold text-sm sm:text-base transition border border-white/30"
+                >
+                  👑 Become an Agent
+                </Link>
+              </div>
+              <div className="flex flex-wrap justify-center gap-3 sm:gap-6 mt-6 sm:mt-8 text-xs sm:text-sm">
+                <div className="flex items-center gap-1 sm:gap-2"><span className="text-yellow-400">✓</span> Cash Guarantee</div>
+                <div className="flex items-center gap-1 sm:gap-2"><span className="text-yellow-400">✓</span> Blockchain Verified</div>
+                <div className="flex items-center gap-1 sm:gap-2"><span className="text-yellow-400">✓</span> 💚 2% for Health</div>
+              </div>
+            </div>
+          </section>
 
           {/* Stats Counters */}
           <div className="bg-white border-t border-gray-200 py-4 shadow-sm">
