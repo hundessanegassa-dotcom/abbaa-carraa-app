@@ -189,8 +189,8 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Abbaa Carraa - {t('common.tagline')}</title>
-        <meta name="description" content={t('common.tagline')} />
+        <title>Abbaa Carraa - Win Amazing Prizes</title>
+        <meta name="description" content="Win amazing prizes through community savings. 2% supports kidney & heart disease patients." />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=yes" />
       </Head>
 
@@ -200,55 +200,88 @@ export default function Home() {
           <CashEquivalentBanner />
           <CharityBanner />
 
-          {/* Hero Section with Background Image */}
-          <section className="relative w-full bg-gradient-to-br from-green-900 to-blue-900 overflow-hidden">
-            {/* Background Image */}
-            <div className="absolute inset-0 z-0">
+          {/* ============ PROFESSIONAL HERO SECTION - IMAGE ON TOP, TEXT BELOW ============ */}
+          <section className="w-full">
+            {/* Background Image - Full width, no text overlay */}
+            <div className="w-full bg-gradient-to-b from-green-800 to-teal-800">
               <img 
                 src="/images/abbaa-carraa-bg.png"
-                alt="Abbaa Carraa Background"
-                className="w-full h-full object-cover object-center"
+                alt="Abbaa Carraa - Win Amazing Prizes"
+                className="w-full h-auto max-h-[40vh] sm:max-h-[50vh] object-contain mx-auto"
                 loading="eager"
                 fetchPriority="high"
                 onError={(e) => {
                   e.target.style.display = 'none';
                 }}
               />
-              <div className="absolute inset-0 bg-black/50"></div>
             </div>
             
-            {/* Content */}
-            <div className="relative z-10 container mx-auto px-4 py-12 sm:py-16 md:py-20 lg:py-24 text-center text-white">
-              <div className="inline-block bg-yellow-500 text-gray-900 px-3 py-1 sm:px-4 sm:py-1 rounded-full text-xs sm:text-sm font-semibold mb-4 sm:mb-6 animate-pulse">
-                🔥 Ethiopia's #1 Prize Platform
-              </div>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4">
-                <span className="text-yellow-400">Abbaa Carraa</span>
-                <span className="block text-lg sm:text-xl md:text-2xl lg:text-3xl text-white/80 mt-1 sm:mt-2">
-                  Win Amazing Prizes
-                </span>
-              </h1>
-              <p className="text-sm sm:text-base md:text-lg max-w-2xl mx-auto mb-6 sm:mb-8 text-white/90 px-2">
-                Win cars, houses, machinery, and electronics! 2% supports kidney & heart disease patients.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
-                <Link 
-                  href="/register" 
-                  className="bg-yellow-500 hover:bg-yellow-600 text-gray-900 px-6 sm:px-8 py-2 sm:py-3 rounded-full font-bold text-sm sm:text-base transition transform hover:scale-105 shadow-lg"
-                >
-                  🎁 Start Winning Now
-                </Link>
-                <Link 
-                  href="/register" 
-                  className="bg-white/20 hover:bg-white/30 backdrop-blur-sm px-6 sm:px-8 py-2 sm:py-3 rounded-full font-semibold text-sm sm:text-base transition border border-white/30"
-                >
-                  👑 Become an Agent
-                </Link>
-              </div>
-              <div className="flex flex-wrap justify-center gap-3 sm:gap-6 mt-6 sm:mt-8 text-xs sm:text-sm">
-                <div className="flex items-center gap-1 sm:gap-2"><span className="text-yellow-400">✓</span> Cash Guarantee</div>
-                <div className="flex items-center gap-1 sm:gap-2"><span className="text-yellow-400">✓</span> Blockchain Verified</div>
-                <div className="flex items-center gap-1 sm:gap-2"><span className="text-yellow-400">✓</span> 💚 2% for Health</div>
+            {/* Content Section - Below the image */}
+            <div className="bg-white py-12 sm:py-16 md:py-20">
+              <div className="container mx-auto px-4 text-center">
+                {/* Ethiopia's #1 Badge */}
+                <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-4 py-1.5 rounded-full text-sm font-semibold mb-6 shadow-md">
+                  <span className="text-base sm:text-lg">🔥</span>
+                  <span>Ethiopia's #1 Prize Platform</span>
+                </div>
+                
+                {/* Main Title */}
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3">
+                  <span className="bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
+                    Abbaa Carraa
+                  </span>
+                  <span className="block text-base sm:text-lg md:text-xl lg:text-2xl text-gray-500 font-normal mt-2">
+                    Your Ethiopian Digital Eta
+                  </span>
+                </h1>
+                
+                {/* Tagline */}
+                <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto mb-6 px-4">
+                  Win cars, houses, machinery, electronics, and more!
+                  <span className="block text-green-600 font-semibold mt-1">💚 2% of every contribution supports kidney & heart disease patients</span>
+                </p>
+                
+                {/* CTA Buttons */}
+                <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
+                  <Link 
+                    href="/register" 
+                    className="group bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white px-6 sm:px-8 py-3 rounded-full font-semibold text-sm sm:text-base transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 inline-flex items-center justify-center gap-2"
+                  >
+                    <span className="text-base sm:text-lg">🎁</span>
+                    Start Winning Now
+                    <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
+                  </Link>
+                  <Link 
+                    href="/register" 
+                    className="group bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 sm:px-8 py-3 rounded-full font-semibold text-sm sm:text-base transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-1 inline-flex items-center justify-center gap-2 border border-gray-200"
+                  >
+                    <span className="text-base sm:text-lg">👑</span>
+                    Become an Agent
+                    <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
+                  </Link>
+                </div>
+                
+                {/* Trust Badges */}
+                <div className="flex flex-wrap justify-center gap-4 sm:gap-8 pt-6 border-t border-gray-100">
+                  <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-green-100 rounded-full flex items-center justify-center">
+                      <span className="text-green-600 text-xs sm:text-sm">✓</span>
+                    </div>
+                    <span>Cash Equivalent Guarantee</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-green-100 rounded-full flex items-center justify-center">
+                      <span className="text-green-600 text-xs sm:text-sm">✓</span>
+                    </div>
+                    <span>Blockchain Verified Draw</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-red-100 rounded-full flex items-center justify-center">
+                      <span className="text-red-500 text-xs sm:text-sm">💚</span>
+                    </div>
+                    <span>2% for Health</span>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
@@ -259,19 +292,19 @@ export default function Home() {
               <div className="flex flex-wrap justify-center items-center gap-6 md:gap-12">
                 <div className="text-center min-w-[80px]">
                   <div className="text-xl md:text-2xl font-bold text-green-600">{stats.total_pools}+</div>
-                  <div className="text-xs text-gray-500">{t('stats.active_pools')}</div>
+                  <div className="text-xs text-gray-500">{t('stats.active_pools') || 'Active Pools'}</div>
                 </div>
                 <div className="text-center min-w-[80px]">
                   <div className="text-xl md:text-2xl font-bold text-green-600">{stats.total_winners}+</div>
-                  <div className="text-xs text-gray-500">{t('stats.winners')}</div>
+                  <div className="text-xs text-gray-500">{t('stats.winners') || 'Winners'}</div>
                 </div>
                 <div className="text-center min-w-[80px]">
                   <div className="text-xl md:text-2xl font-bold text-green-600">{stats.total_agents}+</div>
-                  <div className="text-xs text-gray-500">{t('stats.agents')}</div>
+                  <div className="text-xs text-gray-500">{t('stats.agents') || 'Agents'}</div>
                 </div>
                 <div className="text-center min-w-[80px]">
                   <div className="text-xl md:text-2xl font-bold text-green-600">ETB {Math.floor(stats.total_raised / 1000)}K+</div>
-                  <div className="text-xs text-gray-500">{t('stats.raised')}</div>
+                  <div className="text-xs text-gray-500">{t('stats.raised') || 'Raised'}</div>
                 </div>
               </div>
             </div>
@@ -295,7 +328,7 @@ export default function Home() {
           {featuredPools.length > 0 && (
             <section className="container mx-auto px-4 py-8">
               <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
-                ⭐ {t('pools.featured_pools')}
+                ⭐ {t('pools.featured_pools') || 'Featured Prize Pools'}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {featuredPools.map(pool => (
@@ -309,17 +342,17 @@ export default function Home() {
           <section id="pools-grid" className="container mx-auto px-4 py-8">
             <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
               {activeFilters.category !== 'all' || activeFilters.city !== 'all' 
-                ? t('filters.title') 
-                : t('pools.active_pools')}
+                ? (t('filters.title') || 'Filtered Pools')
+                : (t('pools.active_pools') || 'Active Prize Pools')}
             </h2>
             {filteredPools.length === 0 ? (
               <div className="text-center py-12 bg-gray-50 rounded-lg">
-                <p className="text-gray-500 mb-4">{t('pools.no_pools')}</p>
+                <p className="text-gray-500 mb-4">{t('pools.no_pools') || 'No pools found'}</p>
                 <button 
                   onClick={() => applyFilters({ category: 'all', city: 'all' })} 
                   className="text-green-600 hover:text-green-700"
                 >
-                  {t('common.clear_filters')} →
+                  {t('common.clear_filters') || 'Clear Filters'} →
                 </button>
               </div>
             ) : (
@@ -337,28 +370,28 @@ export default function Home() {
 
           <section className="bg-gray-100 py-12">
             <div className="container mx-auto px-4">
-              <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">{t('how_it_works.title')}</h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">{t('how_it_works.title') || 'How It Works'}</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
                 <div>
                   <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <span className="text-2xl font-bold text-green-600">1</span>
                   </div>
-                  <h3 className="font-bold text-lg mb-2">{t('how_it_works.find_pool')}</h3>
-                  <p className="text-gray-600">{t('how_it_works.find_pool_desc')}</p>
+                  <h3 className="font-bold text-lg mb-2">{t('how_it_works.find_pool') || 'Find a Pool'}</h3>
+                  <p className="text-gray-600">{t('how_it_works.find_pool_desc') || 'Browse available prize pools'}</p>
                 </div>
                 <div>
                   <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <span className="text-2xl font-bold text-green-600">2</span>
                   </div>
-                  <h3 className="font-bold text-lg mb-2">{t('how_it_works.contribute')}</h3>
-                  <p className="text-gray-600">{t('how_it_works.contribute_desc')}</p>
+                  <h3 className="font-bold text-lg mb-2">{t('how_it_works.contribute') || 'Contribute'}</h3>
+                  <p className="text-gray-600">{t('how_it_works.contribute_desc') || 'Make your contribution securely'}</p>
                 </div>
                 <div>
                   <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <span className="text-2xl font-bold text-green-600">3</span>
                   </div>
-                  <h3 className="font-bold text-lg mb-2">{t('how_it_works.win')}</h3>
-                  <p className="text-gray-600">{t('how_it_works.win_desc')}</p>
+                  <h3 className="font-bold text-lg mb-2">{t('how_it_works.win') || 'Win'}</h3>
+                  <p className="text-gray-600">{t('how_it_works.win_desc') || 'Win amazing prizes!'}</p>
                 </div>
               </div>
             </div>
