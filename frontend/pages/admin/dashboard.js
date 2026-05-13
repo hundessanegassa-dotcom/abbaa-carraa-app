@@ -11,7 +11,6 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   
-  // Platform Stats
   const [stats, setStats] = useState({
     total_users: 0, total_agents: 0, total_vendors: 0, total_organizations: 0,
     total_pools: 0, active_pools: 0, completed_pools: 0, pending_pools: 0,
@@ -19,33 +18,25 @@ export default function AdminDashboard() {
     charity_total: 0, lives_impacted: 0, platform_revenue: 0
   });
   
-  // Admin's Personal Pools (20% commission)
   const [myPools, setMyPools] = useState([]);
   const [myStats, setMyStats] = useState({
     total_pools: 0, active_pools: 0, completed_pools: 0,
     total_raised: 0, total_commission: 0, pending_commission: 0
   });
   
-  // Pending Approvals
   const [pendingAgents, setPendingAgents] = useState([]);
   const [pendingVendors, setPendingVendors] = useState([]);
   const [pendingOrganizations, setPendingOrganizations] = useState([]);
   const [withdrawalRequests, setWithdrawalRequests] = useState([]);
   
-  // Users & Pools Management
   const [users, setUsers] = useState([]);
   const [allPools, setAllPools] = useState([]);
   const [featuredPools, setFeaturedPools] = useState([]);
-  
-  // Finance & Charity
   const [charityTransactions, setCharityTransactions] = useState([]);
+  const [disputes, setDisputes] = useState([]);
   
-  // System Settings
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [newAnnouncement, setNewAnnouncement] = useState({ title: '', content: '', target_audience: 'all' });
-  
-  // Disputes
-  const [disputes, setDisputes] = useState([]);
 
   useEffect(() => {
     checkAdmin();
@@ -221,7 +212,6 @@ export default function AdminDashboard() {
     setDisputes(data || []);
   }
 
-  // Admin Actions
   async function verifyAgent(agentId, verified) {
     const { error } = await supabase.from('agents').update({ verified, verified_at: new Date().toISOString() }).eq('id', agentId);
     if (error) toast.error('Failed'); else { toast.success(`Agent ${verified ? 'approved' : 'rejected'}`); loadPendingApprovals(); loadStats(); }
@@ -309,7 +299,7 @@ export default function AdminDashboard() {
             <button onClick={() => setActiveTab('my-pools')} className={`px-4 py-3 font-semibold ${activeTab === 'my-pools' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🎯 My Pools (20%)</button>
             <button onClick={() => setActiveTab('users')} className={`px-4 py-3 font-semibold ${activeTab === 'users' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>👥 Users</button>
             <button onClick={() => setActiveTab('pools')} className={`px-4 py-3 font-semibold ${activeTab === 'pools' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🌊 Pools</button>
-            <button onClick={() => setActiveTab('approvals')} className={`px-4 py-3 font-semibold ${activeTab === 'approvals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>📝 Approvals ({pendingAgents.length + pendingVendors.length + pendingOrganizations.length})</button>
+            <button onClick={() | setActiveTab('approvals')} className={`px-4 py-3 font-semibold ${activeTab === 'approvals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>📝 Approvals ({pendingAgents.length + pendingVendors.length + pendingOrganizations.length})</button>
             <button onClick={() => setActiveTab('withdrawals')} className={`px-4 py-3 font-semibold ${activeTab === 'withdrawals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>💰 Withdrawals ({withdrawalRequests.length})</button>
             <button onClick={() => setActiveTab('featured')} className={`px-4 py-3 font-semibold ${activeTab === 'featured' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>⭐ Featured</button>
             <button onClick={() => setActiveTab('finance')} className={`px-4 py-3 font-semibold ${activeTab === 'finance' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>💰 Finance</button>
@@ -342,25 +332,47 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* My Pools Tab - Admin's personal pools with 20% commission */}
+        {/* My Pools Tab */}
         {activeTab === 'my-pools' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold">💰 My Personal Pools (20% Commission)</h2></div>
-            <div className="p-6">{myPools.length === 0 ? <div className="text-center py-8"><p className="text-gray-400">No pools created yet</p><button onClick={createPool} className="mt-2 text-red-600">Create your first pool →</button></div> : <div className="overflow-x-auto"><table className="w-full"><thead className="bg-gray-50"><tr><th className="px-4 py-2 text-left">Prize</th><th className="px-4 py-2 text-left">Target</th><th className="px-4 py-2 text-left">Raised</th><th className="px-4 py-2 text-left">Your 20%</th><th className="px-4 py-2 text-left">Status</th><th className="px-4 py-2 text-left">Action</th></tr></thead><tbody>{myPools.map(pool => (<tr key={pool.id} className="border-b"><td className="px-4 py-2">{pool.prize_name}</td><td className="px-4 py-2">ETB {pool.target_amount?.toLocaleString()}</td><td className="px-4 py-2">ETB {pool.current_amount?.toLocaleString()}</td><td className="px-4 py-2 font-bold text-green-600">ETB {(pool.target_amount * 0.20).toLocaleString()}</td><td className="px-4 py-2"><span className="px-2 py-1 rounded-full text-xs">{pool.status}</span></td><td className="px-4 py-2"><Link href={`/pools/${pool.id}`} className="text-red-600 text-sm">View</Link></td></tr>))}</tbody></table></div>}<button onClick={createPool} className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg">+ Create New Pool</button></div>
+            <div className="p-6">
+              {myPools.length === 0 ? (
+                <div className="text-center py-8"><p className="text-gray-400">No pools created yet</p><button onClick={createPool} className="mt-2 text-red-600">Create your first pool →</button></div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50"><tr><th className="px-4 py-2 text-left">Prize</th><th className="px-4 py-2 text-left">Target</th><th className="px-4 py-2 text-left">Raised</th><th className="px-4 py-2 text-left">Your 20%</th><th className="px-4 py-2 text-left">Status</th><th className="px-4 py-2 text-left">Action</th></tr></thead>
+                    <tbody>{myPools.map(pool => (<tr key={pool.id} className="border-b"><td className="px-4 py-2">{pool.prize_name}</td><td className="px-4 py-2">ETB {pool.target_amount?.toLocaleString()}</td><td className="px-4 py-2">ETB {pool.current_amount?.toLocaleString()}</td><td className="px-4 py-2 font-bold text-green-600">ETB {(pool.target_amount * 0.20).toLocaleString()}</td><td className="px-4 py-2"><span className="px-2 py-1 rounded-full text-xs">{pool.status}</span></td><td className="px-4 py-2"><Link href={`/pools/${pool.id}`} className="text-red-600 text-sm">View</Link></td></tr>))}</tbody>
+                  </table>
+                </div>
+              )}
+              <button onClick={createPool} className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg">+ Create New Pool</button>
+            </div>
           </div>
         )}
 
         {/* Users Tab */}
         {activeTab === 'users' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden p-4">
-            <div className="overflow-x-auto"><table className="w-full"><thead className="bg-gray-50"><tr><th className="px-4 py-2 text-left">Name</th><th className="px-4 py-2 text-left">Email</th><th className="px-4 py-2 text-left">Role</th><th className="px-4 py-2 text-left">Status</th><th className="px-4 py-2 text-left">Actions</th></tr></thead><tbody>{users.map(u => (<tr key={u.id} className="border-b"><td className="px-4 py-2">{u.full_name}</td><td className="px-4 py-2">{u.email}</td><td className="px-4 py-2"><span className="px-2 py-1 rounded-full text-xs">{u.role || 'user'}</span></td><td className="px-4 py-2">{u.is_banned ? <span className="text-red-600">Banned</span> : <span className="text-green-600">Active</span>}</td><td className="px-4 py-2"><select onChange={(e) => updateUserRole(u.id, e.target.value)} className="border rounded px-2 py-1 text-sm"><option value="user">User</option><option value="agent">Agent</option><option value="vendor">Vendor</option><option value="organization">Organization</option><option value="admin">Admin</option></select><button onClick={() => toggleUserBan(u.id, u.is_banned)} className={`ml-2 px-2 py-1 rounded text-xs ${u.is_banned ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>{u.is_banned ? 'Unban' : 'Ban'}</button></td></tr>))}</tbody></table></div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50"><tr><th className="px-4 py-2 text-left">Name</th><th className="px-4 py-2 text-left">Email</th><th className="px-4 py-2 text-left">Role</th><th className="px-4 py-2 text-left">Status</th><th className="px-4 py-2 text-left">Actions</th></tr></thead>
+                <tbody>{users.map(u => (<tr key={u.id} className="border-b"><td className="px-4 py-2">{u.full_name}</td><td className="px-4 py-2">{u.email}</td><td className="px-4 py-2"><span className="px-2 py-1 rounded-full text-xs">{u.role || 'user'}</span></td><td className="px-4 py-2">{u.is_banned ? <span className="text-red-600">Banned</span> : <span className="text-green-600">Active</span>}</td><td className="px-4 py-2"><select onChange={(e) => updateUserRole(u.id, e.target.value)} className="border rounded px-2 py-1 text-sm"><option value="user">User</option><option value="agent">Agent</option><option value="vendor">Vendor</option><option value="organization">Organization</option><option value="admin">Admin</option></select><button onClick={() => toggleUserBan(u.id, u.is_banned)} className={`ml-2 px-2 py-1 rounded text-xs ${u.is_banned ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>{u.is_banned ? 'Unban' : 'Ban'}</button></td></tr>))}</tbody>
+              </table>
+            </div>
           </div>
         )}
 
-        {/* Pools Tab - Full pool management */}
+        {/* Pools Tab */}
         {activeTab === 'pools' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden p-4">
-            <div className="overflow-x-auto"><table className="w-full"><thead className="bg-gray-50"><tr><th className="px-4 py-2 text-left">Prize</th><th className="px-4 py-2 text-left">Creator</th><th className="px-4 py-2 text-left">Target</th><th className="px-4 py-2 text-left">Status</th><th className="px-4 py-2 text-left">Featured</th><th className="px-4 py-2 text-left">Actions</th></tr></thead><tbody>{allPools.map(p => (<tr key={p.id} className="border-b"><td className="px-4 py-2">{p.prize_name}</td><td className="px-4 py-2">{p.profiles?.full_name}</td><td className="px-4 py-2">ETB {p.target_amount?.toLocaleString()}</td><td className="px-4 py-2">{p.status}</td><td className="px-4 py-2">{p.is_featured ? '⭐' : ''}</td><td className="px-4 py-2"><button onClick={() => togglePoolStatus(p.id, p.status)} className="bg-yellow-600 text-white px-2 py-1 rounded text-xs">Toggle</button><button onClick={() => toggleFeaturedPool(p.id, p.is_featured)} className="ml-1 bg-blue-600 text-white px-2 py-1 rounded text-xs">Feature</button><button onClick={() => deletePool(p.id)} className="ml-1 bg-red-600 text-white px-2 py-1 rounded text-xs">Delete</button><Link href={`/pools/${p.id}`} className="ml-1 bg-gray-600 text-white px-2 py-1 rounded text-xs">View</Link></div></td></div></div></div>)}</tbody></table></div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50"><tr><th className="px-4 py-2 text-left">Prize</th><th className="px-4 py-2 text-left">Creator</th><th className="px-4 py-2 text-left">Target</th><th className="px-4 py-2 text-left">Status</th><th className="px-4 py-2 text-left">Featured</th><th className="px-4 py-2 text-left">Actions</th></tr></thead>
+                <tbody>{allPools.map(p => (<tr key={p.id} className="border-b"><td className="px-4 py-2">{p.prize_name}</td><td className="px-4 py-2">{p.profiles?.full_name}</td><td className="px-4 py-2">ETB {p.target_amount?.toLocaleString()}</td><td className="px-4 py-2">{p.status}</td><td className="px-4 py-2">{p.is_featured ? '⭐' : ''}</td><td className="px-4 py-2"><button onClick={() => togglePoolStatus(p.id, p.status)} className="bg-yellow-600 text-white px-2 py-1 rounded text-xs">Toggle</button><button onClick={() => toggleFeaturedPool(p.id, p.is_featured)} className="ml-1 bg-blue-600 text-white px-2 py-1 rounded text-xs">Feature</button><button onClick={() => deletePool(p.id)} className="ml-1 bg-red-600 text-white px-2 py-1 rounded text-xs">Delete</button><Link href={`/pools/${p.id}`} className="ml-1 bg-gray-600 text-white px-2 py-1 rounded text-xs">View</Link></td></tr>))}</tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -383,7 +395,9 @@ export default function AdminDashboard() {
         {/* Featured Tab */}
         {activeTab === 'featured' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{allPools.filter(p => p.status === 'active').map(p => (<div key={p.id} className="border rounded-lg p-3 flex justify-between items-center"><span>{p.prize_name}</span><button onClick={() => toggleFeaturedPool(p.id, p.is_featured)} className={`px-3 py-1 rounded text-sm ${p.is_featured ? 'bg-gray-300' : 'bg-yellow-500 text-white'}`}>{p.is_featured ? 'Remove' : 'Feature'}</button></div>))}</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {allPools.filter(p => p.status === 'active').map(p => (<div key={p.id} className="border rounded-lg p-3 flex justify-between items-center"><span>{p.prize_name}</span><button onClick={() => toggleFeaturedPool(p.id, p.is_featured)} className={`px-3 py-1 rounded text-sm ${p.is_featured ? 'bg-gray-300' : 'bg-yellow-500 text-white'}`}>{p.is_featured ? 'Remove' : 'Feature'}</button></div>))}
+            </div>
           </div>
         )}
 
