@@ -1,18 +1,22 @@
 // Trigger redeploy - May 7 2026
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { supabase } from '../lib/supabase';
+import dynamic from 'next/dynamic';
+import { supabase, getPoolsWithCache, getPoolsPaginated } from '../lib/supabase';
 import { useTranslation } from 'react-i18next';
 import PoolCard from '../components/PoolCard';
-import NewsletterSubscribe from '../components/NewsletterSubscribe';
-import MovingAd from '../components/MovingAd';
-import AdvertisingBanner from '../components/AdvertisingBanner';
-import SimpleFilters from '../components/SimpleFilters';
-import RoleBanners from '../components/RoleBanners';
-import CashEquivalentBanner from '../components/CashEquivalentBanner';
-import CharityBanner from '../components/CharityBanner';
-import Testimonials from '../components/Testimonials';
+import LoadingSpinner from '../components/LoadingSpinner';
+
+// Lazy load non-critical components for faster initial load
+const NewsletterSubscribe = dynamic(() => import('../components/NewsletterSubscribe'), { ssr: false });
+const MovingAd = dynamic(() => import('../components/MovingAd'), { ssr: false });
+const AdvertisingBanner = dynamic(() => import('../components/AdvertisingBanner'), { ssr: false });
+const SimpleFilters = dynamic(() => import('../components/SimpleFilters'), { ssr: false });
+const RoleBanners = dynamic(() => import('../components/RoleBanners'), { ssr: false });
+const CashEquivalentBanner = dynamic(() => import('../components/CashEquivalentBanner'), { ssr: false });
+const CharityBanner = dynamic(() => import('../components/CharityBanner'), { ssr: false });
+const Testimonials = dynamic(() => import('../components/Testimonials'), { ssr: false });
 
 export default function Home() {
   const { t, i18n } = useTranslation();
@@ -22,6 +26,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [activeFilters, setActiveFilters] = useState({ category: 'all', city: 'all' });
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [stats, setStats] = useState({
     total_pools: 0,
     total_winners: 0,
@@ -38,30 +45,19 @@ export default function Home() {
   useEffect(() => {
     if (!mounted) return;
     
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-
     const loadData = async () => {
       try {
         setError(null);
         await Promise.all([fetchStats(), fetchPools()]);
       } catch (err) {
-        if (err.name !== 'AbortError') {
-          console.error('Loading error:', err);
-          setError('Failed to load data. Please refresh the page.');
-        }
+        console.error('Loading error:', err);
+        setError('Failed to load data. Please refresh the page.');
       } finally {
-        clearTimeout(timeoutId);
         setLoading(false);
       }
     };
 
     loadData();
-
-    return () => {
-      controller.abort();
-      clearTimeout(timeoutId);
-    };
   }, [mounted]);
 
   useEffect(() => {
@@ -72,8 +68,20 @@ export default function Home() {
     }
   }, [pools, activeFilters]);
 
+  // Fetch stats with caching
   async function fetchStats() {
     try {
+      // Try to get from cache first
+      const cacheKey = 'homepage_stats';
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < 60000) { // 1 minute cache
+          setStats(data);
+          return;
+        }
+      }
+      
       const results = await Promise.allSettled([
         supabase.from('pools').select('*', { count: 'exact', head: true }),
         supabase.from('pools').select('*', { count: 'exact', head: true }).not('winner_id', 'is', null),
@@ -87,65 +95,89 @@ export default function Home() {
       const contributions = results[3]?.value?.data || [];
       const total_raised = contributions.reduce((sum, c) => sum + (c.amount || 0), 0);
       
-      setStats({ total_pools, total_winners, total_agents, total_raised });
+      const statsData = { total_pools, total_winners, total_agents, total_raised };
+      setStats(statsData);
+      
+      // Cache stats
+      sessionStorage.setItem(cacheKey, JSON.stringify({ data: statsData, timestamp: Date.now() }));
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
   }
 
-  async function fetchPools() {
+  // Fetch pools with pagination
+  async function fetchPools(reset = true) {
+    if (reset) {
+      setPage(0);
+      setPools([]);
+      setHasMore(true);
+    }
+    
+    const currentPage = reset ? 0 : page;
+    
     try {
-      const { data, error } = await supabase
-        .from('pools')
-        .select('*')
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(50);
-
+      const { data, error, count, hasMore: more } = await getPoolsPaginated(currentPage, 12, activeFilters);
+      
       if (error) throw error;
-      setPools(data || []);
-      setFeaturedPools(data?.filter(pool => pool.is_featured === true) || []);
+      
+      if (reset) {
+        setPools(data || []);
+        setFeaturedPools(data?.filter(pool => pool.is_featured === true) || []);
+      } else {
+        setPools(prev => [...prev, ...(data || [])]);
+      }
+      
+      setHasMore(more);
+      return data;
     } catch (error) {
       console.error('Error loading pools:', error);
       setError('Could not load prize pools. Please try again.');
+      return [];
     }
   }
 
-  const applyFilters = (filters) => {
-    setActiveFilters(filters);
-    let filtered = [...pools];
+  // Load more pools for infinite scroll
+  const loadMorePools = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    setPage(nextPage);
     
-    if (filters.category !== 'all') {
-      const categoryKeywords = {
-        vehicle: ['car', 'truck', 'v8', 'sino', 'toyota', 'motorcycle', 'bike', 'vitara'],
-        machinery: ['excavator', 'loader', 'block machine', 'tractor', 'machine', 'cnc'],
-        electronics: ['laptop', 'phone', 'computer', 'tv', 'dell', 'iphone', 'samsung'],
-        property: ['house', 'home', 'villa', 'apartment', 'land'],
-        furniture: ['furniture', 'sofa', 'bed', 'table', 'chair', 'cabinet']
-      };
-      const keywords = categoryKeywords[filters.category] || [];
-      filtered = filtered.filter(pool => 
-        keywords.some(keyword => 
-          pool.prize_name?.toLowerCase().includes(keyword) || 
-          pool.description?.toLowerCase().includes(keyword)
-        )
-      );
+    try {
+      const { data, error, hasMore: more } = await getPoolsPaginated(nextPage, 12, activeFilters);
+      if (error) throw error;
+      setPools(prev => [...prev, ...(data || [])]);
+      setHasMore(more);
+    } catch (error) {
+      console.error('Error loading more pools:', error);
+    } finally {
+      setLoadingMore(false);
     }
+  };
 
-    if (filters.city !== 'all') {
-      filtered = filtered.filter(pool => pool.city === filters.city);
-    }
+  const applyFilters = async (filters) => {
+    setActiveFilters(filters);
+    // Reset and fetch with new filters
+    setPage(0);
+    setPools([]);
+    setLoading(true);
     
-    setFilteredPools(filtered);
+    try {
+      const { data, error, hasMore: more } = await getPoolsPaginated(0, 12, filters);
+      if (error) throw error;
+      setPools(data || []);
+      setHasMore(more);
+      setFilteredPools(data || []);
+    } catch (error) {
+      console.error('Error applying filters:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Don't render during SSR to prevent hydration errors
   if (!mounted) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-      </div>
-    );
+    return <LoadingSpinner fullPage message="Loading amazing prizes..." />;
   }
 
   if (error) {
@@ -165,25 +197,7 @@ export default function Home() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse">
-            <div className="h-64 bg-gray-200 rounded-lg mb-8"></div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-20 bg-gray-200 rounded-lg"></div>
-              ))}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-80 bg-gray-200 rounded-lg"></div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner fullPage message="Loading amazing prizes..." />;
   }
 
   return (
@@ -192,6 +206,7 @@ export default function Home() {
         <title>Abbaa Carraa - Win Amazing Prizes</title>
         <meta name="description" content="Win amazing prizes through community savings. 2% supports kidney & heart disease patients." />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=yes" />
+        <link rel="preload" href="/images/abbaa-carraa-bg.png" as="image" />
       </Head>
 
       <div className="min-h-screen flex flex-col w-full overflow-x-hidden">
@@ -200,9 +215,9 @@ export default function Home() {
           <CashEquivalentBanner />
           <CharityBanner />
 
-          {/* ============ SIMPLE, NON-OVERLAPPING HERO SECTION ============ */}
+          {/* Simple, Fast Hero Section */}
           <section className="w-full">
-            {/* Image only - full width, no overlay, no text on image */}
+            {/* Image only - full width */}
             <div className="w-full bg-gradient-to-b from-green-800 to-teal-800">
               <img 
                 src="/images/abbaa-carraa-bg.png"
@@ -210,20 +225,20 @@ export default function Home() {
                 className="w-full h-auto"
                 loading="eager"
                 fetchPriority="high"
+                width="1200"
+                height="400"
                 onError={(e) => {
                   e.target.style.display = 'none';
                 }}
               />
             </div>
             
-            {/* Text content - completely separate, below the image */}
+            {/* Text content - separate from image */}
             <div className="bg-white py-12">
               <div className="container mx-auto px-4 text-center">
-                {/* Ethiopia's #1 Badge */}
                 <div className="inline-flex items-center gap-2 bg-yellow-400 text-gray-900 px-4 py-1 rounded-full text-sm font-semibold mb-4">
                   🔥 Ethiopia's #1 Prize Platform
                 </div>
-                
                 <h1 className="text-3xl sm:text-4xl font-bold text-gray-800">
                   Welcome to Abbaa Carraa
                 </h1>
@@ -233,7 +248,6 @@ export default function Home() {
                 <p className="text-green-600 font-semibold mt-1">
                   💚 2% of every contribution supports kidney & heart disease patients
                 </p>
-                
                 <div className="flex flex-col sm:flex-row gap-4 justify-center mt-6">
                   <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-full font-semibold transition">
                     🎁 Start Winning Now
@@ -242,7 +256,6 @@ export default function Home() {
                     👑 Become an Agent
                   </Link>
                 </div>
-                
                 <div className="flex flex-wrap justify-center gap-6 mt-8 text-sm text-gray-500">
                   <div className="flex items-center gap-2">✓ Cash Guarantee</div>
                   <div className="flex items-center gap-2">✓ Blockchain Verified</div>
@@ -295,18 +308,19 @@ export default function Home() {
             <section className="container mx-auto px-4 py-8">
               <h2 className="text-2xl font-bold text-center mb-8">⭐ Featured Prize Pools</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {featuredPools.map(pool => (
+                {featuredPools.slice(0, 3).map(pool => (
                   <PoolCard key={pool.id} pool={pool} featured={true} />
                 ))}
               </div>
             </section>
           )}
 
-          {/* All Active Pools */}
+          {/* All Active Pools with Infinite Scroll */}
           <section id="pools-grid" className="container mx-auto px-4 py-8">
             <h2 className="text-2xl font-bold text-center mb-8">
               {activeFilters.category !== 'all' || activeFilters.city !== 'all' ? 'Filtered Pools' : 'Active Prize Pools'}
             </h2>
+            
             {filteredPools.length === 0 ? (
               <div className="text-center py-12 bg-gray-50 rounded-lg">
                 <p className="text-gray-500 mb-4">No pools found</p>
@@ -318,18 +332,31 @@ export default function Home() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredPools.map(pool => (
-                  <PoolCard key={pool.id} pool={pool} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredPools.map(pool => (
+                    <PoolCard key={pool.id} pool={pool} />
+                  ))}
+                </div>
+                
+                {/* Load More Button */}
+                {hasMore && (
+                  <div className="text-center mt-8">
+                    <button
+                      onClick={loadMorePools}
+                      disabled={loadingMore}
+                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2 rounded-full font-semibold transition disabled:opacity-50"
+                    >
+                      {loadingMore ? 'Loading...' : 'Load More Pools ↓'}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </section>
 
-          <section className="container mx-auto px-4 py-8">
-            <RoleBanners />
-          </section>
-
+          <RoleBanners />
+          
           <section className="bg-gray-100 py-12">
             <div className="container mx-auto px-4">
               <h2 className="text-2xl font-bold text-center mb-8">How It Works</h2>
