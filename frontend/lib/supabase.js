@@ -51,26 +51,41 @@ export async function checkSupabaseConnection() {
 let poolsCache = null;
 let poolsCacheTime = 0;
 const CACHE_DURATION = 60000; // 1 minute cache
-
 export async function getPoolsWithCache() {
   const now = Date.now();
   if (poolsCache && (now - poolsCacheTime) < CACHE_DURATION) {
-    return poolsCache;
+    return { data: poolsCache, error: null };
   }
   
-  const { data, error } = await supabase
-    .from('pools')
-    .select('*')
-    .eq('status', 'active')
-    .order('created_at', { ascending: false })
-    .limit(50);
-  
-  if (!error && data) {
-    poolsCache = data;
-    poolsCacheTime = now;
+  try {
+    const { data, error } = await supabase
+      .from('pools')
+      .select('*')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    
+    if (!error && data) {
+      poolsCache = data;
+      poolsCacheTime = now;
+      return { data, error: null };
+    }
+    
+    // If error, return cached data if available (stale-while-revalidate)
+    if (poolsCache) {
+      console.warn('Using cached data due to error:', error);
+      return { data: poolsCache, error: null, fromCache: true };
+    }
+    
+    return { data: null, error };
+  } catch (error) {
+    console.error('Error fetching pools:', error);
+    // Return cached data if available
+    if (poolsCache) {
+      return { data: poolsCache, error: null, fromCache: true };
+    }
+    return { data: null, error };
   }
-  
-  return { data, error };
 }
 
 // Helper function to invalidate cache
