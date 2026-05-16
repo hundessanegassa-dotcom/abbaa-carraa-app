@@ -42,16 +42,7 @@ export default function AuthCallback() {
         return;
       }
       
-      // If profile exists but no agreement, update it
-      if (existingProfile && existingProfile.agreement_accepted !== true) {
-        setPendingRole(existingProfile.user_type || storedRole);
-        setTempUser(user);
-        setShowAgreement(true);
-        setLoading(false);
-        return;
-      }
-      
-      // New user - show agreement
+      // Show agreement for all cases (new user or agreement not accepted)
       setPendingRole(storedRole);
       setTempUser(user);
       setShowAgreement(true);
