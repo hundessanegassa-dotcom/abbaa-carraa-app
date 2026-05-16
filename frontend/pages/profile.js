@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import DashboardLayout from '../components/DashboardLayout';
+import BackButton from '../components/BackButton';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -134,12 +135,8 @@ export default function ProfilePage() {
       user={user}
       profile={profile}
     >
-      {/* Back to Dashboard */}
-      <div className="mb-4">
-        <Link href="/dashboard" className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
-          ← Back to Dashboard
-        </Link>
-      </div>
+      {/* Back Button */}
+      <BackButton fallbackHref="/dashboard" />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Form */}
