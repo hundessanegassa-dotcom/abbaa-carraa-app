@@ -17,11 +17,12 @@ export default function Dashboard() {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   
-  const [stats, setStats] = useState({ totalSpent: 0, totalWon: 0, activeEntries: 0, winRate: 0 });
+  const [stats, setStats] = useState({ totalSpent: 0, totalWon: 0, activeEntries: 0, winRate: 0, loyaltyPoints: 0 });
   const [activePools, setActivePools] = useState([]);
   const [myEntries, setMyEntries] = useState([]);
   const [myWins, setMyWins] = useState([]);
   const [recentActivities, setRecentActivities] = useState([]);
+  const [badges, setBadges] = useState([]);
   
   useEffect(() => {
     checkUser();
@@ -51,6 +52,7 @@ export default function Dashboard() {
       
       await loadDashboardData(user.id);
       await loadRecentActivities(user.id);
+      await loadBadges(user.id);
       
     } catch (error) {
       console.error('Error:', error);
@@ -115,12 +117,14 @@ export default function Dashboard() {
       
       const totalWon = wins?.reduce((sum, w) => sum + (w.target_amount || 0), 0) || 0;
       const winRate = totalSpent > 0 ? (totalWon / totalSpent) * 100 : 0;
+      const loyaltyPoints = Math.floor(totalSpent / 100) + (wins?.length || 0) * 10;
       
       setStats({ 
         totalSpent, 
         totalWon, 
         activeEntries: activeEntries.length,
-        winRate: winRate.toFixed(1)
+        winRate: winRate.toFixed(1),
+        loyaltyPoints
       });
       setMyEntries(activeEntries);
       setMyWins(wins || []);
@@ -209,6 +213,29 @@ export default function Dashboard() {
     }
   }
 
+  async function loadBadges(userId) {
+    const winsCount = myWins.length || 0;
+    const badgesList = [];
+    
+    if (winsCount >= 1) badgesList.push({ name: 'First Win', icon: '🥇', color: 'bg-yellow-100 text-yellow-700' });
+    if (winsCount >= 5) badgesList.push({ name: 'Rising Star', icon: '⭐', color: 'bg-blue-100 text-blue-700' });
+    if (winsCount >= 10) badgesList.push({ name: 'Champion', icon: '🏆', color: 'bg-purple-100 text-purple-700' });
+    if (stats.totalSpent >= 10000) badgesList.push({ name: 'Big Spender', icon: '💰', color: 'bg-green-100 text-green-700' });
+    if (profile?.referral_count >= 5) badgesList.push({ name: 'Super Referrer', icon: '🤝', color: 'bg-orange-100 text-orange-700' });
+    
+    if (badgesList.length === 0) {
+      badgesList.push({ name: 'Newcomer', icon: '🌱', color: 'bg-gray-100 text-gray-700' });
+    }
+    
+    setBadges(badgesList);
+  }
+
+  const copyReferralLink = () => {
+    const link = `${window.location.origin}/register?ref=${user?.id}`;
+    navigator.clipboard.writeText(link);
+    toast.success('Referral link copied! Share with friends to earn bonuses.');
+  };
+
   if (loading) {
     return <LoadingSpinner fullPage message="Loading your dashboard..." />;
   }
@@ -231,9 +258,10 @@ export default function Dashboard() {
       <div className="bg-gradient-to-r from-green-50 to-teal-50 border-l-4 border-green-500 rounded-xl p-5 mb-8">
         <h3 className="font-bold text-green-800 text-lg mb-2">✨ Your Role: Individual Participant</h3>
         <p className="text-green-700 text-sm leading-relaxed">
-          As an individual participant, you can browse and join various pools, track your entries, and see your winnings.
-          Each pool gives you a chance to win amazing prizes. The more you participate, the higher your chances of winning!
-          Your activity and wins are tracked below. Good luck! 🍀
+          As an individual participant, you can browse and join various pools created by Admins, Agents, or Organizations.
+          Each pool has <strong>one winner</strong> who receives <strong>100% of the target amount</strong>. 
+          The pool creator earns their commission (10% or 20%), and the platform/admin earns a 10% fee on agent/organization pools.
+          <strong className="block mt-2">💚 2% of every contribution supports kidney & heart disease patients.</strong>
         </p>
       </div>
       
@@ -255,8 +283,8 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      {/* Quick Stats - Added Loyalty Points */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-green-100 text-green-600 rounded-xl flex items-center justify-center text-lg">💸</div>
@@ -281,6 +309,15 @@ export default function Dashboard() {
             <div>
               <p className="text-xs text-gray-500 font-medium">Active Entries</p>
               <p className="text-xl font-bold text-blue-600">{stats.activeEntries}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center text-lg">⭐</div>
+            <div>
+              <p className="text-xs text-gray-500 font-medium">Loyalty Points</p>
+              <p className="text-xl font-bold text-purple-600">{stats.loyaltyPoints}</p>
             </div>
           </div>
         </div>
@@ -360,6 +397,33 @@ export default function Dashboard() {
               </div>
             </div>
           )}
+          
+          {/* How to Win Guide */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
+            <h3 className="font-bold text-blue-800 text-lg mb-4 flex items-center gap-2">
+              <span>📖</span> How to Win
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center">
+                <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center mx-auto mb-2 text-xl">1</div>
+                <p className="font-semibold text-sm">Find a Pool</p>
+                <p className="text-xs text-gray-600">Browse active prize pools</p>
+              </div>
+              <div className="text-center">
+                <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center mx-auto mb-2 text-xl">2</div>
+                <p className="font-semibold text-sm">Contribute</p>
+                <p className="text-xs text-gray-600">Pay entry fee for seats</p>
+              </div>
+              <div className="text-center">
+                <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center mx-auto mb-2 text-xl">3</div>
+                <p className="font-semibold text-sm">Win!</p>
+                <p className="text-xs text-gray-600">Random winner selected</p>
+              </div>
+            </div>
+            <p className="text-xs text-blue-600 text-center mt-3">
+              💡 Tip: More entries = higher chance to win!
+            </p>
+          </div>
         </div>
 
         {/* Right Column: User Activity */}
@@ -437,6 +501,58 @@ export default function Dashboard() {
             )}
           </div>
 
+          {/* Badges & Achievements */}
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+            <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+              <span>🎖️</span> Badges & Achievements
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {badges.map((badge, idx) => (
+                <div key={idx} className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium ${badge.color}`}>
+                  <span>{badge.icon}</span>
+                  <span>{badge.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Referral Program */}
+          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-5 rounded-2xl border border-indigo-100">
+            <h3 className="font-semibold text-indigo-800 mb-2 flex items-center gap-2">
+              <span>🤝</span> Referral Program
+            </h3>
+            <p className="text-xs text-indigo-600 mb-3">Invite friends and earn bonuses when they join!</p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                readOnly
+                value={`${window.location.origin}/register?ref=${user?.id}`}
+                className="flex-1 text-xs border rounded-lg px-2 py-1.5 bg-white"
+              />
+              <button
+                onClick={copyReferralLink}
+                className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs hover:bg-indigo-700"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+
+          {/* Charity Section */}
+          <div className="bg-gradient-to-r from-pink-50 to-rose-50 p-5 rounded-2xl border border-pink-100">
+            <h3 className="font-semibold text-pink-800 mb-2 flex items-center gap-2">
+              <span>💚</span> 2% for Health
+            </h3>
+            <p className="text-xs text-pink-700">
+              2% of every contribution goes to support kidney and heart disease patients in Ethiopia.
+              Your participation helps save lives!
+            </p>
+            <div className="mt-3 bg-white rounded-lg p-2 text-center">
+              <p className="text-xs text-gray-500">Total contributed to charity from your activity:</p>
+              <p className="font-bold text-pink-600">ETB {Math.floor(stats.totalSpent * 0.02).toLocaleString()}</p>
+            </div>
+          </div>
+
           {/* Quick Tips */}
           <div className="bg-blue-50 p-5 rounded-2xl border border-blue-100">
             <h3 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
@@ -447,6 +563,7 @@ export default function Dashboard() {
               <li>Complete your profile to qualify for wins</li>
               <li>Invite friends to earn referral bonuses</li>
               <li>Check back daily for new featured pools</li>
+              <li>More entries = higher chance to win!</li>
             </ul>
           </div>
         </div>
