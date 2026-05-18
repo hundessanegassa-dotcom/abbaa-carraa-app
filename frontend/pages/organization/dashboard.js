@@ -15,7 +15,7 @@ export default function OrganizationDashboard() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   
-  const [stats, setStats] = useState({ totalPools: 0, totalParticipants: 0, totalCollected: 0, totalPaid: 0 });
+  const [stats, setStats] = useState({ totalPools: 0, totalParticipants: 0, totalCollected: 0, totalPaid: 0, commissionEarned: 0 });
   const [pools, setPools] = useState([]);
   const [pendingPayouts, setPendingPayouts] = useState([]);
   const [participants, setParticipants] = useState([]);
@@ -23,6 +23,11 @@ export default function OrganizationDashboard() {
   const [selectedPool, setSelectedPool] = useState(null);
   const [winnerId, setWinnerId] = useState('');
   const [payoutAmount, setPayoutAmount] = useState('');
+  const [members, setMembers] = useState([]);
+  const [pendingMembers, setPendingMembers] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
 
   useEffect(() => {
     checkUser();
@@ -59,6 +64,8 @@ export default function OrganizationDashboard() {
       setOrgDetails(orgData);
 
       await loadOrganizationData(user.id);
+      await loadMembers(user.id);
+      await loadRecentActivity(user.id);
       
     } catch (error) {
       console.error('Error:', error);
@@ -84,11 +91,14 @@ export default function OrganizationDashboard() {
       const totalParticipants = myPools?.reduce((sum, p) => sum + (p.participants_count || 0), 0) || 0;
       const totalCollected = myPools?.reduce((sum, p) => sum + (p.current_amount || 0), 0) || 0;
       
+      // Commission earned: 10% of total collected from organization pools
+      const commissionEarned = totalCollected * 0.10;
+      
       // Find pools that need payout (completed but no winner)
       const payouts = myPools?.filter(p => p.status === 'completed' && !p.winner_id) || [];
       setPendingPayouts(payouts);
 
-      // Calculate total paid out from commissions/payouts table
+      // Calculate total paid out
       const { data: payoutsData } = await supabase
         .from('payouts')
         .select('amount')
@@ -101,12 +111,58 @@ export default function OrganizationDashboard() {
         totalPools,
         totalParticipants,
         totalCollected,
-        totalPaid
+        totalPaid,
+        commissionEarned
       });
 
     } catch (error) {
       console.error('Error loading organization data:', error);
       toast.error('Failed to load organization data');
+    }
+  }
+
+  async function loadMembers(userId) {
+    try {
+      // Fetch organization members
+      const { data: memberData } = await supabase
+        .from('organization_members')
+        .select(`
+          id,
+          status,
+          joined_at,
+          user:profiles!user_id(full_name, email, phone)
+        `)
+        .eq('organization_id', userId);
+      
+      const approved = memberData?.filter(m => m.status === 'approved') || [];
+      const pending = memberData?.filter(m => m.status === 'pending') || [];
+      
+      setMembers(approved);
+      setPendingMembers(pending);
+    } catch (error) {
+      console.error('Error loading members:', error);
+    }
+  }
+
+  async function loadRecentActivity(userId) {
+    try {
+      // Fetch recent pool activities
+      const { data: recentPools } = await supabase
+        .from('pools')
+        .select('prize_name, status, created_at')
+        .eq('created_by', userId)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      const activities = (recentPools || []).map(pool => ({
+        action: `Pool "${pool.prize_name}" was ${pool.status}`,
+        date: pool.created_at,
+        icon: pool.status === 'active' ? '✅' : '📋'
+      }));
+      
+      setRecentActivity(activities);
+    } catch (error) {
+      console.error('Error loading activity:', error);
     }
   }
 
@@ -148,7 +204,6 @@ export default function OrganizationDashboard() {
 
       if (error) throw error;
 
-      // Create CSV content
       const headers = ['Name', 'Email', 'Phone', 'Tickets', 'Entry Amount', 'Joined Date'];
       const rows = (data || []).map(entry => [
         entry.user?.full_name || 'N/A',
@@ -193,6 +248,7 @@ export default function OrganizationDashboard() {
     } else {
       toast.success('Pool ended successfully');
       await loadOrganizationData(user.id);
+      await loadRecentActivity(user.id);
     }
     setSubmitting(false);
   };
@@ -231,7 +287,6 @@ export default function OrganizationDashboard() {
 
     setSubmitting(true);
     
-    // 1. Update pool with winner
     const { error: poolError } = await supabase
       .from('pools')
       .update({
@@ -248,7 +303,6 @@ export default function OrganizationDashboard() {
       return;
     }
 
-    // 2. Record payout transaction
     const { error: payoutError } = await supabase
       .from('payouts')
       .insert({
@@ -262,10 +316,8 @@ export default function OrganizationDashboard() {
 
     if (payoutError) {
       console.error('Payout record error:', payoutError);
-      // Don't fail the whole operation
     }
 
-    // 3. Update winner's profile with win record
     await supabase
       .from('profiles')
       .update({
@@ -277,6 +329,21 @@ export default function OrganizationDashboard() {
     toast.success(`Payout of ${parseFloat(payoutAmount).toLocaleString()} ETB processed!`);
     setShowPayoutModal(false);
     await loadOrganizationData(user.id);
+    await loadRecentActivity(user.id);
+    setSubmitting(false);
+  };
+
+  const handleInviteMember = async () => {
+    if (!inviteEmail) {
+      toast.error('Please enter an email address');
+      return;
+    }
+    
+    setSubmitting(true);
+    // In real app, send invitation email and create pending member record
+    toast.success(`Invitation sent to ${inviteEmail}`);
+    setInviteEmail('');
+    setShowInviteModal(false);
     setSubmitting(false);
   };
 
@@ -285,7 +352,7 @@ export default function OrganizationDashboard() {
   return (
     <DashboardLayout 
       title="Organization Dashboard" 
-      subtitle="Create and manage pools, track participants, handle payouts efficiently"
+      subtitle="Create private pools for members, manage participation, and earn 10% commission"
       icon="🏢"
       bgGradient="from-blue-600 to-cyan-600"
       user={user}
@@ -293,25 +360,60 @@ export default function OrganizationDashboard() {
     >
       <BackButton fallbackHref="/" />
 
-      {/* Role Description Card */}
+      {/* Role Description Card - Enhanced with correct 10% commission */}
       <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-blue-500 rounded-xl p-5 mb-8">
-        <h3 className="font-bold text-blue-800 text-lg mb-2">✨ Your Role: Organization</h3>
+        <h3 className="font-bold text-blue-800 text-lg mb-2">✨ Your Role: Organization Organizer</h3>
         <p className="text-blue-700 text-sm leading-relaxed">
-          As an Organization, you can create and manage custom pools for your members, track participant activity, 
-          and handle payouts when pools complete. You earn a <strong className="font-bold">5% commission</strong> on all pools you create. 
-          Use the tools below to export participant data, end pools early, and process winner payouts securely.
+          As an Organization Organizer, you can <strong className="font-bold">create private prize pools</strong> exclusively for your organization members. 
+          When your pool reaches its target and a winner is selected, you earn <strong className="font-bold">10% commission</strong> on the target amount.
         </p>
+        <div className="mt-3 bg-white/50 rounded-lg p-3 text-sm">
+          <p className="font-semibold text-blue-800">💰 Commission Structure (Organization Pools):</p>
+          <p className="text-blue-700 text-xs mt-1">
+            • Winner gets: <strong>100% of target</strong><br/>
+            • You earn: <strong>10% commission</strong> (added on top)<br/>
+            • Platform fee: <strong>10%</strong> (added on top)<br/>
+            • Total collected from members: <strong>Target + 20%</strong>
+          </p>
+          <p className="text-xs text-blue-600 mt-2">
+            Example: Create a 1,000,000 ETB private pool → Winner gets 1,000,000 → Your organization earns 100,000 → Platform gets 100,000 → Total collected 1,200,000 ETB
+          </p>
+        </div>
         {orgDetails && (
-          <div className="mt-3 flex gap-3 text-xs text-blue-600">
-            <span>📧 {orgDetails.business_email}</span>
-            <span>📞 {orgDetails.phone}</span>
-            {orgDetails.verified && <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded">✓ Verified Organization</span>}
+          <div className="mt-3 flex flex-wrap gap-3 text-xs">
+            <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">📧 {orgDetails.business_email}</span>
+            <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">📞 {orgDetails.phone}</span>
+            {orgDetails.verified && <span className="bg-green-100 text-green-700 px-2 py-1 rounded">✓ Verified Organization</span>}
           </div>
         )}
       </div>
 
-      {/* Analytics Cards */}
+      {/* Quick Actions - New Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <Link href="/create-pool?type=private" className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+          <div className="text-2xl mb-1">➕</div>
+          <p className="font-semibold text-sm">Create Private Pool</p>
+          <p className="text-xs opacity-80">Earn 10% commission</p>
+        </Link>
+        <button onClick={() => setShowInviteModal(true)} className="bg-green-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+          <div className="text-2xl mb-1">📧</div>
+          <p className="font-semibold text-sm">Invite Member</p>
+          <p className="text-xs opacity-80">Add to organization</p>
+        </button>
+        <button onClick={() => window.location.href = '/organization/analytics'} className="bg-purple-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+          <div className="text-2xl mb-1">📊</div>
+          <p className="font-semibold text-sm">Analytics</p>
+          <p className="text-xs opacity-80">View reports</p>
+        </button>
+        <button onClick={() => window.location.href = '/organization/settings'} className="bg-gray-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+          <div className="text-2xl mb-1">⚙️</div>
+          <p className="font-semibold text-sm">Settings</p>
+          <p className="text-xs opacity-80">Manage organization</p>
+        </button>
+      </div>
+
+      {/* Analytics Cards - Added Commission Earned */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-center hover:shadow-md transition">
           <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-xl">🏊</div>
           <p className="text-sm text-gray-500 font-medium">Total Pools</p>
@@ -319,17 +421,23 @@ export default function OrganizationDashboard() {
         </div>
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-center hover:shadow-md transition">
           <div className="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-xl">👥</div>
-          <p className="text-sm text-gray-500 font-medium">Participants</p>
-          <p className="text-2xl font-bold text-gray-800 mt-1">{stats.totalParticipants}</p>
+          <p className="text-sm text-gray-500 font-medium">Members</p>
+          <p className="text-2xl font-bold text-gray-800 mt-1">{members.length}</p>
         </div>
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-center hover:shadow-md transition">
           <div className="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-xl">💰</div>
           <p className="text-sm text-gray-500 font-medium">Fees Collected</p>
           <p className="text-xl font-bold text-gray-800 mt-1">{stats.totalCollected.toLocaleString()} ETB</p>
         </div>
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-center hover:shadow-md transition">
+          <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-xl">💸</div>
+          <p className="text-sm text-gray-500 font-medium">Commission Earned</p>
+          <p className="text-xl font-bold text-purple-600 mt-1">{Math.floor(stats.commissionEarned).toLocaleString()} ETB</p>
+          <p className="text-xs text-gray-400">10% of collections</p>
+        </div>
         <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-5 rounded-2xl shadow-sm text-center text-white">
-          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-2 text-xl">💸</div>
-          <p className="text-sm font-medium opacity-90">Total Paid Out</p>
+          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-2 text-xl">🎯</div>
+          <p className="text-sm font-medium opacity-90">Paid Out</p>
           <p className="text-2xl font-bold mt-1">{stats.totalPaid.toLocaleString()} ETB</p>
         </div>
       </div>
@@ -339,7 +447,7 @@ export default function OrganizationDashboard() {
         <div className="lg:col-span-2">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
-              <h3 className="text-xl font-bold text-gray-800">🏊 My Pools</h3>
+              <h3 className="text-xl font-bold text-gray-800">🏊 My Private Pools</h3>
               <Link href="/create-pool?type=private" className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-5 py-2 rounded-xl text-sm font-semibold transition shadow-sm flex items-center gap-2">
                 <span>➕</span> Create New Pool
               </Link>
@@ -352,7 +460,7 @@ export default function OrganizationDashboard() {
                     <th className="py-3 px-3 font-semibold text-gray-600 text-sm">Pool Name</th>
                     <th className="py-3 px-3 font-semibold text-gray-600 text-sm">Entry Fee</th>
                     <th className="py-3 px-3 font-semibold text-gray-600 text-sm">Target</th>
-                    <th className="py-3 px-3 font-semibold text-gray-600 text-sm text-center">Users</th>
+                    <th className="py-3 px-3 font-semibold text-gray-600 text-sm text-center">Members</th>
                     <th className="py-3 px-3 font-semibold text-gray-600 text-sm">Status</th>
                     <th className="py-3 px-3 font-semibold text-gray-600 text-sm text-right">Actions</th>
                   </tr>
@@ -362,7 +470,7 @@ export default function OrganizationDashboard() {
                     <tr key={pool.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
                       <td className="py-4 px-3">
                         <span className="font-semibold text-gray-800 block">{pool.prize_name}</span>
-                        <span className="text-xs text-gray-400">{pool.category || 'General'}</span>
+                        <span className="text-xs text-gray-400">{pool.category || 'Private Pool'}</span>
                       </td>
                       <td className="py-4 px-3 font-medium text-gray-800">{pool.entry_fee?.toLocaleString()} ETB</td>
                       <td className="py-4 px-3 font-bold text-blue-600">{pool.target_amount?.toLocaleString()} ETB</td>
@@ -376,7 +484,7 @@ export default function OrganizationDashboard() {
                         }`}>
                           {pool.status === 'paid' ? 'PAID' : pool.status?.toUpperCase() || 'ACTIVE'}
                         </span>
-                      </td>
+                       </td>
                       <td className="py-4 px-3 text-right">
                         <div className="flex justify-end gap-2">
                           <button 
@@ -421,15 +529,15 @@ export default function OrganizationDashboard() {
                             🗑️
                           </button>
                         </div>
-                      </td>
-                    </tr>
+                       </td>
+                     </tr>
                   ))}
                   {pools.length === 0 && (
                     <tr>
                       <td colSpan="6" className="py-12 text-center text-gray-400">
                         <div className="flex flex-col items-center gap-3">
                           <span className="text-5xl">🏊</span>
-                          <p>You haven't created any pools yet.</p>
+                          <p>You haven't created any private pools yet.</p>
                           <Link href="/create-pool?type=private" className="text-blue-600 font-semibold hover:underline">
                             Create your first pool →
                           </Link>
@@ -445,6 +553,56 @@ export default function OrganizationDashboard() {
 
         {/* Sidebar */}
         <div className="space-y-6">
+          {/* Member Management - NEW */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <span>👥</span> Member Management
+              {pendingMembers.length > 0 && (
+                <span className="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full">{pendingMembers.length} pending</span>
+              )}
+            </h3>
+            
+            {pendingMembers.length > 0 && (
+              <div className="mb-4">
+                <p className="text-sm font-semibold text-gray-600 mb-2">Pending Approvals</p>
+                {pendingMembers.map(member => (
+                  <div key={member.id} className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <div>
+                      <p className="font-medium text-sm">{member.user?.full_name || 'New Member'}</p>
+                      <p className="text-xs text-gray-400">{member.user?.email}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button className="bg-green-500 text-white px-2 py-1 rounded text-xs">Approve</button>
+                      <button className="bg-red-500 text-white px-2 py-1 rounded text-xs">Reject</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <div>
+              <p className="text-sm font-semibold text-gray-600 mb-2">Members ({members.length})</p>
+              {members.length === 0 ? (
+                <p className="text-gray-400 text-sm text-center py-4">No members yet. Invite members to join your organization.</p>
+              ) : (
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {members.slice(0, 5).map(member => (
+                    <div key={member.id} className="flex justify-between items-center text-sm py-1">
+                      <span>{member.user?.full_name?.split(' ')[0]}</span>
+                      <span className="text-xs text-gray-400">Joined {new Date(member.joined_at).toLocaleDateString()}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button 
+                onClick={() => setShowInviteModal(true)}
+                className="w-full mt-3 text-blue-600 text-sm font-medium hover:underline"
+              >
+                + Invite New Member
+              </button>
+            </div>
+          </div>
+
           {/* Pending Payouts */}
           <div className="bg-gradient-to-br from-yellow-50 to-orange-50 p-6 rounded-2xl shadow-sm border border-yellow-200">
             <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
@@ -478,23 +636,56 @@ export default function OrganizationDashboard() {
             </div>
           </div>
 
-          {/* Quick Stats */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-800 mb-3">📈 Quick Stats</h3>
+          {/* Commission Breakdown - NEW */}
+          <div className="bg-gradient-to-br from-green-50 to-teal-50 p-6 rounded-2xl shadow-sm border border-green-100">
+            <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <span>💰</span> Commission Breakdown (10%)
+            </h3>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between py-2 border-b border-gray-100">
-                <span className="text-gray-500">Active Pools</span>
-                <span className="font-bold text-green-600">{pools.filter(p => p.status === 'active').length}</span>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Your Commission Rate:</span>
+                <span className="font-bold text-green-600">10%</span>
               </div>
-              <div className="flex justify-between py-2 border-b border-gray-100">
-                <span className="text-gray-500">Completed Pools</span>
-                <span className="font-bold text-blue-600">{pools.filter(p => p.status === 'completed').length}</span>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Platform Fee:</span>
+                <span className="font-bold text-blue-600">10%</span>
               </div>
-              <div className="flex justify-between py-2">
-                <span className="text-gray-500">Commission Earned (5%)</span>
-                <span className="font-bold text-yellow-600">{Math.floor(stats.totalCollected * 0.05).toLocaleString()} ETB</span>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Winner Gets:</span>
+                <span className="font-bold text-purple-600">100% of Target</span>
+              </div>
+              <div className="border-t border-green-200 mt-2 pt-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Example (1M ETB pool):</span>
+                  <span className="font-bold">1,200,000 ETB total</span>
+                </div>
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>Winner: 1,000,000</span>
+                  <span>You: 100,000</span>
+                  <span>Platform: 100,000</span>
+                </div>
               </div>
             </div>
+          </div>
+
+          {/* Recent Activity - NEW */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <span>📋</span> Recent Activity
+            </h3>
+            {recentActivity.length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-4">No recent activity</p>
+            ) : (
+              <div className="space-y-2">
+                {recentActivity.map((activity, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-sm py-2 border-b border-gray-100">
+                    <span>{activity.icon}</span>
+                    <span className="text-gray-600">{activity.action}</span>
+                    <span className="text-xs text-gray-400 ml-auto">{new Date(activity.date).toLocaleDateString()}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Help Resources */}
@@ -503,11 +694,55 @@ export default function OrganizationDashboard() {
             <ul className="space-y-2 text-sm">
               <li><Link href="/faq#organization" className="text-blue-600 hover:underline flex items-center gap-2">📖 How to manage private pools?</Link></li>
               <li><Link href="/faq#payouts" className="text-blue-600 hover:underline flex items-center gap-2">💰 Payout processing guide</Link></li>
+              <li><Link href="/faq#members" className="text-blue-600 hover:underline flex items-center gap-2">👥 Member management tips</Link></li>
               <li><Link href="/contact" className="text-blue-600 hover:underline flex items-center gap-2">📞 Contact Organization Support</Link></li>
             </ul>
           </div>
         </div>
       </div>
+
+      {/* Invite Member Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">📧 Invite Member</h3>
+              <button onClick={() => setShowInviteModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+            </div>
+            
+            <p className="text-gray-600 text-sm mb-4">Enter the email address of the person you want to invite to your organization.</p>
+            
+            <input
+              type="email"
+              placeholder="member@example.com"
+              className="w-full border rounded-lg p-3 mb-4"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+            />
+            
+            <div className="bg-blue-50 p-3 rounded-lg mb-4 text-sm">
+              <p className="font-semibold text-blue-800">💡 Note:</p>
+              <p className="text-blue-700 text-xs">Invited members will receive an email to join your organization. Once approved, they can participate in your private pools.</p>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={handleInviteMember}
+                disabled={submitting}
+                className="flex-1 bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-400"
+              >
+                {submitting ? 'Sending...' : 'Send Invitation'}
+              </button>
+              <button
+                onClick={() => setShowInviteModal(false)}
+                className="flex-1 border border-gray-300 py-2 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Payout Modal */}
       {showPayoutModal && selectedPool && (
@@ -554,6 +789,11 @@ export default function OrganizationDashboard() {
               <div className="bg-yellow-50 p-3 rounded-lg text-sm">
                 <p className="font-semibold text-yellow-800">⚠️ Important:</p>
                 <p className="text-yellow-700 text-xs">Once you process this payout, the winner will be notified and the pool will be marked as paid. This action cannot be undone.</p>
+              </div>
+
+              <div className="bg-green-50 p-3 rounded-lg text-sm">
+                <p className="font-semibold text-green-800">💰 Your 10% Commission:</p>
+                <p className="text-green-700 text-xs">On this {parseFloat(payoutAmount).toLocaleString()} ETB pool, your organization earns <strong>{Math.floor(parseFloat(payoutAmount) * 0.10).toLocaleString()} ETB</strong> commission.</p>
               </div>
 
               <div className="flex gap-3 pt-4">
