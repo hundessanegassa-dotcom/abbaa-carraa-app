@@ -1,4 +1,4 @@
-// Trigger redeploy - May 7 2026
+// Trigger redeploy - May 18 2026
 import { useEffect, useState, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -24,7 +24,6 @@ export default function Home() {
   const [filteredPools, setFilteredPools] = useState([]);
   const [featuredPools, setFeaturedPools] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [mounted, setMounted] = useState(false);
   const [activeFilters, setActiveFilters] = useState({ category: 'all', city: 'all' });
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -36,18 +35,14 @@ export default function Home() {
     total_raised: 0
   });
   const [error, setError] = useState(null);
+  const [timeoutReached, setTimeoutReached] = useState(false);
 
-  // Handle client-side mounting
+  // Load data immediately on mount (no mounted check needed)
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-    
     const loadData = async () => {
       try {
         setError(null);
+        setLoading(true);
         await Promise.all([fetchStats(), fetchPools()]);
       } catch (err) {
         console.error('Loading error:', err);
@@ -58,7 +53,18 @@ export default function Home() {
     };
 
     loadData();
-  }, [mounted]);
+
+    // Safety timeout - if loading takes more than 10 seconds, force stop
+    const timer = setTimeout(() => {
+      if (loading) {
+        setTimeoutReached(true);
+        setError('Loading is taking too long. Please refresh the page.');
+        setLoading(false);
+      }
+    }, 10000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (pools.length > 0) {
@@ -71,12 +77,11 @@ export default function Home() {
   // Fetch stats with caching
   async function fetchStats() {
     try {
-      // Try to get from cache first
       const cacheKey = 'homepage_stats';
       const cached = sessionStorage.getItem(cacheKey);
       if (cached) {
         const { data, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp < 60000) { // 1 minute cache
+        if (Date.now() - timestamp < 60000) {
           setStats(data);
           return;
         }
@@ -98,7 +103,6 @@ export default function Home() {
       const statsData = { total_pools, total_winners, total_agents, total_raised };
       setStats(statsData);
       
-      // Cache stats
       sessionStorage.setItem(cacheKey, JSON.stringify({ data: statsData, timestamp: Date.now() }));
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -157,7 +161,6 @@ export default function Home() {
 
   const applyFilters = async (filters) => {
     setActiveFilters(filters);
-    // Reset and fetch with new filters
     setPage(0);
     setPools([]);
     setLoading(true);
@@ -175,17 +178,13 @@ export default function Home() {
     }
   };
 
-  // Don't render during SSR to prevent hydration errors
-  if (!mounted) {
-    return <LoadingSpinner fullPage message="Loading amazing prizes..." />;
-  }
-
-  if (error) {
+  // Error state
+  if (error || timeoutReached) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <div className="text-red-500 text-6xl mb-4">⚠️</div>
         <h2 className="text-xl font-bold mb-2">Something went wrong</h2>
-        <p className="text-gray-500 mb-4">{error}</p>
+        <p className="text-gray-500 mb-4">{error || 'Page failed to load'}</p>
         <button 
           onClick={() => window.location.reload()} 
           className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
@@ -196,6 +195,7 @@ export default function Home() {
     );
   }
 
+  // Loading state
   if (loading) {
     return <LoadingSpinner fullPage message="Loading amazing prizes..." />;
   }
@@ -206,7 +206,6 @@ export default function Home() {
         <title>Abbaa Carraa - Win Amazing Prizes</title>
         <meta name="description" content="Win amazing prizes through community savings. 2% supports kidney & heart disease patients." />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=yes" />
-        <link rel="preload" href="/images/abbaa-carraa-bg.png" as="image" />
       </Head>
 
       <div className="min-h-screen flex flex-col w-full overflow-x-hidden">
@@ -215,14 +214,11 @@ export default function Home() {
           <CashEquivalentBanner />
           <CharityBanner />
 
-          {/* ============================================================ */}
-          {/* HERO SECTION - IMAGE AND TEXT IN SEPARATE DIVS - NO OVERLAP */}
-          {/* ============================================================ */}
-          
-          {/* DIV 1: IMAGE ONLY - Full width image container */}
+          {/* HERO SECTION - IMAGE AND TEXT IN SEPARATE DIVS */}
           <section className="w-full">
             <div className="w-full bg-gradient-to-br from-green-700 to-teal-700">
               <div className="max-w-7xl mx-auto">
+                {/* Image with fallback - removed preload that was causing 404 */}
                 <img 
                   src="/images/abbaa-carraa-bg.png"
                   alt="Abbaa Carraa - Win Amazing Prizes"
@@ -232,25 +228,27 @@ export default function Home() {
                   style={{ maxHeight: '500px', objectPosition: 'center' }}
                   onError={(e) => {
                     e.target.style.display = 'none';
-                    e.target.parentElement.classList.add('bg-gradient-to-r', 'from-green-600', 'to-teal-600', 'py-20');
+                    // Show fallback text instead
+                    const parent = e.target.parentElement;
+                    if (parent) {
+                      parent.innerHTML = '<div class="text-white text-center py-20"><div class="text-6xl mb-4">🎁</div><p class="text-2xl font-bold">Abbaa Carraa</p><p class="text-lg">Win Amazing Prizes!</p></div>';
+                    }
                   }}
                 />
               </div>
             </div>
           </section>
 
-          {/* DIV 2: TEXT CONTENT ONLY - Completely separate below image */}
+          {/* TEXT CONTENT ONLY - Completely separate below image */}
           <section className="w-full bg-gradient-to-b from-white to-gray-50">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
               <div className="text-center max-w-4xl mx-auto">
-                {/* Badge */}
                 <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-4 py-1.5 rounded-full text-sm font-semibold mb-5 shadow-sm">
                   <span className="text-base">🔥</span> 
                   Ethiopia's #1 Prize Platform
                   <span className="text-base">🏆</span>
                 </div>
                 
-                {/* Main Heading */}
                 <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 leading-tight">
                   Welcome to{' '}
                   <span className="bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
@@ -258,12 +256,10 @@ export default function Home() {
                   </span>
                 </h1>
                 
-                {/* Subtitle */}
                 <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mt-4">
                   Win cars, houses, machinery, electronics, and more through community savings!
                 </p>
                 
-                {/* Charity Message */}
                 <div className="mt-4 inline-flex items-center gap-2 bg-green-50 border border-green-200 px-4 py-2 rounded-full">
                   <span className="text-green-600 text-lg">💚</span>
                   <span className="text-green-700 font-medium text-sm sm:text-base">
@@ -271,7 +267,6 @@ export default function Home() {
                   </span>
                 </div>
                 
-                {/* CTA Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
                   <Link 
                     href="/register" 
@@ -291,7 +286,6 @@ export default function Home() {
                   </Link>
                 </div>
                 
-                {/* Trust Badges */}
                 <div className="flex flex-wrap justify-center gap-3 sm:gap-6 mt-10 pt-6 border-t border-gray-200">
                   <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
                     <span className="text-green-600 text-lg">✓</span> 
@@ -319,19 +313,19 @@ export default function Home() {
             <div className="container mx-auto px-4">
               <div className="flex flex-wrap justify-center items-center gap-6 md:gap-12">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{stats.total_pools}+</div>
+                  <div className="text-2xl font-bold text-green-600">{stats.total_pools || 0}+</div>
                   <div className="text-xs text-gray-500">Active Pools</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{stats.total_winners}+</div>
+                  <div className="text-2xl font-bold text-green-600">{stats.total_winners || 0}+</div>
                   <div className="text-xs text-gray-500">Winners</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{stats.total_agents}+</div>
+                  <div className="text-2xl font-bold text-green-600">{stats.total_agents || 0}+</div>
                   <div className="text-xs text-gray-500">Agents</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">ETB {Math.floor(stats.total_raised / 1000)}K+</div>
+                  <div className="text-2xl font-bold text-green-600">ETB {Math.floor((stats.total_raised || 0) / 1000)}K+</div>
                   <div className="text-xs text-gray-500">Raised</div>
                 </div>
               </div>
@@ -388,7 +382,6 @@ export default function Home() {
                   ))}
                 </div>
                 
-                {/* Load More Button */}
                 {hasMore && (
                   <div className="text-center mt-8">
                     <button
