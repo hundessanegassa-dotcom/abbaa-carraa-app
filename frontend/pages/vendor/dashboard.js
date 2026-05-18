@@ -23,13 +23,16 @@ export default function VendorDashboard() {
     views: 0, 
     conversion: 0,
     totalCommission: 0,
-    pendingCommission: 0
+    pendingCommission: 0,
+    charityContribution: 0
   });
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [withdrawalHistory, setWithdrawalHistory] = useState([]);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawalAmount, setWithdrawalAmount] = useState('');
+  const [pendingDeliveries, setPendingDeliveries] = useState([]);
+  const [discounts, setDiscounts] = useState([]);
 
   useEffect(() => {
     checkUser();
@@ -66,6 +69,7 @@ export default function VendorDashboard() {
       setVendorDetails(vendorData);
 
       await loadVendorData(user.id);
+      await loadPendingDeliveries(user.id);
       
     } catch (error) {
       console.error('Error:', error);
@@ -114,10 +118,11 @@ export default function VendorDashboard() {
       const ordersCount = ordersData?.length || 0;
       const avgOrder = ordersCount > 0 ? totalSales / ordersCount : 0;
       
-      // 4. Calculate commission (assuming 5% platform fee)
-      const totalCommission = totalSales * 0.05;
-      const paidCommission = ordersData?.filter(o => o.commission_paid)?.reduce((sum, o) => sum + (o.amount * 0.05), 0) || 0;
+      // 4. Calculate commission (10% platform fee - CORRECTED)
+      const totalCommission = totalSales * 0.10;
+      const paidCommission = ordersData?.filter(o => o.commission_paid)?.reduce((sum, o) => sum + (o.amount * 0.10), 0) || 0;
       const pendingCommission = totalCommission - paidCommission;
+      const charityContribution = totalSales * 0.02;
       
       // 5. Fetch withdrawal history
       const { data: withdrawals } = await supabase
@@ -138,12 +143,36 @@ export default function VendorDashboard() {
         views: totalStockValue,
         conversion: ordersCount > 0 ? ((ordersCount / (productsData?.length || 1)) * 100).toFixed(1) : 0,
         totalCommission,
-        pendingCommission
+        pendingCommission,
+        charityContribution
       });
       
     } catch (error) {
       console.error('Error loading vendor data:', error);
       toast.error('Failed to load vendor data');
+    }
+  }
+
+  async function loadPendingDeliveries(userId) {
+    try {
+      const { data: deliveries } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          order_number,
+          amount,
+          status,
+          created_at,
+          product:products(name),
+          buyer:profiles!buyer_id(full_name)
+        `)
+        .eq('vendor_id', userId)
+        .in('status', ['pending', 'processing', 'shipped'])
+        .order('created_at', { ascending: false });
+      
+      setPendingDeliveries(deliveries || []);
+    } catch (error) {
+      console.error('Error loading deliveries:', error);
     }
   }
 
@@ -230,7 +259,7 @@ export default function VendorDashboard() {
   return (
     <DashboardLayout 
       title="Vendor Dashboard" 
-      subtitle="Manage your products, track sales, and grow your business"
+      subtitle="List products, manage inventory, and earn 10% commission on sales"
       icon="🏪"
       bgGradient="from-purple-600 to-pink-600"
       user={user}
@@ -238,19 +267,54 @@ export default function VendorDashboard() {
     >
       <BackButton fallbackHref="/" />
 
-      {/* Role Description Card */}
+      {/* Role Description Card - Enhanced with correct 10% commission */}
       <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500 rounded-xl p-5 mb-8">
         <h3 className="font-bold text-purple-800 text-lg mb-2">✨ Your Role: Vendor</h3>
         <p className="text-purple-700 text-sm leading-relaxed">
-          As a Vendor, you can list products for sale on Abbaa Carraa's marketplace. Each sale earns you revenue 
-          after a <strong className="font-bold">5% platform commission</strong>. Use the dashboard below to manage your inventory, 
-          track orders, and withdraw your earnings. The more products you list, the more you can earn!
+          As a Vendor, you can list products for sale on Abbaa Carraa's marketplace. When a pool winner purchases your product 
+          using their prize money, you earn <strong className="font-bold">10% commission</strong> on the sale.
         </p>
+        <div className="mt-3 bg-white/50 rounded-lg p-3 text-sm">
+          <p className="font-semibold text-purple-800">💰 Commission Structure (Vendor Sales):</p>
+          <p className="text-purple-700 text-xs mt-1">
+            • Product price: <strong>100% of product value</strong><br/>
+            • You earn: <strong>10% commission</strong> (added on top)<br/>
+            • Platform fee: <strong>10%</strong> (added on top)<br/>
+            • Total paid by buyer (winner): <strong>Product price + 20%</strong>
+          </p>
+          <p className="text-xs text-purple-600 mt-2">
+            Example: Product priced at 100,000 ETB → Winner pays 120,000 ETB → You earn 10,000 ETB → Platform gets 10,000 ETB → Winner gets product
+          </p>
+        </div>
         {vendorDetails && vendorDetails.verified && (
           <div className="mt-3 inline-flex items-center gap-2 bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs">
             <span>✓</span> Verified Vendor Account
           </div>
         )}
+      </div>
+
+      {/* Quick Actions - New Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <Link href="/vendor/listings/create" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+          <div className="text-2xl mb-1">➕</div>
+          <p className="font-semibold text-sm">List Product</p>
+          <p className="text-xs opacity-80">Add new item</p>
+        </Link>
+        <Link href="/create-pool" className="bg-blue-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+          <div className="text-2xl mb-1">🏊</div>
+          <p className="font-semibold text-sm">Create Pool</p>
+          <p className="text-xs opacity-80">As vendor/agent</p>
+        </Link>
+        <button onClick={() => window.location.href = '/vendor/analytics'} className="bg-green-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+          <div className="text-2xl mb-1">📊</div>
+          <p className="font-semibold text-sm">Analytics</p>
+          <p className="text-xs opacity-80">View reports</p>
+        </button>
+        <button onClick={() => window.location.href = '/vendor/discounts'} className="bg-orange-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+          <div className="text-2xl mb-1">🏷️</div>
+          <p className="font-semibold text-sm">Discounts</p>
+          <p className="text-xs opacity-80">Manage offers</p>
+        </button>
       </div>
 
       {/* Warnings & Alerts */}
@@ -277,7 +341,7 @@ export default function VendorDashboard() {
       )}
 
       {/* Sales Summary & Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-center hover:shadow-md transition">
           <div className="w-10 h-10 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-lg">💰</div>
           <p className="text-xs text-gray-500 font-medium">Total Sales</p>
@@ -293,10 +357,16 @@ export default function VendorDashboard() {
           <p className="text-xs text-gray-500 font-medium">Active Listings</p>
           <p className="text-xl font-bold text-purple-600 mt-1">{stats.activeListings}</p>
         </div>
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-center hover:shadow-md transition">
+          <div className="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-lg">📈</div>
+          <p className="text-xs text-gray-500 font-medium">Conversion</p>
+          <p className="text-xl font-bold text-yellow-600 mt-1">{stats.conversion}%</p>
+        </div>
         <div className="bg-gradient-to-br from-purple-500 to-pink-500 p-5 rounded-2xl shadow-sm text-center text-white">
           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-2 text-lg">💸</div>
           <p className="text-xs font-medium opacity-90">Pending Commission</p>
           <p className="text-xl font-bold mt-1">{stats.pendingCommission.toLocaleString()} ETB</p>
+          <p className="text-xs opacity-75">10% of sales</p>
         </div>
       </div>
 
@@ -390,7 +460,7 @@ export default function VendorDashboard() {
                             </button>
                           </div>
                         </td>
-                       </tr>
+                      </tr>
                     ))}
                   </tbody>
                 </table>
@@ -401,10 +471,48 @@ export default function VendorDashboard() {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Commission Summary */}
+          {/* Pending Deliveries - NEW */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <span>🚚</span> Pending Deliveries
+              {pendingDeliveries.length > 0 && (
+                <span className="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full">{pendingDeliveries.length}</span>
+              )}
+            </h3>
+            {pendingDeliveries.length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-4">No pending deliveries</p>
+            ) : (
+              <div className="space-y-3 max-h-60 overflow-y-auto">
+                {pendingDeliveries.slice(0, 4).map(delivery => (
+                  <div key={delivery.id} className="p-3 bg-gray-50 rounded-xl">
+                    <div className="flex justify-between items-start">
+                      <p className="font-medium text-sm">{delivery.product?.name || 'Product'}</p>
+                      <span className={`px-2 py-0.5 rounded-full text-xs ${
+                        delivery.status === 'shipped' ? 'bg-blue-100 text-blue-700' : 
+                        delivery.status === 'processing' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>
+                        {delivery.status || 'pending'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Buyer: {delivery.buyer?.full_name || 'Customer'}</p>
+                    <div className="flex justify-between mt-2">
+                      <span className="text-xs text-gray-400">{new Date(delivery.created_at).toLocaleDateString()}</span>
+                      <button className="text-purple-600 text-xs font-medium hover:underline">Update Status</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <Link href="/vendor/deliveries" className="block text-center text-purple-600 text-sm mt-3 hover:underline">
+              View All Deliveries →
+            </Link>
+          </div>
+
+          {/* Commission Summary - Updated to 10% */}
           <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl shadow-sm border border-green-100">
             <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-              <span>💰</span> Commission Summary
+              <span>💰</span> Commission Summary (10%)
             </h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between py-2 border-b border-green-100">
@@ -412,12 +520,20 @@ export default function VendorDashboard() {
                 <span className="font-bold">{stats.totalSales.toLocaleString()} ETB</span>
               </div>
               <div className="flex justify-between py-2 border-b border-green-100">
-                <span className="text-gray-600">Platform Fee (5%)</span>
+                <span className="text-gray-600">Your Commission (10%)</span>
                 <span className="font-bold text-purple-600">{stats.totalCommission.toLocaleString()} ETB</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-green-100">
+                <span className="text-gray-600">Platform Fee (10%)</span>
+                <span className="font-bold text-blue-600">{stats.totalCommission.toLocaleString()} ETB</span>
               </div>
               <div className="flex justify-between py-2">
                 <span className="text-gray-600">Pending Payout</span>
                 <span className="font-bold text-orange-600">{stats.pendingCommission.toLocaleString()} ETB</span>
+              </div>
+              <div className="flex justify-between py-2 border-t border-green-200 mt-1 pt-2">
+                <span className="text-gray-600">💚 Charity (2%)</span>
+                <span className="font-bold text-pink-600">{stats.charityContribution.toLocaleString()} ETB</span>
               </div>
             </div>
             <button 
@@ -433,48 +549,71 @@ export default function VendorDashboard() {
             </button>
           </div>
 
-          {/* Recent Orders */}
+          {/* Discount Management - NEW */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                <span>📦</span> Recent Orders
-              </h3>
-              {orders.length > 3 && (
-                <Link href="/vendor/orders" className="text-sm text-purple-600 hover:underline">View All</Link>
-              )}
-            </div>
-            
-            {orders.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-400 text-sm">No orders yet</p>
-                <p className="text-xs text-gray-400 mt-1">When customers buy your products, they'll appear here</p>
+            <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <span>🏷️</span> Active Discounts
+            </h3>
+            {discounts.length === 0 ? (
+              <div className="text-center py-4">
+                <p className="text-gray-400 text-sm">No active discounts</p>
+                <button className="text-purple-600 text-xs mt-1 hover:underline">Create discount →</button>
               </div>
             ) : (
-              <div className="space-y-3">
-                {orders.slice(0, 3).map((order) => (
-                  <div key={order.id} className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                    <div className="flex justify-between items-start mb-1">
-                      <span className="font-semibold text-gray-800 text-sm">{order.product?.name || 'Product'}</span>
-                      <span className="text-xs text-gray-500">{order.order_number || order.id?.slice(0, 8)}</span>
-                    </div>
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span>Buyer: {order.buyer?.full_name || 'Customer'}</span>
-                      <span>{new Date(order.created_at).toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-200">
-                      <span className="font-bold text-purple-600 text-sm">{order.amount?.toLocaleString()} ETB</span>
-                      <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                        order.status === 'delivered' ? 'bg-green-100 text-green-700' : 
-                        order.status === 'processing' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-gray-100 text-gray-600'
-                      }`}>
-                        {order.status || 'pending'}
-                      </span>
-                    </div>
+              <div className="space-y-2">
+                {discounts.map(d => (
+                  <div key={d.id} className="flex justify-between items-center text-sm py-2 border-b border-gray-100">
+                    <span>{d.code}</span>
+                    <span className="text-green-600">{d.percentage}% off</span>
                   </div>
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Sales Analytics - NEW */}
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl shadow-sm border border-blue-100">
+            <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <span>📊</span> Sales Analytics
+            </h3>
+            <div className="space-y-3">
+              <div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-600">Average Order Value</span>
+                  <span className="font-bold">{Math.floor(stats.avgOrder).toLocaleString()} ETB</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${Math.min((stats.avgOrder / 100000) * 100, 100)}%` }}></div>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-600">Conversion Rate</span>
+                  <span className="font-bold">{stats.conversion}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="bg-green-600 h-2 rounded-full" style={{ width: `${Math.min(parseFloat(stats.conversion) * 10, 100)}%` }}></div>
+                </div>
+              </div>
+              <div className="pt-2 text-center">
+                <p className="text-xs text-gray-500">Based on {stats.orders} orders from {stats.activeListings} listings</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Tips for Success - NEW */}
+          <div className="bg-yellow-50 p-5 rounded-2xl border border-yellow-100">
+            <h3 className="font-semibold text-yellow-800 mb-2 flex items-center gap-2">
+              <span>💡</span> Tips for Success
+            </h3>
+            <ul className="text-xs text-yellow-700 space-y-1 list-disc list-inside">
+              <li>List high-quality products with clear images</li>
+              <li>Keep your inventory stocked and updated</li>
+              <li>Offer competitive prices to attract winners</li>
+              <li>Respond quickly to order inquiries</li>
+              <li>Build your reputation with good ratings</li>
+              <li>Create discounts to boost sales</li>
+            </ul>
           </div>
 
           {/* Withdrawal History */}
