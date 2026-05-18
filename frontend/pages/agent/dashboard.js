@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import DashboardLayout from '../../components/DashboardLayout';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import BackButton from '../../components/BackButton';
@@ -20,6 +21,8 @@ export default function AgentDashboard() {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [withdrawalHistory, setWithdrawalHistory] = useState([]);
+  const [myPools, setMyPools] = useState([]);
+  const [pendingDeliveries, setPendingDeliveries] = useState([]);
 
   useEffect(() => {
     checkUser();
@@ -56,6 +59,7 @@ export default function AgentDashboard() {
         
       setAgentDetails(agentData || { commission_rate: 10 });
       await loadAgentData(user.id);
+      await loadMyPools(user.id);
       
     } catch (error) {
       console.error('Error:', error);
@@ -89,7 +93,7 @@ export default function AgentDashboard() {
         name: ref.referred?.full_name || 'Anonymous User',
         email: ref.referred?.email || 'N/A',
         joined: new Date(ref.created_at).toLocaleDateString(),
-        totalSpent: ref.commission_earned ? ref.commission_earned / 0.1 : 0, // Assuming 10% commission rate
+        totalSpent: ref.commission_earned ? ref.commission_earned / 0.1 : 0,
         commission: ref.commission_earned || 0,
         status: ref.status
       }));
@@ -119,6 +123,28 @@ export default function AgentDashboard() {
 
     } catch (error) {
       console.error('Error loading agent data:', error);
+    }
+  }
+
+  async function loadMyPools(userId) {
+    try {
+      const { data: pools } = await supabase
+        .from('pools')
+        .select('*')
+        .eq('created_by', userId)
+        .eq('creator_role', 'agent')
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      setMyPools(pools || []);
+      
+      // Mock pending deliveries (in real app, fetch from orders/deliveries table)
+      setPendingDeliveries([
+        { id: 1, product: 'iPhone 15 Pro', buyer: 'Abebe K.', status: 'processing', date: '2026-05-20' },
+        { id: 2, product: 'Samsung TV', buyer: 'Tirhas H.', status: 'shipped', date: '2026-05-19' },
+      ]);
+    } catch (error) {
+      console.error('Error loading pools:', error);
     }
   }
 
@@ -162,7 +188,7 @@ export default function AgentDashboard() {
       toast.success(`Withdrawal request of ${amount.toLocaleString()} ETB submitted!`);
       setWithdrawalAmount('');
       setShowWithdrawModal(false);
-      await loadAgentData(user.id); // Refresh data
+      await loadAgentData(user.id);
     }
     setSubmitting(false);
   };
@@ -172,7 +198,7 @@ export default function AgentDashboard() {
   return (
     <DashboardLayout 
       title="Agent Dashboard" 
-      subtitle="Recruit users, manage referrals, earn 10% commission on every referral's activity"
+      subtitle="Create pools, recruit users, and earn 10% commission"
       icon="🤝"
       bgGradient="from-yellow-500 to-orange-500"
       user={user}
@@ -180,14 +206,25 @@ export default function AgentDashboard() {
     >
       <BackButton fallbackHref="/" />
 
-      {/* Role Description Card */}
+      {/* Role Description Card - Enhanced */}
       <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-l-4 border-yellow-500 rounded-xl p-5 mb-8">
         <h3 className="font-bold text-yellow-800 text-lg mb-2">✨ Your Role: Agent</h3>
         <p className="text-yellow-700 text-sm leading-relaxed">
-          As an Agent, you earn <strong className="font-bold">10% commission</strong> on all activities of users you refer to Abbaa Carraa. 
-          Share your unique referral link, track your earnings in real-time, and withdraw your commissions once they're approved. 
-          The more active users you refer, the more you earn! Your commission rate: <strong>{agentDetails?.commission_rate || 10}%</strong>
+          As an Agent, you can <strong className="font-bold">create prize pools</strong> for clients to participate in. 
+          When your pool reaches its target and a winner is selected, you earn <strong className="font-bold">10% commission</strong> on the target amount.
         </p>
+        <div className="mt-3 bg-white/50 rounded-lg p-3 text-sm">
+          <p className="font-semibold text-yellow-800">💰 Commission Structure:</p>
+          <p className="text-yellow-700 text-xs mt-1">
+            • Winner gets: <strong>100% of target</strong><br/>
+            • You earn: <strong>10% commission</strong> (added on top)<br/>
+            • Platform fee: <strong>10%</strong> (added on top)<br/>
+            • Total collected from participants: <strong>Target + 20%</strong>
+          </p>
+          <p className="text-xs text-yellow-600 mt-2">
+            Example: Create a 1,000,000 ETB pool → Winner gets 1,000,000 → You earn 100,000 → Platform gets 100,000 → Total collected 1,200,000 ETB
+          </p>
+        </div>
       </div>
 
       {/* Welcome & Referral Link */}
@@ -212,6 +249,30 @@ export default function AgentDashboard() {
             📋 Copy
           </button>
         </div>
+      </div>
+
+      {/* Quick Actions - Added Create Pool Button */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <Link href="/create-pool" className="bg-gradient-to-r from-green-600 to-teal-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+          <div className="text-2xl mb-1">➕</div>
+          <p className="font-semibold text-sm">Create Pool</p>
+          <p className="text-xs opacity-80">Earn 10% commission</p>
+        </Link>
+        <button onClick={copyReferralLink} className="bg-blue-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+          <div className="text-2xl mb-1">🔗</div>
+          <p className="font-semibold text-sm">Share Link</p>
+          <p className="text-xs opacity-80">Invite users</p>
+        </button>
+        <button onClick={() => window.location.href = '/agent/earnings'} className="bg-purple-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+          <div className="text-2xl mb-1">📊</div>
+          <p className="font-semibold text-sm">Earnings</p>
+          <p className="text-xs opacity-80">View details</p>
+        </button>
+        <button onClick={() => window.location.href = '/agent/training'} className="bg-orange-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+          <div className="text-2xl mb-1">🎓</div>
+          <p className="font-semibold text-sm">Training</p>
+          <p className="text-xs opacity-80">Learn to earn more</p>
+        </button>
       </div>
 
       {/* Commission Summary */}
@@ -269,8 +330,8 @@ export default function AgentDashboard() {
                         }`}>
                           {ref.status || 'pending'}
                         </span>
-                      </td>
-                    </tr>
+                       </td>
+                     </tr>
                   ))}
                   {referrals.length === 0 && (
                     <tr>
@@ -289,7 +350,7 @@ export default function AgentDashboard() {
           </div>
         </div>
 
-        {/* Sidebar: Performance & Quick Actions */}
+        {/* Sidebar */}
         <div className="space-y-6">
           {/* Top Performers */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -322,20 +383,95 @@ export default function AgentDashboard() {
             </div>
           </div>
 
+          {/* My Pools Section - NEW */}
+          {myPools.length > 0 && (
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+              <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                <span>🏊</span> My Pools
+              </h3>
+              <div className="space-y-2">
+                {myPools.slice(0, 3).map(pool => (
+                  <div key={pool.id} className="flex justify-between items-center text-sm py-2 border-b border-gray-100">
+                    <span className="font-medium">{pool.prize_name}</span>
+                    <span className="text-green-600">{pool.status}</span>
+                  </div>
+                ))}
+              </div>
+              <Link href="/create-pool" className="block text-center text-yellow-600 text-sm mt-3 hover:underline">
+                + Create New Pool
+              </Link>
+            </div>
+          )}
+
+          {/* Pending Deliveries - NEW */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <span>🚚</span> Pending Deliveries
+            </h3>
+            {pendingDeliveries.length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-4">No pending deliveries</p>
+            ) : (
+              <div className="space-y-2">
+                {pendingDeliveries.map(delivery => (
+                  <div key={delivery.id} className="flex justify-between items-center text-sm py-2 border-b border-gray-100">
+                    <div>
+                      <p className="font-medium">{delivery.product}</p>
+                      <p className="text-xs text-gray-400">Buyer: {delivery.buyer}</p>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-xs ${
+                      delivery.status === 'shipped' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {delivery.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Commission Breakdown - NEW */}
+          <div className="bg-gradient-to-br from-green-50 to-teal-50 p-6 rounded-2xl shadow-sm border border-green-100">
+            <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <span>💰</span> Commission Breakdown
+            </h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Your Commission Rate:</span>
+                <span className="font-bold text-green-600">10%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Platform Fee:</span>
+                <span className="font-bold text-blue-600">10%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Winner Gets:</span>
+                <span className="font-bold text-purple-600">100% of Target</span>
+              </div>
+              <div className="border-t border-green-200 mt-2 pt-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Example (1M ETB pool):</span>
+                  <span className="font-bold">1,200,000 ETB total</span>
+                </div>
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>Winner: 1,000,000</span>
+                  <span>You: 100,000</span>
+                  <span>Platform: 100,000</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Quick Actions */}
           <div className="bg-gradient-to-br from-yellow-50 to-orange-50 p-6 rounded-2xl shadow-sm border border-yellow-100">
             <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
               <span>⚡</span> Quick Actions
             </h3>
             <div className="space-y-3">
+              <Link href="/create-pool" className="w-full bg-white border border-yellow-300 hover:border-yellow-500 text-gray-700 py-2.5 rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2">
+                🏊 Create New Pool
+              </Link>
               <button onClick={copyReferralLink} className="w-full bg-white border border-yellow-300 hover:border-yellow-500 text-gray-700 py-2.5 rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2">
                 🔗 Share Referral Link
-              </button>
-              <button 
-                onClick={() => window.location.href = '/agent/commission-history'} 
-                className="w-full bg-white border border-gray-200 hover:border-yellow-500 text-gray-700 py-2.5 rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2"
-              >
-                📊 View Commission History
               </button>
               <button 
                 onClick={() => setShowWithdrawModal(true)} 
@@ -349,6 +485,20 @@ export default function AgentDashboard() {
                 💵 Withdraw Earnings {stats.pending > 0 && `(${stats.pending.toLocaleString()} ETB available)`}
               </button>
             </div>
+          </div>
+
+          {/* Tips for Success - NEW */}
+          <div className="bg-blue-50 p-5 rounded-2xl border border-blue-100">
+            <h3 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
+              <span>💡</span> Tips for Success
+            </h3>
+            <ul className="text-xs text-blue-700 space-y-1 list-disc list-inside">
+              <li>Share your referral link on social media</li>
+              <li>Create attractive prize pools to draw participants</li>
+              <li>Follow up with your referrals to keep them active</li>
+              <li>Withdraw earnings early to see your progress</li>
+              <li>Complete your agent profile for better credibility</li>
+            </ul>
           </div>
 
           {/* Withdrawal History */}
