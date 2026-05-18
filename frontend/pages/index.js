@@ -215,60 +215,109 @@ export default function Home() {
           <CashEquivalentBanner />
           <CharityBanner />
 
-          {/* Simple, Fast Hero Section */}
+          {/* ============================================================ */}
+          {/* HERO SECTION - IMAGE AND TEXT IN SEPARATE DIVS - NO OVERLAP */}
+          {/* ============================================================ */}
+          
+          {/* DIV 1: IMAGE ONLY - Full width image container */}
           <section className="w-full">
-            {/* Image only - full width */}
-            <div className="w-full bg-gradient-to-b from-green-800 to-teal-800">
-              <img 
-                src="/images/abbaa-carraa-bg.png"
-                alt="Abbaa Carraa"
-                className="w-full h-auto"
-                loading="eager"
-                fetchPriority="high"
-                width="1200"
-                height="400"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
-              />
+            <div className="w-full bg-gradient-to-br from-green-700 to-teal-700">
+              <div className="max-w-7xl mx-auto">
+                <img 
+                  src="/images/abbaa-carraa-bg.png"
+                  alt="Abbaa Carraa - Win Amazing Prizes"
+                  className="w-full h-auto object-cover block"
+                  loading="eager"
+                  fetchPriority="high"
+                  style={{ maxHeight: '500px', objectPosition: 'center' }}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.parentElement.classList.add('bg-gradient-to-r', 'from-green-600', 'to-teal-600', 'py-20');
+                  }}
+                />
+              </div>
             </div>
-            
-            {/* Text content - separate from image */}
-            <div className="bg-white py-12">
-              <div className="container mx-auto px-4 text-center">
-                <div className="inline-flex items-center gap-2 bg-yellow-400 text-gray-900 px-4 py-1 rounded-full text-sm font-semibold mb-4">
-                  🔥 Ethiopia's #1 Prize Platform
+          </section>
+
+          {/* DIV 2: TEXT CONTENT ONLY - Completely separate below image */}
+          <section className="w-full bg-gradient-to-b from-white to-gray-50">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+              <div className="text-center max-w-4xl mx-auto">
+                {/* Badge */}
+                <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-4 py-1.5 rounded-full text-sm font-semibold mb-5 shadow-sm">
+                  <span className="text-base">🔥</span> 
+                  Ethiopia's #1 Prize Platform
+                  <span className="text-base">🏆</span>
                 </div>
-                <h1 className="text-3xl sm:text-4xl font-bold text-gray-800">
-                  Welcome to Abbaa Carraa
+                
+                {/* Main Heading */}
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 leading-tight">
+                  Welcome to{' '}
+                  <span className="bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
+                    Abbaa Carraa
+                  </span>
                 </h1>
-                <p className="text-gray-600 max-w-2xl mx-auto mt-2">
-                  Win cars, houses, machinery, electronics, and more!
+                
+                {/* Subtitle */}
+                <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mt-4">
+                  Win cars, houses, machinery, electronics, and more through community savings!
                 </p>
-                <p className="text-green-600 font-semibold mt-1">
-                  💚 2% of every contribution supports kidney & heart disease patients
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center mt-6">
-                  <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-full font-semibold transition">
-                    🎁 Start Winning Now
+                
+                {/* Charity Message */}
+                <div className="mt-4 inline-flex items-center gap-2 bg-green-50 border border-green-200 px-4 py-2 rounded-full">
+                  <span className="text-green-600 text-lg">💚</span>
+                  <span className="text-green-700 font-medium text-sm sm:text-base">
+                    2% of every contribution supports kidney & heart disease patients
+                  </span>
+                </div>
+                
+                {/* CTA Buttons */}
+                <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+                  <Link 
+                    href="/register" 
+                    className="group bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white px-8 py-3.5 rounded-full font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                  >
+                    <span>🎁</span>
+                    Start Winning Now
+                    <span>→</span>
                   </Link>
-                  <Link href="/register" className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-8 py-3 rounded-full font-semibold transition border">
-                    👑 Become an Agent
+                  <Link 
+                    href="/become-agent" 
+                    className="group bg-white hover:bg-gray-50 text-gray-700 px-8 py-3.5 rounded-full font-semibold text-lg transition-all duration-300 shadow-md border-2 border-gray-200 hover:border-green-500 flex items-center justify-center gap-2"
+                  >
+                    <span>👑</span>
+                    Become an Agent
+                    <span className="text-green-600 group-hover:translate-x-1 transition">→</span>
                   </Link>
                 </div>
-                <div className="flex flex-wrap justify-center gap-6 mt-8 text-sm text-gray-500">
-                  <div className="flex items-center gap-2">✓ Cash Guarantee</div>
-                  <div className="flex items-center gap-2">✓ Blockchain Verified</div>
-                  <div className="flex items-center gap-2">💚 2% for Health</div>
+                
+                {/* Trust Badges */}
+                <div className="flex flex-wrap justify-center gap-3 sm:gap-6 mt-10 pt-6 border-t border-gray-200">
+                  <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
+                    <span className="text-green-600 text-lg">✓</span> 
+                    Cash Guarantee
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
+                    <span className="text-green-600 text-lg">✓</span> 
+                    Blockchain Verified
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
+                    <span className="text-green-600 text-lg">💚</span> 
+                    2% for Health
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
+                    <span className="text-green-600 text-lg">✓</span> 
+                    24/7 Support
+                  </div>
                 </div>
               </div>
             </div>
           </section>
 
           {/* Stats Counters */}
-          <div className="bg-white border-t border-gray-200 py-4">
+          <div className="bg-white border-t border-gray-200 py-6">
             <div className="container mx-auto px-4">
-              <div className="flex flex-wrap justify-center items-center gap-8">
+              <div className="flex flex-wrap justify-center items-center gap-6 md:gap-12">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">{stats.total_pools}+</div>
                   <div className="text-xs text-gray-500">Active Pools</div>
