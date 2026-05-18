@@ -10,22 +10,18 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
   // Download agreement as PDF/txt
   const downloadAgreement = () => {
     try {
-      // Get the agreement content element
       const agreementElement = document.querySelector('.agreement-content');
       if (!agreementElement) {
         toast.error('Unable to download agreement');
         return;
       }
       
-      // Get the text content
       const agreementText = agreementElement.innerText;
-      
-      // Create a blob and download
-      const blob = new Blob([agreementText], { type: 'text/plain' });
+      const blob = new Blob([agreementText], { type: 'text/plain;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${roleTitles[role].replace(/\s/g, '_')}.txt`;
+      a.download = `${roleDisplayTitles[role] ? roleDisplayTitles[role].replace(/\s/g, '_') : 'Agreement'}.txt`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -45,46 +41,7 @@ export default function AgreementModal({ role, onAccept, onDecline }) {
 
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      // If user is not logged in (Google flow), just call onAccept without saving
-      if (!user) {
-        toast.success('Agreement accepted! Please continue with Google login.');
-        if (onAccept) onAccept();
-        setLoading(false);
-        return;
-      }
-
-      // User is logged in (phone flow) - save agreement to database
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          agreement_accepted: true,
-          agreement_accepted_at: new Date().toISOString(),
-          agreement_type: role,
-          can_create_pool: role !== 'individual',
-          role: role === 'individual' ? 'user' : role
-        })
-        .eq('id', user.id);
-
-      if (profileError) throw profileError;
-
-      // Record acceptance in legal_acceptances table
-      const { error: legalError } = await supabase
-        .from('legal_acceptances')
-        .insert({
-          user_id: user.id,
-          agreement_type: role,
-          version: '1.0.0',
-          ip_address: '',
-          user_agent: navigator.userAgent,
-          signature_type: 'checkbox'
-        });
-
-      if (legalError) console.error('Legal acceptance error:', legalError);
-
-      toast.success(`Agreement accepted! Welcome as ${role}.`);
-      if (onAccept) onAccept();
+      if (onAccept) await onAccept();
     } catch (error) {
       console.error('Acceptance error:', error);
       toast.error('Failed to accept agreement. Please try again.');

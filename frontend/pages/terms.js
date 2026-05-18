@@ -1,9 +1,11 @@
+import BackButton from '../components/BackButton';
 import Link from 'next/link';
 
 export default function Terms() {
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container mx-auto px-4 max-w-4xl">
+        <div className="mb-4"><BackButton /></div>
         <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
           <h1 className="text-3xl md:text-4xl font-bold text-center mb-2">Terms & Conditions</h1>
           <p className="text-center text-gray-500 mb-8">Last Updated: May 2026</p>

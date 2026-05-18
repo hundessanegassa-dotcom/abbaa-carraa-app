@@ -1,3 +1,4 @@
+import BackButton from '../components/BackButton';
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -36,6 +37,7 @@ export default function Contact() {
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container mx-auto px-4 max-w-5xl">
+        <div className="mb-4"><BackButton /></div>
         <h1 className="text-3xl md:text-4xl font-bold text-center mb-4">Contact Us</h1>
         <p className="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
           Have questions about Abbaa Carraa? Need help with a pool or prize? We're here to help!

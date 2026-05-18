@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import DashboardLayout from '../components/DashboardLayout';
+import BackButton from '../components/BackButton';
 
 export default function SettingsPage() {
   const { t, i18n } = useTranslation();

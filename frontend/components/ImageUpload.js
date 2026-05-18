@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { uploadImage } from '../utils/uploadImage';
+import { uploadImage } from '../lib/supabase/storage';
 import toast from 'react-hot-toast';
 
 export default function ImageUpload({ onUpload, currentImage, folder = 'pools' }) {

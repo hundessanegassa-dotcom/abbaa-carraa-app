@@ -81,8 +81,10 @@ const handleLogout = async () => {
   try {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
-    localStorage.clear();
-    sessionStorage.clear();
+    if (typeof window !== 'undefined') {
+      window.localStorage.clear();
+      window.sessionStorage.clear();
+    }
     toast.success('Logged out successfully');
     router.push('/');
   } catch (error) {

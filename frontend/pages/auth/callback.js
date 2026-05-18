@@ -26,7 +26,7 @@ export default function AuthCallback() {
       }
 
       const user = session.user;
-      const storedRole = sessionStorage.getItem('pendingRole') || 'individual';
+      const storedRole = localStorage.getItem('pendingRole') || 'individual';
       
       // Check if user already has a profile
       let { data: existingProfile } = await supabase
@@ -37,7 +37,7 @@ export default function AuthCallback() {
       
       // If profile exists and agreement accepted, go to dashboard
       if (existingProfile && existingProfile.agreement_accepted === true) {
-        sessionStorage.removeItem('pendingRole');
+        localStorage.removeItem('pendingRole');
         redirectToDashboard(existingProfile.user_type || storedRole);
         return;
       }
@@ -106,7 +106,7 @@ export default function AuthCallback() {
       }
       
       toast.success(`Welcome! You registered as ${pendingRole}.`);
-      sessionStorage.removeItem('pendingRole');
+      localStorage.removeItem('pendingRole');
       redirectToDashboard(pendingRole);
       
     } catch (err) {

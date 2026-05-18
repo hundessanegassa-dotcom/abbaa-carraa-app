@@ -24,7 +24,7 @@ export default function Register() {
     }
     
     setLoading(true);
-    sessionStorage.setItem('pendingRole', selectedRole);
+    localStorage.setItem('pendingRole', selectedRole);
     
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',

@@ -1,3 +1,4 @@
+import BackButton from '../components/BackButton';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
@@ -146,6 +147,7 @@ export default function NotificationsPage() {
       user={user}
       profile={profile}
     >
+      <div className="container mx-auto px-4 mt-4"><BackButton /></div>
       {/* Header with filters and settings link */}
       <div className="bg-white rounded-2xl shadow-md p-4 mb-6">
         <div className="flex flex-wrap justify-between items-center gap-3">

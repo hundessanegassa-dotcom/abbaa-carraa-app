@@ -1,3 +1,4 @@
+import BackButton from '../../../components/BackButton';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { useRouter } from 'next/router';
@@ -97,6 +98,7 @@ export default function CreateListing() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4 max-w-2xl">
+        <div className="mb-4"><BackButton /></div>
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white">
             <h1 className="text-2xl font-bold">List a Product</h1>
