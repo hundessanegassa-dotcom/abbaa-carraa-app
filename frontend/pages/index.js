@@ -1,4 +1,4 @@
-// Trigger redeploy - May 18 2026
+// Final Stable Version - May 18, 2026
 import { useEffect, useState, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -35,35 +35,34 @@ export default function Home() {
     total_raised: 0
   });
   const [error, setError] = useState(null);
-  const [timeoutReached, setTimeoutReached] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
-  // Load data immediately on mount (no mounted check needed)
+  // Load data immediately on mount
   useEffect(() => {
     const loadData = async () => {
       try {
         setError(null);
         setLoading(true);
-        await Promise.all([fetchStats(), fetchPools()]);
+        
+        // Add timeout protection
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Loading timeout after 8 seconds')), 8000)
+        );
+        
+        await Promise.race([
+          Promise.all([fetchStats(), fetchPools()]),
+          timeoutPromise
+        ]);
+        
       } catch (err) {
         console.error('Loading error:', err);
-        setError('Failed to load data. Please refresh the page.');
+        setError('Unable to load data. Please check your internet connection and refresh.');
       } finally {
         setLoading(false);
       }
     };
 
     loadData();
-
-    // Safety timeout - if loading takes more than 10 seconds, force stop
-    const timer = setTimeout(() => {
-      if (loading) {
-        setTimeoutReached(true);
-        setError('Loading is taking too long. Please refresh the page.');
-        setLoading(false);
-      }
-    }, 10000);
-
-    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -179,12 +178,12 @@ export default function Home() {
   };
 
   // Error state
-  if (error || timeoutReached) {
+  if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <div className="text-red-500 text-6xl mb-4">⚠️</div>
-        <h2 className="text-xl font-bold mb-2">Something went wrong</h2>
-        <p className="text-gray-500 mb-4">{error || 'Page failed to load'}</p>
+        <h2 className="text-xl font-bold mb-2">Connection Issue</h2>
+        <p className="text-gray-500 mb-4 text-center max-w-md">{error}</p>
         <button 
           onClick={() => window.location.reload()} 
           className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
@@ -214,24 +213,33 @@ export default function Home() {
           <CashEquivalentBanner />
           <CharityBanner />
 
-          {/* HERO SECTION - IMAGE AND TEXT IN SEPARATE DIVS */}
+          {/* ============================================================ */}
+          {/* HERO SECTION - IMAGE AND TEXT IN SEPARATE DIVS - OPTIMIZED */}
+          {/* ============================================================ */}
+          
+          {/* DIV 1: IMAGE ONLY - Optimized loading, no preload */}
           <section className="w-full">
             <div className="w-full bg-gradient-to-br from-green-700 to-teal-700">
               <div className="max-w-7xl mx-auto">
-                {/* Image with fallback - removed preload that was causing 404 */}
+                {!imageLoaded && (
+                  <div className="w-full h-64 md:h-96 bg-gradient-to-r from-green-600 to-teal-600 animate-pulse flex items-center justify-center">
+                    <span className="text-white text-4xl">🎁</span>
+                  </div>
+                )}
                 <img 
                   src="/images/abbaa-carraa-bg.png"
                   alt="Abbaa Carraa - Win Amazing Prizes"
-                  className="w-full h-auto object-cover block"
+                  className={`w-full h-auto object-cover block transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0 h-0'}`}
                   loading="eager"
                   fetchPriority="high"
                   style={{ maxHeight: '500px', objectPosition: 'center' }}
+                  onLoad={() => setImageLoaded(true)}
                   onError={(e) => {
                     e.target.style.display = 'none';
-                    // Show fallback text instead
                     const parent = e.target.parentElement;
                     if (parent) {
-                      parent.innerHTML = '<div class="text-white text-center py-20"><div class="text-6xl mb-4">🎁</div><p class="text-2xl font-bold">Abbaa Carraa</p><p class="text-lg">Win Amazing Prizes!</p></div>';
+                      const skeleton = parent.querySelector('.animate-pulse');
+                      if (skeleton) skeleton.style.display = 'flex';
                     }
                   }}
                 />
@@ -239,16 +247,18 @@ export default function Home() {
             </div>
           </section>
 
-          {/* TEXT CONTENT ONLY - Completely separate below image */}
+          {/* DIV 2: TEXT CONTENT ONLY - Completely separate below image */}
           <section className="w-full bg-gradient-to-b from-white to-gray-50">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
               <div className="text-center max-w-4xl mx-auto">
+                {/* Badge */}
                 <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-4 py-1.5 rounded-full text-sm font-semibold mb-5 shadow-sm">
                   <span className="text-base">🔥</span> 
                   Ethiopia's #1 Prize Platform
                   <span className="text-base">🏆</span>
                 </div>
                 
+                {/* Main Heading */}
                 <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 leading-tight">
                   Welcome to{' '}
                   <span className="bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
@@ -256,10 +266,12 @@ export default function Home() {
                   </span>
                 </h1>
                 
+                {/* Subtitle */}
                 <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mt-4">
                   Win cars, houses, machinery, electronics, and more through community savings!
                 </p>
                 
+                {/* Charity Message */}
                 <div className="mt-4 inline-flex items-center gap-2 bg-green-50 border border-green-200 px-4 py-2 rounded-full">
                   <span className="text-green-600 text-lg">💚</span>
                   <span className="text-green-700 font-medium text-sm sm:text-base">
@@ -267,6 +279,7 @@ export default function Home() {
                   </span>
                 </div>
                 
+                {/* CTA Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
                   <Link 
                     href="/register" 
@@ -286,6 +299,7 @@ export default function Home() {
                   </Link>
                 </div>
                 
+                {/* Trust Badges */}
                 <div className="flex flex-wrap justify-center gap-3 sm:gap-6 mt-10 pt-6 border-t border-gray-200">
                   <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
                     <span className="text-green-600 text-lg">✓</span> 
@@ -382,6 +396,7 @@ export default function Home() {
                   ))}
                 </div>
                 
+                {/* Load More Button */}
                 {hasMore && (
                   <div className="text-center mt-8">
                     <button
