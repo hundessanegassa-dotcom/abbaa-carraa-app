@@ -39,6 +39,7 @@ export default function AdminDashboard() {
   const [featuredPools, setFeaturedPools] = useState([]);
   const [charityTransactions, setCharityTransactions] = useState([]);
   const [disputes, setDisputes] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
   
   // Announcement modal
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
@@ -89,6 +90,7 @@ export default function AdminDashboard() {
       }
       
       await loadAllData();
+      await loadRecentActivity();
     } catch (error) {
       console.error('Admin check error:', error);
       router.push('/login');
@@ -109,6 +111,41 @@ export default function AdminDashboard() {
       loadCharityData(),
       loadDisputes()
     ]);
+  }
+
+  async function loadRecentActivity() {
+    // Fetch recent activities (new users, new pools, etc.)
+    const { data: recentUsers } = await supabase
+      .from('profiles')
+      .select('full_name, email, created_at')
+      .order('created_at', { ascending: false })
+      .limit(3);
+    
+    const { data: recentPools } = await supabase
+      .from('pools')
+      .select('prize_name, status, created_at')
+      .order('created_at', { ascending: false })
+      .limit(3);
+    
+    const activities = [];
+    (recentUsers || []).forEach(u => {
+      activities.push({
+        action: `New user registered: ${u.full_name || u.email}`,
+        date: u.created_at,
+        icon: '👤',
+        color: 'blue'
+      });
+    });
+    (recentPools || []).forEach(p => {
+      activities.push({
+        action: `New pool created: "${p.prize_name}" (${p.status})`,
+        date: p.created_at,
+        icon: '🏊',
+        color: 'green'
+      });
+    });
+    activities.sort((a, b) => new Date(b.date) - new Date(a.date));
+    setRecentActivity(activities.slice(0, 5));
   }
 
   async function loadStats() {
@@ -372,6 +409,7 @@ export default function AdminDashboard() {
       loadFeaturedPools();
       loadStats();
       loadMyPools();
+      loadRecentActivity();
     }
     setLoading(false);
   }
@@ -400,8 +438,62 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* Role Description Card - NEW */}
+      <div className="container mx-auto px-4 mt-6">
+        <div className="bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 rounded-xl p-5">
+          <h3 className="font-bold text-red-800 text-lg mb-2">👑 Your Role: Platform Administrator</h3>
+          <p className="text-red-700 text-sm leading-relaxed">
+            As the Platform Administrator, you have full control over Abbaa Carraa. You can manage users, approve applications, 
+            monitor all pools, process withdrawals, and resolve disputes. Additionally, you can <strong className="font-bold">create your own personal pools</strong> 
+            and earn <strong className="font-bold">20% commission</strong> on them.
+          </p>
+          <div className="mt-3 bg-white/50 rounded-lg p-3 text-sm">
+            <p className="font-semibold text-red-800">💰 Admin Personal Pool Commission (20%):</p>
+            <p className="text-red-700 text-xs mt-1">
+              • Winner gets: <strong>100% of target</strong><br/>
+              • You earn: <strong>20% commission</strong> (added on top)<br/>
+              • Total collected: <strong>Target + 20%</strong>
+            </p>
+            <p className="text-xs text-red-600 mt-2">
+              Example: Create a 1,000,000 ETB personal pool → Winner gets 1,000,000 → You earn 200,000 → Total collected 1,200,000 ETB
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions - NEW */}
+      <div className="container mx-auto px-4 mt-6">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <button onClick={() => setShowPoolModal(true)} className="bg-gradient-to-r from-red-600 to-rose-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+            <div className="text-2xl mb-1">➕</div>
+            <p className="font-semibold text-sm">Create Pool</p>
+            <p className="text-xs opacity-80">20% commission</p>
+          </button>
+          <button onClick={() => setActiveTab('approvals')} className="bg-yellow-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+            <div className="text-2xl mb-1">📝</div>
+            <p className="font-semibold text-sm">Approvals</p>
+            <p className="text-xs opacity-80">{pendingAgents.length + pendingVendors.length + pendingOrganizations.length} pending</p>
+          </button>
+          <button onClick={() => setActiveTab('withdrawals')} className="bg-green-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+            <div className="text-2xl mb-1">💰</div>
+            <p className="font-semibold text-sm">Withdrawals</p>
+            <p className="text-xs opacity-80">{withdrawalRequests.length} requests</p>
+          </button>
+          <button onClick={() => setActiveTab('disputes')} className="bg-orange-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+            <div className="text-2xl mb-1">⚖️</div>
+            <p className="font-semibold text-sm">Disputes</p>
+            <p className="text-xs opacity-80">{disputes.length} open</p>
+          </button>
+          <button onClick={() => setShowAnnouncementModal(true)} className="bg-purple-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+            <div className="text-2xl mb-1">📢</div>
+            <p className="font-semibold text-sm">Announce</p>
+            <p className="text-xs opacity-80">Send message</p>
+          </button>
+        </div>
+      </div>
+
       {/* Tabs */}
-      <div className="border-b bg-white sticky top-0 z-10 overflow-x-auto">
+      <div className="border-b bg-white sticky top-0 z-10 overflow-x-auto mt-6">
         <div className="container mx-auto px-4">
           <div className="flex gap-1 min-w-max">
             <button onClick={() => setActiveTab('overview')} className={`px-4 py-3 font-semibold ${activeTab === 'overview' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>📊 Overview</button>
@@ -423,6 +515,7 @@ export default function AdminDashboard() {
         {/* ========== OVERVIEW TAB ========== */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
+            {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
               <div className="bg-white rounded-xl p-3 text-center shadow-sm"><p className="text-2xl font-bold text-blue-600">{stats.total_users}</p><p className="text-xs text-gray-500">Users</p></div>
               <div className="bg-white rounded-xl p-3 text-center shadow-sm"><p className="text-2xl font-bold text-yellow-600">{stats.total_agents}</p><p className="text-xs text-gray-500">Agents</p></div>
@@ -456,19 +549,55 @@ export default function AdminDashboard() {
                 <button onClick={() => setShowPoolModal(true)} className="mt-4 w-full bg-red-600 text-white py-2 rounded-lg font-semibold">+ Create New Featured Pool</button>
               </div>
             </div>
-            
+
+            {/* Recent Activity - NEW */}
             <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="font-bold text-lg mb-3">📢 Platform Description</h3>
-              <p className="text-gray-700">As an Admin, you have full control over the platform. You can:</p>
-              <ul className="list-disc list-inside mt-2 space-y-1 text-gray-600">
-                <li>Create featured pools with 20% commission</li>
-                <li>Manage all users, agents, vendors, and organizations</li>
-                <li>Approve or reject applications</li>
-                <li>Process withdrawal requests</li>
-                <li>Manage all pools (feature, pause, delete)</li>
-                <li>Resolve disputes and send announcements</li>
-                <li>Track platform revenue and charity contributions</li>
-              </ul>
+              <h3 className="font-bold text-lg mb-3">📋 Recent Platform Activity</h3>
+              <div className="space-y-2">
+                {recentActivity.length === 0 ? (
+                  <p className="text-gray-400 text-center py-4">No recent activity</p>
+                ) : (
+                  recentActivity.map((activity, idx) => (
+                    <div key={idx} className="flex items-center gap-3 p-2 border-b border-gray-100">
+                      <span className="text-xl">{activity.icon}</span>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-700">{activity.action}</p>
+                        <p className="text-xs text-gray-400">{new Date(activity.date).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Commission Breakdown - NEW */}
+            <div className="bg-gradient-to-r from-red-50 to-rose-50 rounded-xl p-6 border border-red-100">
+              <h3 className="font-bold text-red-800 text-lg mb-3">💰 Platform Commission Structure</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                <div className="bg-white rounded-lg p-3 text-center">
+                  <p className="font-bold text-red-600">Admin Personal Pool</p>
+                  <p className="text-2xl font-bold">20%</p>
+                  <p className="text-xs text-gray-500">Commission</p>
+                </div>
+                <div className="bg-white rounded-lg p-3 text-center">
+                  <p className="font-bold text-yellow-600">Agent Pool</p>
+                  <p className="text-2xl font-bold">10%</p>
+                  <p className="text-xs text-gray-500">+ 10% platform fee</p>
+                </div>
+                <div className="bg-white rounded-lg p-3 text-center">
+                  <p className="font-bold text-cyan-600">Organization Pool</p>
+                  <p className="text-2xl font-bold">10%</p>
+                  <p className="text-xs text-gray-500">+ 10% platform fee</p>
+                </div>
+                <div className="bg-white rounded-lg p-3 text-center">
+                  <p className="font-bold text-purple-600">Vendor Sale</p>
+                  <p className="text-2xl font-bold">10%</p>
+                  <p className="text-xs text-gray-500">+ 10% platform fee</p>
+                </div>
+              </div>
+              <p className="text-xs text-red-600 text-center mt-3">
+                💚 2% of all contributions goes to kidney & heart disease treatment
+              </p>
             </div>
           </div>
         )}
@@ -654,31 +783,26 @@ export default function AdminDashboard() {
             </div>
             
             <div className="p-6 space-y-5">
-              {/* Prize Name */}
               <div>
                 <label className="block text-sm font-medium mb-1">Prize Name *</label>
                 <input type="text" className="w-full border rounded-lg p-3" placeholder="e.g., iPhone 15 Pro Max" value={newPool.prize_name} onChange={(e) => setNewPool({...newPool, prize_name: e.target.value})} />
               </div>
               
-              {/* Description */}
               <div>
                 <label className="block text-sm font-medium mb-1">Description</label>
                 <textarea rows="3" className="w-full border rounded-lg p-3" placeholder="Describe the prize and pool rules..." value={newPool.description} onChange={(e) => setNewPool({...newPool, description: e.target.value})} />
               </div>
               
-              {/* Target Amount & Entry Fee */}
               <div className="grid grid-cols-2 gap-4">
                 <div><label className="block text-sm font-medium mb-1">Target Amount (ETB) *</label><input type="number" className="w-full border rounded-lg p-3" placeholder="10000" value={newPool.target_amount} onChange={(e) => setNewPool({...newPool, target_amount: e.target.value})} /></div>
                 <div><label className="block text-sm font-medium mb-1">Entry Fee (ETB)</label><input type="number" className="w-full border rounded-lg p-3" placeholder="10" value={newPool.entry_fee} onChange={(e) => setNewPool({...newPool, entry_fee: e.target.value})} /></div>
               </div>
               
-              {/* Dates */}
               <div className="grid grid-cols-2 gap-4">
                 <div><label className="block text-sm font-medium mb-1">Start Date</label><input type="datetime-local" className="w-full border rounded-lg p-3" value={newPool.start_date} onChange={(e) => setNewPool({...newPool, start_date: e.target.value})} /></div>
                 <div><label className="block text-sm font-medium mb-1">End Date *</label><input type="datetime-local" className="w-full border rounded-lg p-3" value={newPool.end_date} onChange={(e) => setNewPool({...newPool, end_date: e.target.value})} /></div>
               </div>
               
-              {/* Image Upload */}
               <div>
                 <label className="block text-sm font-medium mb-1">Pool Image</label>
                 <input type="file" accept="image/*" onChange={handlePoolImageUpload} disabled={uploading} className="w-full border rounded-lg p-2" />
@@ -686,13 +810,10 @@ export default function AdminDashboard() {
                 {newPool.image_url && <div className="mt-2"><img src={newPool.image_url} alt="Preview" className="w-32 h-32 object-cover rounded-lg" /></div>}
               </div>
               
-              {/* Featured Toggle */}
               <div className="flex items-center gap-3"><input type="checkbox" id="is_featured" checked={newPool.is_featured} onChange={(e) => setNewPool({...newPool, is_featured: e.target.checked})} className="w-5 h-5" /><label htmlFor="is_featured" className="text-sm font-medium">⭐ Feature this pool on homepage</label></div>
               
-              {/* Commission Info */}
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm"><p className="font-semibold text-yellow-800">💰 Admin Commission: 20%</p><p className="text-yellow-700 text-xs mt-1">When this pool reaches target, you earn 20% of the total amount. Target: ETB {parseFloat(newPool.target_amount || 0).toLocaleString()} → Your commission: ETB {(parseFloat(newPool.target_amount || 0) * 0.20).toLocaleString()}</p></div>
               
-              {/* Buttons */}
               <div className="flex gap-3 pt-4"><button onClick={createAdminPool} disabled={loading || uploading} className="flex-1 bg-gradient-to-r from-red-600 to-rose-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition">{loading ? 'Creating...' : '✨ Create Featured Pool'}</button><button onClick={() => setShowPoolModal(false)} className="flex-1 border border-gray-300 py-3 rounded-lg hover:bg-gray-50">Cancel</button></div>
             </div>
           </div>
