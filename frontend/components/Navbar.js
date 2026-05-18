@@ -77,21 +77,46 @@ export default function Navbar() {
       setIsLoading(false);
     }
   }
-const handleLogout = async () => {
-  try {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-    if (typeof window !== 'undefined') {
-      window.localStorage.clear();
-      window.sessionStorage.clear();
+
+  // FIXED LOGOUT FUNCTION - This is the only change
+  const handleLogout = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Clear ALL browser storage FIRST
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Clear all cookies
+        document.cookie.split(";").forEach(function(c) {
+          document.cookie = c
+            .replace(/^ +/, "")
+            .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+        });
+      }
+      
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      // Clear state
+      setUser(null);
+      setUserRole(null);
+      setUserType(null);
+      
+      toast.success('Logged out successfully');
+      
+      // Force hard redirect to prevent infinite loop
+      window.location.href = '/';
+      
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to logout');
+      setIsLoading(false);
     }
-    toast.success('Logged out successfully');
-    router.push('/');
-  } catch (error) {
-    console.error('Logout error:', error);
-    toast.error('Failed to logout');
-  }
-};
+  };
+
   const getDashboardLink = () => {
     if (userType === 'agent') return '/agent/dashboard';
     if (userType === 'vendor') return '/vendor/dashboard';
