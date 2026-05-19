@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 import BackButton from '../../components/BackButton';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
