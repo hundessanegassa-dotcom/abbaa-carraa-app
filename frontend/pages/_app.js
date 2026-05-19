@@ -1,13 +1,12 @@
 import '../styles/globals.css';
-import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../lib/i18n';
-import Head from 'next/head';  // ← ADD THIS LINE
+import Head from 'next/head';
 
-// Dynamically import components that use browser-only APIs
+// Dynamically import components
 const Navbar = dynamic(() => import('../components/Navbar'), { ssr: false });
 const Footer = dynamic(() => import('../components/Footer'), { ssr: false });
 const ChatBot = dynamic(() => import('../components/ChatBot'), { ssr: false });
@@ -16,26 +15,12 @@ const LanguageToggle = dynamic(() => import('../components/LanguageToggle'), { s
 const queryClient = new QueryClient();
 
 function MyApp({ Component, pageProps }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    );
-  }
-
+  // No mounted check - render immediately
   return (
     <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={i18n}>
         <>
-          <Head>  {/* ← ADD THIS ENTIRE Head SECTION */}
+          <Head>
             <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎁</text></svg>" />
             <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎁</text></svg>" />
           </Head>
