@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 import '../styles/globals.css';
 import dynamic from 'next/dynamic';
 import { Toaster } from 'react-hot-toast';
