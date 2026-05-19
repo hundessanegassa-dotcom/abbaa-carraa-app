@@ -5,7 +5,6 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-// 🔥 THIS PREVENTS STATIC GENERATION TIMEOUT
 export async function getServerSideProps() {
   return { props: {} };
 }
@@ -81,7 +80,6 @@ export default function AdminDraw() {
     const toastId = toast.loading('Running cryptographic draw...');
 
     try {
-      // 1. Get all completed contributions for this pool
       const { data: contributions, error: contribError } = await supabase
         .from('contributions')
         .select('user_id, amount, profiles(full_name, email, phone)')
@@ -97,7 +95,6 @@ export default function AdminDraw() {
         return;
       }
 
-      // 2. Create weighted tickets (1 ticket per 100 ETB)
       let tickets = [];
       contributions.forEach(contrib => {
         const ticketCount = Math.floor(contrib.amount / 100);
@@ -117,12 +114,10 @@ export default function AdminDraw() {
         return;
       }
 
-      // 3. Generate cryptographic random seed using Web Crypto API
       const randomSeed = crypto.randomUUID();
       const randomIndex = Math.floor(Math.random() * tickets.length);
       const winner = tickets[randomIndex];
 
-      // 4. Get pool details
       const { data: pool, error: poolError } = await supabase
         .from('pools')
         .select('*')
@@ -131,7 +126,6 @@ export default function AdminDraw() {
 
       if (poolError) throw poolError;
 
-      // 5. Update pool with winner
       const { error: updateError } = await supabase
         .from('pools')
         .update({
@@ -146,8 +140,7 @@ export default function AdminDraw() {
 
       if (updateError) throw updateError;
 
-      // 6. Record the draw
-      const { error: drawError } = await supabase
+      await supabase
         .from('draws')
         .insert({
           pool_id: poolId,
@@ -159,9 +152,6 @@ export default function AdminDraw() {
           created_at: new Date().toISOString()
         });
 
-      if (drawError) throw drawError;
-
-      // 7. Update winner's total wins count
       const { data: currentProfile } = await supabase
         .from('profiles')
         .select('total_wins')
@@ -173,7 +163,6 @@ export default function AdminDraw() {
         .update({ total_wins: (currentProfile?.total_wins || 0) + 1 })
         .eq('id', winner.user_id);
 
-      // 8. Create notification for winner
       await supabase
         .from('notifications')
         .insert({
@@ -187,7 +176,6 @@ export default function AdminDraw() {
 
       toast.success(`🏆 Winner selected! ${winner.user?.full_name || 'User'} won ${pool.prize_name}!`, { id: toastId });
       
-      // Show winner details
       setShowWinnerDetails({
         winner: winner.user,
         prize_name: pool.prize_name,
@@ -196,7 +184,6 @@ export default function AdminDraw() {
         ticket_count: tickets.length
       });
       
-      // Reload pools
       await loadPools();
       
     } catch (error) {
@@ -227,7 +214,6 @@ export default function AdminDraw() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
       <nav className="bg-white shadow-md">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
@@ -249,35 +235,25 @@ export default function AdminDraw() {
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">🎲 Draw Management</h1>
         
-        {/* Stats Summary */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-gray-500 text-sm">Active Pools</h3>
-            <p className="text-3xl font-bold text-green-600">
-              {pools.filter(p => p.status === 'active').length}
-            </p>
+            <p className="text-3xl font-bold text-green-600">{pools.filter(p => p.status === 'active').length}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-gray-500 text-sm">Completed Pools</h3>
-            <p className="text-3xl font-bold text-blue-600">
-              {pools.filter(p => p.status === 'completed').length}
-            </p>
+            <p className="text-3xl font-bold text-blue-600">{pools.filter(p => p.status === 'completed').length}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-gray-500 text-sm">Ready for Draw</h3>
-            <p className="text-3xl font-bold text-yellow-600">
-              {readyPools}
-            </p>
+            <p className="text-3xl font-bold text-yellow-600">{readyPools}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-gray-500 text-sm">Total Winners</h3>
-            <p className="text-3xl font-bold text-purple-600">
-              {pools.filter(p => p.winner_id).length}
-            </p>
+            <p className="text-3xl font-bold text-purple-600">{pools.filter(p => p.winner_id).length}</p>
           </div>
         </div>
 
-        {/* Pools Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -306,69 +282,43 @@ export default function AdminDraw() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="w-40">
-                          <div className="flex justify-between text-sm mb-1">
-                            <span>{progress.toFixed(1)}%</span>
-                          </div>
+                          <div className="flex justify-between text-sm mb-1"><span>{progress.toFixed(1)}%</span></div>
                           <div className="bg-gray-200 rounded-full h-2">
-                            <div 
-                              className={`h-2 rounded-full ${isCompleted ? 'bg-green-600' : 'bg-green-500'}`}
-                              style={{ width: `${Math.min(progress, 100)}%` }}
-                            ></div>
+                            <div className={`h-2 rounded-full ${isCompleted ? 'bg-green-600' : 'bg-green-500'}`} style={{ width: `${Math.min(progress, 100)}%` }}></div>
                           </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            ETB {pool.current_amount.toLocaleString()} / {pool.target_amount.toLocaleString()}
-                          </div>
+                          <div className="text-xs text-gray-500 mt-1">ETB {pool.current_amount.toLocaleString()} / {pool.target_amount.toLocaleString()}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          pool.status === 'active' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
+                        <span className={`px-2 py-1 text-xs rounded-full ${pool.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                           {pool.status === 'active' ? '● Active' : '✓ Completed'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         {pool.winner_id ? (
                           <div>
-                            <div className="text-sm font-medium text-green-600">
-                              🏆 {pool.profiles?.full_name || 'Anonymous Winner'}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {pool.draw_date ? new Date(pool.draw_date).toLocaleDateString() : ''}
-                            </div>
+                            <div className="text-sm font-medium text-green-600">🏆 {pool.profiles?.full_name || 'Anonymous Winner'}</div>
+                            <div className="text-xs text-gray-500">{pool.draw_date ? new Date(pool.draw_date).toLocaleDateString() : ''}</div>
                             {drawInfo && (
                               <details className="mt-1">
                                 <summary className="text-xs text-gray-400 cursor-pointer">🔐 Verification Details</summary>
-                                <div className="text-xs text-gray-500 mt-1 font-mono break-all">
-                                  Seed: {drawInfo.random_seed?.slice(0, 20)}...<br/>
-                                  Tickets: {drawInfo.ticket_count}
-                                </div>
+                                <div className="text-xs text-gray-500 mt-1 font-mono break-all">Seed: {drawInfo.random_seed?.slice(0, 20)}...<br/>Tickets: {drawInfo.ticket_count}</div>
                               </details>
                             )}
                           </div>
                         ) : (
                           <span className="text-gray-400 text-sm">⏳ Not drawn yet</span>
                         )}
-                      </tr>
+                      </td>
                       <td className="px-6 py-4">
-                        {isReady && !isCompleted && (
-                          <button
-                            onClick={() => confirmDraw(pool)}
-                            disabled={drawing}
-                            className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition disabled:bg-gray-400"
-                          >
+                        {isReady && !isCompleted ? (
+                          <button onClick={() => confirmDraw(pool)} disabled={drawing} className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition disabled:bg-gray-400">
                             {drawing ? '🔄 Drawing...' : '🎲 Run Draw'}
                           </button>
-                        )}
-                        {isCompleted && (
+                        ) : isCompleted ? (
                           <span className="text-green-600 text-sm font-medium">✓ Completed</span>
-                        )}
-                        {!isReady && !isCompleted && (
-                          <span className="text-gray-400 text-sm">
-                            Need {(pool.target_amount - pool.current_amount).toLocaleString()} ETB more
-                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-sm">Need {(pool.target_amount - pool.current_amount).toLocaleString()} ETB more</span>
                         )}
                       </td>
                     </tr>
@@ -379,7 +329,6 @@ export default function AdminDraw() {
           </div>
         </div>
 
-        {/* Empty State */}
         {pools.length === 0 && (
           <div className="bg-white rounded-lg shadow p-12 text-center">
             <p className="text-gray-500">No pools found. Create a pool first!</p>
@@ -390,14 +339,11 @@ export default function AdminDraw() {
         )}
       </div>
 
-      {/* Confirmation Modal */}
       {showConfirm && selectedPool && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h2 className="text-xl font-bold mb-4">Confirm Draw</h2>
-            <p className="text-gray-600 mb-4">
-              Are you sure you want to run the draw for <strong>{selectedPool.prize_name}</strong>?
-            </p>
+            <p className="text-gray-600 mb-4">Are you sure you want to run the draw for <strong>{selectedPool.prize_name}</strong>?</p>
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-6">
               <p className="text-sm text-yellow-800">
                 📊 Pool Statistics:<br/>
@@ -406,21 +352,12 @@ export default function AdminDraw() {
                 • Progress: {((selectedPool.current_amount / selectedPool.target_amount) * 100).toFixed(1)}%
               </p>
             </div>
-            <p className="text-sm text-red-500 mb-6">
-              ⚠️ This action cannot be undone. A winner will be randomly selected using cryptographic randomization.
-            </p>
+            <p className="text-sm text-red-500 mb-6">⚠️ This action cannot be undone. A winner will be randomly selected using cryptographic randomization.</p>
             <div className="flex space-x-3">
-              <button
-                onClick={() => executeDraw(selectedPool.id)}
-                disabled={drawing}
-                className="flex-1 bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 disabled:bg-gray-400"
-              >
+              <button onClick={() => executeDraw(selectedPool.id)} disabled={drawing} className="flex-1 bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 disabled:bg-gray-400">
                 {drawing ? 'Running Draw...' : 'Yes, Run Draw'}
               </button>
-              <button
-                onClick={() => setShowConfirm(false)}
-                className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
-              >
+              <button onClick={() => setShowConfirm(false)} className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400">
                 Cancel
               </button>
             </div>
@@ -428,7 +365,6 @@ export default function AdminDraw() {
         </div>
       )}
 
-      {/* Winner Details Modal */}
       {showWinnerDetails && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
@@ -452,10 +388,7 @@ export default function AdminDraw() {
                 <p className="text-xs">Tickets: {showWinnerDetails.ticket_count}</p>
               </div>
             </div>
-            <button
-              onClick={() => setShowWinnerDetails(null)}
-              className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
-            >
+            <button onClick={() => setShowWinnerDetails(null)} className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
               Close
             </button>
           </div>
