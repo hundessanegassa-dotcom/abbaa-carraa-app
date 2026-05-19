@@ -1,3 +1,6 @@
+export async function getServerSideProps() {
+  return { props: {} };
+}
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/router';
