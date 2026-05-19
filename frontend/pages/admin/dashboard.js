@@ -1,3 +1,6 @@
+export async function getServerSideProps() {
+  return { props: {} };
+}
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 import BackButton from '../../components/BackButton';
