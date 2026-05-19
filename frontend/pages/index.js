@@ -234,7 +234,7 @@ export default function Home() {
                   </div>
                 )}
                 <img 
-                  src="/images/abbaa-carraa-bg.png?t=2"
+                  src="/images/abbaa-carraa-bg.png"
                   alt="Abbaa Carraa - Win Amazing Prizes"
                   className={`w-full h-auto object-cover block transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0 h-0'}`}
                   loading="eager"
