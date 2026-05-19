@@ -1,9 +1,11 @@
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import toast from 'react-hot-toast';
-export const dynamic = 'force-dynamic';
+
 export const fetchCache = 'force-no-store';
 export default function AdminAnnouncements() {
   const router = useRouter();
