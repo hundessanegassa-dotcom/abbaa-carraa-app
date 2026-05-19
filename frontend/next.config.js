@@ -3,14 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   compress: true,
-  staticPageGenerationTimeout: 240, // 4 minutes timeout
-  
-  // 🔥 THIS PREVENTS ALL PAGES FROM STATIC GENERATION
-  output: 'standalone',
-  trailingSlash: false,
-  
-  // Disable static generation for all pages (forces server-side rendering)
-  generateBuildId: async () => 'build',
+  staticPageGenerationTimeout: 240, // ← This is the only thing needed for Pages Router
   
   images: {
     remotePatterns: [
@@ -30,6 +23,8 @@ const nextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
+  
+  output: 'standalone',
   
   onDemandEntries: {
     maxInactiveAge: 25 * 1000,
