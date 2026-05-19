@@ -4,9 +4,13 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { supabase } from '../lib/supabase';
 import { useTranslation } from 'react-i18next';
+import PoolCard from '../components/PoolCard';
 import LoadingSpinner from '../components/LoadingSpinner';
+import AdvertisingBanner from '../components/AdvertisingBanner';
+import CashEquivalentBanner from '../components/CashEquivalentBanner';
+import CharityBanner from '../components/CharityBanner';
 
-// Safe components only
+// Dynamic imports for non-critical components
 const MovingAd = dynamic(() => import('../components/MovingAd'), { ssr: false });
 const SimpleFilters = dynamic(() => import('../components/SimpleFilters'), { ssr: false });
 const RoleBanners = dynamic(() => import('../components/RoleBanners'), { ssr: false });
@@ -15,7 +19,11 @@ const NewsletterSubscribe = dynamic(() => import('../components/NewsletterSubscr
 
 export default function Home() {
   const { t } = useTranslation();
-  const [loading, setLoading] = useState(false);
+  const [pools, setPools] = useState([]);
+  const [filteredPools, setFilteredPools] = useState([]);
+  const [featuredPools, setFeaturedPools] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeFilters, setActiveFilters] = useState({ category: 'all', city: 'all' });
   const [stats, setStats] = useState({
     total_pools: 0,
     total_winners: 0,
@@ -24,8 +32,25 @@ export default function Home() {
   });
 
   useEffect(() => {
-    fetchStats();
+    loadData();
   }, []);
+
+  useEffect(() => {
+    if (pools.length > 0) {
+      applyFilters(activeFilters);
+    }
+  }, [pools, activeFilters]);
+
+  async function loadData() {
+    try {
+      setLoading(true);
+      await Promise.all([fetchStats(), fetchPools()]);
+    } catch (error) {
+      console.error('Loading error:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function fetchStats() {
     try {
@@ -47,8 +72,38 @@ export default function Home() {
     }
   }
 
+  async function fetchPools() {
+    try {
+      const { data, error } = await supabase
+        .from('pools')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      if (error) throw error;
+      setPools(data || []);
+      setFeaturedPools(data?.filter(pool => pool.is_featured === true) || []);
+      setFilteredPools(data || []);
+    } catch (error) {
+      console.error('Error loading pools:', error);
+    }
+  }
+
+  const applyFilters = async (filters) => {
+    setActiveFilters(filters);
+    let filtered = [...pools];
+    if (filters.category !== 'all') {
+      filtered = filtered.filter(p => p.category === filters.category);
+    }
+    if (filters.city !== 'all') {
+      filtered = filtered.filter(p => p.city === filters.city);
+    }
+    setFilteredPools(filtered);
+  };
+
   if (loading) {
-    return <LoadingSpinner fullPage message="Loading..." />;
+    return <LoadingSpinner fullPage message="Loading amazing prizes..." />;
   }
 
   return (
@@ -60,7 +115,10 @@ export default function Home() {
       </Head>
 
       <div className="min-h-screen flex flex-col">
-        {/* Hero Section with Image */}
+        <CashEquivalentBanner />
+        <CharityBanner />
+
+        {/* Hero Section */}
         <div className="w-full bg-gradient-to-br from-green-700 to-teal-700">
           <img 
             src="/images/abbaa-carraa-bg.png"
@@ -75,7 +133,7 @@ export default function Home() {
           />
         </div>
 
-        {/* Text Content Below Image */}
+        {/* Text Content */}
         <div className="bg-white py-12">
           <div className="container mx-auto px-4 text-center">
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-4 py-1.5 rounded-full text-sm font-semibold mb-5">
@@ -110,7 +168,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Stats Section */}
+        {/* Stats */}
         <div className="bg-white py-12 border-t border-gray-200">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
@@ -123,8 +181,37 @@ export default function Home() {
         </div>
 
         <MovingAd />
-        <SimpleFilters onFilterChange={() => {}} />
-        
+        <AdvertisingBanner />
+        <SimpleFilters onFilterChange={applyFilters} />
+
+        {/* Featured Pools */}
+        {featuredPools.length > 0 && (
+          <section className="container mx-auto px-4 py-8">
+            <h2 className="text-2xl font-bold text-center mb-8">⭐ Featured Prize Pools</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredPools.slice(0, 3).map(pool => (
+                <PoolCard key={pool.id} pool={pool} featured={true} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* All Pools */}
+        <section className="container mx-auto px-4 py-8">
+          <h2 className="text-2xl font-bold text-center mb-8">Active Prize Pools</h2>
+          {filteredPools.length === 0 ? (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <p className="text-gray-500">No pools found</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredPools.map(pool => (
+                <PoolCard key={pool.id} pool={pool} />
+              ))}
+            </div>
+          )}
+        </section>
+
         <RoleBanners />
         <Testimonials />
         <NewsletterSubscribe />
@@ -134,9 +221,21 @@ export default function Home() {
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
             <div className="grid md:grid-cols-3 gap-8 text-center">
-              <div><div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">1</div><h3 className="font-bold text-xl mb-2">Find a Pool</h3><p className="text-gray-600">Browse available prize pools</p></div>
-              <div><div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">2</div><h3 className="font-bold text-xl mb-2">Contribute</h3><p className="text-gray-600">Make your contribution securely</p></div>
-              <div><div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">3</div><h3 className="font-bold text-xl mb-2">Win!</h3><p className="text-gray-600">Win amazing prizes!</p></div>
+              <div>
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">1</div>
+                <h3 className="font-bold text-xl mb-2">Find a Pool</h3>
+                <p className="text-gray-600">Browse available prize pools</p>
+              </div>
+              <div>
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">2</div>
+                <h3 className="font-bold text-xl mb-2">Contribute</h3>
+                <p className="text-gray-600">Make your contribution securely</p>
+              </div>
+              <div>
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">3</div>
+                <h3 className="font-bold text-xl mb-2">Win!</h3>
+                <p className="text-gray-600">Win amazing prizes!</p>
+              </div>
             </div>
           </div>
         </div>
