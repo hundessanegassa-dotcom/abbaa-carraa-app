@@ -1,5 +1,12 @@
 // All components kept - with error handling
+import { useEffect, useState } from 'react';
+import Head from 'next/head';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { supabase, getPoolsPaginated } from '../lib/supabase';
+import { useTranslation } from 'react-i18next';
+import PoolCard from '../components/PoolCard';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 // Wrap each component with error boundary to prevent total crash
 const withErrorBoundary = (importFn, fallback = null) => {
@@ -17,6 +24,7 @@ const RoleBanners = withErrorBoundary(() => import('../components/RoleBanners'))
 const CashEquivalentBanner = withErrorBoundary(() => import('../components/CashEquivalentBanner'));
 const CharityBanner = withErrorBoundary(() => import('../components/CharityBanner'));
 const Testimonials = withErrorBoundary(() => import('../components/Testimonials'));
+
 export default function Home() {
   const { t, i18n } = useTranslation();
   const [pools, setPools] = useState([]);
@@ -226,7 +234,7 @@ export default function Home() {
                   </div>
                 )}
                 <img 
-                  src="/images/abbaa-carraa-bg.png"
+                  src="/images/abbaa-carraa-bg.png?t=2"
                   alt="Abbaa Carraa - Win Amazing Prizes"
                   className={`w-full h-auto object-cover block transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0 h-0'}`}
                   loading="eager"
