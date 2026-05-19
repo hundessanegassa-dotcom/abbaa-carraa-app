@@ -1,23 +1,22 @@
-// Final Stable Version - May 18, 2026
-import { useEffect, useState, useCallback } from 'react';
-import Head from 'next/head';
-import Link from 'next/link';
+// All components kept - with error handling
 import dynamic from 'next/dynamic';
-import { supabase, getPoolsWithCache, getPoolsPaginated } from '../lib/supabase';
-import { useTranslation } from 'react-i18next';
-import PoolCard from '../components/PoolCard';
-import LoadingSpinner from '../components/LoadingSpinner';
 
-// Lazy load non-critical components for faster initial load
-const NewsletterSubscribe = dynamic(() => import('../components/NewsletterSubscribe'), { ssr: false });
-const MovingAd = dynamic(() => import('../components/MovingAd'), { ssr: false });
-const AdvertisingBanner = dynamic(() => import('../components/AdvertisingBanner'), { ssr: false });
-const SimpleFilters = dynamic(() => import('../components/SimpleFilters'), { ssr: false });
-const RoleBanners = dynamic(() => import('../components/RoleBanners'), { ssr: false });
-const CashEquivalentBanner = dynamic(() => import('../components/CashEquivalentBanner'), { ssr: false });
-const CharityBanner = dynamic(() => import('../components/CharityBanner'), { ssr: false });
-const Testimonials = dynamic(() => import('../components/Testimonials'), { ssr: false });
+// Wrap each component with error boundary to prevent total crash
+const withErrorBoundary = (importFn, fallback = null) => {
+  return dynamic(() => importFn().catch(err => {
+    console.error('Component failed to load:', err);
+    return { default: () => fallback };
+  }), { ssr: false });
+};
 
+const NewsletterSubscribe = withErrorBoundary(() => import('../components/NewsletterSubscribe'));
+const MovingAd = withErrorBoundary(() => import('../components/MovingAd'));
+const AdvertisingBanner = withErrorBoundary(() => import('../components/AdvertisingBanner'));
+const SimpleFilters = withErrorBoundary(() => import('../components/SimpleFilters'));
+const RoleBanners = withErrorBoundary(() => import('../components/RoleBanners'));
+const CashEquivalentBanner = withErrorBoundary(() => import('../components/CashEquivalentBanner'));
+const CharityBanner = withErrorBoundary(() => import('../components/CharityBanner'));
+const Testimonials = withErrorBoundary(() => import('../components/Testimonials'));
 export default function Home() {
   const { t, i18n } = useTranslation();
   const [pools, setPools] = useState([]);
