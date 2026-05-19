@@ -3,6 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   compress: true,
+  staticPageGenerationTimeout: 180, // ← ADD THIS LINE (increases timeout to 180 seconds)
   
   images: {
     remotePatterns: [
