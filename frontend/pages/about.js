@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 import BackButton from '../components/BackButton';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
@@ -78,7 +81,7 @@ export default function About() {
         </div>
       </section>
 
-      {/* ========== CASH EQUIVALENT GUARANTEE SECTION ========== */}
+      {/* Cash Equivalent Guarantee Section */}
       <section id="guarantee" className="container mx-auto px-4 py-12 scroll-mt-20">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
@@ -122,7 +125,7 @@ export default function About() {
         </div>
       </section>
 
-      {/* ========== CHARITY & SOCIAL RESPONSIBILITY SECTION ========== */}
+      {/* Charity Section */}
       <section id="charity" className="container mx-auto px-4 py-12 scroll-mt-20 bg-gradient-to-r from-red-50 to-pink-50">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
