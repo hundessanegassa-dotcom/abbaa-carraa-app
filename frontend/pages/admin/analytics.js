@@ -5,7 +5,8 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearSca
 import { Pie, Bar, Line } from 'react-chartjs-2';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title, PointElement, LineElement);
-
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 export default function AdminAnalytics() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
