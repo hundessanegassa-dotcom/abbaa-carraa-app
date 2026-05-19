@@ -1,9 +1,17 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { supabase } from '../lib/supabase';
 import { useTranslation } from 'react-i18next';
 import LoadingSpinner from '../components/LoadingSpinner';
+
+// Safe components only
+const MovingAd = dynamic(() => import('../components/MovingAd'), { ssr: false });
+const SimpleFilters = dynamic(() => import('../components/SimpleFilters'), { ssr: false });
+const RoleBanners = dynamic(() => import('../components/RoleBanners'), { ssr: false });
+const Testimonials = dynamic(() => import('../components/Testimonials'), { ssr: false });
+const NewsletterSubscribe = dynamic(() => import('../components/NewsletterSubscribe'), { ssr: false });
 
 export default function Home() {
   const { t } = useTranslation();
@@ -52,80 +60,84 @@ export default function Home() {
       </Head>
 
       <div className="min-h-screen flex flex-col">
-        {/* Hero Section - Simple, No External Image */}
-        <div className="bg-gradient-to-r from-green-600 to-teal-600 text-white py-16 md:py-24">
+        {/* Hero Section with Image */}
+        <div className="w-full bg-gradient-to-br from-green-700 to-teal-700">
+          <img 
+            src="/images/abbaa-carraa-bg.png"
+            alt="Abbaa Carraa"
+            className="w-full h-auto object-cover block"
+            loading="eager"
+            fetchPriority="high"
+            style={{ maxHeight: '500px', objectPosition: 'center' }}
+            onError={(e) => {
+              e.target.style.display = 'none';
+            }}
+          />
+        </div>
+
+        {/* Text Content Below Image */}
+        <div className="bg-white py-12">
           <div className="container mx-auto px-4 text-center">
-            <div className="text-6xl md:text-7xl mb-4">🎁🏆🎉</div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-4">Abbaa Carraa</h1>
-            <p className="text-xl md:text-2xl mb-6">Ethiopia's #1 Prize Platform</p>
-            <p className="text-green-100 mb-8">Win cars, houses, electronics, and more!</p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/register" className="bg-white text-green-600 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition">
-                🎁 Start Winning
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-4 py-1.5 rounded-full text-sm font-semibold mb-5">
+              🔥 Ethiopia's #1 Prize Platform 🏆
+            </div>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900">
+              Welcome to{' '}
+              <span className="bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
+                Abbaa Carraa
+              </span>
+            </h1>
+            <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mt-4">
+              Win cars, houses, machinery, electronics, and more through community savings!
+            </p>
+            <div className="mt-4 inline-flex items-center gap-2 bg-green-50 border border-green-200 px-4 py-2 rounded-full">
+              <span className="text-green-600 text-lg">💚</span>
+              <span className="text-green-700 font-medium">2% supports kidney & heart disease patients</span>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+              <Link href="/register" className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-8 py-3.5 rounded-full font-semibold text-lg shadow-lg">
+                🎁 Start Winning Now →
               </Link>
-              <Link href="/login" className="bg-white/20 text-white px-8 py-3 rounded-full font-semibold hover:bg-white/30 transition border border-white/30">
-                👑 Login
+              <Link href="/become-agent" className="bg-white border-2 border-gray-200 text-gray-700 px-8 py-3.5 rounded-full font-semibold text-lg shadow-md hover:border-green-500">
+                👑 Become an Agent →
               </Link>
             </div>
-            <p className="mt-8 text-green-100">💚 2% supports kidney & heart disease patients</p>
+            <div className="flex flex-wrap justify-center gap-3 mt-10 pt-6 border-t border-gray-200">
+              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">✓ Cash Guarantee</div>
+              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">✓ Blockchain Verified</div>
+              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">💚 2% for Health</div>
+            </div>
           </div>
         </div>
 
         {/* Stats Section */}
-        <div className="bg-white py-12">
+        <div className="bg-white py-12 border-t border-gray-200">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-              <div>
-                <div className="text-3xl font-bold text-green-600">{stats.total_pools}+</div>
-                <div className="text-gray-500">Active Pools</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-green-600">{stats.total_winners}+</div>
-                <div className="text-gray-500">Winners</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-green-600">{stats.total_agents}+</div>
-                <div className="text-gray-500">Agents</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-green-600">ETB {Math.floor(stats.total_raised / 1000)}K+</div>
-                <div className="text-gray-500">Raised</div>
-              </div>
+              <div><div className="text-3xl font-bold text-green-600">{stats.total_pools}+</div><div className="text-gray-500">Active Pools</div></div>
+              <div><div className="text-3xl font-bold text-green-600">{stats.total_winners}+</div><div className="text-gray-500">Winners</div></div>
+              <div><div className="text-3xl font-bold text-green-600">{stats.total_agents}+</div><div className="text-gray-500">Agents</div></div>
+              <div><div className="text-3xl font-bold text-green-600">ETB {Math.floor(stats.total_raised / 1000)}K+</div><div className="text-gray-500">Raised</div></div>
             </div>
           </div>
         </div>
+
+        <MovingAd />
+        <SimpleFilters onFilterChange={() => {}} />
+        
+        <RoleBanners />
+        <Testimonials />
+        <NewsletterSubscribe />
 
         {/* How It Works */}
         <div className="bg-gray-50 py-16">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
             <div className="grid md:grid-cols-3 gap-8 text-center">
-              <div>
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">1</div>
-                <h3 className="font-bold text-xl mb-2">Find a Pool</h3>
-                <p className="text-gray-600">Browse available prize pools</p>
-              </div>
-              <div>
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">2</div>
-                <h3 className="font-bold text-xl mb-2">Contribute</h3>
-                <p className="text-gray-600">Make your contribution securely</p>
-              </div>
-              <div>
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">3</div>
-                <h3 className="font-bold text-xl mb-2">Win!</h3>
-                <p className="text-gray-600">Win amazing prizes!</p>
-              </div>
+              <div><div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">1</div><h3 className="font-bold text-xl mb-2">Find a Pool</h3><p className="text-gray-600">Browse available prize pools</p></div>
+              <div><div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">2</div><h3 className="font-bold text-xl mb-2">Contribute</h3><p className="text-gray-600">Make your contribution securely</p></div>
+              <div><div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">3</div><h3 className="font-bold text-xl mb-2">Win!</h3><p className="text-gray-600">Win amazing prizes!</p></div>
             </div>
-          </div>
-        </div>
-
-        {/* CTA Section */}
-        <div className="bg-gradient-to-r from-green-600 to-teal-600 text-white py-12">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-2xl font-bold mb-4">Ready to Win?</h2>
-            <Link href="/register" className="bg-white text-green-600 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition inline-block">
-              Join Now →
-            </Link>
           </div>
         </div>
       </div>
