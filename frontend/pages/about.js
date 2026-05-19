@@ -1,3 +1,7 @@
+export const runtime = 'experimental-edge';
+export const config = {
+  runtime: 'experimental-edge',
+};
 import BackButton from '../components/BackButton';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
