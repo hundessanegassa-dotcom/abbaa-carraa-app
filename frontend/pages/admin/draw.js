@@ -5,6 +5,11 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+// 🔥 THIS PREVENTS STATIC GENERATION TIMEOUT
+export async function getServerSideProps() {
+  return { props: {} };
+}
+
 export default function AdminDraw() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -346,7 +351,7 @@ export default function AdminDraw() {
                         ) : (
                           <span className="text-gray-400 text-sm">⏳ Not drawn yet</span>
                         )}
-                      </td>
+                      </tr>
                       <td className="px-6 py-4">
                         {isReady && !isCompleted && (
                           <button
