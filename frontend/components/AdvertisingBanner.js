@@ -3,8 +3,18 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 
+const FALLBACK_PRODUCTS = [
+  { id: 1, prize_name: '4-Axis CNC Machine', description: 'Professional 4-axis CNC machine for furniture and 3D carving', target_amount: 1250000, contribution_amount: 2500, image_url: null },
+  { id: 2, prize_name: 'Sino Truck', description: 'Sinotruk Howo Homan T5 cargo truck - perfect for logistics business', target_amount: 5500000, contribution_amount: 11000, image_url: null },
+  { id: 3, prize_name: 'Excavator', description: 'Medium excavator for construction - rental value 4,000 ETB/hour', target_amount: 5500000, contribution_amount: 11000, image_url: null },
+  { id: 4, prize_name: 'Wheel Loader', description: 'Heavy-duty wheel loader with attachments', target_amount: 8000000, contribution_amount: 16000, image_url: null },
+  { id: 5, prize_name: 'Modern House', description: 'Brand new house in Addis Ababa prime location', target_amount: 25000000, contribution_amount: 50000, image_url: null },
+  { id: 6, prize_name: 'V8 Car', description: 'Luxury V8 performance car', target_amount: 5000000, contribution_amount: 10000, image_url: null },
+  { id: 7, prize_name: 'Block Making Machine', description: 'Semi-automatic block making machine', target_amount: 2000000, contribution_amount: 4000, image_url: null }
+];
+
 export default function AdvertisingBanner() {
-  const { t, i18n } = useTranslation(); // ← Added i18n here
+  const { t, i18n } = useTranslation();
   const [products, setProducts] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -15,29 +25,25 @@ export default function AdvertisingBanner() {
 
   async function fetchFeaturedProducts() {
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+      
+      // Try to fetch from Supabase
+      let { data, error } = await supabase
         .from('pools')
         .select('*')
-        .in('prize_name', ['Sino Truck', 'Excavator', 'Wheel Loader', 'Modern House', 'V8 Car', 'Block Making Machine', '4-Axis CNC Machine'])
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .limit(7);
       
       if (error) throw error;
       
       if (data && data.length > 0) {
         setProducts(data);
       } else {
-        setProducts([
-          { id: 1, prize_name: '4-Axis CNC Machine', description: 'Professional 4-axis CNC machine for furniture and 3D carving', target_amount: 1250000, contribution_amount: 2500, image_url: null },
-          { id: 2, prize_name: 'Sino Truck', description: 'Sinotruk Howo Homan T5 cargo truck - perfect for logistics business', target_amount: 5500000, contribution_amount: 11000, image_url: null },
-          { id: 3, prize_name: 'Excavator', description: 'Medium excavator for construction - rental value 4,000 ETB/hour', target_amount: 5500000, contribution_amount: 11000, image_url: null },
-          { id: 4, prize_name: 'Wheel Loader', description: 'Heavy-duty wheel loader with attachments', target_amount: 8000000, contribution_amount: 16000, image_url: null },
-          { id: 5, prize_name: 'Modern House', description: 'Brand new house in Addis Ababa prime location', target_amount: 25000000, contribution_amount: 50000, image_url: null },
-          { id: 6, prize_name: 'V8 Car', description: 'Luxury V8 performance car', target_amount: 5000000, contribution_amount: 10000, image_url: null },
-          { id: 7, prize_name: 'Block Making Machine', description: 'Semi-automatic block making machine', target_amount: 2000000, contribution_amount: 4000, image_url: null }
-        ]);
+        setProducts(FALLBACK_PRODUCTS);
       }
     } catch (error) {
       console.error('Error fetching products:', error);
+      setProducts(FALLBACK_PRODUCTS);
     } finally {
       setLoading(false);
     }
@@ -61,7 +67,6 @@ export default function AdvertisingBanner() {
     return diffDays > 0 ? diffDays : 0;
   };
 
-  // ✅ FIXED: Use i18n.language instead of t('common.locale')
   const formatDate = (dateString) => {
     if (!dateString) return t('common.not_set') || 'Not set';
     const date = new Date(dateString);
