@@ -9,14 +9,15 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import AdvertisingBanner from '../components/AdvertisingBanner';
 import CashEquivalentBanner from '../components/CashEquivalentBanner';
 import CharityBanner from '../components/CharityBanner';
-
+}
 // Dynamic imports for non-critical components
 const MovingAd = dynamic(() => import('../components/MovingAd'), { ssr: false });
 const SimpleFilters = dynamic(() => import('../components/SimpleFilters'), { ssr: false });
 const RoleBanners = dynamic(() => import('../components/RoleBanners'), { ssr: false });
 const Testimonials = dynamic(() => import('../components/Testimonials'), { ssr: false });
 const NewsletterSubscribe = dynamic(() => import('../components/NewsletterSubscribe'), { ssr: false });
-
+export async function getServerSideProps() {
+  return { props: {} };
 export default function Home() {
   const { t } = useTranslation();
   const [pools, setPools] = useState([]);
