@@ -260,25 +260,33 @@ export default function VendorDashboard() {
     >
       <BackButton fallbackHref="/" />
 
-      {/* Role Description Card - Enhanced for Vendor */}
+      {/* Role Description Card - Enhanced Vendor Description */}
       <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500 rounded-xl p-5 mb-8">
         <h3 className="font-bold text-purple-800 text-lg mb-2">✨ Your Role: Vendor/Supplier</h3>
         <p className="text-purple-700 text-sm leading-relaxed">
-          As a Vendor/Supplier, you provide products for prize pools (cars, real estate, electronics, machinery, etc.).
+          As a Vendor/Supplier, you provide products for prize pools. This includes:
         </p>
+        <ul className="text-purple-700 text-sm list-disc list-inside mt-2 space-y-1">
+          <li><strong>Car Dealers</strong> - List vehicles for pool winners</li>
+          <li><strong>Real Estate Sellers</strong> - List houses/properties</li>
+          <li><strong>Electronics Shops</strong> - List phones, laptops, TVs</li>
+          <li><strong>Machinery Dealers</strong> - List equipment for businesses</li>
+          <li><strong>Furniture Stores</strong> - List sofas, beds, dining sets</li>
+          <li><strong>Any Product Provider</strong> - Your products become prizes!</li>
+        </ul>
         <div className="mt-3 bg-white/50 rounded-lg p-3 text-sm">
           <p className="font-semibold text-purple-800">🏪 How It Works:</p>
           <ul className="text-purple-700 text-xs mt-1 list-disc list-inside space-y-1">
-            <li>You list your products on the platform (car dealer, real estate seller, electronics shop, etc.)</li>
+            <li>You list your products on the platform</li>
             <li>Agents/Organizations create pools using your products as prizes</li>
-            <li>When a pool reaches its target, the <strong>winner receives your product</strong> (physical or cash equivalent)</li>
+            <li>When a pool reaches its target, the <strong>winner receives your product</strong> (physical delivery or cash equivalent)</li>
             <li><strong>Non-winners</strong> receive a discount code to purchase from you directly</li>
             <li>You earn <strong>10% commission</strong> on each sale to winners</li>
             <li>Discount sales to non-winners are <strong>commission-free</strong> (direct profit)</li>
           </ul>
         </div>
         <div className="mt-3 bg-green-50 rounded-lg p-2 text-center text-xs text-green-700">
-          💡 Example: A car dealer lists a Toyota. Agent creates a pool. Winner gets the car. 99 non-winners get 20% discount codes to buy from your dealership!
+          💡 Example: A car dealer lists a Toyota worth 1,000,000 ETB. Agent creates a pool. Winner gets the car. 99 non-winners get 20% discount codes to buy from your dealership!
         </div>
         {vendorDetails && vendorDetails.verified && (
           <div className="mt-3 inline-flex items-center gap-2 bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs">
@@ -436,10 +444,10 @@ export default function VendorDashboard() {
                             <button onClick={() => handleDeleteProduct(product.id)} disabled={submitting} className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition" title="Delete">🗑️</button>
                           </div>
                         </td>
-                      </tr>
+                       </>
                     ))}
                   </tbody>
-                </table>
+                 </table>
               </div>
             )}
           </div>
