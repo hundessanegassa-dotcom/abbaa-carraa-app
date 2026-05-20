@@ -1,6 +1,8 @@
 import BackButton from '../components/BackButton';
 import Link from 'next/link';
-
+export async function getServerSideProps() {
+  return { props: {} };
+}
 export default function Terms() {
   return (
     <div className="min-h-screen bg-gray-50 py-12">
