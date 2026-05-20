@@ -5,7 +5,9 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import DashboardLayout from '../components/DashboardLayout';
 import BackButton from '../components/BackButton';
-
+export async function getServerSideProps() {
+  return { props: {} };
+}
 export default function ProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
