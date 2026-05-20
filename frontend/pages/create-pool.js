@@ -4,7 +4,9 @@ import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
 import ImageUpload from '../components/ImageUpload';
-
+export async function getServerSideProps() {
+  return { props: {} };
+}
 export default function CreatePool() {
   const router = useRouter();
   const [user, setUser] = useState(null);
