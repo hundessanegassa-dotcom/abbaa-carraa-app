@@ -1,13 +1,11 @@
-export const runtime = 'experimental-edge';
-export const config = {
-  runtime: 'experimental-edge',
-};
 import BackButton from '../components/BackButton';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-
+export async function getServerSideProps() {
+  return { props: {} };
+}
 export default function About() {
   const { t } = useTranslation();
   const [stats, setStats] = useState({
