@@ -260,7 +260,7 @@ export default function VendorDashboard() {
     >
       <BackButton fallbackHref="/" />
 
-      {/* Role Description Card - Enhanced Vendor Description */}
+      {/* Role Description Card */}
       <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500 rounded-xl p-5 mb-8">
         <h3 className="font-bold text-purple-800 text-lg mb-2">✨ Your Role: Vendor/Supplier</h3>
         <p className="text-purple-700 text-sm leading-relaxed">
@@ -319,7 +319,7 @@ export default function VendorDashboard() {
         </button>
       </div>
 
-      {/* Warnings & Alerts */}
+      {/* Warnings */}
       {lowStockProducts.length > 0 && (
         <div className="mb-6 bg-orange-50 border border-orange-200 text-orange-800 px-5 py-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="text-2xl">⚠️</div>
@@ -342,24 +342,24 @@ export default function VendorDashboard() {
         </div>
       )}
 
-      {/* Sales Summary Stats */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-center hover:shadow-md transition">
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-center">
           <div className="w-10 h-10 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-lg">💰</div>
           <p className="text-xs text-gray-500 font-medium">Total Sales</p>
           <p className="text-xl font-bold text-gray-800 mt-1">{stats.totalSales.toLocaleString()} ETB</p>
         </div>
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-center hover:shadow-md transition">
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-center">
           <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-lg">📦</div>
           <p className="text-xs text-gray-500 font-medium">Orders</p>
           <p className="text-xl font-bold text-gray-800 mt-1">{stats.orders}</p>
         </div>
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-center hover:shadow-md transition">
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-center">
           <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-lg">🏷️</div>
           <p className="text-xs text-gray-500 font-medium">Active Listings</p>
           <p className="text-xl font-bold text-purple-600 mt-1">{stats.activeListings}</p>
         </div>
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-center hover:shadow-md transition">
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-center">
           <div className="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-lg">📈</div>
           <p className="text-xs text-gray-500 font-medium">Conversion</p>
           <p className="text-xl font-bold text-yellow-600 mt-1">{stats.conversion}%</p>
@@ -373,7 +373,7 @@ export default function VendorDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Product Management */}
+        {/* Products Table */}
         <div className="lg:col-span-2">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
@@ -444,10 +444,10 @@ export default function VendorDashboard() {
                             <button onClick={() => handleDeleteProduct(product.id)} disabled={submitting} className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition" title="Delete">🗑️</button>
                           </div>
                         </td>
-                       </>
+                      </tr>
                     ))}
                   </tbody>
-                 </table>
+                </table>
               </div>
             )}
           </div>
@@ -533,7 +533,7 @@ export default function VendorDashboard() {
             </button>
           </div>
 
-          {/* Tips for Success */}
+          {/* Tips */}
           <div className="bg-yellow-50 p-5 rounded-2xl border border-yellow-100">
             <h3 className="font-semibold text-yellow-800 mb-2 flex items-center gap-2">
               <span>💡</span> Tips for Success
