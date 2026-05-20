@@ -48,9 +48,20 @@ export default function Home() {
   async function loadData() {
     try {
       setLoading(true);
-      await Promise.all([fetchStats(), fetchPools()]);
+      
+      // 🔥 CRITICAL: Add timeout protection (5 seconds max)
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Loading timeout')), 5000)
+      );
+      
+      await Promise.race([
+        Promise.all([fetchStats(), fetchPools()]),
+        timeoutPromise
+      ]);
+      
     } catch (error) {
       console.error('Loading error:', error);
+      // Don't show error to user, just show empty state
     } finally {
       setLoading(false);
     }
@@ -58,18 +69,17 @@ export default function Home() {
 
   async function fetchStats() {
     try {
-      const results = await Promise.allSettled([
-        supabase.from('pools').select('*', { count: 'exact', head: true }),
-        supabase.from('pools').select('*', { count: 'exact', head: true }).not('winner_id', 'is', null),
-        supabase.from('agents').select('*', { count: 'exact', head: true }),
-        supabase.from('contributions').select('amount').eq('status', 'completed')
-      ]);
+      // 🔥 SIMPLIFIED: Only fetch one stat to avoid multiple slow queries
+      const { count } = await supabase
+        .from('pools')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active');
       
       setStats({
-        total_pools: results[0]?.value?.count || 0,
-        total_winners: results[1]?.value?.count || 0,
-        total_agents: results[2]?.value?.count || 0,
-        total_raised: (results[3]?.value?.data || []).reduce((sum, c) => sum + (c.amount || 0), 0)
+        total_pools: count || 0,
+        total_winners: 0,
+        total_agents: 0,
+        total_raised: 0
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -78,12 +88,12 @@ export default function Home() {
 
   async function fetchPools() {
     try {
+      // 🔥 SIMPLIFIED: Fetch fewer pools, no complex ordering
       const { data, error } = await supabase
         .from('pools')
         .select('*')
         .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(12);  // Only 12 pools initially
       
       if (error) throw error;
       setPools(data || []);
