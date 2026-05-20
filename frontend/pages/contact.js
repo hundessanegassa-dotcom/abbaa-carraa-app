@@ -3,7 +3,9 @@ import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-
+export async function getServerSideProps() {
+  return { props: {} };
+}
 export default function Contact() {
   const [formData, setFormData] = useState({
     name: '',
