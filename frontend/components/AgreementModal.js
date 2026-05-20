@@ -1,12 +1,8 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { useRouter } from 'next/router';
-import toast from 'react-hot-toast';
 
-export default function AgreementModal({ isOpen, onAccept, onClose, userId, userEmail, userRole }) {
+export default function AgreementModal({ isOpen, onClose, onAccept, userRole }) {
   const [hasScrolled, setHasScrolled] = useState(false);
   const [agreed, setAgreed] = useState(false);
-  const [saving, setSaving] = useState(false);
 
   if (!isOpen) return null;
 
@@ -47,10 +43,7 @@ You must be at least 18 years old to use this platform.
 We reserve the right to suspend accounts that violate these terms.
 
 6. PRIVACY
-Your data is handled according to our Privacy Policy. We do not sell your personal information.
-
-7. LIMITATION OF LIABILITY
-Abbaa Carraa is not liable for any indirect, incidental, or consequential damages.
+Your data is handled according to our Privacy Policy.
 
 For full terms, visit: ${window.location.origin}/terms
 
@@ -65,81 +58,28 @@ By clicking "I Agree", you acknowledge that you have read and understood this ag
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast.success('Agreement downloaded');
   };
 
-  const handleAccept = async () => {
-    if (!agreed) {
-      toast.error('Please scroll to the bottom and agree to the terms');
-      return;
+  const getRoleTitle = () => {
+    switch (userRole) {
+      case 'agent': return 'Agent Agreement';
+      case 'vendor': return 'Vendor Agreement';
+      case 'organization': return 'Organization Agreement';
+      case 'individual': return 'Participant Agreement';
+      default: return 'User Agreement';
     }
+  };
 
-    setSaving(true);
-    
-    try {
-      // Get current session to ensure we have the user
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) throw sessionError;
-      if (!session) {
-        toast.error('Please sign in again');
-        window.location.href = '/register';
-        return;
-      }
-
-      const currentUserId = session.user.id;
-      
-      // Update profile with agreement acceptance
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          agreement_accepted: true,
-          agreement_accepted_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          role: userRole || 'individual'
-        })
-        .eq('id', currentUserId);
-
-      if (updateError) {
-        console.error('Update error:', updateError);
-        throw new Error(updateError.message);
-      }
-
-      // Also update user_type if needed
-      const { error: typeError } = await supabase
-        .from('profiles')
-        .update({ user_type: userRole || 'individual' })
-        .eq('id', currentUserId);
-
-      if (typeError) {
-        console.warn('User type update warning:', typeError);
-      }
-
-      toast.success('Agreement accepted! Redirecting...');
-      
-      // Clear stored role
-      localStorage.removeItem('pendingRole');
-      sessionStorage.removeItem('pendingRole');
-      
-      // Redirect to appropriate dashboard
-      const dashboards = {
-        agent: '/agent/dashboard',
-        vendor: '/vendor/dashboard',
-        organization: '/organization/dashboard',
-        admin: '/admin/dashboard',
-        individual: '/dashboard'
-      };
-      
-      const dashboardPath = dashboards[userRole] || '/dashboard';
-      setTimeout(() => {
-        window.location.href = dashboardPath;
-      }, 1000);
-      
-    } catch (err) {
-      console.error('Save agreement error:', err);
-      toast.error('Failed to save agreement: ' + err.message);
-    } finally {
-      setSaving(false);
+  const getRoleDescription = () => {
+    switch (userRole) {
+      case 'agent':
+        return 'As an Agent, you agree to create pools fairly and pay winners promptly. You earn 10% commission.';
+      case 'vendor':
+        return 'As a Vendor, you agree to deliver products to winners or provide cash equivalent. You earn 10% commission.';
+      case 'organization':
+        return 'As an Organization, you agree to manage private pools for your members fairly. You earn 10% commission.';
+      default:
+        return 'As a Participant, you agree to contribute fairly and accept draw results.';
     }
   };
 
@@ -147,9 +87,10 @@ By clicking "I Agree", you acknowledge that you have read and understood this ag
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
         <div className="p-6 border-b">
-          <h2 className="text-2xl font-bold text-gray-800">Terms & Agreement</h2>
+          <h2 className="text-2xl font-bold text-gray-800">{getRoleTitle()}</h2>
           <p className="text-gray-500 mt-1">Please read carefully before continuing</p>
-          <p className="text-sm text-gray-400 mt-1">Role: <span className="font-semibold text-green-600 capitalize">{userRole || 'Individual'}</span></p>
+          <p className="text-sm text-green-600 mt-1 capitalize">Role: {userRole}</p>
+          <p className="text-xs text-gray-400 mt-1">{getRoleDescription()}</p>
         </div>
         
         <div 
@@ -164,10 +105,13 @@ By clicking "I Agree", you acknowledge that you have read and understood this ag
             <p>You must be at least 18 years old to use this platform.</p>
             
             <h3 className="text-lg font-semibold mt-4">3. Your Role</h3>
-            <p>You are registering as a <strong className="capitalize">{userRole || 'Individual'}</strong>. Your responsibilities and benefits are defined based on this role.</p>
+            <p>You are registering as a <strong className="capitalize">{userRole}</strong>. Your responsibilities and benefits are defined based on this role.</p>
             
-            <h3 className="text-lg font-semibold mt-4">4. Platform Fees</h3>
-            <p>Platform fees apply to all transactions as displayed. Agents earn 10% commission. Vendors pay 5% commission.</p>
+            <h3 className="text-lg font-semibold mt-4">4. Commission Structure</h3>
+            <p>• Admin personal pools: 20% commission<br/>
+            • Agents/Organizations/Vendors: 10% commission<br/>
+            • Platform fee: 10% on agent/organization/vendor pools<br/>
+            • Winner receives: 100% of target amount</p>
             
             <h3 className="text-lg font-semibold mt-4">5. Prohibited Activities</h3>
             <p>Fraud, manipulation, or abuse of the platform is strictly prohibited.</p>
@@ -177,9 +121,6 @@ By clicking "I Agree", you acknowledge that you have read and understood this ag
             
             <h3 className="text-lg font-semibold mt-4">7. Termination</h3>
             <p>We reserve the right to suspend accounts violating these terms.</p>
-            
-            <h3 className="text-lg font-semibold mt-4">8. Limitation of Liability</h3>
-            <p>Abbaa Carraa is not liable for indirect or consequential damages.</p>
           </div>
         </div>
         
@@ -213,15 +154,15 @@ By clicking "I Agree", you acknowledge that you have read and understood this ag
               Cancel
             </button>
             <button
-              onClick={handleAccept}
-              disabled={!agreed || saving}
+              onClick={onAccept}
+              disabled={!agreed}
               className={`flex-1 px-4 py-2 rounded-lg transition ${
-                agreed && !saving
+                agreed
                   ? 'bg-green-600 text-white hover:bg-green-700' 
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
             >
-              {saving ? 'Saving...' : 'I Agree & Continue'}
+              I Agree & Continue
             </button>
           </div>
         </div>
