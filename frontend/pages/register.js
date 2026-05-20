@@ -11,10 +11,38 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
 
   const roles = [
-    { id: 'individual', name: 'Individual', icon: '👤', description: 'Join pools and win amazing prizes', bgColor: 'from-green-500 to-teal-500', path: '/dashboard' },
-    { id: 'agent', name: 'Agent', icon: '🤝', description: 'Create pools and earn 10% commission', bgColor: 'from-yellow-500 to-orange-500', path: '/agent/dashboard' },
-    { id: 'vendor', name: 'Vendor', icon: '🏪', description: 'List products and earn 10% commission', bgColor: 'from-purple-500 to-pink-500', path: '/vendor/dashboard' },
-    { id: 'organization', name: 'Organization', icon: '🏢', description: 'Create private pools for members', bgColor: 'from-blue-500 to-cyan-500', path: '/organization/dashboard' }
+    { 
+      id: 'individual', 
+      name: 'Individual Participant', 
+      icon: '🎁', 
+      description: 'Join pools and win amazing prizes',
+      bgColor: 'from-green-500 to-teal-500',
+      dashboard: '/dashboard'
+    },
+    { 
+      id: 'agent', 
+      name: 'Agent', 
+      icon: '🤝', 
+      description: 'Create pools and earn 10% commission',
+      bgColor: 'from-yellow-500 to-orange-500',
+      dashboard: '/agent/dashboard'
+    },
+    { 
+      id: 'vendor', 
+      name: 'Vendor', 
+      icon: '🏪', 
+      description: 'List products, create pools, earn 10% commission',
+      bgColor: 'from-purple-500 to-pink-500',
+      dashboard: '/vendor/dashboard'
+    },
+    { 
+      id: 'organization', 
+      name: 'Organization Organizer', 
+      icon: '🏢', 
+      description: 'Create private pools for members, earn 10% commission',
+      bgColor: 'from-blue-500 to-cyan-500',
+      dashboard: '/organization/dashboard'
+    }
   ];
 
   useEffect(() => {
@@ -31,13 +59,11 @@ export default function Register() {
     
     setLoading(true);
     
-    // Store selected role
     localStorage.setItem('pendingRole', selectedRole);
     sessionStorage.setItem('pendingRole', selectedRole);
     
-    // Get redirect URL based on role
     const roleConfig = roles.find(r => r.id === selectedRole);
-    const redirectPath = roleConfig?.path || '/dashboard';
+    const redirectPath = roleConfig?.dashboard || '/dashboard';
     
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -58,7 +84,7 @@ export default function Register() {
         <title>Register - Abbaa Carraa</title>
       </Head>
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4 w-full">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <div className="text-center mb-8">
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-3xl">🎁</span>
@@ -67,12 +93,12 @@ export default function Register() {
             <p className="text-gray-500 mt-2">Choose your role to get started</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {roles.map((role) => (
               <button
                 key={role.id}
                 onClick={() => setSelectedRole(role.id)}
-                className={`bg-gradient-to-r ${role.bgColor} rounded-xl p-6 text-white text-left hover:shadow-xl transition transform hover:-translate-y-1 ${
+                className={`bg-gradient-to-r ${role.bgColor} rounded-xl p-6 text-white text-left hover:shadow-xl transition transform hover:-translate-y-1 touch-target ${
                   selectedRole === role.id ? 'ring-4 ring-white ring-offset-2' : ''
                 }`}
               >
@@ -86,7 +112,7 @@ export default function Register() {
           <button 
             onClick={startRegistration} 
             disabled={!selectedRole || loading} 
-            className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition disabled:bg-gray-400 flex items-center justify-center gap-3"
+            className="w-full bg-green-600 text-white py-4 rounded-xl font-semibold hover:bg-green-700 transition disabled:bg-gray-400 flex items-center justify-center gap-3 touch-target"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -97,6 +123,10 @@ export default function Register() {
             Continue with Google
             {selectedRole && <span className="text-sm">({roles.find(r => r.id === selectedRole)?.name})</span>}
           </button>
+          
+          <p className="text-center text-gray-500 text-xs mt-6">
+            By continuing, you agree to our Terms and Conditions and Privacy Policy
+          </p>
         </div>
       </div>
     </>
