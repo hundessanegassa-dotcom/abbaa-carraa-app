@@ -7,7 +7,9 @@ import PoolCard from '../components/PoolCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import BackButton from '../components/BackButton';
 import toast from 'react-hot-toast';
-
+export async function getServerSideProps() {
+  return { props: {} };
+}
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState(null);
