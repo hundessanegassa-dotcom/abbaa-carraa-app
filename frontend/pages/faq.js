@@ -3,7 +3,9 @@ import BackButton from '../components/BackButton';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-
+export async function getServerSideProps() {
+  return { props: {} };
+}
 export default function FAQ() {
   const { t } = useTranslation();
   const [openSection, setOpenSection] = useState(null);
