@@ -433,3 +433,41 @@ html {
 .trust-badge-icon:hover {
   transform: scale(1.1);
 }
+/* Mobile Safe Area for notches */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Touch-friendly targets */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Mobile Responsive - Keep multiple columns, just adjust spacing */
+@media (max-width: 768px) {
+  button, 
+  a[href*="/register"],
+  a[href*="/login"],
+  .touch-target {
+    min-height: 48px;
+  }
+  
+  body {
+    font-size: 16px;
+  }
+  
+  .container {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+
+/* Animation */
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
