@@ -1,36 +1,49 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
-import Link from 'next/link';
 import Head from 'next/head';
 
 export default function Register() {
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState('');
+  const { role: preselectedRole } = router.query;
+  const [selectedRole, setSelectedRole] = useState(preselectedRole || '');
   const [loading, setLoading] = useState(false);
 
   const roles = [
-    { id: 'individual', name: 'Individual', icon: '👤', description: 'Join pools and win amazing prizes', color: 'from-green-500 to-teal-500' },
-    { id: 'agent', name: 'Agent', icon: '🤝', description: 'Create pools and earn 10% commission', color: 'from-yellow-500 to-orange-500' },
-    { id: 'vendor', name: 'Vendor', icon: '🏪', description: 'List products and earn commission', color: 'from-purple-500 to-pink-500' },
-    { id: 'organization', name: 'Organization', icon: '🏢', description: 'Create private pools for members', color: 'from-blue-500 to-cyan-500' }
+    { id: 'individual', name: 'Individual', icon: '👤', description: 'Join pools and win amazing prizes', bgColor: 'from-green-500 to-teal-500', path: '/dashboard' },
+    { id: 'agent', name: 'Agent', icon: '🤝', description: 'Create pools and earn 10% commission', bgColor: 'from-yellow-500 to-orange-500', path: '/agent/dashboard' },
+    { id: 'vendor', name: 'Vendor', icon: '🏪', description: 'List products and earn 10% commission', bgColor: 'from-purple-500 to-pink-500', path: '/vendor/dashboard' },
+    { id: 'organization', name: 'Organization', icon: '🏢', description: 'Create private pools for members', bgColor: 'from-blue-500 to-cyan-500', path: '/organization/dashboard' }
   ];
+
+  useEffect(() => {
+    if (preselectedRole) {
+      setSelectedRole(preselectedRole);
+    }
+  }, [preselectedRole]);
 
   const startRegistration = async () => {
     if (!selectedRole) {
-      toast.error('Please select a role first');
+      toast.error('Please select a role');
       return;
     }
     
     setLoading(true);
+    
+    // Store selected role
     localStorage.setItem('pendingRole', selectedRole);
+    sessionStorage.setItem('pendingRole', selectedRole);
+    
+    // Get redirect URL based on role
+    const roleConfig = roles.find(r => r.id === selectedRole);
+    const redirectPath = roleConfig?.path || '/dashboard';
     
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
+        redirectTo: `${window.location.origin}/auth/callback?redirect=${redirectPath}`
+      }
     });
     
     if (error) {
@@ -41,15 +54,17 @@ export default function Register() {
 
   return (
     <>
-      <Head><title>Register - Abbaa Carraa</title></Head>
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4">
+      <Head>
+        <title>Register - Abbaa Carraa</title>
+      </Head>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4 w-full">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-3xl">🎁</span>
             </div>
             <h1 className="text-3xl font-bold text-gray-800">Join Abbaa Carraa</h1>
-            <p className="text-gray-500 mt-2">Choose how you want to participate</p>
+            <p className="text-gray-500 mt-2">Choose your role to get started</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -57,16 +72,13 @@ export default function Register() {
               <button
                 key={role.id}
                 onClick={() => setSelectedRole(role.id)}
-                className={`bg-gradient-to-r ${role.color} rounded-xl p-6 text-white text-left hover:shadow-xl transition transform hover:-translate-y-1 ${selectedRole === role.id ? 'ring-4 ring-white' : ''}`}
+                className={`bg-gradient-to-r ${role.bgColor} rounded-xl p-6 text-white text-left hover:shadow-xl transition transform hover:-translate-y-1 ${
+                  selectedRole === role.id ? 'ring-4 ring-white ring-offset-2' : ''
+                }`}
               >
                 <div className="text-4xl mb-3">{role.icon}</div>
                 <h3 className="text-xl font-bold mb-2">{role.name}</h3>
                 <p className="text-sm opacity-90">{role.description}</p>
-                {role.id !== 'individual' && (
-                  <div className="mt-2 text-xs bg-white/20 rounded-full px-2 py-0.5 inline-block">
-                    💰 Earn 10% commission
-                  </div>
-                )}
               </button>
             ))}
           </div>
@@ -85,10 +97,6 @@ export default function Register() {
             Continue with Google
             {selectedRole && <span className="text-sm">({roles.find(r => r.id === selectedRole)?.name})</span>}
           </button>
-          
-          <div className="mt-8 text-center">
-            <p className="text-gray-500 text-sm">Already have an account? <Link href="/login" className="text-green-600 font-semibold">Sign In</Link></p>
-          </div>
         </div>
       </div>
     </>
