@@ -1,5 +1,5 @@
 import '../styles/globals.css';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -16,42 +16,19 @@ const LanguageToggle = dynamic(() => import('../components/LanguageToggle'), { s
 
 const queryClient = new QueryClient();
 
-// Pages where back button should NEVER appear
-const HIDE_BACK_BUTTON = ['/', '/login', '/register'];
+// Pages where back button should NOT appear
+const HIDE_BACK_BUTTON = ['/', '/login', '/register', '/auth/callback'];
 
 function MyApp({ Component, pageProps }) {
   const [mounted, setMounted] = useState(false);
-  const [showGlobalBackButton, setShowGlobalBackButton] = useState(true);
   const router = useRouter();
-  const containerRef = useRef(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // After component renders, check if page already has a back button
-  useEffect(() => {
-    if (!mounted) return;
-    
-    // Small delay to ensure DOM is ready
-    const timer = setTimeout(() => {
-      // Check if there's already a back button on the page
-      const existingBackButton = document.querySelector('button');
-      const hasBackButton = existingBackButton && 
-                           existingBackButton.textContent?.includes('Back');
-      
-      // Also check for our BackButton component by looking for its specific classes
-      const hasOurBackButton = document.querySelector('button.text-gray-500');
-      
-      if (hasBackButton || hasOurBackButton) {
-        setShowGlobalBackButton(false);
-      }
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, [mounted, router.pathname]);
-
-  const shouldShow = !HIDE_BACK_BUTTON.includes(router.pathname) && showGlobalBackButton;
+  // Check if we should show the back button
+  const showBackButton = !HIDE_BACK_BUTTON.includes(router.pathname);
 
   if (!mounted) {
     return (
@@ -70,9 +47,11 @@ function MyApp({ Component, pageProps }) {
           </Head>
           <div className="min-h-screen flex flex-col">
             <Navbar />
-            <main className="flex-grow container mx-auto px-4 py-6" ref={containerRef}>
-              {shouldShow && <BackButton />}
-              <Component {...pageProps} />
+            <main className="flex-grow w-full">
+              <div className="container mx-auto px-4 py-4">
+                {showBackButton && <BackButton />}
+                <Component {...pageProps} />
+              </div>
             </main>
             <Footer />
             <LanguageToggle />
