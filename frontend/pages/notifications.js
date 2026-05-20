@@ -5,7 +5,9 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import DashboardLayout from '../components/DashboardLayout';
 import toast from 'react-hot-toast';
-
+export async function getServerSideProps() {
+  return { props: {} };
+}
 export default function NotificationsPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
