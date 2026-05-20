@@ -7,15 +7,15 @@ import toast from 'react-hot-toast';
 
 export default function AuthCallback() {
   const router = useRouter();
+  const { redirect } = router.query;
   const [showAgreement, setShowAgreement] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [userData, setUserData] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Get the session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) throw sessionError;
@@ -26,13 +26,9 @@ export default function AuthCallback() {
           return;
         }
 
-        const user = session.user;
-        
-        // Get pending role from storage
+        // Get role from storage
         let pendingRole = localStorage.getItem('pendingRole');
         if (!pendingRole) pendingRole = sessionStorage.getItem('pendingRole');
-        
-        console.log('Pending role:', pendingRole);
         
         if (!pendingRole) {
           toast.error('Please select a role first');
@@ -40,41 +36,30 @@ export default function AuthCallback() {
           return;
         }
 
-        // First, ensure profile exists
-        const { data: existingProfile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, agreement_accepted, role, user_type')
-          .eq('id', user.id)
-          .maybeSingle();
+        setUserRole(pendingRole);
 
-        // If profile doesn't exist, create it
-        if (!existingProfile) {
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert({
-              id: user.id,
-              email: user.email,
-              full_name: user.user_metadata?.full_name || user.email,
-              role: pendingRole,
-              user_type: pendingRole,
-              agreement_accepted: false,
-              created_at: new Date().toISOString()
-            });
-          
-          if (insertError) {
-            console.error('Profile creation error:', insertError);
-          }
-        }
-
-        // Check if agreement is already accepted
+        // Check if profile exists and agreement accepted
         const { data: profile } = await supabase
           .from('profiles')
           .select('agreement_accepted')
-          .eq('id', user.id)
+          .eq('id', session.user.id)
           .maybeSingle();
 
+        // Create profile if it doesn't exist
+        if (!profile) {
+          await supabase.from('profiles').insert({
+            id: session.user.id,
+            email: session.user.email,
+            full_name: session.user.user_metadata?.full_name || session.user.email,
+            role: pendingRole,
+            user_type: pendingRole,
+            agreement_accepted: false,
+            created_at: new Date().toISOString()
+          });
+        }
+
         if (profile?.agreement_accepted === true) {
-          // Already accepted, redirect to dashboard
+          // Already accepted, redirect to role dashboard
           localStorage.removeItem('pendingRole');
           sessionStorage.removeItem('pendingRole');
           
@@ -85,17 +70,11 @@ export default function AuthCallback() {
             admin: '/admin/dashboard',
             individual: '/dashboard'
           };
-          router.push(dashboards[pendingRole] || '/dashboard');
+          router.push(dashboards[pendingRole] || redirect || '/dashboard');
           return;
         }
 
         // Show agreement modal
-        setUserData({
-          id: user.id,
-          email: user.email,
-          name: user.user_metadata?.full_name || user.email,
-          role: pendingRole
-        });
         setShowAgreement(true);
         setLoading(false);
         
@@ -108,7 +87,7 @@ export default function AuthCallback() {
     };
 
     handleCallback();
-  }, [router]);
+  }, [router, redirect]);
 
   const handleClose = () => {
     localStorage.removeItem('pendingRole');
@@ -133,14 +112,12 @@ export default function AuthCallback() {
     return <LoadingSpinner fullPage message="Completing sign in..." />;
   }
 
-  if (showAgreement && userData) {
+  if (showAgreement && userRole) {
     return (
       <AgreementModal
         isOpen={true}
         onClose={handleClose}
-        userId={userData.id}
-        userEmail={userData.email}
-        userRole={userData.role}
+        userRole={userRole}
       />
     );
   }
