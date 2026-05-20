@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import BackButton from '../components/BackButton';
 import { useState } from 'react';
 import Link from 'next/link';
