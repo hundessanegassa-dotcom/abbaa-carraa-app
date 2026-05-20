@@ -179,7 +179,6 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* Additional Role Buttons */}
             <div className="flex flex-wrap justify-center gap-3 mt-6">
               <Link href="/register?role=vendor" className="bg-purple-50 text-purple-700 px-4 py-2 rounded-full text-sm hover:bg-purple-100 transition">
                 🏪 Become a Vendor
