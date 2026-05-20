@@ -2,7 +2,9 @@ import BackButton from '../components/BackButton';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import Link from 'next/link';
-
+export async function getServerSideProps() {
+  return { props: {} };
+}
 export default function Winners() {
   const [winners, setWinners] = useState([]);
   const [loading, setLoading] = useState(true);
