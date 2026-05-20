@@ -30,50 +30,84 @@ export default function Home() {
   });
   const [dataLoaded, setDataLoaded] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        // Fetch all stats
-        const [poolsResult, winnersResult, agentsResult, contributionsResult] = await Promise.all([
-          supabase.from('pools').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-          supabase.from('pools').select('*', { count: 'exact', head: true }).not('winner_id', 'is', null),
-          supabase.from('agents').select('*', { count: 'exact', head: true }),
-          supabase.from('contributions').select('amount').eq('status', 'completed')
-        ]);
-        
-        const total_raised = (contributionsResult.data || []).reduce((sum, c) => sum + (c.amount || 0), 0);
-        
-        setStats({
-          total_pools: poolsResult.count || 0,
-          total_winners: winnersResult.count || 0,
-          total_agents: agentsResult.count || 0,
-          total_raised: total_raised
-        });
-        
-        // Fetch ONLY pools with images
-        const { data } = await supabase
-          .from('pools')
+    // 🔥 Check if data is already in sessionStorage
+    const cachedData = sessionStorage.getItem('homepage_data');
+    
+    if (cachedData) {
+      // Use cached data immediately - NO LOADING STATE
+      const { pools: cachedPools, featuredPools: cachedFeatured, stats: cachedStats } = JSON.parse(cachedData);
+      setPools(cachedPools);
+      setFeaturedPools(cachedFeatured);
+      setStats(cachedStats);
+      setDataLoaded(true);
+      setIsInitialLoad(false);
+    } else {
+      // First time loading - fetch data
+      loadData();
+    }
+  }, []);
+
+  const loadData = async () => {
+    try {
+      // Fetch all stats in parallel
+      const [poolsResult, winnersResult, agentsResult, contributionsResult, poolsData] = await Promise.all([
+        supabase.from('pools').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+        supabase.from('pools').select('*', { count: 'exact', head: true }).not('winner_id', 'is', null),
+        supabase.from('agents').select('*', { count: 'exact', head: true }),
+        supabase.from('contributions').select('amount').eq('status', 'completed'),
+        supabase.from('pools')
           .select('*')
           .eq('status', 'active')
-          .not('image_url', 'is', null)  // 🔥 ONLY pools with images
-          .not('image_url', 'eq', '')     // 🔥 Exclude empty strings
-          .limit(12);
-        
-        setPools(data || []);
-        
-        // Featured pools: pools with images AND is_featured = true
-        setFeaturedPools(data?.filter(pool => pool.is_featured === true && pool.image_url) || []);
-        
-      } catch (error) {
-        console.error('Error:', error);
-      } finally {
-        setDataLoaded(true);
-      }
-    };
-    
-    loadData();
-  }, []);
+          .not('image_url', 'is', null)
+          .not('image_url', 'eq', '')
+          .limit(12)
+      ]);
+      
+      const total_raised = (contributionsResult.data || []).reduce((sum, c) => sum + (c.amount || 0), 0);
+      
+      const newStats = {
+        total_pools: poolsResult.count || 0,
+        total_winners: winnersResult.count || 0,
+        total_agents: agentsResult.count || 0,
+        total_raised: total_raised
+      };
+      
+      const newPools = poolsData.data || [];
+      const newFeaturedPools = newPools.filter(pool => pool.is_featured === true && pool.image_url);
+      
+      setPools(newPools);
+      setFeaturedPools(newFeaturedPools);
+      setStats(newStats);
+      
+      // 🔥 Cache data in sessionStorage for back button navigation
+      sessionStorage.setItem('homepage_data', JSON.stringify({
+        pools: newPools,
+        featuredPools: newFeaturedPools,
+        stats: newStats
+      }));
+      
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setDataLoaded(true);
+      setIsInitialLoad(false);
+    }
+  };
+
+  // Don't show loading spinner on back navigation
+  if (!dataLoaded && isInitialLoad) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-500">Loading amazing prizes...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -87,8 +121,7 @@ export default function Home() {
         <CashEquivalentBanner />
         <CharityBanner />
 
-        {/* ========== HERO SECTION ========== */}
-        {/* DIV 1: IMAGE ONLY - Full width */}
+        {/* Hero Section */}
         <div className="w-full bg-gradient-to-br from-green-700 to-teal-700">
           <div className="max-w-7xl mx-auto">
             {!imageLoaded && (
@@ -116,7 +149,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* DIV 2: TEXT CONTENT ONLY */}
+        {/* Text Content */}
         <div className="bg-white py-12">
           <div className="container mx-auto px-4 text-center">
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-4 py-1.5 rounded-full text-sm font-semibold mb-5">
@@ -152,26 +185,14 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ========== FULL STATS SECTION ========== */}
+        {/* Stats Section */}
         <div className="bg-white border-t border-gray-200 py-8">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-              <div>
-                <div className="text-3xl font-bold text-green-600">{stats.total_pools}+</div>
-                <div className="text-gray-500 text-sm">Active Pools</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-green-600">{stats.total_winners}+</div>
-                <div className="text-gray-500 text-sm">Happy Winners</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-green-600">{stats.total_agents}+</div>
-                <div className="text-gray-500 text-sm">Trusted Agents</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-green-600">ETB {Math.floor(stats.total_raised / 1000)}K+</div>
-                <div className="text-gray-500 text-sm">Total Raised</div>
-              </div>
+              <div><div className="text-3xl font-bold text-green-600">{stats.total_pools}+</div><div className="text-gray-500 text-sm">Active Pools</div></div>
+              <div><div className="text-3xl font-bold text-green-600">{stats.total_winners}+</div><div className="text-gray-500 text-sm">Happy Winners</div></div>
+              <div><div className="text-3xl font-bold text-green-600">{stats.total_agents}+</div><div className="text-gray-500 text-sm">Trusted Agents</div></div>
+              <div><div className="text-3xl font-bold text-green-600">ETB {Math.floor(stats.total_raised / 1000)}K+</div><div className="text-gray-500 text-sm">Total Raised</div></div>
             </div>
           </div>
         </div>
@@ -180,7 +201,7 @@ export default function Home() {
         <AdvertisingBanner />
         <SimpleFilters onFilterChange={() => {}} />
 
-        {/* ========== FEATURED POOLS (ONLY WITH IMAGES) ========== */}
+        {/* Featured Pools */}
         {featuredPools.length > 0 && (
           <section className="container mx-auto px-4 py-8">
             <h2 className="text-2xl font-bold text-center mb-8">⭐ Featured Prize Pools</h2>
@@ -192,7 +213,7 @@ export default function Home() {
           </section>
         )}
 
-        {/* ========== ALL ACTIVE POOLS (ONLY WITH IMAGES) ========== */}
+        {/* All Active Pools */}
         <section className="container mx-auto px-4 py-8">
           <h2 className="text-2xl font-bold text-center mb-8">Active Prize Pools</h2>
           {pools.length === 0 && !dataLoaded ? (
@@ -219,26 +240,14 @@ export default function Home() {
         <Testimonials />
         <NewsletterSubscribe />
 
-        {/* ========== HOW IT WORKS ========== */}
+        {/* How It Works */}
         <div className="bg-gray-50 py-16">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
             <div className="grid md:grid-cols-3 gap-8 text-center">
-              <div>
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">1</div>
-                <h3 className="font-bold text-xl mb-2">Find a Pool</h3>
-                <p className="text-gray-600">Browse available prize pools</p>
-              </div>
-              <div>
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">2</div>
-                <h3 className="font-bold text-xl mb-2">Contribute</h3>
-                <p className="text-gray-600">Make your contribution securely</p>
-              </div>
-              <div>
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">3</div>
-                <h3 className="font-bold text-xl mb-2">Win!</h3>
-                <p className="text-gray-600">Win amazing prizes!</p>
-              </div>
+              <div><div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">1</div><h3 className="font-bold text-xl mb-2">Find a Pool</h3><p className="text-gray-600">Browse available prize pools</p></div>
+              <div><div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">2</div><h3 className="font-bold text-xl mb-2">Contribute</h3><p className="text-gray-600">Make your contribution securely</p></div>
+              <div><div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">3</div><h3 className="font-bold text-xl mb-2">Win!</h3><p className="text-gray-600">Win amazing prizes!</p></div>
             </div>
           </div>
         </div>
