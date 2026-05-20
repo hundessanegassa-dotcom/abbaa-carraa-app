@@ -163,28 +163,35 @@ export default function Home() {
               <span className="text-green-700 font-medium">2% supports kidney & heart disease patients</span>
             </div>
             
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-              <Link 
-                href="/listings" 
-                className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-8 py-3.5 rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition"
-              >
-                🎁 Start Winning Now →
-              </Link>
+            {/* Role Buttons - Direct to role-specific registration */}
+            <div className="flex flex-wrap justify-center gap-3 mt-6">
               <Link 
                 href="/register?role=agent" 
-                className="bg-white border-2 border-gray-200 text-gray-700 px-8 py-3.5 rounded-full font-semibold text-lg shadow-md hover:border-green-500 transition"
+                className="bg-yellow-50 text-yellow-700 px-4 py-2 rounded-full text-sm hover:bg-yellow-100 transition touch-target"
               >
-                👑 Become an Agent →
+                🤝 Become an Agent
+              </Link>
+              <Link 
+                href="/register?role=vendor" 
+                className="bg-purple-50 text-purple-700 px-4 py-2 rounded-full text-sm hover:bg-purple-100 transition touch-target"
+              >
+                🏪 Become a Vendor
+              </Link>
+              <Link 
+                href="/register?role=organization" 
+                className="bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm hover:bg-blue-100 transition touch-target"
+              >
+                🏢 Become an Organization
               </Link>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-3 mt-6">
-              <Link href="/register?role=vendor" className="bg-purple-50 text-purple-700 px-4 py-2 rounded-full text-sm hover:bg-purple-100 transition">
-                🏪 Become a Vendor
-              </Link>
-              <Link href="/register?role=organization" className="bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm hover:bg-blue-100 transition">
-                🏢 Become an Organization
+            {/* Individual Participant Button */}
+            <div className="flex justify-center mt-4">
+              <Link 
+                href="/register?role=individual" 
+                className="bg-green-600 text-white px-6 py-3 rounded-full font-semibold text-base shadow-md hover:bg-green-700 transition touch-target"
+              >
+                🎁 Start Winning Now →
               </Link>
             </div>
 
