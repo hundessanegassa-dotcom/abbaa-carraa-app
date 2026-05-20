@@ -1,21 +1,25 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 🔥 THIS DISABLES ALL STATIC PRE-RENDERING
-  output: 'standalone',
-  
-  // Disable static generation for all pages
-  trailingSlash: false,
-  
   reactStrictMode: true,
   swcMinify: true,
   
+  // 🔥 THIS PREVENTS STATIC GENERATION TIMEOUTS
+  output: 'standalone',
+  
   images: {
     unoptimized: true,
-    domains: ['supabase.co'],
+    domains: ['supabase.co', 'lh3.googleusercontent.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co',
+      },
+    ],
   },
   
-  // Tell Next.js not to try to pre-render any page
-  staticPageGenerationTimeout: 1,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
 };
 
 module.exports = nextConfig;
