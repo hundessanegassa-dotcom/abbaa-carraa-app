@@ -163,7 +163,7 @@ export default function Home() {
               <span className="text-green-700 font-medium">2% supports kidney & heart disease patients</span>
             </div>
             
-            {/* Role Buttons - Direct to role-specific registration */}
+            {/* Role Buttons - Direct to Google Login */}
             <div className="flex flex-wrap justify-center gap-3 mt-6">
               <Link 
                 href="/register?role=agent" 
