@@ -32,7 +32,6 @@ export default function VendorDashboard() {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawalAmount, setWithdrawalAmount] = useState('');
   const [pendingDeliveries, setPendingDeliveries] = useState([]);
-  const [discounts, setDiscounts] = useState([]);
 
   useEffect(() => {
     checkUser();
@@ -60,7 +59,6 @@ export default function VendorDashboard() {
         return;
       }
 
-      // Get vendor details
       const { data: vendorData } = await supabase
         .from('vendors')
         .select('*')
@@ -80,7 +78,6 @@ export default function VendorDashboard() {
 
   async function loadVendorData(userId) {
     try {
-      // 1. Fetch products
       const { data: productsData, error: productsError } = await supabase
         .from('products')
         .select('*')
@@ -94,7 +91,6 @@ export default function VendorDashboard() {
       const activeListings = productsData?.filter(p => p.status === 'active')?.length || 0;
       const totalStockValue = productsData?.reduce((sum, p) => sum + (p.price * (p.stock || 0)), 0) || 0;
       
-      // 2. Fetch orders for this vendor's products
       const productIds = productsData?.map(p => p.id) || [];
       
       let ordersData = [];
@@ -113,18 +109,15 @@ export default function VendorDashboard() {
       }
       setOrders(ordersData);
       
-      // 3. Calculate stats
       const totalSales = ordersData?.reduce((sum, o) => sum + (o.amount || 0), 0) || 0;
       const ordersCount = ordersData?.length || 0;
       const avgOrder = ordersCount > 0 ? totalSales / ordersCount : 0;
       
-      // 4. Calculate commission (10% platform fee - CORRECTED)
       const totalCommission = totalSales * 0.10;
       const paidCommission = ordersData?.filter(o => o.commission_paid)?.reduce((sum, o) => sum + (o.amount * 0.10), 0) || 0;
       const pendingCommission = totalCommission - paidCommission;
       const charityContribution = totalSales * 0.02;
       
-      // 5. Fetch withdrawal history
       const { data: withdrawals } = await supabase
         .from('withdrawal_requests')
         .select('*')
@@ -267,24 +260,25 @@ export default function VendorDashboard() {
     >
       <BackButton fallbackHref="/" />
 
-      {/* Role Description Card - Enhanced with correct 10% commission */}
+      {/* Role Description Card - Enhanced for Vendor */}
       <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500 rounded-xl p-5 mb-8">
-        <h3 className="font-bold text-purple-800 text-lg mb-2">✨ Your Role: Vendor</h3>
+        <h3 className="font-bold text-purple-800 text-lg mb-2">✨ Your Role: Vendor/Supplier</h3>
         <p className="text-purple-700 text-sm leading-relaxed">
-          As a Vendor, you can list products for sale on Abbaa Carraa's marketplace. When a pool winner purchases your product 
-          using their prize money, you earn <strong className="font-bold">10% commission</strong> on the sale.
+          As a Vendor/Supplier, you provide products for prize pools (cars, real estate, electronics, machinery, etc.).
         </p>
         <div className="mt-3 bg-white/50 rounded-lg p-3 text-sm">
-          <p className="font-semibold text-purple-800">💰 Commission Structure (Vendor Sales):</p>
-          <p className="text-purple-700 text-xs mt-1">
-            • Product price: <strong>100% of product value</strong><br/>
-            • You earn: <strong>10% commission</strong> (added on top)<br/>
-            • Platform fee: <strong>10%</strong> (added on top)<br/>
-            • Total paid by buyer (winner): <strong>Product price + 20%</strong>
-          </p>
-          <p className="text-xs text-purple-600 mt-2">
-            Example: Product priced at 100,000 ETB → Winner pays 120,000 ETB → You earn 10,000 ETB → Platform gets 10,000 ETB → Winner gets product
-          </p>
+          <p className="font-semibold text-purple-800">🏪 How It Works:</p>
+          <ul className="text-purple-700 text-xs mt-1 list-disc list-inside space-y-1">
+            <li>You list your products on the platform (car dealer, real estate seller, electronics shop, etc.)</li>
+            <li>Agents/Organizations create pools using your products as prizes</li>
+            <li>When a pool reaches its target, the <strong>winner receives your product</strong> (physical or cash equivalent)</li>
+            <li><strong>Non-winners</strong> receive a discount code to purchase from you directly</li>
+            <li>You earn <strong>10% commission</strong> on each sale to winners</li>
+            <li>Discount sales to non-winners are <strong>commission-free</strong> (direct profit)</li>
+          </ul>
+        </div>
+        <div className="mt-3 bg-green-50 rounded-lg p-2 text-center text-xs text-green-700">
+          💡 Example: A car dealer lists a Toyota. Agent creates a pool. Winner gets the car. 99 non-winners get 20% discount codes to buy from your dealership!
         </div>
         {vendorDetails && vendorDetails.verified && (
           <div className="mt-3 inline-flex items-center gap-2 bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs">
@@ -293,7 +287,7 @@ export default function VendorDashboard() {
         )}
       </div>
 
-      {/* Quick Actions - New Row */}
+      {/* Quick Actions Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <Link href="/vendor/listings/create" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
           <div className="text-2xl mb-1">➕</div>
@@ -340,7 +334,7 @@ export default function VendorDashboard() {
         </div>
       )}
 
-      {/* Sales Summary & Quick Stats */}
+      {/* Sales Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-center hover:shadow-md transition">
           <div className="w-10 h-10 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-lg">💰</div>
@@ -435,29 +429,11 @@ export default function VendorDashboard() {
                         </td>
                         <td className="py-3 px-3 text-right">
                           <div className="flex justify-end gap-1">
-                            <Link 
-                              href={`/vendor/listings/edit/${product.id}`} 
-                              className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition" 
-                              title="Edit"
-                            >
-                              ✏️
-                            </Link>
-                            <button 
-                              onClick={() => handleToggleStatus(product.id, product.status)} 
-                              disabled={submitting}
-                              className="text-orange-600 hover:bg-orange-50 p-2 rounded-lg transition" 
-                              title={product.status === 'active' ? 'Disable' : 'Enable'}
-                            >
+                            <Link href={`/vendor/listings/edit/${product.id}`} className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition" title="Edit">✏️</Link>
+                            <button onClick={() => handleToggleStatus(product.id, product.status)} disabled={submitting} className="text-orange-600 hover:bg-orange-50 p-2 rounded-lg transition" title={product.status === 'active' ? 'Disable' : 'Enable'}>
                               {product.status === 'active' ? '⏸️' : '▶️'}
                             </button>
-                            <button 
-                              onClick={() => handleDeleteProduct(product.id)} 
-                              disabled={submitting}
-                              className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition" 
-                              title="Delete"
-                            >
-                              🗑️
-                            </button>
+                            <button onClick={() => handleDeleteProduct(product.id)} disabled={submitting} className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition" title="Delete">🗑️</button>
                           </div>
                         </td>
                       </tr>
@@ -471,7 +447,7 @@ export default function VendorDashboard() {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Pending Deliveries - NEW */}
+          {/* Pending Deliveries */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
               <span>🚚</span> Pending Deliveries
@@ -509,7 +485,7 @@ export default function VendorDashboard() {
             </Link>
           </div>
 
-          {/* Commission Summary - Updated to 10% */}
+          {/* Commission Summary */}
           <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl shadow-sm border border-green-100">
             <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
               <span>💰</span> Commission Summary (10%)
@@ -549,59 +525,7 @@ export default function VendorDashboard() {
             </button>
           </div>
 
-          {/* Discount Management - NEW */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-              <span>🏷️</span> Active Discounts
-            </h3>
-            {discounts.length === 0 ? (
-              <div className="text-center py-4">
-                <p className="text-gray-400 text-sm">No active discounts</p>
-                <button className="text-purple-600 text-xs mt-1 hover:underline">Create discount →</button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {discounts.map(d => (
-                  <div key={d.id} className="flex justify-between items-center text-sm py-2 border-b border-gray-100">
-                    <span>{d.code}</span>
-                    <span className="text-green-600">{d.percentage}% off</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Sales Analytics - NEW */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl shadow-sm border border-blue-100">
-            <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-              <span>📊</span> Sales Analytics
-            </h3>
-            <div className="space-y-3">
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600">Average Order Value</span>
-                  <span className="font-bold">{Math.floor(stats.avgOrder).toLocaleString()} ETB</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${Math.min((stats.avgOrder / 100000) * 100, 100)}%` }}></div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600">Conversion Rate</span>
-                  <span className="font-bold">{stats.conversion}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-green-600 h-2 rounded-full" style={{ width: `${Math.min(parseFloat(stats.conversion) * 10, 100)}%` }}></div>
-                </div>
-              </div>
-              <div className="pt-2 text-center">
-                <p className="text-xs text-gray-500">Based on {stats.orders} orders from {stats.activeListings} listings</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Tips for Success - NEW */}
+          {/* Tips for Success */}
           <div className="bg-yellow-50 p-5 rounded-2xl border border-yellow-100">
             <h3 className="font-semibold text-yellow-800 mb-2 flex items-center gap-2">
               <span>💡</span> Tips for Success
@@ -612,7 +536,7 @@ export default function VendorDashboard() {
               <li>Offer competitive prices to attract winners</li>
               <li>Respond quickly to order inquiries</li>
               <li>Build your reputation with good ratings</li>
-              <li>Create discounts to boost sales</li>
+              <li>Create discounts to boost sales to non-winners</li>
             </ul>
           </div>
 
