@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
@@ -42,7 +41,7 @@ export default function AuthCallback() {
         // Check if profile exists and agreement accepted
         const { data: profile } = await supabase
           .from('profiles')
-          .select('agreement_accepted')
+          .select('agreement_accepted, role')
           .eq('id', session.user.id)
           .maybeSingle();
 
@@ -59,8 +58,8 @@ export default function AuthCallback() {
           });
         }
 
+        // If agreement already accepted, redirect to dashboard
         if (profile?.agreement_accepted === true) {
-          // Already accepted, redirect to role dashboard
           localStorage.removeItem('pendingRole');
           sessionStorage.removeItem('pendingRole');
           
@@ -90,6 +89,49 @@ export default function AuthCallback() {
     handleCallback();
   }, [router, redirect]);
 
+  const handleAcceptAgreement = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      
+      const pendingRole = localStorage.getItem('pendingRole') || sessionStorage.getItem('pendingRole');
+      
+      // Update profile with agreement accepted
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          agreement_accepted: true,
+          agreement_accepted_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', session.user.id);
+      
+      if (error) throw error;
+      
+      // Clear stored role
+      localStorage.removeItem('pendingRole');
+      sessionStorage.removeItem('pendingRole');
+      
+      toast.success('Welcome to Abbaa Carraa!');
+      
+      // Redirect to role dashboard
+      const dashboards = {
+        agent: '/agent/dashboard',
+        vendor: '/vendor/dashboard',
+        organization: '/organization/dashboard',
+        admin: '/admin/dashboard',
+        individual: '/dashboard'
+      };
+      
+      const dashboardPath = dashboards[pendingRole] || '/dashboard';
+      router.push(dashboardPath);
+      
+    } catch (err) {
+      console.error('Accept agreement error:', err);
+      toast.error('Failed to save agreement. Please try again.');
+    }
+  };
+
   const handleClose = () => {
     localStorage.removeItem('pendingRole');
     sessionStorage.removeItem('pendingRole');
@@ -118,6 +160,7 @@ export default function AuthCallback() {
       <AgreementModal
         isOpen={true}
         onClose={handleClose}
+        onAccept={handleAcceptAgreement}
         userRole={userRole}
       />
     );
