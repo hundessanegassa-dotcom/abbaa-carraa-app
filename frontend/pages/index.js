@@ -33,11 +33,9 @@ export default function Home() {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
-    // 🔥 Check if data is already in sessionStorage
     const cachedData = sessionStorage.getItem('homepage_data');
     
     if (cachedData) {
-      // Use cached data immediately - NO LOADING STATE
       const { pools: cachedPools, featuredPools: cachedFeatured, stats: cachedStats } = JSON.parse(cachedData);
       setPools(cachedPools);
       setFeaturedPools(cachedFeatured);
@@ -45,14 +43,12 @@ export default function Home() {
       setDataLoaded(true);
       setIsInitialLoad(false);
     } else {
-      // First time loading - fetch data
       loadData();
     }
   }, []);
 
   const loadData = async () => {
     try {
-      // Fetch all stats in parallel
       const [poolsResult, winnersResult, agentsResult, contributionsResult, poolsData] = await Promise.all([
         supabase.from('pools').select('*', { count: 'exact', head: true }).eq('status', 'active'),
         supabase.from('pools').select('*', { count: 'exact', head: true }).not('winner_id', 'is', null),
@@ -82,7 +78,6 @@ export default function Home() {
       setFeaturedPools(newFeaturedPools);
       setStats(newStats);
       
-      // 🔥 Cache data in sessionStorage for back button navigation
       sessionStorage.setItem('homepage_data', JSON.stringify({
         pools: newPools,
         featuredPools: newFeaturedPools,
@@ -97,7 +92,6 @@ export default function Home() {
     }
   };
 
-  // Don't show loading spinner on back navigation
   if (!dataLoaded && isInitialLoad) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -117,7 +111,7 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-white w-full">
         <CashEquivalentBanner />
         <CharityBanner />
 
@@ -150,7 +144,7 @@ export default function Home() {
         </div>
 
         {/* Text Content */}
-        <div className="bg-white py-12">
+        <div className="bg-white py-12 w-full">
           <div className="container mx-auto px-4 text-center">
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-4 py-1.5 rounded-full text-sm font-semibold mb-5">
               🔥 Ethiopia's #1 Prize Platform 🏆
@@ -168,14 +162,33 @@ export default function Home() {
               <span className="text-green-600 text-lg">💚</span>
               <span className="text-green-700 font-medium">2% supports kidney & heart disease patients</span>
             </div>
+            
+            {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-              <Link href="/register" className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-8 py-3.5 rounded-full font-semibold text-lg shadow-lg">
+              <Link 
+                href="/listings" 
+                className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-8 py-3.5 rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition"
+              >
                 🎁 Start Winning Now →
               </Link>
-              <Link href="/become-agent" className="bg-white border-2 border-gray-200 text-gray-700 px-8 py-3.5 rounded-full font-semibold text-lg shadow-md hover:border-green-500">
+              <Link 
+                href="/register?role=agent" 
+                className="bg-white border-2 border-gray-200 text-gray-700 px-8 py-3.5 rounded-full font-semibold text-lg shadow-md hover:border-green-500 transition"
+              >
                 👑 Become an Agent →
               </Link>
             </div>
+
+            {/* Additional Role Buttons */}
+            <div className="flex flex-wrap justify-center gap-3 mt-6">
+              <Link href="/register?role=vendor" className="bg-purple-50 text-purple-700 px-4 py-2 rounded-full text-sm hover:bg-purple-100 transition">
+                🏪 Become a Vendor
+              </Link>
+              <Link href="/register?role=organization" className="bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm hover:bg-blue-100 transition">
+                🏢 Become an Organization
+              </Link>
+            </div>
+
             <div className="flex flex-wrap justify-center gap-3 mt-10 pt-6 border-t border-gray-200">
               <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">✓ Cash Guarantee</div>
               <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">✓ Blockchain Verified</div>
@@ -186,7 +199,7 @@ export default function Home() {
         </div>
 
         {/* Stats Section */}
-        <div className="bg-white border-t border-gray-200 py-8">
+        <div className="bg-white border-t border-gray-200 py-8 w-full">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
               <div><div className="text-3xl font-bold text-green-600">{stats.total_pools}+</div><div className="text-gray-500 text-sm">Active Pools</div></div>
@@ -241,7 +254,7 @@ export default function Home() {
         <NewsletterSubscribe />
 
         {/* How It Works */}
-        <div className="bg-gray-50 py-16">
+        <div className="bg-gray-50 py-16 w-full">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
             <div className="grid md:grid-cols-3 gap-8 text-center">
