@@ -1,5 +1,5 @@
 import '../styles/globals.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -16,37 +16,42 @@ const LanguageToggle = dynamic(() => import('../components/LanguageToggle'), { s
 
 const queryClient = new QueryClient();
 
-// Pages where back button should NEVER appear (even global)
+// Pages where back button should NEVER appear
 const HIDE_BACK_BUTTON = ['/', '/login', '/register'];
 
 function MyApp({ Component, pageProps }) {
   const [mounted, setMounted] = useState(false);
+  const [showGlobalBackButton, setShowGlobalBackButton] = useState(true);
   const router = useRouter();
-  const [pageHasBackButton, setPageHasBackButton] = useState(false);
+  const containerRef = useRef(null);
 
   useEffect(() => {
     setMounted(true);
-    
-    // Check if the page component has a back button
-    // This checks for both imported BackButton component and manual back buttons
-    const checkForBackButton = () => {
-      // Get the rendered HTML temporarily (not ideal but works)
-      const tempDiv = document.createElement('div');
-      // This is a simplified check - we'll use a better approach below
-    };
-    
-    // Better approach: Check component's source code characteristics
-    // Since we can't easily check rendered output, we'll use a different method
-  }, [Component]);
+  }, []);
 
-  // Alternative: Add a flag in pageProps when page has its own back button
-  // Pages can set this when they import their own BackButton
-  const hasOwnBackButton = pageProps.hasBackButton === true;
-  
-  // Show global back button only if:
-  // 1. Not on hidden pages (home, login, register)
-  // 2. Page doesn't have its own back button
-  const showGlobalBackButton = !HIDE_BACK_BUTTON.includes(router.pathname) && !hasOwnBackButton;
+  // After component renders, check if page already has a back button
+  useEffect(() => {
+    if (!mounted) return;
+    
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      // Check if there's already a back button on the page
+      const existingBackButton = document.querySelector('button');
+      const hasBackButton = existingBackButton && 
+                           existingBackButton.textContent?.includes('Back');
+      
+      // Also check for our BackButton component by looking for its specific classes
+      const hasOurBackButton = document.querySelector('button.text-gray-500');
+      
+      if (hasBackButton || hasOurBackButton) {
+        setShowGlobalBackButton(false);
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [mounted, router.pathname]);
+
+  const shouldShow = !HIDE_BACK_BUTTON.includes(router.pathname) && showGlobalBackButton;
 
   if (!mounted) {
     return (
@@ -65,9 +70,8 @@ function MyApp({ Component, pageProps }) {
           </Head>
           <div className="min-h-screen flex flex-col">
             <Navbar />
-            <main className="flex-grow container mx-auto px-4 py-6">
-              {/* Global Back Button - only if page doesn't have its own */}
-              {showGlobalBackButton && <BackButton />}
+            <main className="flex-grow container mx-auto px-4 py-6" ref={containerRef}>
+              {shouldShow && <BackButton />}
               <Component {...pageProps} />
             </main>
             <Footer />
