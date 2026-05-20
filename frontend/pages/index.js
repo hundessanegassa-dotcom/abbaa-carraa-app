@@ -34,7 +34,7 @@ export default function Home() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Fetch all stats in parallel
+        // Fetch all stats
         const [poolsResult, winnersResult, agentsResult, contributionsResult] = await Promise.all([
           supabase.from('pools').select('*', { count: 'exact', head: true }).eq('status', 'active'),
           supabase.from('pools').select('*', { count: 'exact', head: true }).not('winner_id', 'is', null),
@@ -51,15 +51,19 @@ export default function Home() {
           total_raised: total_raised
         });
         
-        // Fetch pools
+        // Fetch ONLY pools with images
         const { data } = await supabase
           .from('pools')
           .select('*')
           .eq('status', 'active')
+          .not('image_url', 'is', null)  // 🔥 ONLY pools with images
+          .not('image_url', 'eq', '')     // 🔥 Exclude empty strings
           .limit(12);
         
         setPools(data || []);
-        setFeaturedPools(data?.filter(pool => pool.is_featured === true) || []);
+        
+        // Featured pools: pools with images AND is_featured = true
+        setFeaturedPools(data?.filter(pool => pool.is_featured === true && pool.image_url) || []);
         
       } catch (error) {
         console.error('Error:', error);
@@ -112,7 +116,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* DIV 2: TEXT CONTENT ONLY - Completely separate below image */}
+        {/* DIV 2: TEXT CONTENT ONLY */}
         <div className="bg-white py-12">
           <div className="container mx-auto px-4 text-center">
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-4 py-1.5 rounded-full text-sm font-semibold mb-5">
@@ -176,7 +180,7 @@ export default function Home() {
         <AdvertisingBanner />
         <SimpleFilters onFilterChange={() => {}} />
 
-        {/* ========== FEATURED POOLS ========== */}
+        {/* ========== FEATURED POOLS (ONLY WITH IMAGES) ========== */}
         {featuredPools.length > 0 && (
           <section className="container mx-auto px-4 py-8">
             <h2 className="text-2xl font-bold text-center mb-8">⭐ Featured Prize Pools</h2>
@@ -188,7 +192,7 @@ export default function Home() {
           </section>
         )}
 
-        {/* ========== ALL ACTIVE POOLS ========== */}
+        {/* ========== ALL ACTIVE POOLS (ONLY WITH IMAGES) ========== */}
         <section className="container mx-auto px-4 py-8">
           <h2 className="text-2xl font-bold text-center mb-8">Active Prize Pools</h2>
           {pools.length === 0 && !dataLoaded ? (
@@ -199,7 +203,7 @@ export default function Home() {
             </div>
           ) : pools.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500">No pools available at the moment.</p>
+              <p className="text-gray-500">No pools with images available at the moment.</p>
               <Link href="/create-pool" className="text-green-600 mt-2 inline-block">Create a pool →</Link>
             </div>
           ) : (
