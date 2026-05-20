@@ -6,7 +6,6 @@ import { supabase } from '../lib/supabase';
 import { useTranslation } from 'react-i18next';
 import PoolCard from '../components/PoolCard';
 import LoadingSpinner from '../components/LoadingSpinner';
-import AdvertisingBanner from '../components/AdvertisingBanner';
 import CashEquivalentBanner from '../components/CashEquivalentBanner';
 import CharityBanner from '../components/CharityBanner';
 
