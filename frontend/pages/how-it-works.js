@@ -1,7 +1,9 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-
+export async function getServerSideProps() {
+  return { props: {} };
+}
 export default function HowItWorks() {
   const { t } = useTranslation();
 
