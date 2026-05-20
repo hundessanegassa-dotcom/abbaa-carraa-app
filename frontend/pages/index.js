@@ -62,34 +62,35 @@ export default function Home() {
         <CashEquivalentBanner />
         <CharityBanner />
 
-        {/* Hero Section - No image to avoid blink */}
-        <div className="bg-gradient-to-r from-green-600 to-teal-600 text-white py-16 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold">Abbaa Carraa</h1>
-          <p className="text-xl mt-2">Ethiopia's #1 Prize Platform</p>
-          <p className="text-green-100 mt-2">Win cars, houses, electronics & more!</p>
-          <div className="mt-6 flex gap-4 justify-center">
-            <Link href="/register" className="bg-white text-green-600 px-6 py-2 rounded-full font-semibold">
-              Start Winning →
-            </Link>
-            <Link href="/become-agent" className="border border-white text-white px-6 py-2 rounded-full font-semibold">
-              Become Agent →
-            </Link>
-          </div>
-          <p className="mt-4 text-green-100">💚 2% supports kidney & heart disease patients</p>
-        </div>
-
-        {/* Stats - Show immediately, update when data loads */}
-        <div className="py-8 border-b">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-              <div><div className="text-3xl font-bold text-green-600">{stats.total_pools || 0}+</div><div className="text-gray-500">Active Pools</div></div>
-              <div><div className="text-3xl font-bold text-green-600">50+</div><div className="text-gray-500">Winners</div></div>
-              <div><div className="text-3xl font-bold text-green-600">20+</div><div className="text-gray-500">Agents</div></div>
-              <div><div className="text-3xl font-bold text-green-600">ETB 500K+</div><div className="text-gray-500">Raised</div></div>
-            </div>
-          </div>
-        </div>
-
+       {/* Hero Section with Image - No Blink */}
+<div className="relative">
+  <div className="bg-gradient-to-r from-green-600 to-teal-600">
+    <img 
+      src="/images/abbaa-carraa-bg.png"
+      alt="Abbaa Carraa"
+      className="w-full h-auto object-cover block opacity-90"
+      loading="eager"
+      style={{ maxHeight: '400px' }}
+      onError={(e) => {
+        e.target.style.display = 'none';
+      }}
+    />
+  </div>
+  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+    <div className="text-center text-white px-4">
+      <h1 className="text-4xl md:text-6xl font-bold">Abbaa Carraa</h1>
+      <p className="text-xl mt-2">Ethiopia's #1 Prize Platform</p>
+      <div className="mt-4 flex gap-4 justify-center">
+        <Link href="/register" className="bg-white text-green-600 px-6 py-2 rounded-full font-semibold">
+          Start Winning →
+        </Link>
+        <Link href="/become-agent" className="border border-white text-white px-6 py-2 rounded-full font-semibold">
+          Become Agent →
+        </Link>
+      </div>
+    </div>
+  </div>
+</div>
         <MovingAd />
         <AdvertisingBanner />
         <SimpleFilters onFilterChange={() => {}} />
