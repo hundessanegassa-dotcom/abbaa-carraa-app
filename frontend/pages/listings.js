@@ -3,7 +3,9 @@ import { supabase } from '../lib/supabase';
 import Link from 'next/link';
 import Head from 'next/head';
 import { useTranslation } from 'react-i18next';
-
+export async function getServerSideProps() {
+  return { props: {} };
+}
 export default function Listings() {
   const { t } = useTranslation();
   const [pools, setPools] = useState([]);
