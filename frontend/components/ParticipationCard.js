@@ -49,7 +49,7 @@ export default function ParticipationCard({ contribution, pool, user, onClose })
       ticketSeat: 'Tiiketti / Teessoo',
       winnerGets: 'Moʼaataan kan argatu',
       dateJoined: 'Guyyaa hirmaannaa',
-      verification: 'Mirkaneessaa',
+      verification: 'MIRKANEESSA',
       scanToVerify: 'Hirmaannaa keessan mirkaneessuuf iskaanii godhaa',
       charity: '2% dhukkuba kalee fi onne qabaniif tajaajila',
       footer: 'Abbaa Carraa - Abjuu mirkaneessuu, Jireenya Jijjiiruu'
@@ -115,10 +115,10 @@ export default function ParticipationCard({ contribution, pool, user, onClose })
 
   const shareOnWhatsApp = () => {
     const message = `🎉✨ ${language === 'en' ? 'I just joined the' : language === 'am' ? 'አሁን ተቀላቀልኩ' : 'Ani yeroo ammaa makadhe'} "${pool.prize_name}" ${language === 'en' ? 'pool on Abbaa Carraa' : language === 'am' ? 'በአባ ካራ ላይ' : 'kuusaa Abbaa Carraa irratti'}! ✨🎉\n\n` +
-                    `💰 ${language === 'en' ? 'Entry' : language === 'am' ? 'የመግቢያ ክፍያ' : 'Kaffaltii Seensaa'}: ETB ${contribution.amount.toLocaleString()}\n` +
-                    `🎟️ ${language === 'en' ? 'Ticket' : language === 'am' ? 'ቲኬት' : 'Tiiketti'}: ${generateTicketNumbers()}\n\n` +
-                    `🏆 ${language === 'en' ? 'Winner gets' : language === 'am' ? 'አሸናፊው የሚያገኘው' : 'Moʼaataan kan argatu'} ETB ${pool.target_amount?.toLocaleString()}!\n\n` +
-                    `💚 2% ${language === 'en' ? 'supports kidney & heart disease patients' : language === 'am' ? 'የኩላሊት እና የልብ ህመምተኞችን ይደግፋል' : 'dhukkuba kalee fi onne qabaniif tajaajila'}\n\n` +
+                    `💰 ${t.entryAmount}: ETB ${contribution.amount.toLocaleString()}\n` +
+                    `🎟️ ${t.ticketSeat}: ${generateTicketNumbers()}\n\n` +
+                    `🏆 ${t.winnerGets}: ETB ${pool.target_amount?.toLocaleString()}!\n\n` +
+                    `💚 ${t.charity}\n\n` +
                     `${language === 'en' ? 'Join me' : language === 'am' ? 'ተቀላቀሉኝ' : 'Na makadhu'} 👇\n` +
                     `${window.location.origin}/pools/${pool.id}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
@@ -126,10 +126,10 @@ export default function ParticipationCard({ contribution, pool, user, onClose })
 
   const shareOnTelegram = () => {
     const message = `🎉✨ ${language === 'en' ? 'I just joined the' : language === 'am' ? 'አሁን ተቀላቀልኩ' : 'Ani yeroo ammaa makadhe'} "${pool.prize_name}" ${language === 'en' ? 'pool on Abbaa Carraa' : language === 'am' ? 'በአባ ካራ ላይ' : 'kuusaa Abbaa Carraa irratti'}! ✨🎉\n\n` +
-                    `💰 ${language === 'en' ? 'Entry' : language === 'am' ? 'የመግቢያ ክፍያ' : 'Kaffaltii Seensaa'}: ETB ${contribution.amount.toLocaleString()}\n` +
-                    `🎟️ ${language === 'en' ? 'Ticket' : language === 'am' ? 'ቲኬት' : 'Tiiketti'}: ${generateTicketNumbers()}\n\n` +
-                    `🏆 ${language === 'en' ? 'Winner gets' : language === 'am' ? 'አሸናፊው የሚያገኘው' : 'Moʼaataan kan argatu'} ETB ${pool.target_amount?.toLocaleString()}!\n\n` +
-                    `💚 2% ${language === 'en' ? 'supports kidney & heart disease patients' : language === 'am' ? 'የኩላሊት እና የልብ ህመምተኞችን ይደግፋል' : 'dhukkuba kalee fi onne qabaniif tajaajila'}`;
+                    `💰 ${t.entryAmount}: ETB ${contribution.amount.toLocaleString()}\n` +
+                    `🎟️ ${t.ticketSeat}: ${generateTicketNumbers()}\n\n` +
+                    `🏆 ${t.winnerGets}: ETB ${pool.target_amount?.toLocaleString()}!\n\n` +
+                    `💚 ${t.charity}`;
     window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.origin + '/pools/' + pool.id)}&text=${encodeURIComponent(message)}`, '_blank');
   };
 
@@ -170,11 +170,11 @@ export default function ParticipationCard({ contribution, pool, user, onClose })
               <span className="text-4xl">🎁</span>
             </div>
             <h2 className="text-2xl font-bold">🎉 {language === 'en' ? 'Participation Confirmed!' : language === 'am' ? 'ተሳትፎ ተረጋግጧል!' : 'Hirmaannaa Mirkaneeffame!'}</h2>
-            <p className="text-sm opacity-90 mt-1">{language === 'en' ? "You're officially in the draw!" : language === 'am' ? 'በይፋ በእጣው ውስጥ ነዎት!' : 'Wabii keessatti ofiiseen jiraattu!'}</p>
+            <p className="text-sm opacity-90 mt-1">{language === 'en' ? "You're officially in the draw!" : language === 'am' ? 'በይፋ በእጣው ውስጥ ነዎት!' : 'Hirmaanna badhaasaa keessaa ifaan seentanittu!'}</p>
           </div>
         </div>
 
-        {/* Card Content - Downloadable (All Colors Preserved) */}
+        {/* Card Content - Downloadable */}
         <div ref={cardRef} className="p-6 bg-white">
           {/* Premium Badge */}
           <div className="text-center mb-4">
