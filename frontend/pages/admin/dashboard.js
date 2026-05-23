@@ -1,8 +1,6 @@
 export async function getServerSideProps() {
   return { props: {} };
 }
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
 import BackButton from '../../components/BackButton';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -592,14 +590,14 @@ export default function AdminDashboard() {
             <button onClick={() => setActiveTab('bank-transfers')} className={`px-4 py-3 font-semibold ${activeTab === 'bank-transfers' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🏦 Bank Transfers ({pendingBankTransfers})</button>
             <button onClick={() => setActiveTab('featured')} className={`px-4 py-3 font-semibold ${activeTab === 'featured' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>⭐ Featured</button>
             <button onClick={() => setActiveTab('finance')} className={`px-4 py-3 font-semibold ${activeTab === 'finance' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>💰 Finance</button>
-            <button onClick={() | setActiveTab('disputes')} className={`px-4 py-3 font-semibold ${activeTab === 'disputes' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>⚖️ Disputes ({disputes.length})</button>
+            <button onClick={() => setActiveTab('disputes')} className={`px-4 py-3 font-semibold ${activeTab === 'disputes' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>⚖️ Disputes ({disputes.length})</button>
             <button onClick={() => setActiveTab('settings')} className={`px-4 py-3 font-semibold ${activeTab === 'settings' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>⚙️ Settings</button>
           </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Overview Tab Content */}
+        {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
@@ -668,17 +666,11 @@ export default function AdminDashboard() {
         {/* My Pools Tab */}
         {activeTab === 'my-pools' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
-            <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
-              <h2 className="font-bold text-lg">💰 My Personal Pools (20% Commission)</h2>
-              <button onClick={() => setShowPoolModal(true)} className="bg-red-600 text-white px-4 py-1 rounded-full text-sm">+ Create</button>
-            </div>
+            <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center"><h2 className="font-bold text-lg">💰 My Personal Pools (20% Commission)</h2><button onClick={() => setShowPoolModal(true)} className="bg-red-600 text-white px-4 py-1 rounded-full text-sm">+ Create</button></div>
             <div className="p-6">
-              {myPools.length === 0 ? (
-                <div className="text-center py-8"><p className="text-gray-400">No pools created yet</p><button onClick={() => setShowPoolModal(true)} className="mt-2 text-red-600">Create your first pool →</button></div>
-              ) : (
+              {myPools.length === 0 ? (<div className="text-center py-8"><p className="text-gray-400">No pools created yet</p><button onClick={() => setShowPoolModal(true)} className="mt-2 text-red-600">Create your first pool →</button></div>) : (
                 <div className="overflow-x-auto"><table className="w-full"><thead className="bg-gray-50"><tr><th className="px-4 py-3 text-left">Prize</th><th className="px-4 py-3 text-left">Target</th><th className="px-4 py-3 text-left">Raised</th><th className="px-4 py-3 text-left">Your 20%</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Action</th></tr></thead>
-                <tbody>{myPools.map(pool => (<tr key={pool.id} className="border-b hover:bg-gray-50"><td className="px-4 py-3 font-medium">{pool.prize_name}</td><td className="px-4 py-3">ETB {pool.target_amount?.toLocaleString()}</td><td className="px-4 py-3">ETB {pool.current_amount?.toLocaleString()}</td><td className="px-4 py-3 font-bold text-green-600">ETB {((pool.target_amount || 0) * 0.20).toLocaleString()}</td><td className="px-4 py-3"><span className="px-2 py-1 rounded-full text-xs">{pool.status}</span></td><td className="px-4 py-3"><Link href={`/pools/${pool.id}`} className="text-red-600 text-sm hover:underline">View</Link></td></tr>))}</tbody></table></div>
-              )}
+                <tbody>{myPools.map(pool => (<tr key={pool.id} className="border-b hover:bg-gray-50"><td className="px-4 py-3 font-medium">{pool.prize_name}</td><td className="px-4 py-3">ETB {pool.target_amount?.toLocaleString()}</td><td className="px-4 py-3">ETB {pool.current_amount?.toLocaleString()}</td><td className="px-4 py-3 font-bold text-green-600">ETB {((pool.target_amount || 0) * 0.20).toLocaleString()}</td><td className="px-4 py-3"><span className={`px-2 py-1 rounded-full text-xs ${pool.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{pool.status}</span></td><td className="px-4 py-3"><Link href={`/pools/${pool.id}`} className="text-red-600 text-sm hover:underline">View</Link></td></tr>))}</tbody></table></div>)}
             </div>
           </div>
         )}
@@ -697,7 +689,7 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">🌊 All Platform Pools</h2></div>
             <div className="overflow-x-auto p-4"><table className="w-full"><thead className="bg-gray-50"><tr><th className="px-4 py-3 text-left">Prize</th><th className="px-4 py-3 text-left">Creator</th><th className="px-4 py-3 text-left">Target</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Featured</th><th className="px-4 py-3 text-left">Actions</th></tr></thead>
-            <tbody>{allPools.map(p => (<tr key={p.id} className="border-b hover:bg-gray-50"><td className="px-4 py-3 font-medium">{p.prize_name}</td><td className="px-4 py-3">{p.profiles?.full_name || 'Admin'}</td><td className="px-4 py-3">ETB {p.target_amount?.toLocaleString()}</td><td className="px-4 py-3"><span className="px-2 py-1 rounded-full text-xs">{p.status}</span></td><td className="px-4 py-3">{p.is_featured ? '⭐ Featured' : ''}</td><td className="px-4 py-3 flex gap-1 flex-wrap"><button onClick={() => togglePoolStatus(p.id, p.status)} className="bg-yellow-600 text-white px-2 py-1 rounded text-xs">{p.status === 'active' ? 'Pause' : 'Activate'}</button><button onClick={() => toggleFeaturedPool(p.id, p.is_featured)} className="bg-blue-600 text-white px-2 py-1 rounded text-xs">{p.is_featured ? 'Unfeature' : 'Feature'}</button><button onClick={() => deletePool(p.id)} className="bg-red-600 text-white px-2 py-1 rounded text-xs">Delete</button><Link href={`/pools/${p.id}`} className="bg-gray-600 text-white px-2 py-1 rounded text-xs">View</Link></td></tr>))}</tbody></table></div>
+            <tbody>{allPools.map(p => (<tr key={p.id} className="border-b hover:bg-gray-50"><td className="px-4 py-3 font-medium">{p.prize_name}</td><td className="px-4 py-3">{p.profiles?.full_name || 'Admin'}</td><td className="px-4 py-3">ETB {p.target_amount?.toLocaleString()}</td><td className="px-4 py-3"><span className={`px-2 py-1 rounded-full text-xs ${p.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{p.status}</span></td><td className="px-4 py-3">{p.is_featured ? '⭐ Featured' : ''}</td><td className="px-4 py-3 flex gap-1 flex-wrap"><button onClick={() => togglePoolStatus(p.id, p.status)} className="bg-yellow-600 text-white px-2 py-1 rounded text-xs">{p.status === 'active' ? 'Pause' : 'Activate'}</button><button onClick={() => toggleFeaturedPool(p.id, p.is_featured)} className="bg-blue-600 text-white px-2 py-1 rounded text-xs">{p.is_featured ? 'Unfeature' : 'Feature'}</button><button onClick={() => deletePool(p.id)} className="bg-red-600 text-white px-2 py-1 rounded text-xs">Delete</button><Link href={`/pools/${p.id}`} className="bg-gray-600 text-white px-2 py-1 rounded text-xs">View</Link></td></tr>))}</tbody></table></div>
           </div>
         )}
 
