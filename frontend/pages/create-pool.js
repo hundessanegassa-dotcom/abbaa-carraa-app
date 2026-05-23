@@ -4,9 +4,11 @@ import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
 import ImageUpload from '../components/ImageUpload';
+
 export async function getServerSideProps() {
   return { props: {} };
 }
+
 export default function CreatePool() {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -247,7 +249,7 @@ export default function CreatePool() {
                 />
                 {numberOfSeats > 0 && (
                   <p className="text-xs text-gray-400 mt-1">
-                    This pool will have ~{numberOfSeats} seats
+                    This pool will have ~{numberOfSeats.toLocaleString()} seats
                   </p>
                 )}
               </div>
@@ -338,7 +340,7 @@ export default function CreatePool() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition disabled:bg-gray-400"
+              className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition disabled:opacity-50"
             >
               {submitting ? 'Creating...' : '🚀 Create Prize Pool'}
             </button>
