@@ -132,7 +132,8 @@ export default function CreatePool() {
     const numberOfSeats = Math.ceil(targetAmount / contributionAmount);
 
     const poolData = {
-      prize_name: formData.prize_name,
+      name: formData.prize_name,           // Required column
+      prize_name: formData.prize_name,     // For compatibility
       description: formData.description,
       target_amount: targetAmount,
       contribution_amount: contributionAmount,
