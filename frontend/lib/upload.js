@@ -54,18 +54,13 @@ export async function uploadPoolImage(file, folder = 'pools') {
     throw new Error('Image must be less than 10MB');
   }
   
-  // Compress image (resize to 1200px, quality 70%)
+  // Compress image if larger than 500KB
   let uploadFile = file;
-  let isCompressed = false;
-  
-  // Only compress if file is larger than 1MB or very large dimensions
-  if (file.size > 1024 * 1024) {
+  if (file.size > 500 * 1024) {
     try {
       uploadFile = await compressImage(file, 1200, 0.7);
-      isCompressed = true;
     } catch (compressError) {
       console.warn('Compression failed, using original file:', compressError);
-      uploadFile = file;
     }
   }
   
@@ -92,12 +87,7 @@ export async function uploadPoolImage(file, folder = 'pools') {
     .from('pool-images')
     .getPublicUrl(fileName);
   
-  return {
-    url: publicUrl,
-    compressed: isCompressed,
-    originalSize: file.size,
-    compressedSize: uploadFile.size
-  };
+  return publicUrl;
 }
 
 // Delete image from storage
@@ -117,21 +107,4 @@ export async function deletePoolImage(imageUrl) {
   if (error) {
     console.error('Delete error:', error);
   }
-}
-
-// Get optimized image URL (with size parameters)
-export function getOptimizedImageUrl(imageUrl, width = 400, height = null) {
-  if (!imageUrl) return null;
-  
-  // If it's a Supabase URL, we can add transformation params
-  if (imageUrl.includes('supabase.co')) {
-    const params = new URLSearchParams();
-    params.append('width', width);
-    if (height) params.append('height', height);
-    params.append('resize', 'contain');
-    
-    return `${imageUrl}?${params.toString()}`;
-  }
-  
-  return imageUrl;
 }
