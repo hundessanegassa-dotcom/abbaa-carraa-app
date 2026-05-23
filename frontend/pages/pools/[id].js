@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import Head from 'next/head';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import SeatSelector from '../../components/SeatSelector';
 
 export default function PoolDetails() {
   const router = useRouter();
@@ -11,13 +12,16 @@ export default function PoolDetails() {
   const [pool, setPool] = useState(null);
   const [loading, setLoading] = useState(true);
   const [contributing, setContributing] = useState(false);
-  const [contributionAmount, setContributionAmount] = useState(100);
   const [user, setUser] = useState(null);
+  const [showSeatSelector, setShowSeatSelector] = useState(false);
+  const [selectedSeatsData, setSelectedSeatsData] = useState(null);
+  const [availableSeats, setAvailableSeats] = useState(0);
 
   useEffect(() => {
     if (id) {
       fetchPool();
       getCurrentUser();
+      fetchAvailableSeats();
     }
   }, [id]);
 
@@ -44,34 +48,106 @@ export default function PoolDetails() {
     setLoading(false);
   }
 
-  async function handleContribute() {
+  async function fetchAvailableSeats() {
+    const { count, error } = await supabase
+      .from('pool_seats')
+      .select('*', { count: 'exact', head: true })
+      .eq('pool_id', id)
+      .eq('status', 'available');
+    
+    if (!error) {
+      setAvailableSeats(count || 0);
+    }
+  }
+
+  const handleJoinNow = () => {
     if (!user) {
-      toast.error('Please login to contribute');
+      toast.error('Please login to join this pool');
       router.push('/login');
       return;
     }
+    setShowSeatSelector(true);
+  };
 
+  const handleSeatsSelected = async (seatData) => {
+    setSelectedSeatsData(seatData);
+    setShowSeatSelector(false);
+    
+    // Proceed to payment with seat data
+    await initiatePayment(seatData);
+  };
+
+  const initiatePayment = async (seatData) => {
     setContributing(true);
     
-    // Create contribution record
-    const { error } = await supabase
-      .from('contributions')
-      .insert({
-        user_id: user.id,
-        pool_id: pool.id,
-        amount: contributionAmount,
-        status: 'pending',
-        created_at: new Date().toISOString()
-      });
-    
-    if (error) {
-      toast.error('Failed to process contribution');
-    } else {
-      toast.success('Contribution initiated! Please complete payment.');
-      // Redirect to payment page or show payment modal
+    try {
+      // Create contribution record with seat numbers
+      const { data: contribution, error: contribError } = await supabase
+        .from('contributions')
+        .insert({
+          user_id: user.id,
+          pool_id: pool.id,
+          amount: seatData.totalAmount,
+          seat_numbers: seatData.seats,
+          seat_count: seatData.seatCount,
+          status: 'pending',
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      if (contribError) throw contribError;
+
+      // Mark seats as reserved (will be taken after payment)
+      const { error: seatError } = await supabase
+        .from('pool_seats')
+        .update({
+          status: 'reserved',
+          user_id: user.id,
+          contribution_id: contribution.id,
+          reserved_until: new Date(Date.now() + 10 * 60 * 1000).toISOString()
+        })
+        .in('seat_number', seatData.seats)
+        .eq('pool_id', pool.id);
+
+      if (seatError) throw seatError;
+
+      // Redirect to payment
+      // Replace with your actual payment integration
+      toast.success('Please complete payment to confirm your seats');
+      
+      // For Chapa payment
+      if (process.env.NEXT_PUBLIC_CHAPA_SECRET_KEY) {
+        // Redirect to Chapa payment
+        const response = await fetch('/api/chapa/initialize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: seatData.totalAmount,
+            email: user.email,
+            firstName: user.user_metadata?.full_name?.split(' ')[0] || 'User',
+            lastName: user.user_metadata?.full_name?.split(' ')[1] || '',
+            tx_ref: `ABBA-${Date.now()}-${contribution.id}`,
+            callbackUrl: `${window.location.origin}/payment/success?pool_id=${pool.id}&seats=${seatData.seats.join(',')}&contribution_id=${contribution.id}`
+          })
+        });
+        
+        const data = await response.json();
+        if (data.checkout_url) {
+          window.location.href = data.checkout_url;
+        }
+      } else {
+        // Demo mode - simulate success
+        router.push(`/payment/success?pool_id=${pool.id}&seats=${seatData.seats.join(',')}&contribution_id=${contribution.id}&demo=true`);
+      }
+      
+    } catch (error) {
+      console.error('Payment initiation error:', error);
+      toast.error('Failed to initiate payment. Please try again.');
+    } finally {
+      setContributing(false);
     }
-    setContributing(false);
-  }
+  };
 
   if (loading) {
     return (
@@ -95,17 +171,21 @@ export default function PoolDetails() {
   const progress = (pool.current_amount / pool.target_amount) * 100;
   const totalCollection = pool.target_amount * 1.2;
   const daysLeft = pool.end_date ? Math.max(0, Math.ceil((new Date(pool.end_date) - new Date()) / (1000 * 60 * 60 * 24))) : null;
+  const maxSeatsPerUser = 5;
 
   return (
     <>
-      <Head><title>{pool.prize_name} - Abbaa Carraa Ethio</title></Head>
+      <Head>
+        <title>{pool.prize_name} - Abbaa Carraa</title>
+        <meta name="description" content={`Join the ${pool.prize_name} pool. Winner gets ETB ${pool.target_amount?.toLocaleString()}!`} />
+      </Head>
       <div className="min-h-screen bg-gray-50 py-8">
-        <div className="container mx-auto px-4 max-w-4xl">
+        <div className="container mx-auto px-4 max-w-5xl">
           <Link href="/listings" className="text-green-600 hover:underline mb-4 inline-block">← Back to listings</Link>
           
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
             {/* Image */}
-            <div className="w-full h-64 md:h-96 bg-gray-200 relative">
+            <div className="w-full h-64 md:h-80 bg-gray-200 relative">
               {pool.image_url ? (
                 <img src={pool.image_url} alt={pool.prize_name} className="w-full h-full object-cover" />
               ) : (
@@ -114,7 +194,14 @@ export default function PoolDetails() {
                 </div>
               )}
               {pool.status === 'active' && (
-                <span className="absolute top-4 left-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm">Active</span>
+                <span className="absolute top-4 left-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                  🔴 Active
+                </span>
+              )}
+              {pool.is_featured && (
+                <span className="absolute top-4 right-4 bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                  ⭐ Featured
+                </span>
               )}
             </div>
 
@@ -125,66 +212,109 @@ export default function PoolDetails() {
               {/* Progress */}
               <div className="mb-6">
                 <div className="flex justify-between text-sm text-gray-600 mb-1">
-                  <span>Progress</span>
-                  <span>{Math.round(progress)}%</span>
+                  <span>Pool Progress</span>
+                  <span>{Math.round(progress)}% funded</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div className="bg-green-600 h-3 rounded-full" style={{ width: `${Math.min(progress, 100)}%` }}></div>
+                  <div className="bg-green-600 h-3 rounded-full transition-all duration-500" style={{ width: `${Math.min(progress, 100)}%` }}></div>
+                </div>
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>ETB {pool.current_amount?.toLocaleString()}</span>
+                  <span>Target: ETB {pool.target_amount?.toLocaleString()}</span>
                 </div>
               </div>
 
               {/* Stats Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-gray-500 text-sm">Winner Gets</p>
-                  <p className="text-2xl font-bold text-green-600">ETB {pool.target_amount?.toLocaleString()}</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                <div className="bg-green-50 rounded-xl p-3 text-center">
+                  <p className="text-gray-500 text-xs">Winner Gets</p>
+                  <p className="text-lg font-bold text-green-600">ETB {pool.target_amount?.toLocaleString()}</p>
                 </div>
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-gray-500 text-sm">Entry Fee</p>
-                  <p className="text-2xl font-bold text-blue-600">ETB {pool.contribution_amount?.toLocaleString()}</p>
+                <div className="bg-blue-50 rounded-xl p-3 text-center">
+                  <p className="text-gray-500 text-xs">Entry Fee</p>
+                  <p className="text-lg font-bold text-blue-600">ETB {pool.entry_fee?.toLocaleString()}</p>
                 </div>
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-gray-500 text-sm">Total Collection</p>
-                  <p className="text-2xl font-bold text-purple-600">ETB {totalCollection.toLocaleString()}</p>
-                  <p className="text-xs text-gray-400">Includes 20% commission</p>
+                <div className="bg-purple-50 rounded-xl p-3 text-center">
+                  <p className="text-gray-500 text-xs">Total Collection</p>
+                  <p className="text-lg font-bold text-purple-600">ETB {totalCollection.toLocaleString()}</p>
+                  <p className="text-[10px] text-gray-400">Incl. 20% commission</p>
                 </div>
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-gray-500 text-sm">Days Left</p>
-                  <p className="text-2xl font-bold text-orange-600">{daysLeft || 'N/A'} days</p>
+                <div className="bg-orange-50 rounded-xl p-3 text-center">
+                  <p className="text-gray-500 text-xs">Available Seats</p>
+                  <p className="text-lg font-bold text-orange-600">{availableSeats}</p>
+                  <p className="text-[10px] text-gray-400">Max {maxSeatsPerUser} per person</p>
                 </div>
               </div>
 
-              {/* Contribution Section */}
+              {/* Commission Breakdown */}
+              <div className="bg-yellow-50 rounded-xl p-4 mb-6">
+                <p className="font-semibold text-yellow-800 text-sm mb-2">💰 Commission Breakdown</p>
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="text-center">
+                    <p className="text-gray-600">Winner</p>
+                    <p className="font-bold text-green-600">100% of Target</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-gray-600">Creator</p>
+                    <p className="font-bold text-blue-600">10-20%</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-gray-600">Platform</p>
+                    <p className="font-bold text-purple-600">10%</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Section */}
               {pool.status === 'active' && (
                 <div className="border-t pt-6">
-                  <h3 className="text-lg font-bold mb-4">Make a Contribution</h3>
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="flex-1">
-                      <label className="block text-sm text-gray-600 mb-1">Amount (ETB)</label>
-                      <input
-                        type="number"
-                        value={contributionAmount}
-                        onChange={(e) => setContributionAmount(parseInt(e.target.value))}
-                        min={pool.contribution_amount}
-                        step={pool.contribution_amount}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                      />
-                      <p className="text-xs text-gray-400 mt-1">Minimum: ETB {pool.contribution_amount}</p>
-                    </div>
-                    <div className="flex items-end">
+                  {!showSeatSelector ? (
+                    <div className="space-y-4">
+                      <div className="bg-green-50 rounded-xl p-4 text-center">
+                        <p className="text-sm text-green-800 mb-2">
+                          🎯 Choose your seat(s) to participate
+                        </p>
+                        <p className="text-xs text-green-600">
+                          {availableSeats} seats available • Max {maxSeatsPerUser} seats per person
+                        </p>
+                      </div>
                       <button
-                        onClick={handleContribute}
-                        disabled={contributing}
-                        className="bg-green-600 text-white px-8 py-2 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-gray-400"
+                        onClick={handleJoinNow}
+                        disabled={contributing || availableSeats === 0}
+                        className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {contributing ? 'Processing...' : 'Contribute Now'}
+                        {availableSeats === 0 ? 'No Seats Available' : '🎯 Select Seat & Join Pool'}
                       </button>
+                      <p className="text-xs text-gray-400 text-center">
+                        💚 2% of your contribution supports kidney & heart disease treatment
+                      </p>
                     </div>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-3">💚 2% of your contribution supports kidney & heart disease treatment</p>
+                  ) : (
+                    <SeatSelector
+                      poolId={pool.id}
+                      entryFee={pool.entry_fee}
+                      maxSeats={maxSeatsPerUser}
+                      onSeatsSelected={handleSeatsSelected}
+                      onCancel={() => setShowSeatSelector(false)}
+                    />
+                  )}
+                </div>
+              )}
+
+              {pool.status !== 'active' && (
+                <div className="bg-gray-100 rounded-xl p-6 text-center">
+                  <p className="text-gray-500">This pool is no longer active</p>
+                  <Link href="/listings" className="text-green-600 mt-2 inline-block">Browse other pools →</Link>
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Charity Message */}
+          <div className="text-center mt-6">
+            <p className="text-sm text-gray-500">
+              💚 2% of every contribution supports kidney and heart disease treatment in Ethiopia
+            </p>
           </div>
         </div>
       </div>
