@@ -137,6 +137,7 @@ export default function CreatePool() {
       description: formData.description,
       target_amount: targetAmount,
       contribution_amount: contributionAmount,
+      entry_fee: contributionAmount,
       number_of_seats: numberOfSeats,
       total_collection: totalCollection,
       current_amount: 0,
