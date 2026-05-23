@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import AdminAnnouncementModal from '../../components/AdminAnnouncementModal';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -50,7 +51,6 @@ export default function AdminDashboard() {
   
   // Announcement modal
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
-  const [newAnnouncement, setNewAnnouncement] = useState({ title: '', content: '', target_audience: 'all' });
   
   // Pool creation modal
   const [showPoolModal, setShowPoolModal] = useState(false);
@@ -417,13 +417,6 @@ export default function AdminDashboard() {
     if (error) toast.error('Failed'); else { toast.success('Dispute resolved'); loadDisputes(); }
   }
 
-  // Announcement functions
-  async function createAnnouncement() {
-    if (!newAnnouncement.title || !newAnnouncement.content) { toast.error('Please fill all fields'); return; }
-    const { error } = await supabase.from('announcements').insert({ title: newAnnouncement.title, content: newAnnouncement.content, target_audience: newAnnouncement.target_audience, created_by: user?.id, is_active: true });
-    if (error) toast.error('Failed'); else { toast.success('Announcement created'); setShowAnnouncementModal(false); setNewAnnouncement({ title: '', content: '', target_audience: 'all' }); }
-  }
-
   // Pool creation functions
   async function handlePoolImageUpload(e) {
     const file = e.target.files[0];
@@ -543,7 +536,7 @@ export default function AdminDashboard() {
 
       {/* Quick Actions */}
       <div className="container mx-auto px-4 mt-6">
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-7 gap-4">
           <button onClick={() => setShowPoolModal(true)} className="bg-gradient-to-r from-red-600 to-rose-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
             <div className="text-2xl mb-1">➕</div>
             <p className="font-semibold text-xs">Create Pool</p>
@@ -571,8 +564,13 @@ export default function AdminDashboard() {
           </button>
           <button onClick={() => setShowAnnouncementModal(true)} className="bg-purple-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
             <div className="text-2xl mb-1">📢</div>
-            <p className="font-semibold text-xs">Announce</p>
-            <p className="text-xs opacity-80">Send message</p>
+            <p className="font-semibold text-xs">Announcement</p>
+            <p className="text-xs opacity-80">Create & Publish</p>
+          </button>
+          <button onClick={() => setActiveTab('settings')} className="bg-gray-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
+            <div className="text-2xl mb-1">⚙️</div>
+            <p className="font-semibold text-xs">Settings</p>
+            <p className="text-xs opacity-80">Platform</p>
           </button>
         </div>
       </div>
@@ -586,7 +584,7 @@ export default function AdminDashboard() {
             <button onClick={() => setActiveTab('users')} className={`px-4 py-3 font-semibold ${activeTab === 'users' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>👥 Users</button>
             <button onClick={() => setActiveTab('pools')} className={`px-4 py-3 font-semibold ${activeTab === 'pools' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🌊 All Pools</button>
             <button onClick={() => setActiveTab('approvals')} className={`px-4 py-3 font-semibold ${activeTab === 'approvals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>📝 Approvals ({pendingAgents.length + pendingVendors.length + pendingOrganizations.length})</button>
-            <button onClick={() => setActiveTab('withdrawals')} className={`px-4 py-3 font-semibold ${activeTab === 'withdrawals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>💰 Withdrawals ({withdrawalRequests.length})</button>
+            <button onClick={() | setActiveTab('withdrawals')} className={`px-4 py-3 font-semibold ${activeTab === 'withdrawals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>💰 Withdrawals ({withdrawalRequests.length})</button>
             <button onClick={() => setActiveTab('bank-transfers')} className={`px-4 py-3 font-semibold ${activeTab === 'bank-transfers' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🏦 Bank Transfers ({pendingBankTransfers})</button>
             <button onClick={() => setActiveTab('featured')} className={`px-4 py-3 font-semibold ${activeTab === 'featured' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>⭐ Featured</button>
             <button onClick={() => setActiveTab('finance')} className={`px-4 py-3 font-semibold ${activeTab === 'finance' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>💰 Finance</button>
@@ -733,9 +731,12 @@ export default function AdminDashboard() {
 
         {/* Settings Tab */}
         {activeTab === 'settings' && (
-          <div className="bg-white rounded-xl shadow-md p-6"><h2 className="font-bold text-xl mb-4">⚙️ Platform Settings</h2><button onClick={() => setShowAnnouncementModal(true)} className="bg-blue-600 text-white px-6 py-2 rounded-lg">📢 Create Announcement</button>
-          <div className="mt-6 pt-6 border-t"><Link href="/admin/analytics" className="text-blue-600 hover:underline">📊 View Full Analytics →</Link></div>
-          <div className="mt-4"><Link href="/admin/logs" className="text-blue-600 hover:underline">📜 View System Logs →</Link></div></div>
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <h2 className="font-bold text-xl mb-4">⚙️ Platform Settings</h2>
+            <button onClick={() => setShowAnnouncementModal(true)} className="bg-blue-600 text-white px-6 py-2 rounded-lg">📢 Create Announcement</button>
+            <div className="mt-6 pt-6 border-t"><Link href="/admin/analytics" className="text-blue-600 hover:underline">📊 View Full Analytics →</Link></div>
+            <div className="mt-4"><Link href="/admin/logs" className="text-blue-600 hover:underline">📜 View System Logs →</Link></div>
+          </div>
         )}
       </div>
 
@@ -763,15 +764,13 @@ export default function AdminDashboard() {
 
       {/* Announcement Modal */}
       {showAnnouncementModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold mb-4">Create Announcement</h3>
-            <input type="text" placeholder="Title" className="w-full border rounded-lg p-2 mb-3" value={newAnnouncement.title} onChange={(e) => setNewAnnouncement({...newAnnouncement, title: e.target.value})} />
-            <textarea placeholder="Content" rows="4" className="w-full border rounded-lg p-2 mb-3" value={newAnnouncement.content} onChange={(e) => setNewAnnouncement({...newAnnouncement, content: e.target.value})}></textarea>
-            <select className="w-full border rounded-lg p-2 mb-4" value={newAnnouncement.target_audience} onChange={(e) => setNewAnnouncement({...newAnnouncement, target_audience: e.target.value})}><option value="all">All Users</option><option value="agents">Agents</option><option value="vendors">Vendors</option><option value="individuals">Individuals</option></select>
-            <div className="flex gap-3"><button onClick={createAnnouncement} className="flex-1 bg-blue-600 text-white py-2 rounded-lg">Publish</button><button onClick={() => setShowAnnouncementModal(false)} className="flex-1 bg-gray-200 py-2 rounded-lg">Cancel</button></div>
-          </div>
-        </div>
+        <AdminAnnouncementModal
+          isOpen={showAnnouncementModal}
+          onClose={() => setShowAnnouncementModal(false)}
+          onSuccess={() => {
+            toast.success('Announcement published!');
+          }}
+        />
       )}
     </div>
   );
