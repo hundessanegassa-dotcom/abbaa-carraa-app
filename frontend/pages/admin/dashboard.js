@@ -49,7 +49,6 @@ export default function AdminDashboard() {
   const [charityTransactions, setCharityTransactions] = useState([]);
   const [disputes, setDisputes] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
-  const [commissions, setCommissions] = useState([]);
   
   // Announcement modal
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
@@ -120,8 +119,7 @@ export default function AdminDashboard() {
       loadFeaturedPools(),
       loadCharityData(),
       loadDisputes(),
-      loadBankTransfers(),
-      loadCommissions()
+      loadBankTransfers()
     ]);
   }
 
@@ -251,16 +249,6 @@ export default function AdminDashboard() {
     setPendingBankTransfers(data?.length || 0);
   }
 
-  async function loadCommissions() {
-    const { data } = await supabase
-      .from('commissions')
-      .select('*, profiles(full_name, email)')
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false })
-      .limit(50);
-    setCommissions(data || []);
-  }
-
   async function loadUsers() {
     const { data } = await supabase
       .from('profiles')
@@ -356,13 +344,11 @@ export default function AdminDashboard() {
     
     try {
       if (approved) {
-        // Update transfer status
         await supabase
           .from('bank_transfers')
           .update({ status: 'verified', verified_at: new Date().toISOString(), verified_by: user?.id })
           .eq('id', transferId);
 
-        // Mark seats as taken
         if (seatNumbers && seatNumbers.length > 0) {
           await supabase
             .from('pool_seats')
@@ -371,7 +357,6 @@ export default function AdminDashboard() {
             .eq('pool_id', poolId);
         }
 
-        // Create contribution record
         await supabase
           .from('contributions')
           .insert({
@@ -384,7 +369,6 @@ export default function AdminDashboard() {
             created_at: new Date().toISOString()
           });
 
-        // Update pool current amount
         const { data: pool } = await supabase
           .from('pools')
           .select('current_amount')
@@ -398,7 +382,6 @@ export default function AdminDashboard() {
 
         toast.success('Payment approved! Seats confirmed.');
       } else {
-        // Reject - release seats
         await supabase
           .from('bank_transfers')
           .update({ status: 'rejected', rejected_at: new Date().toISOString() })
@@ -581,7 +564,7 @@ export default function AdminDashboard() {
           <button onClick={() => setActiveTab('bank-transfers')} className="bg-blue-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
             <div className="text-2xl mb-1">🏦</div>
             <p className="font-semibold text-xs">Bank Transfers</p>
-            <p className="text-xs opacity-80">{pendingBankTransfers} pending</p>
+            <p className="text-xs opacity-80">{pendingBankTransfers}</p>
           </button>
           <button onClick={() => setActiveTab('disputes')} className="bg-orange-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
             <div className="text-2xl mb-1">⚖️</div>
@@ -597,28 +580,28 @@ export default function AdminDashboard() {
       </div>
 
       {/* Tabs */}
-<div className="border-b bg-white sticky top-0 z-10 overflow-x-auto mt-6">
-  <div className="container mx-auto px-4">
-    <div className="flex gap-1 min-w-max">
-      <button onClick={() => setActiveTab('overview')} className={`px-4 py-3 font-semibold ${activeTab === 'overview' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>📊 Overview</button>
-      <button onClick={() => setActiveTab('my-pools')} className={`px-4 py-3 font-semibold ${activeTab === 'my-pools' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🎯 My Pools (20%)</button>
-      <button onClick={() => setActiveTab('users')} className={`px-4 py-3 font-semibold ${activeTab === 'users' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>👥 Users</button>
-      <button onClick={() => setActiveTab('pools')} className={`px-4 py-3 font-semibold ${activeTab === 'pools' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🌊 All Pools</button>
-      <button onClick={() => setActiveTab('approvals')} className={`px-4 py-3 font-semibold ${activeTab === 'approvals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>📝 Approvals ({pendingAgents.length + pendingVendors.length + pendingOrganizations.length})</button>
-      <button onClick={() => setActiveTab('withdrawals')} className={`px-4 py-3 font-semibold ${activeTab === 'withdrawals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>💰 Withdrawals ({withdrawalRequests.length})</button>
-      <button onClick={() => setActiveTab('bank-transfers')} className={`px-4 py-3 font-semibold ${activeTab === 'bank-transfers' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🏦 Bank Transfers ({pendingBankTransfers})</button>
-      <button onClick={() => setActiveTab('featured')} className={`px-4 py-3 font-semibold ${activeTab === 'featured' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>⭐ Featured</button>
-      <button onClick={() => setActiveTab('finance')} className={`px-4 py-3 font-semibold ${activeTab === 'finance' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>💰 Finance</button>
-      <button onClick={() => setActiveTab('disputes')} className={`px-4 py-3 font-semibold ${activeTab === 'disputes' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>⚖️ Disputes ({disputes.length})</button>
-      <button onClick={() => setActiveTab('settings')} className={`px-4 py-3 font-semibold ${activeTab === 'settings' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>⚙️ Settings</button>
-    </div>
-  </div>
-</div>
-        
-        {/* ========== OVERVIEW TAB ========== */}
+      <div className="border-b bg-white sticky top-0 z-10 overflow-x-auto mt-6">
+        <div className="container mx-auto px-4">
+          <div className="flex gap-1 min-w-max">
+            <button onClick={() => setActiveTab('overview')} className={`px-4 py-3 font-semibold ${activeTab === 'overview' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>📊 Overview</button>
+            <button onClick={() => setActiveTab('my-pools')} className={`px-4 py-3 font-semibold ${activeTab === 'my-pools' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🎯 My Pools (20%)</button>
+            <button onClick={() => setActiveTab('users')} className={`px-4 py-3 font-semibold ${activeTab === 'users' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>👥 Users</button>
+            <button onClick={() => setActiveTab('pools')} className={`px-4 py-3 font-semibold ${activeTab === 'pools' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🌊 All Pools</button>
+            <button onClick={() => setActiveTab('approvals')} className={`px-4 py-3 font-semibold ${activeTab === 'approvals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>📝 Approvals ({pendingAgents.length + pendingVendors.length + pendingOrganizations.length})</button>
+            <button onClick={() => setActiveTab('withdrawals')} className={`px-4 py-3 font-semibold ${activeTab === 'withdrawals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>💰 Withdrawals ({withdrawalRequests.length})</button>
+            <button onClick={() => setActiveTab('bank-transfers')} className={`px-4 py-3 font-semibold ${activeTab === 'bank-transfers' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🏦 Bank Transfers ({pendingBankTransfers})</button>
+            <button onClick={() => setActiveTab('featured')} className={`px-4 py-3 font-semibold ${activeTab === 'featured' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>⭐ Featured</button>
+            <button onClick={() => setActiveTab('finance')} className={`px-4 py-3 font-semibold ${activeTab === 'finance' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>💰 Finance</button>
+            <button onClick={() | setActiveTab('disputes')} className={`px-4 py-3 font-semibold ${activeTab === 'disputes' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>⚖️ Disputes ({disputes.length})</button>
+            <button onClick={() => setActiveTab('settings')} className={`px-4 py-3 font-semibold ${activeTab === 'settings' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>⚙️ Settings</button>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8">
+        {/* Overview Tab Content */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
               <div className="bg-white rounded-xl p-3 text-center shadow-sm"><p className="text-2xl font-bold text-blue-600">{stats.total_users}</p><p className="text-xs text-gray-500">Users</p></div>
               <div className="bg-white rounded-xl p-3 text-center shadow-sm"><p className="text-2xl font-bold text-yellow-600">{stats.total_agents}</p><p className="text-xs text-gray-500">Agents</p></div>
@@ -653,7 +636,6 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Recent Activity */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <h3 className="font-bold text-lg mb-3">📋 Recent Platform Activity</h3>
               <div className="space-y-2">
@@ -663,17 +645,13 @@ export default function AdminDashboard() {
                   recentActivity.map((activity, idx) => (
                     <div key={idx} className="flex items-center gap-3 p-2 border-b border-gray-100">
                       <span className="text-xl">{activity.icon}</span>
-                      <div className="flex-1">
-                        <p className="text-sm text-gray-700">{activity.action}</p>
-                        <p className="text-xs text-gray-400">{new Date(activity.date).toLocaleString()}</p>
-                      </div>
+                      <div className="flex-1"><p className="text-sm text-gray-700">{activity.action}</p><p className="text-xs text-gray-400">{new Date(activity.date).toLocaleString()}</p></div>
                     </div>
                   ))
                 )}
               </div>
             </div>
 
-            {/* Commission Breakdown */}
             <div className="bg-gradient-to-r from-red-50 to-rose-50 rounded-xl p-6 border border-red-100">
               <h3 className="font-bold text-red-800 text-lg mb-3">💰 Platform Commission Structure</h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
@@ -687,7 +665,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ========== MY POOLS TAB ========== */}
+        {/* My Pools Tab */}
         {activeTab === 'my-pools' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
@@ -698,229 +676,78 @@ export default function AdminDashboard() {
               {myPools.length === 0 ? (
                 <div className="text-center py-8"><p className="text-gray-400">No pools created yet</p><button onClick={() => setShowPoolModal(true)} className="mt-2 text-red-600">Create your first pool →</button></div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr><th className="px-4 py-3 text-left">Prize</th><th className="px-4 py-3 text-left">Target</th><th className="px-4 py-3 text-left">Raised</th><th className="px-4 py-3 text-left">Your 20%</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Action</th></tr>
-                    </thead>
-                    <tbody>
-                      {myPools.map(pool => (
-                        <tr key={pool.id} className="border-b hover:bg-gray-50">
-                          <td className="px-4 py-3 font-medium">{pool.prize_name}</td>
-                          <td className="px-4 py-3">ETB {pool.target_amount?.toLocaleString()}</td>
-                          <td className="px-4 py-3">ETB {pool.current_amount?.toLocaleString()}</td>
-                          <td className="px-4 py-3 font-bold text-green-600">ETB {((pool.target_amount || 0) * 0.20).toLocaleString()}</td>
-                          <td className="px-4 py-3"><span className={`px-2 py-1 rounded-full text-xs ${pool.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{pool.status}</span></td>
-                          <td className="px-4 py-3"><Link href={`/pools/${pool.id}`} className="text-red-600 text-sm hover:underline">View</Link></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <div className="overflow-x-auto"><table className="w-full"><thead className="bg-gray-50"><tr><th className="px-4 py-3 text-left">Prize</th><th className="px-4 py-3 text-left">Target</th><th className="px-4 py-3 text-left">Raised</th><th className="px-4 py-3 text-left">Your 20%</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Action</th></tr></thead>
+                <tbody>{myPools.map(pool => (<tr key={pool.id} className="border-b hover:bg-gray-50"><td className="px-4 py-3 font-medium">{pool.prize_name}</td><td className="px-4 py-3">ETB {pool.target_amount?.toLocaleString()}</td><td className="px-4 py-3">ETB {pool.current_amount?.toLocaleString()}</td><td className="px-4 py-3 font-bold text-green-600">ETB {((pool.target_amount || 0) * 0.20).toLocaleString()}</td><td className="px-4 py-3"><span className="px-2 py-1 rounded-full text-xs">{pool.status}</span></td><td className="px-4 py-3"><Link href={`/pools/${pool.id}`} className="text-red-600 text-sm hover:underline">View</Link></td></tr>))}</tbody></table></div>
               )}
             </div>
           </div>
         )}
 
-        {/* ========== USERS TAB ========== */}
+        {/* Users Tab */}
         {activeTab === 'users' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">👥 User Management</h2></div>
-            <div className="overflow-x-auto p-4">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr><th className="px-4 py-3 text-left">Name</th><th className="px-4 py-3 text-left">Email</th><th className="px-4 py-3 text-left">Role</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Actions</th></tr>
-                </thead>
-                <tbody>
-                  {users.map(u => (
-                    <tr key={u.id} className="border-b hover:bg-gray-50">
-                      <td className="px-4 py-3">{u.full_name || 'N/A'}</td>
-                      <td className="px-4 py-3">{u.email}</td>
-                      <td className="px-4 py-3">
-                        <select onChange={(e) => updateUserRole(u.id, e.target.value)} defaultValue={u.role || 'individual'} className="border rounded px-2 py-1 text-sm">
-                          <option value="individual">Individual</option><option value="agent">Agent</option><option value="vendor">Vendor</option><option value="organization">Organization</option><option value="admin">Admin</option>
-                        </select>
-                      </td>
-                      <td className="px-4 py-3">{u.is_banned ? <span className="text-red-600 font-medium">Banned</span> : <span className="text-green-600">Active</span>}</td>
-                      <td className="px-4 py-3">
-                        <button onClick={() => toggleUserBan(u.id, u.is_banned)} className={`px-3 py-1 rounded text-xs ${u.is_banned ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>{u.is_banned ? 'Unban' : 'Ban'}</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <div className="overflow-x-auto p-4"><table className="w-full"><thead className="bg-gray-50"><tr><th className="px-4 py-3 text-left">Name</th><th className="px-4 py-3 text-left">Email</th><th className="px-4 py-3 text-left">Role</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Actions</th></tr></thead>
+            <tbody>{users.map(u => (<tr key={u.id} className="border-b hover:bg-gray-50"><td className="px-4 py-3">{u.full_name || 'N/A'}</td><td className="px-4 py-3">{u.email}</td><td className="px-4 py-3"><select onChange={(e) => updateUserRole(u.id, e.target.value)} defaultValue={u.role || 'individual'} className="border rounded px-2 py-1 text-sm"><option value="individual">Individual</option><option value="agent">Agent</option><option value="vendor">Vendor</option><option value="organization">Organization</option><option value="admin">Admin</option></select></td><td className="px-4 py-3">{u.is_banned ? <span className="text-red-600 font-medium">Banned</span> : <span className="text-green-600">Active</span>}</td><td className="px-4 py-3"><button onClick={() => toggleUserBan(u.id, u.is_banned)} className={`px-3 py-1 rounded text-xs ${u.is_banned ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>{u.is_banned ? 'Unban' : 'Ban'}</button></td></tr>))}</tbody></table></div>
           </div>
         )}
 
-        {/* ========== ALL POOLS TAB ========== */}
+        {/* All Pools Tab */}
         {activeTab === 'pools' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">🌊 All Platform Pools</h2></div>
-            <div className="overflow-x-auto p-4">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr><th className="px-4 py-3 text-left">Prize</th><th className="px-4 py-3 text-left">Creator</th><th className="px-4 py-3 text-left">Target</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Featured</th><th className="px-4 py-3 text-left">Actions</th></tr>
-                </thead>
-                <tbody>
-                  {allPools.map(p => (
-                    <tr key={p.id} className="border-b hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium">{p.prize_name}</td>
-                      <td className="px-4 py-3">{p.profiles?.full_name || 'Admin'}</td>
-                      <td className="px-4 py-3">ETB {p.target_amount?.toLocaleString()}</td>
-                      <td className="px-4 py-3"><span className={`px-2 py-1 rounded-full text-xs ${p.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{p.status}</span></td>
-                      <td className="px-4 py-3">{p.is_featured ? '⭐ Featured' : ''}</td>
-                      <td className="px-4 py-3 flex gap-1 flex-wrap">
-                        <button onClick={() => togglePoolStatus(p.id, p.status)} className="bg-yellow-600 text-white px-2 py-1 rounded text-xs">{p.status === 'active' ? 'Pause' : 'Activate'}</button>
-                        <button onClick={() => toggleFeaturedPool(p.id, p.is_featured)} className="bg-blue-600 text-white px-2 py-1 rounded text-xs">{p.is_featured ? 'Unfeature' : 'Feature'}</button>
-                        <button onClick={() => deletePool(p.id)} className="bg-red-600 text-white px-2 py-1 rounded text-xs">Delete</button>
-                        <Link href={`/pools/${p.id}`} className="bg-gray-600 text-white px-2 py-1 rounded text-xs">View</Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <div className="overflow-x-auto p-4"><table className="w-full"><thead className="bg-gray-50"><tr><th className="px-4 py-3 text-left">Prize</th><th className="px-4 py-3 text-left">Creator</th><th className="px-4 py-3 text-left">Target</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Featured</th><th className="px-4 py-3 text-left">Actions</th></tr></thead>
+            <tbody>{allPools.map(p => (<tr key={p.id} className="border-b hover:bg-gray-50"><td className="px-4 py-3 font-medium">{p.prize_name}</td><td className="px-4 py-3">{p.profiles?.full_name || 'Admin'}</td><td className="px-4 py-3">ETB {p.target_amount?.toLocaleString()}</td><td className="px-4 py-3"><span className="px-2 py-1 rounded-full text-xs">{p.status}</span></td><td className="px-4 py-3">{p.is_featured ? '⭐ Featured' : ''}</td><td className="px-4 py-3 flex gap-1 flex-wrap"><button onClick={() => togglePoolStatus(p.id, p.status)} className="bg-yellow-600 text-white px-2 py-1 rounded text-xs">{p.status === 'active' ? 'Pause' : 'Activate'}</button><button onClick={() => toggleFeaturedPool(p.id, p.is_featured)} className="bg-blue-600 text-white px-2 py-1 rounded text-xs">{p.is_featured ? 'Unfeature' : 'Feature'}</button><button onClick={() => deletePool(p.id)} className="bg-red-600 text-white px-2 py-1 rounded text-xs">Delete</button><Link href={`/pools/${p.id}`} className="bg-gray-600 text-white px-2 py-1 rounded text-xs">View</Link></td></tr>))}</tbody></table></div>
           </div>
         )}
 
-        {/* ========== APPROVALS TAB ========== */}
+        {/* Approvals Tab */}
         {activeTab === 'approvals' && (
           <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-md p-6"><h3 className="font-bold text-lg mb-4">🤝 Pending Agents ({pendingAgents.length})</h3>
-              {pendingAgents.length === 0 ? <p className="text-gray-400">No pending agents</p> : pendingAgents.map(a => (<div key={a.id} className="flex justify-between items-center border-b py-3"><div><p className="font-medium">{a.business_name}</p><p className="text-sm text-gray-500">{a.profiles?.email}</p></div><div><button onClick={() => verifyAgent(a.id, true)} className="bg-green-600 text-white px-4 py-1 rounded text-sm">Approve</button><button onClick={() => verifyAgent(a.id, false)} className="bg-red-600 text-white px-4 py-1 rounded text-sm ml-2">Reject</button></div></div>))}
-            </div>
-            <div className="bg-white rounded-xl shadow-md p-6"><h3 className="font-bold text-lg mb-4">🏪 Pending Vendors ({pendingVendors.length})</h3>
-              {pendingVendors.length === 0 ? <p className="text-gray-400">No pending vendors</p> : pendingVendors.map(v => (<div key={v.id} className="flex justify-between items-center border-b py-3"><div><p className="font-medium">{v.business_name}</p><p className="text-sm text-gray-500">{v.profiles?.email}</p></div><div><button onClick={() => verifyVendor(v.id, true)} className="bg-green-600 text-white px-4 py-1 rounded text-sm">Approve</button><button onClick={() => verifyVendor(v.id, false)} className="bg-red-600 text-white px-4 py-1 rounded text-sm ml-2">Reject</button></div></div>))}
-            </div>
-            <div className="bg-white rounded-xl shadow-md p-6"><h3 className="font-bold text-lg mb-4">🏢 Pending Organizations ({pendingOrganizations.length})</h3>
-              {pendingOrganizations.length === 0 ? <p className="text-gray-400">No pending organizations</p> : pendingOrganizations.map(o => (<div key={o.id} className="flex justify-between items-center border-b py-3"><div><p className="font-medium">{o.business_name}</p><p className="text-sm text-gray-500">{o.profiles?.email}</p></div><div><button onClick={() => verifyOrganization(o.id, true)} className="bg-green-600 text-white px-4 py-1 rounded text-sm">Approve</button><button onClick={() => verifyOrganization(o.id, false)} className="bg-red-600 text-white px-4 py-1 rounded text-sm ml-2">Reject</button></div></div>))}
-            </div>
+            <div className="bg-white rounded-xl shadow-md p-6"><h3 className="font-bold text-lg mb-4">🤝 Pending Agents ({pendingAgents.length})</h3>{pendingAgents.length === 0 ? <p className="text-gray-400">No pending agents</p> : pendingAgents.map(a => (<div key={a.id} className="flex justify-between items-center border-b py-3"><div><p className="font-medium">{a.business_name}</p><p className="text-sm text-gray-500">{a.profiles?.email}</p></div><div><button onClick={() => verifyAgent(a.id, true)} className="bg-green-600 text-white px-4 py-1 rounded text-sm">Approve</button><button onClick={() => verifyAgent(a.id, false)} className="bg-red-600 text-white px-4 py-1 rounded text-sm ml-2">Reject</button></div></div>))}</div>
+            <div className="bg-white rounded-xl shadow-md p-6"><h3 className="font-bold text-lg mb-4">🏪 Pending Vendors ({pendingVendors.length})</h3>{pendingVendors.length === 0 ? <p className="text-gray-400">No pending vendors</p> : pendingVendors.map(v => (<div key={v.id} className="flex justify-between items-center border-b py-3"><div><p className="font-medium">{v.business_name}</p><p className="text-sm text-gray-500">{v.profiles?.email}</p></div><div><button onClick={() => verifyVendor(v.id, true)} className="bg-green-600 text-white px-4 py-1 rounded text-sm">Approve</button><button onClick={() => verifyVendor(v.id, false)} className="bg-red-600 text-white px-4 py-1 rounded text-sm ml-2">Reject</button></div></div>))}</div>
+            <div className="bg-white rounded-xl shadow-md p-6"><h3 className="font-bold text-lg mb-4">🏢 Pending Organizations ({pendingOrganizations.length})</h3>{pendingOrganizations.length === 0 ? <p className="text-gray-400">No pending organizations</p> : pendingOrganizations.map(o => (<div key={o.id} className="flex justify-between items-center border-b py-3"><div><p className="font-medium">{o.business_name}</p><p className="text-sm text-gray-500">{o.profiles?.email}</p></div><div><button onClick={() => verifyOrganization(o.id, true)} className="bg-green-600 text-white px-4 py-1 rounded text-sm">Approve</button><button onClick={() => verifyOrganization(o.id, false)} className="bg-red-600 text-white px-4 py-1 rounded text-sm ml-2">Reject</button></div></div>))}</div>
           </div>
         )}
 
-        {/* ========== WITHDRAWALS TAB ========== */}
+        {/* Withdrawals Tab */}
         {activeTab === 'withdrawals' && (
-          <div className="bg-white rounded-xl shadow-md overflow-hidden p-6">
-            <h3 className="font-bold text-lg mb-4">💰 Withdrawal Requests ({withdrawalRequests.length})</h3>
-            {withdrawalRequests.length === 0 ? <p className="text-gray-400 text-center py-8">No pending withdrawal requests</p> : 
-              withdrawalRequests.map(w => (<div key={w.id} className="flex justify-between items-center border-b py-3"><div><p className="font-medium">{w.profiles?.full_name}</p><p className="text-sm">ETB {w.amount?.toLocaleString()} - {w.commission_type}</p></div><div><button onClick={() => processWithdrawal(w.id, true)} className="bg-green-600 text-white px-4 py-1 rounded text-sm">Approve</button><button onClick={() => processWithdrawal(w.id, false)} className="bg-red-600 text-white px-4 py-1 rounded text-sm ml-2">Reject</button></div></div>))
-            }
-          </div>
+          <div className="bg-white rounded-xl shadow-md overflow-hidden p-6"><h3 className="font-bold text-lg mb-4">💰 Withdrawal Requests ({withdrawalRequests.length})</h3>{withdrawalRequests.length === 0 ? <p className="text-gray-400 text-center py-8">No pending withdrawal requests</p> : withdrawalRequests.map(w => (<div key={w.id} className="flex justify-between items-center border-b py-3"><div><p className="font-medium">{w.profiles?.full_name}</p><p className="text-sm">ETB {w.amount?.toLocaleString()} - {w.commission_type}</p></div><div><button onClick={() => processWithdrawal(w.id, true)} className="bg-green-600 text-white px-4 py-1 rounded text-sm">Approve</button><button onClick={() => processWithdrawal(w.id, false)} className="bg-red-600 text-white px-4 py-1 rounded text-sm ml-2">Reject</button></div></div>))}</div>
         )}
 
-        {/* ========== BANK TRANSFERS TAB ========== */}
+        {/* Bank Transfers Tab */}
         {activeTab === 'bank-transfers' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
-            <div className="px-6 py-4 bg-gray-50 border-b">
-              <h2 className="font-bold text-lg">🏦 Bank Transfer Verification</h2>
-              <p className="text-sm text-gray-500">Verify user payment proofs to confirm their seats</p>
-            </div>
-            <div className="p-4">
-              {bankTransfers.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="text-5xl mb-3">✅</div>
-                  <p className="text-gray-500">No pending bank transfers</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {bankTransfers.map((transfer) => (
-                    <div key={transfer.id} className="border rounded-lg p-4 hover:shadow-md transition">
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-1">
-                          <p className="font-semibold text-lg">{transfer.profiles?.full_name}</p>
-                          <p className="text-sm text-gray-500">{transfer.profiles?.email}</p>
-                          <p className="text-sm text-gray-500">📞 {transfer.profiles?.phone || 'No phone'}</p>
-                          <p className="text-sm">🎯 Pool: <span className="font-medium">{transfer.pools?.prize_name}</span></p>
-                          <p className="text-sm">🎟️ Seats: <span className="font-mono">{transfer.seat_numbers?.join(', ')}</span></p>
-                          <p className="text-sm">💰 Amount: <span className="font-bold text-green-600">ETB {transfer.amount?.toLocaleString()}</span></p>
-                          <p className="text-xs text-gray-400">Reference: {transfer.reference}</p>
-                          <p className="text-xs text-gray-400">Submitted: {new Date(transfer.created_at).toLocaleString()}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          {transfer.proof_image && (
-                            <button
-                              onClick={() => window.open(transfer.proof_image, '_blank')}
-                              className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                            >
-                              📸 View Proof
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="flex gap-3 mt-4 pt-3 border-t">
-                        <button
-                          onClick={() => verifyBankTransfer(transfer.id, transfer.user_id, transfer.pool_id, transfer.amount, transfer.seat_numbers, true)}
-                          className="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700"
-                        >
-                          ✅ Approve & Confirm Seats
-                        </button>
-                        <button
-                          onClick={() => verifyBankTransfer(transfer.id, transfer.user_id, transfer.pool_id, transfer.amount, transfer.seat_numbers, false)}
-                          className="flex-1 bg-red-600 text-white py-2 rounded-lg font-semibold hover:bg-red-700"
-                        >
-                          ❌ Reject
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">🏦 Bank Transfer Verification</h2><p className="text-sm text-gray-500">Verify user payment proofs to confirm their seats</p></div>
+            <div className="p-4">{bankTransfers.length === 0 ? (<div className="text-center py-12"><div className="text-5xl mb-3">✅</div><p className="text-gray-500">No pending bank transfers</p></div>) : (bankTransfers.map((transfer) => (<div key={transfer.id} className="border rounded-lg p-4 hover:shadow-md transition"><div className="flex justify-between items-start"><div className="space-y-1"><p className="font-semibold text-lg">{transfer.profiles?.full_name}</p><p className="text-sm text-gray-500">{transfer.profiles?.email}</p><p className="text-sm text-gray-500">📞 {transfer.profiles?.phone || 'No phone'}</p><p className="text-sm">🎯 Pool: <span className="font-medium">{transfer.pools?.prize_name}</span></p><p className="text-sm">🎟️ Seats: <span className="font-mono">{transfer.seat_numbers?.join(', ')}</span></p><p className="text-sm">💰 Amount: <span className="font-bold text-green-600">ETB {transfer.amount?.toLocaleString()}</span></p><p className="text-xs text-gray-400">Reference: {transfer.reference}</p><p className="text-xs text-gray-400">Submitted: {new Date(transfer.created_at).toLocaleString()}</p></div><div>{transfer.proof_image && <button onClick={() => window.open(transfer.proof_image, '_blank')} className="bg-blue-600 text-white px-3 py-1 rounded text-sm">📸 View Proof</button>}</div></div><div className="flex gap-3 mt-4 pt-3 border-t"><button onClick={() => verifyBankTransfer(transfer.id, transfer.user_id, transfer.pool_id, transfer.amount, transfer.seat_numbers, true)} className="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold">✅ Approve & Confirm Seats</button><button onClick={() => verifyBankTransfer(transfer.id, transfer.user_id, transfer.pool_id, transfer.amount, transfer.seat_numbers, false)} className="flex-1 bg-red-600 text-white py-2 rounded-lg font-semibold">❌ Reject</button></div></div>)))}</div>
           </div>
         )}
 
-        {/* ========== FEATURED TAB ========== */}
+        {/* Featured Tab */}
         {activeTab === 'featured' && (
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="font-bold text-lg mb-4">⭐ Manage Featured Pools</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {allPools.filter(p => p.status === 'active').map(p => (
-                <div key={p.id} className="border rounded-lg p-4 flex justify-between items-center">
-                  <div><p className="font-medium">{p.prize_name}</p><p className="text-sm text-gray-500">ETB {p.target_amount?.toLocaleString()}</p></div>
-                  <button onClick={() => toggleFeaturedPool(p.id, p.is_featured)} className={`px-3 py-1 rounded text-sm ${p.is_featured ? 'bg-gray-300 text-gray-700' : 'bg-yellow-500 text-white'}`}>{p.is_featured ? 'Remove' : 'Feature'}</button>
-                </div>
-              ))}
-            </div>
-          </div>
+          <div className="bg-white rounded-xl shadow-md p-6"><h3 className="font-bold text-lg mb-4">⭐ Manage Featured Pools</h3><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{allPools.filter(p => p.status === 'active').map(p => (<div key={p.id} className="border rounded-lg p-4 flex justify-between items-center"><div><p className="font-medium">{p.prize_name}</p><p className="text-sm text-gray-500">ETB {p.target_amount?.toLocaleString()}</p></div><button onClick={() => toggleFeaturedPool(p.id, p.is_featured)} className={`px-3 py-1 rounded text-sm ${p.is_featured ? 'bg-gray-300 text-gray-700' : 'bg-yellow-500 text-white'}`}>{p.is_featured ? 'Remove' : 'Feature'}</button></div>))}</div></div>
         )}
 
-        {/* ========== FINANCE TAB ========== */}
+        {/* Finance Tab */}
         {activeTab === 'finance' && (
-          <div className="space-y-6">
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="bg-white rounded-xl shadow-md p-6"><h3 className="font-bold text-gray-500">Total Volume</h3><p className="text-3xl font-bold text-green-600">ETB {stats.total_volume.toLocaleString()}</p></div>
-              <div className="bg-white rounded-xl shadow-md p-6"><h3 className="font-bold text-gray-500">Platform Revenue (10%)</h3><p className="text-3xl font-bold text-blue-600">ETB {stats.platform_revenue.toLocaleString()}</p></div>
-              <div className="bg-gradient-to-r from-red-500 to-pink-500 rounded-xl p-6 text-white"><h3 className="font-bold">Charity Fund (2%)</h3><p className="text-3xl font-bold">ETB {Math.floor(stats.charity_total).toLocaleString()}</p><p className="text-sm">Lives Impacted: {stats.lives_impacted}</p></div>
-            </div>
-            <div className="bg-white rounded-xl shadow-md p-6"><h3 className="font-bold text-lg mb-4">💚 Charity Transaction History</h3>{charityTransactions.length === 0 ? <p className="text-gray-400 text-center py-8">No charity transactions yet</p> : charityTransactions.map(t => (<div key={t.id} className="border-b py-3 flex justify-between"><span>{new Date(t.created_at).toLocaleDateString()}</span><span className="font-bold text-green-600">ETB {t.amount?.toLocaleString()}</span><span className="text-gray-500">{t.source}</span></div>))}</div>
-          </div>
+          <div className="space-y-6"><div className="grid md:grid-cols-3 gap-4"><div className="bg-white rounded-xl shadow-md p-6"><h3 className="font-bold text-gray-500">Total Volume</h3><p className="text-3xl font-bold text-green-600">ETB {stats.total_volume.toLocaleString()}</p></div><div className="bg-white rounded-xl shadow-md p-6"><h3 className="font-bold text-gray-500">Platform Revenue (10%)</h3><p className="text-3xl font-bold text-blue-600">ETB {stats.platform_revenue.toLocaleString()}</p></div><div className="bg-gradient-to-r from-red-500 to-pink-500 rounded-xl p-6 text-white"><h3 className="font-bold">Charity Fund (2%)</h3><p className="text-3xl font-bold">ETB {Math.floor(stats.charity_total).toLocaleString()}</p><p className="text-sm">Lives Impacted: {stats.lives_impacted}</p></div></div>
+          <div className="bg-white rounded-xl shadow-md p-6"><h3 className="font-bold text-lg mb-4">💚 Charity Transaction History</h3>{charityTransactions.length === 0 ? <p className="text-gray-400 text-center py-8">No charity transactions yet</p> : charityTransactions.map(t => (<div key={t.id} className="border-b py-3 flex justify-between"><span>{new Date(t.created_at).toLocaleDateString()}</span><span className="font-bold text-green-600">ETB {t.amount?.toLocaleString()}</span><span className="text-gray-500">{t.source}</span></div>))}</div></div>
         )}
 
-        {/* ========== DISPUTES TAB ========== */}
+        {/* Disputes Tab */}
         {activeTab === 'disputes' && (
-          <div className="space-y-4">
-            {disputes.length === 0 ? <div className="bg-white rounded-xl p-8 text-center"><p className="text-gray-400">✅ No pending disputes</p></div> : disputes.map(d => (<div key={d.id} className="bg-white rounded-xl shadow-md p-6"><p className="font-bold text-lg">Pool: {d.pool?.prize_name}</p><p className="text-gray-600">Filed by: {d.user?.full_name}</p><p className="mt-2">{d.description}</p><textarea id={`res-${d.id}`} placeholder="Enter resolution notes..." className="w-full border rounded-lg p-2 mt-3"></textarea><button onClick={() => resolveDispute(d.id, document.getElementById(`res-${d.id}`).value)} className="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg">Resolve Dispute</button></div>))}
-          </div>
+          <div className="space-y-4">{disputes.length === 0 ? <div className="bg-white rounded-xl p-8 text-center"><p className="text-gray-400">✅ No pending disputes</p></div> : disputes.map(d => (<div key={d.id} className="bg-white rounded-xl shadow-md p-6"><p className="font-bold text-lg">Pool: {d.pool?.prize_name}</p><p className="text-gray-600">Filed by: {d.user?.full_name}</p><p className="mt-2">{d.description}</p><textarea id={`res-${d.id}`} placeholder="Enter resolution notes..." className="w-full border rounded-lg p-2 mt-3"></textarea><button onClick={() => resolveDispute(d.id, document.getElementById(`res-${d.id}`).value)} className="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg">Resolve Dispute</button></div>))}</div>
         )}
 
-        {/* ========== SETTINGS TAB ========== */}
+        {/* Settings Tab */}
         {activeTab === 'settings' && (
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="font-bold text-xl mb-4">⚙️ Platform Settings</h2>
-            <button onClick={() => setShowAnnouncementModal(true)} className="bg-blue-600 text-white px-6 py-2 rounded-lg">📢 Create Announcement</button>
-            <div className="mt-6 pt-6 border-t">
-              <Link href="/admin/analytics" className="text-blue-600 hover:underline">📊 View Full Analytics →</Link>
-            </div>
-            <div className="mt-4">
-              <Link href="/admin/logs" className="text-blue-600 hover:underline">📜 View System Logs →</Link>
-            </div>
-          </div>
+          <div className="bg-white rounded-xl shadow-md p-6"><h2 className="font-bold text-xl mb-4">⚙️ Platform Settings</h2><button onClick={() => setShowAnnouncementModal(true)} className="bg-blue-600 text-white px-6 py-2 rounded-lg">📢 Create Announcement</button>
+          <div className="mt-6 pt-6 border-t"><Link href="/admin/analytics" className="text-blue-600 hover:underline">📊 View Full Analytics →</Link></div>
+          <div className="mt-4"><Link href="/admin/logs" className="text-blue-600 hover:underline">📜 View System Logs →</Link></div></div>
         )}
       </div>
 
-      {/* ========== CREATE POOL MODAL ========== */}
+      {/* Create Pool Modal */}
       {showPoolModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -928,7 +755,6 @@ export default function AdminDashboard() {
               <h2 className="text-xl font-bold">✨ Create Featured Pool (20% Commission)</h2>
               <button onClick={() => setShowPoolModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
             </div>
-            
             <div className="p-6 space-y-5">
               <div><label className="block text-sm font-medium mb-1">Prize Name *</label><input type="text" className="w-full border rounded-lg p-3" placeholder="e.g., iPhone 15 Pro Max" value={newPool.prize_name} onChange={(e) => setNewPool({...newPool, prize_name: e.target.value})} /></div>
               <div><label className="block text-sm font-medium mb-1">Description</label><textarea rows="3" className="w-full border rounded-lg p-3" placeholder="Describe the prize and pool rules..." value={newPool.description} onChange={(e) => setNewPool({...newPool, description: e.target.value})} /></div>
@@ -943,7 +769,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* ========== ANNOUNCEMENT MODAL ========== */}
+      {/* Announcement Modal */}
       {showAnnouncementModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-white rounded-2xl max-w-md w-full p-6">
