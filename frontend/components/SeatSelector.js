@@ -2,18 +2,27 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
-export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSelected }) {
+export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSelected, onCancel }) {
   const [seats, setSeats] = useState([]);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [totalPrice, setTotalPrice] = useState(0);
-  const [reservationId, setReservationId] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Fetch current user
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    };
+    getUser();
+  }, []);
 
   // Fetch seats
   useEffect(() => {
     fetchSeats();
     
-    // Cleanup expired reservations every 30 seconds
+    // Refresh every 30 seconds
     const interval = setInterval(() => {
       fetchSeats();
     }, 30000);
@@ -40,8 +49,7 @@ export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSe
   }
 
   async function reserveSeats(seatNumbers) {
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user) {
+    if (!currentUser) {
       toast.error('Please login to select seats');
       return false;
     }
@@ -52,7 +60,7 @@ export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSe
       .from('pool_seats')
       .update({
         status: 'reserved',
-        reserved_by: user.user.id,
+        reserved_by: currentUser.id,
         reserved_at: new Date().toISOString(),
         reserved_until: reservedUntil
       })
@@ -77,8 +85,8 @@ export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSe
     }
 
     // Cannot select seats reserved by others
-    if (seat.status === 'reserved' && seat.reserved_by !== (await supabase.auth.getUser()).data.user?.id) {
-      toast.error(`Seat ${seat.seat_number} is currently being selected by another user`);
+    if (seat.status === 'reserved' && seat.reserved_by !== currentUser?.id) {
+      toast.error(`Seat ${seat.seat_number} is being selected by another user`);
       return;
     }
 
@@ -137,7 +145,7 @@ export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSe
   const getSeatColor = (seat) => {
     if (seat.status === 'taken') return 'bg-gray-400 cursor-not-allowed opacity-50';
     if (seat.status === 'reserved') {
-      const isMyReservation = seat.reserved_by === (supabase.auth.getUser() as any)?.data.user?.id;
+      const isMyReservation = seat.reserved_by === currentUser?.id;
       return isMyReservation ? 'bg-yellow-400 hover:bg-yellow-500' : 'bg-red-300 cursor-not-allowed';
     }
     if (selectedSeats.includes(seat.seat_number)) return 'bg-green-600 text-white';
@@ -147,7 +155,7 @@ export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSe
   const getSeatStatusText = (seat) => {
     if (seat.status === 'taken') return 'Taken';
     if (seat.status === 'reserved') {
-      const isMyReservation = seat.reserved_by === (supabase.auth.getUser() as any)?.data.user?.id;
+      const isMyReservation = seat.reserved_by === currentUser?.id;
       return isMyReservation ? 'Selected by you' : 'Being selected';
     }
     return 'Available';
@@ -206,7 +214,7 @@ export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSe
                 <button
                   key={seat.seat_number}
                   onClick={() => handleSeatClick(seat)}
-                  disabled={seat.status === 'taken' || (seat.status === 'reserved' && seat.reserved_by !== (supabase.auth.getUser() as any)?.data.user?.id)}
+                  disabled={seat.status === 'taken' || (seat.status === 'reserved' && seat.reserved_by !== currentUser?.id)}
                   className={`
                     w-12 h-12 rounded-lg flex flex-col items-center justify-center text-xs font-semibold transition-all
                     ${getSeatColor(seat)}
@@ -251,6 +259,14 @@ export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSe
           </p>
         </div>
       )}
+
+      {/* Cancel Button */}
+      <button
+        onClick={onCancel}
+        className="w-full bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-300 transition mt-3"
+      >
+        ← Cancel & Go Back
+      </button>
     </div>
   );
 }
