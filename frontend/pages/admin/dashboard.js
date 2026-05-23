@@ -38,6 +38,10 @@ export default function AdminDashboard() {
   const [pendingOrganizations, setPendingOrganizations] = useState([]);
   const [withdrawalRequests, setWithdrawalRequests] = useState([]);
   
+  // Bank Transfers
+  const [bankTransfers, setBankTransfers] = useState([]);
+  const [pendingBankTransfers, setPendingBankTransfers] = useState(0);
+  
   // Management data
   const [users, setUsers] = useState([]);
   const [allPools, setAllPools] = useState([]);
@@ -45,6 +49,7 @@ export default function AdminDashboard() {
   const [charityTransactions, setCharityTransactions] = useState([]);
   const [disputes, setDisputes] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
+  const [commissions, setCommissions] = useState([]);
   
   // Announcement modal
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
@@ -114,12 +119,13 @@ export default function AdminDashboard() {
       loadAllPools(),
       loadFeaturedPools(),
       loadCharityData(),
-      loadDisputes()
+      loadDisputes(),
+      loadBankTransfers(),
+      loadCommissions()
     ]);
   }
 
   async function loadRecentActivity() {
-    // Fetch recent activities (new users, new pools, etc.)
     const { data: recentUsers } = await supabase
       .from('profiles')
       .select('full_name, email, created_at')
@@ -230,6 +236,31 @@ export default function AdminDashboard() {
     setWithdrawalRequests(data || []);
   }
 
+  async function loadBankTransfers() {
+    const { data } = await supabase
+      .from('bank_transfers')
+      .select(`
+        *,
+        profiles!user_id (id, full_name, email, phone),
+        pools!pool_id (prize_name, target_amount)
+      `)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+    
+    setBankTransfers(data || []);
+    setPendingBankTransfers(data?.length || 0);
+  }
+
+  async function loadCommissions() {
+    const { data } = await supabase
+      .from('commissions')
+      .select('*, profiles(full_name, email)')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    setCommissions(data || []);
+  }
+
   async function loadUsers() {
     const { data } = await supabase
       .from('profiles')
@@ -317,6 +348,80 @@ export default function AdminDashboard() {
     if (!confirm('Are you sure? This cannot be undone.')) return;
     const { error } = await supabase.from('pools').delete().eq('id', poolId);
     if (error) toast.error('Failed'); else { toast.success('Pool deleted'); loadAllPools(); loadStats(); loadMyPools(); }
+  }
+
+  // Bank Transfer verification
+  async function verifyBankTransfer(transferId, userId, poolId, amount, seatNumbers, approved) {
+    if (!confirm(approved ? 'Approve this payment and confirm seats?' : 'Reject this payment?')) return;
+    
+    try {
+      if (approved) {
+        // Update transfer status
+        await supabase
+          .from('bank_transfers')
+          .update({ status: 'verified', verified_at: new Date().toISOString(), verified_by: user?.id })
+          .eq('id', transferId);
+
+        // Mark seats as taken
+        if (seatNumbers && seatNumbers.length > 0) {
+          await supabase
+            .from('pool_seats')
+            .update({ status: 'taken', user_id: userId })
+            .in('seat_number', seatNumbers)
+            .eq('pool_id', poolId);
+        }
+
+        // Create contribution record
+        await supabase
+          .from('contributions')
+          .insert({
+            user_id: userId,
+            pool_id: poolId,
+            amount: amount,
+            status: 'completed',
+            payment_method: 'bank_transfer',
+            seat_numbers: seatNumbers,
+            created_at: new Date().toISOString()
+          });
+
+        // Update pool current amount
+        const { data: pool } = await supabase
+          .from('pools')
+          .select('current_amount')
+          .eq('id', poolId)
+          .single();
+          
+        await supabase
+          .from('pools')
+          .update({ current_amount: (pool?.current_amount || 0) + amount })
+          .eq('id', poolId);
+
+        toast.success('Payment approved! Seats confirmed.');
+      } else {
+        // Reject - release seats
+        await supabase
+          .from('bank_transfers')
+          .update({ status: 'rejected', rejected_at: new Date().toISOString() })
+          .eq('id', transferId);
+
+        if (seatNumbers && seatNumbers.length > 0) {
+          await supabase
+            .from('pool_seats')
+            .update({ status: 'available', user_id: null })
+            .in('seat_number', seatNumbers)
+            .eq('pool_id', poolId);
+        }
+
+        toast.success('Payment rejected. Seats released.');
+      }
+      
+      await loadBankTransfers();
+      await loadStats();
+      
+    } catch (error) {
+      console.error('Verification error:', error);
+      toast.error('Failed to process');
+    }
   }
 
   // Withdrawal management
@@ -443,55 +548,49 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Role Description Card - NEW */}
+      {/* Role Description Card */}
       <div className="container mx-auto px-4 mt-6">
         <div className="bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 rounded-xl p-5">
           <h3 className="font-bold text-red-800 text-lg mb-2">👑 Your Role: Platform Administrator</h3>
           <p className="text-red-700 text-sm leading-relaxed">
             As the Platform Administrator, you have full control over Abbaa Carraa. You can manage users, approve applications, 
-            monitor all pools, process withdrawals, and resolve disputes. Additionally, you can <strong className="font-bold">create your own personal pools</strong> 
-            and earn <strong className="font-bold">20% commission</strong> on them.
+            monitor all pools, process withdrawals, resolve disputes, verify bank transfers, and manage commissions.
+            Additionally, you can create your own personal pools and earn <strong>20% commission</strong> on them.
           </p>
-          <div className="mt-3 bg-white/50 rounded-lg p-3 text-sm">
-            <p className="font-semibold text-red-800">💰 Admin Personal Pool Commission (20%):</p>
-            <p className="text-red-700 text-xs mt-1">
-              • Winner gets: <strong>100% of target</strong><br/>
-              • You earn: <strong>20% commission</strong> (added on top)<br/>
-              • Total collected: <strong>Target + 20%</strong>
-            </p>
-            <p className="text-xs text-red-600 mt-2">
-              Example: Create a 1,000,000 ETB personal pool → Winner gets 1,000,000 → You earn 200,000 → Total collected 1,200,000 ETB
-            </p>
-          </div>
         </div>
       </div>
 
-      {/* Quick Actions - NEW */}
+      {/* Quick Actions */}
       <div className="container mx-auto px-4 mt-6">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <button onClick={() => setShowPoolModal(true)} className="bg-gradient-to-r from-red-600 to-rose-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+          <button onClick={() => setShowPoolModal(true)} className="bg-gradient-to-r from-red-600 to-rose-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
             <div className="text-2xl mb-1">➕</div>
-            <p className="font-semibold text-sm">Create Pool</p>
+            <p className="font-semibold text-xs">Create Pool</p>
             <p className="text-xs opacity-80">20% commission</p>
           </button>
-          <button onClick={() => setActiveTab('approvals')} className="bg-yellow-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+          <button onClick={() => setActiveTab('approvals')} className="bg-yellow-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
             <div className="text-2xl mb-1">📝</div>
-            <p className="font-semibold text-sm">Approvals</p>
-            <p className="text-xs opacity-80">{pendingAgents.length + pendingVendors.length + pendingOrganizations.length} pending</p>
+            <p className="font-semibold text-xs">Approvals</p>
+            <p className="text-xs opacity-80">{pendingAgents.length + pendingVendors.length + pendingOrganizations.length}</p>
           </button>
-          <button onClick={() => setActiveTab('withdrawals')} className="bg-green-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+          <button onClick={() => setActiveTab('withdrawals')} className="bg-green-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
             <div className="text-2xl mb-1">💰</div>
-            <p className="font-semibold text-sm">Withdrawals</p>
-            <p className="text-xs opacity-80">{withdrawalRequests.length} requests</p>
+            <p className="font-semibold text-xs">Withdrawals</p>
+            <p className="text-xs opacity-80">{withdrawalRequests.length}</p>
           </button>
-          <button onClick={() => setActiveTab('disputes')} className="bg-orange-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+          <button onClick={() => setActiveTab('bank-transfers')} className="bg-blue-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
+            <div className="text-2xl mb-1">🏦</div>
+            <p className="font-semibold text-xs">Bank Transfers</p>
+            <p className="text-xs opacity-80">{pendingBankTransfers} pending</p>
+          </button>
+          <button onClick={() => setActiveTab('disputes')} className="bg-orange-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
             <div className="text-2xl mb-1">⚖️</div>
-            <p className="font-semibold text-sm">Disputes</p>
-            <p className="text-xs opacity-80">{disputes.length} open</p>
+            <p className="font-semibold text-xs">Disputes</p>
+            <p className="text-xs opacity-80">{disputes.length}</p>
           </button>
-          <button onClick={() => setShowAnnouncementModal(true)} className="bg-purple-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+          <button onClick={() => setShowAnnouncementModal(true)} className="bg-purple-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
             <div className="text-2xl mb-1">📢</div>
-            <p className="font-semibold text-sm">Announce</p>
+            <p className="font-semibold text-xs">Announce</p>
             <p className="text-xs opacity-80">Send message</p>
           </button>
         </div>
@@ -504,9 +603,10 @@ export default function AdminDashboard() {
             <button onClick={() => setActiveTab('overview')} className={`px-4 py-3 font-semibold ${activeTab === 'overview' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>📊 Overview</button>
             <button onClick={() => setActiveTab('my-pools')} className={`px-4 py-3 font-semibold ${activeTab === 'my-pools' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🎯 My Pools (20%)</button>
             <button onClick={() => setActiveTab('users')} className={`px-4 py-3 font-semibold ${activeTab === 'users' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>👥 Users</button>
-            <button onClick={() => setActiveTab('pools')} className={`px-4 py-3 font-semibold ${activeTab === 'pools' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🌊 All Pools</button>
+            <button onClick={() | setActiveTab('pools')} className={`px-4 py-3 font-semibold ${activeTab === 'pools' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🌊 All Pools</button>
             <button onClick={() => setActiveTab('approvals')} className={`px-4 py-3 font-semibold ${activeTab === 'approvals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>📝 Approvals ({pendingAgents.length + pendingVendors.length + pendingOrganizations.length})</button>
             <button onClick={() => setActiveTab('withdrawals')} className={`px-4 py-3 font-semibold ${activeTab === 'withdrawals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>💰 Withdrawals ({withdrawalRequests.length})</button>
+            <button onClick={() => setActiveTab('bank-transfers')} className={`px-4 py-3 font-semibold ${activeTab === 'bank-transfers' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🏦 Bank Transfers ({pendingBankTransfers})</button>
             <button onClick={() => setActiveTab('featured')} className={`px-4 py-3 font-semibold ${activeTab === 'featured' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>⭐ Featured</button>
             <button onClick={() => setActiveTab('finance')} className={`px-4 py-3 font-semibold ${activeTab === 'finance' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>💰 Finance</button>
             <button onClick={() => setActiveTab('disputes')} className={`px-4 py-3 font-semibold ${activeTab === 'disputes' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>⚖️ Disputes ({disputes.length})</button>
@@ -555,7 +655,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Recent Activity - NEW */}
+            {/* Recent Activity */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <h3 className="font-bold text-lg mb-3">📋 Recent Platform Activity</h3>
               <div className="space-y-2">
@@ -575,34 +675,16 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Commission Breakdown - NEW */}
+            {/* Commission Breakdown */}
             <div className="bg-gradient-to-r from-red-50 to-rose-50 rounded-xl p-6 border border-red-100">
               <h3 className="font-bold text-red-800 text-lg mb-3">💰 Platform Commission Structure</h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                <div className="bg-white rounded-lg p-3 text-center">
-                  <p className="font-bold text-red-600">Admin Personal Pool</p>
-                  <p className="text-2xl font-bold">20%</p>
-                  <p className="text-xs text-gray-500">Commission</p>
-                </div>
-                <div className="bg-white rounded-lg p-3 text-center">
-                  <p className="font-bold text-yellow-600">Agent Pool</p>
-                  <p className="text-2xl font-bold">10%</p>
-                  <p className="text-xs text-gray-500">+ 10% platform fee</p>
-                </div>
-                <div className="bg-white rounded-lg p-3 text-center">
-                  <p className="font-bold text-cyan-600">Organization Pool</p>
-                  <p className="text-2xl font-bold">10%</p>
-                  <p className="text-xs text-gray-500">+ 10% platform fee</p>
-                </div>
-                <div className="bg-white rounded-lg p-3 text-center">
-                  <p className="font-bold text-purple-600">Vendor Sale</p>
-                  <p className="text-2xl font-bold">10%</p>
-                  <p className="text-xs text-gray-500">+ 10% platform fee</p>
-                </div>
+                <div className="bg-white rounded-lg p-3 text-center"><p className="font-bold text-red-600">Admin Personal Pool</p><p className="text-2xl font-bold">20%</p><p className="text-xs text-gray-500">Commission</p></div>
+                <div className="bg-white rounded-lg p-3 text-center"><p className="font-bold text-yellow-600">Agent Pool</p><p className="text-2xl font-bold">10%</p><p className="text-xs text-gray-500">+ 10% platform fee</p></div>
+                <div className="bg-white rounded-lg p-3 text-center"><p className="font-bold text-cyan-600">Organization Pool</p><p className="text-2xl font-bold">10%</p><p className="text-xs text-gray-500">+ 10% platform fee</p></div>
+                <div className="bg-white rounded-lg p-3 text-center"><p className="font-bold text-purple-600">Vendor Sale</p><p className="text-2xl font-bold">10%</p><p className="text-xs text-gray-500">+ 10% platform fee</p></div>
               </div>
-              <p className="text-xs text-red-600 text-center mt-3">
-                💚 2% of all contributions goes to kidney & heart disease treatment
-              </p>
+              <p className="text-xs text-red-600 text-center mt-3">💚 2% of all contributions goes to kidney & heart disease treatment</p>
             </div>
           </div>
         )}
@@ -729,6 +811,68 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* ========== BANK TRANSFERS TAB ========== */}
+        {activeTab === 'bank-transfers' && (
+          <div className="bg-white rounded-xl shadow-md overflow-hidden">
+            <div className="px-6 py-4 bg-gray-50 border-b">
+              <h2 className="font-bold text-lg">🏦 Bank Transfer Verification</h2>
+              <p className="text-sm text-gray-500">Verify user payment proofs to confirm their seats</p>
+            </div>
+            <div className="p-4">
+              {bankTransfers.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-5xl mb-3">✅</div>
+                  <p className="text-gray-500">No pending bank transfers</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {bankTransfers.map((transfer) => (
+                    <div key={transfer.id} className="border rounded-lg p-4 hover:shadow-md transition">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-1">
+                          <p className="font-semibold text-lg">{transfer.profiles?.full_name}</p>
+                          <p className="text-sm text-gray-500">{transfer.profiles?.email}</p>
+                          <p className="text-sm text-gray-500">📞 {transfer.profiles?.phone || 'No phone'}</p>
+                          <p className="text-sm">🎯 Pool: <span className="font-medium">{transfer.pools?.prize_name}</span></p>
+                          <p className="text-sm">🎟️ Seats: <span className="font-mono">{transfer.seat_numbers?.join(', ')}</span></p>
+                          <p className="text-sm">💰 Amount: <span className="font-bold text-green-600">ETB {transfer.amount?.toLocaleString()}</span></p>
+                          <p className="text-xs text-gray-400">Reference: {transfer.reference}</p>
+                          <p className="text-xs text-gray-400">Submitted: {new Date(transfer.created_at).toLocaleString()}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          {transfer.proof_image && (
+                            <button
+                              onClick={() => window.open(transfer.proof_image, '_blank')}
+                              className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                            >
+                              📸 View Proof
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-3 mt-4 pt-3 border-t">
+                        <button
+                          onClick={() => verifyBankTransfer(transfer.id, transfer.user_id, transfer.pool_id, transfer.amount, transfer.seat_numbers, true)}
+                          className="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700"
+                        >
+                          ✅ Approve & Confirm Seats
+                        </button>
+                        <button
+                          onClick={() => verifyBankTransfer(transfer.id, transfer.user_id, transfer.pool_id, transfer.amount, transfer.seat_numbers, false)}
+                          className="flex-1 bg-red-600 text-white py-2 rounded-lg font-semibold hover:bg-red-700"
+                        >
+                          ❌ Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* ========== FEATURED TAB ========== */}
         {activeTab === 'featured' && (
           <div className="bg-white rounded-xl shadow-md p-6">
@@ -788,37 +932,13 @@ export default function AdminDashboard() {
             </div>
             
             <div className="p-6 space-y-5">
-              <div>
-                <label className="block text-sm font-medium mb-1">Prize Name *</label>
-                <input type="text" className="w-full border rounded-lg p-3" placeholder="e.g., iPhone 15 Pro Max" value={newPool.prize_name} onChange={(e) => setNewPool({...newPool, prize_name: e.target.value})} />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
-                <textarea rows="3" className="w-full border rounded-lg p-3" placeholder="Describe the prize and pool rules..." value={newPool.description} onChange={(e) => setNewPool({...newPool, description: e.target.value})} />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div><label className="block text-sm font-medium mb-1">Target Amount (ETB) *</label><input type="number" className="w-full border rounded-lg p-3" placeholder="10000" value={newPool.target_amount} onChange={(e) => setNewPool({...newPool, target_amount: e.target.value})} /></div>
-                <div><label className="block text-sm font-medium mb-1">Entry Fee (ETB)</label><input type="number" className="w-full border rounded-lg p-3" placeholder="10" value={newPool.entry_fee} onChange={(e) => setNewPool({...newPool, entry_fee: e.target.value})} /></div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div><label className="block text-sm font-medium mb-1">Start Date</label><input type="datetime-local" className="w-full border rounded-lg p-3" value={newPool.start_date} onChange={(e) => setNewPool({...newPool, start_date: e.target.value})} /></div>
-                <div><label className="block text-sm font-medium mb-1">End Date *</label><input type="datetime-local" className="w-full border rounded-lg p-3" value={newPool.end_date} onChange={(e) => setNewPool({...newPool, end_date: e.target.value})} /></div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Pool Image</label>
-                <input type="file" accept="image/*" onChange={handlePoolImageUpload} disabled={uploading} className="w-full border rounded-lg p-2" />
-                {uploading && <p className="text-sm text-gray-500 mt-1">Uploading...</p>}
-                {newPool.image_url && <div className="mt-2"><img src={newPool.image_url} alt="Preview" className="w-32 h-32 object-cover rounded-lg" /></div>}
-              </div>
-              
+              <div><label className="block text-sm font-medium mb-1">Prize Name *</label><input type="text" className="w-full border rounded-lg p-3" placeholder="e.g., iPhone 15 Pro Max" value={newPool.prize_name} onChange={(e) => setNewPool({...newPool, prize_name: e.target.value})} /></div>
+              <div><label className="block text-sm font-medium mb-1">Description</label><textarea rows="3" className="w-full border rounded-lg p-3" placeholder="Describe the prize and pool rules..." value={newPool.description} onChange={(e) => setNewPool({...newPool, description: e.target.value})} /></div>
+              <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-1">Target Amount (ETB) *</label><input type="number" className="w-full border rounded-lg p-3" placeholder="10000" value={newPool.target_amount} onChange={(e) => setNewPool({...newPool, target_amount: e.target.value})} /></div><div><label className="block text-sm font-medium mb-1">Entry Fee (ETB)</label><input type="number" className="w-full border rounded-lg p-3" placeholder="10" value={newPool.entry_fee} onChange={(e) => setNewPool({...newPool, entry_fee: e.target.value})} /></div></div>
+              <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-1">Start Date</label><input type="datetime-local" className="w-full border rounded-lg p-3" value={newPool.start_date} onChange={(e) => setNewPool({...newPool, start_date: e.target.value})} /></div><div><label className="block text-sm font-medium mb-1">End Date *</label><input type="datetime-local" className="w-full border rounded-lg p-3" value={newPool.end_date} onChange={(e) => setNewPool({...newPool, end_date: e.target.value})} /></div></div>
+              <div><label className="block text-sm font-medium mb-1">Pool Image</label><input type="file" accept="image/*" onChange={handlePoolImageUpload} disabled={uploading} className="w-full border rounded-lg p-2" />{uploading && <p className="text-sm text-gray-500 mt-1">Uploading...</p>}{newPool.image_url && <div className="mt-2"><img src={newPool.image_url} alt="Preview" className="w-32 h-32 object-cover rounded-lg" /></div>}</div>
               <div className="flex items-center gap-3"><input type="checkbox" id="is_featured" checked={newPool.is_featured} onChange={(e) => setNewPool({...newPool, is_featured: e.target.checked})} className="w-5 h-5" /><label htmlFor="is_featured" className="text-sm font-medium">⭐ Feature this pool on homepage</label></div>
-              
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm"><p className="font-semibold text-yellow-800">💰 Admin Commission: 20%</p><p className="text-yellow-700 text-xs mt-1">When this pool reaches target, you earn 20% of the total amount. Target: ETB {parseFloat(newPool.target_amount || 0).toLocaleString()} → Your commission: ETB {(parseFloat(newPool.target_amount || 0) * 0.20).toLocaleString()}</p></div>
-              
               <div className="flex gap-3 pt-4"><button onClick={createAdminPool} disabled={loading || uploading} className="flex-1 bg-gradient-to-r from-red-600 to-rose-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition">{loading ? 'Creating...' : '✨ Create Featured Pool'}</button><button onClick={() => setShowPoolModal(false)} className="flex-1 border border-gray-300 py-3 rounded-lg hover:bg-gray-50">Cancel</button></div>
             </div>
           </div>
