@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { uploadPoolImage } from '../lib/upload';
 import toast from 'react-hot-toast';
 
-export default function ImageUpload({ onImageUploaded, currentImage = null, label = 'Pool Image' }) {
+export default function ImageUpload({ onUpload, currentImage = null, folder = 'pools' }) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState(currentImage);
   const [progress, setProgress] = useState(0);
@@ -38,19 +38,25 @@ export default function ImageUpload({ onImageUploaded, currentImage = null, labe
         setProgress(prev => Math.min(prev + 15, 90));
       }, 200);
       
-      const result = await uploadPoolImage(file);
+      const result = await uploadPoolImage(file, folder);
       
       clearInterval(progressInterval);
       setProgress(100);
       
-      onImageUploaded(result.url);
+      // Handle both return types (string or object)
+      const imageUrl = typeof result === 'string' ? result : result?.url;
+      
+      if (onUpload) {
+        onUpload(imageUrl);
+      }
+      
       setUploadInfo({
-        compressed: result.compressed,
-        originalSize: (result.originalSize / 1024).toFixed(1),
-        compressedSize: (result.compressedSize / 1024).toFixed(1)
+        compressed: result?.compressed || false,
+        originalSize: result?.originalSize ? (result.originalSize / 1024).toFixed(1) : null,
+        compressedSize: result?.compressedSize ? (result.compressedSize / 1024).toFixed(1) : null
       });
       
-      toast.success(`Image uploaded${result.compressed ? ' and optimized' : ''}!`);
+      toast.success(`Image uploaded${result?.compressed ? ' and optimized' : ''}!`);
       
       // Reset progress after a moment
       setTimeout(() => setProgress(0), 1000);
@@ -69,7 +75,9 @@ export default function ImageUpload({ onImageUploaded, currentImage = null, labe
   const removeImage = () => {
     setPreview(null);
     setUploadInfo(null);
-    onImageUploaded(null);
+    if (onUpload) {
+      onUpload(null);
+    }
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -78,7 +86,9 @@ export default function ImageUpload({ onImageUploaded, currentImage = null, labe
 
   return (
     <div className="space-y-3">
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        Pool Image <span className="text-red-500">*</span>
+      </label>
       
       {preview ? (
         <div className="relative inline-block">
@@ -116,9 +126,9 @@ export default function ImageUpload({ onImageUploaded, currentImage = null, labe
           />
           <div className="flex flex-col items-center gap-2">
             <span className="text-4xl">📸</span>
-            <p className="text-sm text-gray-500">Click to upload image</p>
+            <p className="text-sm text-gray-500">Click to upload pool image</p>
             <p className="text-xs text-gray-400">JPEG, PNG, WEBP up to 10MB</p>
-            <p className="text-xs text-green-600">✨ Images are automatically optimized</p>
+            <p className="text-xs text-green-600">✨ Images are automatically optimized for fast loading</p>
           </div>
         </div>
       )}
