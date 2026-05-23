@@ -5,6 +5,11 @@ import Head from 'next/head';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import SeatSelector from '../../components/SeatSelector';
+import BankTransferUpload from '../../components/BankTransferUpload';
+
+export async function getServerSideProps() {
+  return { props: {} };
+}
 
 export default function PoolDetails() {
   const router = useRouter();
@@ -14,6 +19,7 @@ export default function PoolDetails() {
   const [contributing, setContributing] = useState(false);
   const [user, setUser] = useState(null);
   const [showSeatSelector, setShowSeatSelector] = useState(false);
+  const [showBankUpload, setShowBankUpload] = useState(false);
   const [selectedSeatsData, setSelectedSeatsData] = useState(null);
   const [availableSeats, setAvailableSeats] = useState(0);
 
@@ -70,83 +76,30 @@ export default function PoolDetails() {
   };
 
   const handleSeatsSelected = async (seatData) => {
+    // Double-check seat availability before proceeding
+    const { data: seats, error: seatCheckError } = await supabase
+      .from('pool_seats')
+      .select('seat_number, status')
+      .in('seat_number', seatData.seats)
+      .eq('pool_id', pool.id);
+
+    if (seatCheckError) {
+      toast.error('Error checking seat availability');
+      setShowSeatSelector(true);
+      return;
+    }
+
+    const unavailableSeats = seats.filter(s => s.status !== 'available');
+    if (unavailableSeats.length > 0) {
+      toast.error(`Seats ${unavailableSeats.map(s => s.seat_number).join(', ')} are no longer available. Please reselect.`);
+      setShowSeatSelector(true);
+      await fetchAvailableSeats();
+      return;
+    }
+
     setSelectedSeatsData(seatData);
     setShowSeatSelector(false);
-    
-    // Proceed to payment with seat data
-    await initiatePayment(seatData);
-  };
-
-  const initiatePayment = async (seatData) => {
-    setContributing(true);
-    
-    try {
-      // Create contribution record with seat numbers
-      const { data: contribution, error: contribError } = await supabase
-        .from('contributions')
-        .insert({
-          user_id: user.id,
-          pool_id: pool.id,
-          amount: seatData.totalAmount,
-          seat_numbers: seatData.seats,
-          seat_count: seatData.seatCount,
-          status: 'pending',
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-      
-      if (contribError) throw contribError;
-
-      // Mark seats as reserved (will be taken after payment)
-      const { error: seatError } = await supabase
-        .from('pool_seats')
-        .update({
-          status: 'reserved',
-          user_id: user.id,
-          contribution_id: contribution.id,
-          reserved_until: new Date(Date.now() + 10 * 60 * 1000).toISOString()
-        })
-        .in('seat_number', seatData.seats)
-        .eq('pool_id', pool.id);
-
-      if (seatError) throw seatError;
-
-      // Redirect to payment
-      // Replace with your actual payment integration
-      toast.success('Please complete payment to confirm your seats');
-      
-      // For Chapa payment
-      if (process.env.NEXT_PUBLIC_CHAPA_SECRET_KEY) {
-        // Redirect to Chapa payment
-        const response = await fetch('/api/chapa/initialize', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            amount: seatData.totalAmount,
-            email: user.email,
-            firstName: user.user_metadata?.full_name?.split(' ')[0] || 'User',
-            lastName: user.user_metadata?.full_name?.split(' ')[1] || '',
-            tx_ref: `ABBA-${Date.now()}-${contribution.id}`,
-            callbackUrl: `${window.location.origin}/payment/success?pool_id=${pool.id}&seats=${seatData.seats.join(',')}&contribution_id=${contribution.id}`
-          })
-        });
-        
-        const data = await response.json();
-        if (data.checkout_url) {
-          window.location.href = data.checkout_url;
-        }
-      } else {
-        // Demo mode - simulate success
-        router.push(`/payment/success?pool_id=${pool.id}&seats=${seatData.seats.join(',')}&contribution_id=${contribution.id}&demo=true`);
-      }
-      
-    } catch (error) {
-      console.error('Payment initiation error:', error);
-      toast.error('Failed to initiate payment. Please try again.');
-    } finally {
-      setContributing(false);
-    }
+    setShowBankUpload(true);
   };
 
   if (loading) {
@@ -268,7 +221,7 @@ export default function PoolDetails() {
               {/* Action Section */}
               {pool.status === 'active' && (
                 <div className="border-t pt-6">
-                  {!showSeatSelector ? (
+                  {!showSeatSelector && !showBankUpload ? (
                     <div className="space-y-4">
                       <div className="bg-green-50 rounded-xl p-4 text-center">
                         <p className="text-sm text-green-800 mb-2">
@@ -289,7 +242,7 @@ export default function PoolDetails() {
                         💚 2% of your contribution supports kidney & heart disease treatment
                       </p>
                     </div>
-                  ) : (
+                  ) : showSeatSelector && (
                     <SeatSelector
                       poolId={pool.id}
                       entryFee={pool.entry_fee}
@@ -318,6 +271,24 @@ export default function PoolDetails() {
           </div>
         </div>
       </div>
+
+      {/* Bank Transfer Upload Modal */}
+      {showBankUpload && selectedSeatsData && (
+        <BankTransferUpload
+          poolId={pool.id}
+          amount={selectedSeatsData.totalAmount}
+          seatNumbers={selectedSeatsData.seats}
+          onSuccess={() => {
+            setShowBankUpload(false);
+            toast.success('Payment proof submitted! Admin will verify within 1 hour.');
+            router.push('/dashboard');
+          }}
+          onClose={() => {
+            setShowBankUpload(false);
+            setShowSeatSelector(true);
+          }}
+        />
+      )}
     </>
   );
 }
