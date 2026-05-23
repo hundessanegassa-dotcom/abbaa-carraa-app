@@ -22,6 +22,7 @@ export default function CreatePool() {
     contribution_amount: '',
     category: 'vehicle',
     city: 'Addis Ababa',
+    city_custom: '',
     image_url: '',
     end_date: ''
   });
@@ -45,7 +46,6 @@ export default function CreatePool() {
       .maybeSingle();
     setProfile(profile);
 
-    // Check if user can create pools (Agent, Vendor, Organization, Admin)
     const canCreatePool = ['agent', 'vendor', 'organization', 'admin'].includes(profile?.user_type);
     
     if (!canCreatePool) {
@@ -65,7 +65,13 @@ export default function CreatePool() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'city' && value === 'Other') {
+      setFormData(prev => ({ ...prev, city: '', city_custom: '' }));
+    } else if (name === 'city_custom') {
+      setFormData(prev => ({ ...prev, city: value }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleImageUpload = (url) => {
@@ -103,6 +109,14 @@ export default function CreatePool() {
       return;
     }
 
+    // Get final city value
+    const finalCity = formData.city === 'Other' ? formData.city_custom : formData.city;
+    if (!finalCity || finalCity.trim() === '') {
+      toast.error('Please select or enter a city');
+      setSubmitting(false);
+      return;
+    }
+
     const isAdmin = profile?.user_type === 'admin';
     const totalCommission = targetAmount * 0.20;
     const creatorCommission = targetAmount * (isAdmin ? 0.20 : 0.10);
@@ -119,7 +133,7 @@ export default function CreatePool() {
       total_collection: totalCollection,
       current_amount: 0,
       category: formData.category,
-      city: formData.city,
+      city: finalCity,
       image_url: formData.image_url,
       end_date: formData.end_date,
       status: 'active',
@@ -129,6 +143,8 @@ export default function CreatePool() {
       platform_rate: isAdmin ? 0 : 10,
       created_at: new Date().toISOString()
     };
+
+    console.log('Submitting pool data:', poolData);
 
     const { data, error } = await supabase
       .from('pools')
@@ -143,7 +159,6 @@ export default function CreatePool() {
     } else {
       toast.success(`🎉 Pool created successfully! Total to collect: ETB ${totalCollection.toLocaleString()}`);
       
-      // Redirect to role-specific dashboard
       setTimeout(() => {
         router.push(`/${profile?.user_type}/dashboard`);
       }, 1500);
@@ -159,6 +174,8 @@ export default function CreatePool() {
   const numberOfSeats = targetAmount > 0 && parseFloat(formData.contribution_amount) > 0 
     ? Math.ceil(targetAmount / parseFloat(formData.contribution_amount)) 
     : 0;
+
+  const finalCityDisplay = formData.city === 'Other' ? formData.city_custom : formData.city;
 
   if (loading) {
     return (
@@ -278,21 +295,40 @@ export default function CreatePool() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   City
                 </label>
-                <select
-                  name="city"
-                  value={formData.city}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                >
-                  <option value="Addis Ababa">Addis Ababa</option>
-                  <option value="Adama">Adama</option>
-                  <option value="Bahir Dar">Bahir Dar</option>
-                  <option value="Dire Dawa">Dire Dawa</option>
-                  <option value="Hawassa">Hawassa</option>
-                  <option value="Mekelle">Mekelle</option>
-                  <option value="Jimma">Jimma</option>
-                  <option value="Gondar">Gondar</option>
-                </select>
+                <div className="flex gap-2">
+                  <select
+                    name="city"
+                    value={formData.city === 'Other' ? 'Other' : formData.city}
+                    onChange={handleChange}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="Addis Ababa">Addis Ababa</option>
+                    <option value="Adama">Adama</option>
+                    <option value="Bahir Dar">Bahir Dar</option>
+                    <option value="Dire Dawa">Dire Dawa</option>
+                    <option value="Hawassa">Hawassa</option>
+                    <option value="Mekelle">Mekelle</option>
+                    <option value="Jimma">Jimma</option>
+                    <option value="Gondar">Gondar</option>
+                    <option value="Dessie">Dessie</option>
+                    <option value="Harar">Harar</option>
+                    <option value="Other">Other (type below)</option>
+                  </select>
+                </div>
+                {formData.city === 'Other' && (
+                  <input
+                    type="text"
+                    name="city_custom"
+                    placeholder="Enter your city name"
+                    onChange={handleChange}
+                    className="mt-2 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  />
+                )}
+                {finalCityDisplay && formData.city !== 'Other' && (
+                  <p className="text-xs text-green-600 mt-1">
+                    Selected city: {finalCityDisplay}
+                  </p>
+                )}
               </div>
             </div>
 
