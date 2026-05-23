@@ -6,7 +6,6 @@ export default function ImageUpload({ onUpload, currentImage = null, folder = 'p
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState(currentImage);
   const [progress, setProgress] = useState(0);
-  const [uploadInfo, setUploadInfo] = useState(null);
   const fileInputRef = useRef(null);
 
   const handleFileSelect = async (e) => {
@@ -30,7 +29,6 @@ export default function ImageUpload({ onUpload, currentImage = null, folder = 'p
     setPreview(objectUrl);
     setUploading(true);
     setProgress(10);
-    setUploadInfo(null);
     
     try {
       // Simulate progress for better UX
@@ -38,25 +36,16 @@ export default function ImageUpload({ onUpload, currentImage = null, folder = 'p
         setProgress(prev => Math.min(prev + 15, 90));
       }, 200);
       
-      const result = await uploadPoolImage(file, folder);
+      const imageUrl = await uploadPoolImage(file, folder);
       
       clearInterval(progressInterval);
       setProgress(100);
-      
-      // Handle both return types (string or object)
-      const imageUrl = typeof result === 'string' ? result : result?.url;
       
       if (onUpload) {
         onUpload(imageUrl);
       }
       
-      setUploadInfo({
-        compressed: result?.compressed || false,
-        originalSize: result?.originalSize ? (result.originalSize / 1024).toFixed(1) : null,
-        compressedSize: result?.compressedSize ? (result.compressedSize / 1024).toFixed(1) : null
-      });
-      
-      toast.success(`Image uploaded${result?.compressed ? ' and optimized' : ''}!`);
+      toast.success('Image uploaded successfully!');
       
       // Reset progress after a moment
       setTimeout(() => setProgress(0), 1000);
@@ -74,7 +63,6 @@ export default function ImageUpload({ onUpload, currentImage = null, folder = 'p
 
   const removeImage = () => {
     setPreview(null);
-    setUploadInfo(null);
     if (onUpload) {
       onUpload(null);
     }
@@ -105,11 +93,6 @@ export default function ImageUpload({ onUpload, currentImage = null, folder = 'p
           >
             ×
           </button>
-          {uploadInfo && uploadInfo.compressed && (
-            <div className="absolute -bottom-6 left-0 text-xs text-green-600 whitespace-nowrap">
-              ⚡ {uploadInfo.compressedSize}KB (from {uploadInfo.originalSize}KB)
-            </div>
-          )}
         </div>
       ) : (
         <div 
@@ -136,7 +119,7 @@ export default function ImageUpload({ onUpload, currentImage = null, folder = 'p
       {uploading && (
         <div className="space-y-1">
           <div className="flex justify-between text-xs">
-            <span className="text-gray-500">Optimizing & uploading...</span>
+            <span className="text-gray-500">Uploading...</span>
             <span className="text-gray-500">{progress}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
