@@ -143,20 +143,32 @@ export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSe
   }
 
   const getSeatColor = (seat) => {
-    if (seat.status === 'taken') return 'bg-gray-400 cursor-not-allowed opacity-50';
+    if (seat.status === 'taken') {
+      return 'bg-gray-400 cursor-not-allowed opacity-50';
+    }
     if (seat.status === 'reserved') {
       const isMyReservation = seat.reserved_by === currentUser?.id;
-      return isMyReservation ? 'bg-yellow-400 hover:bg-yellow-500' : 'bg-red-300 cursor-not-allowed';
+      if (isMyReservation) {
+        return 'bg-yellow-400 hover:bg-yellow-500';
+      }
+      return 'bg-red-300 cursor-not-allowed';
     }
-    if (selectedSeats.includes(seat.seat_number)) return 'bg-green-600 text-white';
+    if (selectedSeats.includes(seat.seat_number)) {
+      return 'bg-green-600 text-white';
+    }
     return 'bg-green-100 hover:bg-green-200 cursor-pointer';
   };
 
   const getSeatStatusText = (seat) => {
-    if (seat.status === 'taken') return 'Taken';
+    if (seat.status === 'taken') {
+      return 'Taken';
+    }
     if (seat.status === 'reserved') {
       const isMyReservation = seat.reserved_by === currentUser?.id;
-      return isMyReservation ? 'Selected by you' : 'Being selected';
+      if (isMyReservation) {
+        return 'Selected by you';
+      }
+      return 'Being selected';
     }
     return 'Available';
   };
@@ -210,23 +222,29 @@ export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSe
         <div className="inline-block min-w-full">
           {seatRows.map((row, rowIndex) => (
             <div key={rowIndex} className="flex justify-center gap-2 mb-2">
-              {row.map((seat) => (
-                <button
-                  key={seat.seat_number}
-                  onClick={() => handleSeatClick(seat)}
-                  disabled={seat.status === 'taken' || (seat.status === 'reserved' && seat.reserved_by !== currentUser?.id)}
-                  className={`
-                    w-12 h-12 rounded-lg flex flex-col items-center justify-center text-xs font-semibold transition-all
-                    ${getSeatColor(seat)}
-                  `}
-                  title={`Seat ${seat.seat_number} - ${getSeatStatusText(seat)}`}
-                >
-                  <span className="text-sm">{seat.seat_number}</span>
-                  <span className="text-[8px] mt-0.5">
-                    {seat.status === 'taken' ? '🔒' : seat.status === 'reserved' ? '⏳' : '🟢'}
-                  </span>
-                </button>
-              ))}
+              {row.map((seat) => {
+                const isDisabled = seat.status === 'taken' || (seat.status === 'reserved' && seat.reserved_by !== currentUser?.id);
+                const seatColor = getSeatColor(seat);
+                const statusText = getSeatStatusText(seat);
+                
+                return (
+                  <button
+                    key={seat.seat_number}
+                    onClick={() => handleSeatClick(seat)}
+                    disabled={isDisabled}
+                    className={`
+                      w-12 h-12 rounded-lg flex flex-col items-center justify-center text-xs font-semibold transition-all
+                      ${seatColor}
+                    `}
+                    title={`Seat ${seat.seat_number} - ${statusText}`}
+                  >
+                    <span className="text-sm">{seat.seat_number}</span>
+                    <span className="text-[8px] mt-0.5">
+                      {seat.status === 'taken' ? '🔒' : seat.status === 'reserved' ? '⏳' : '🟢'}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           ))}
         </div>
@@ -238,7 +256,7 @@ export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSe
           <div className="flex justify-between items-center mb-4">
             <div>
               <p className="text-sm text-gray-500">Selected Seats</p>
-              <p className="font-bold text-lg">{selectedSeats.sort((a,b) => a-b).join(', ')}</p>
+              <p className="font-bold text-lg">{selectedSeats.sort((a, b) => a - b).join(', ')}</p>
             </div>
             <div className="text-right">
               <p className="text-sm text-gray-500">Total Amount</p>
