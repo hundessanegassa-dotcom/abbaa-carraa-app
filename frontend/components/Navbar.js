@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import LanguageToggle from './LanguageToggle';
 import NotificationBell from './NotificationBell';
+import { checkAdminStatus } from '../lib/adminCheck'; // NEW: Only addition
 
 // Check if running on client side
 const isClient = typeof window !== 'undefined';
@@ -22,6 +23,7 @@ export default function Navbar() {
   const [hasVendorApplication, setHasVendorApplication] = useState(false);
   const [hasOrgApplication, setHasOrgApplication] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false); // NEW: Admin state
 
   useEffect(() => {
     if (isClient) {
@@ -48,6 +50,10 @@ export default function Navbar() {
           .maybeSingle();
         setUserRole(profile?.role || null);
         setUserType(profile?.user_type || null);
+        
+        // NEW: Check if user is admin
+        const { isAdmin: adminStatus } = await checkAdminStatus();
+        setIsAdmin(adminStatus);
         
         const { data: agentCheck } = await supabase
           .from('agents')
@@ -78,17 +84,14 @@ export default function Navbar() {
     }
   }
 
-  // FIXED LOGOUT FUNCTION - This is the only change
   const handleLogout = async () => {
     try {
       setIsLoading(true);
       
-      // Clear ALL browser storage FIRST
       if (typeof window !== 'undefined') {
         localStorage.clear();
         sessionStorage.clear();
         
-        // Clear all cookies
         document.cookie.split(";").forEach(function(c) {
           document.cookie = c
             .replace(/^ +/, "")
@@ -96,18 +99,15 @@ export default function Navbar() {
         });
       }
       
-      // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      // Clear state
       setUser(null);
       setUserRole(null);
       setUserType(null);
+      setIsAdmin(false);
       
       toast.success('Logged out successfully');
-      
-      // Force hard redirect to prevent infinite loop
       window.location.href = '/';
       
     } catch (error) {
@@ -189,6 +189,13 @@ export default function Navbar() {
               <Link href="/winners" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🏆 Winners </Link>
               <Link href="/how-it-works" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🎯 How It Works </Link>
               
+              {/* NEW: Admin Panel Link - Only visible to admin users */}
+              {isAdmin && (
+                <Link href="/admin/dashboard" className="ml-2 bg-red-600 text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-red-700 transition flex items-center gap-1">
+                  👑 Admin
+                </Link>
+              )}
+              
               {user && createAction && (
                 <Link href={createAction.link} className="ml-2 bg-gradient-to-r from-green-500 to-teal-500 text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:shadow-lg transition transform hover:scale-105 flex items-center gap-1">
                   <span>+</span> {createAction.text}
@@ -221,6 +228,20 @@ export default function Navbar() {
                         <p className="text-sm font-semibold text-gray-800 capitalize">{userType || 'Individual'}</p>
                         <p className="text-xs text-gray-500">{user.email}</p>
                       </div>
+                      
+                      {/* NEW: Admin quick links in dropdown */}
+                      {isAdmin && (
+                        <>
+                          <Link href="/admin/dashboard" className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition">
+                            <span>👑</span> Admin Dashboard
+                          </Link>
+                          <Link href="/admin/bank-transfers" className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition">
+                            <span>🏦</span> Verify Payments
+                          </Link>
+                          <div className="border-t my-1"></div>
+                        </>
+                      )}
+                      
                       <Link href={getDashboardLink()} className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded-lg transition">
                         <span>📊</span> Dashboard
                       </Link>
@@ -288,6 +309,13 @@ export default function Navbar() {
               <Link href="/listings" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🎁 Browse Prizes </Link>
               <Link href="/winners" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🏆 Winners </Link>
               <Link href="/how-it-works" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🎯 How It Works </Link>
+              
+              {/* NEW: Mobile Admin Link */}
+              {isAdmin && (
+                <Link href="/admin/dashboard" className="block py-2 px-3 text-sm bg-red-100 text-red-600 rounded-lg font-semibold" onClick={() => setMobileMenuOpen(false)}>
+                  👑 Admin Panel
+                </Link>
+              )}
               
               {user && (
                 <>
