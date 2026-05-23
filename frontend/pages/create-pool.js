@@ -21,8 +21,8 @@ export default function CreatePool() {
     target_amount: '',
     contribution_amount: '',
     category: 'vehicle',
+    city_select: 'Addis Ababa',
     city: 'Addis Ababa',
-    city_custom: '',
     image_url: '',
     end_date: ''
   });
@@ -65,13 +65,20 @@ export default function CreatePool() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'city' && value === 'Other') {
-      setFormData(prev => ({ ...prev, city: '', city_custom: '' }));
-    } else if (name === 'city_custom') {
-      setFormData(prev => ({ ...prev, city: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleCityChange = (e) => {
+    const value = e.target.value;
+    if (value === 'Other') {
+      setFormData(prev => ({ ...prev, city_select: 'Other', city: '' }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData(prev => ({ ...prev, city_select: value, city: value }));
     }
+  };
+
+  const handleCustomCityChange = (e) => {
+    setFormData(prev => ({ ...prev, city: e.target.value }));
   };
 
   const handleImageUpload = (url) => {
@@ -110,7 +117,7 @@ export default function CreatePool() {
     }
 
     // Get final city value
-    const finalCity = formData.city === 'Other' ? formData.city_custom : formData.city;
+    const finalCity = formData.city;
     if (!finalCity || finalCity.trim() === '') {
       toast.error('Please select or enter a city');
       setSubmitting(false);
@@ -174,8 +181,6 @@ export default function CreatePool() {
   const numberOfSeats = targetAmount > 0 && parseFloat(formData.contribution_amount) > 0 
     ? Math.ceil(targetAmount / parseFloat(formData.contribution_amount)) 
     : 0;
-
-  const finalCityDisplay = formData.city === 'Other' ? formData.city_custom : formData.city;
 
   if (loading) {
     return (
@@ -293,41 +298,34 @@ export default function CreatePool() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  City
+                  City *
                 </label>
-                <div className="flex gap-2">
-                  <select
-                    name="city"
-                    value={formData.city === 'Other' ? 'Other' : formData.city}
-                    onChange={handleChange}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  >
-                    <option value="Addis Ababa">Addis Ababa</option>
-                    <option value="Adama">Adama</option>
-                    <option value="Bahir Dar">Bahir Dar</option>
-                    <option value="Dire Dawa">Dire Dawa</option>
-                    <option value="Hawassa">Hawassa</option>
-                    <option value="Mekelle">Mekelle</option>
-                    <option value="Jimma">Jimma</option>
-                    <option value="Gondar">Gondar</option>
-                    <option value="Dessie">Dessie</option>
-                    <option value="Harar">Harar</option>
-                    <option value="Other">Other (type below)</option>
-                  </select>
-                </div>
-                {formData.city === 'Other' && (
+                <select
+                  value={formData.city_select}
+                  onChange={handleCityChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="Addis Ababa">Addis Ababa</option>
+                  <option value="Adama">Adama</option>
+                  <option value="Bahir Dar">Bahir Dar</option>
+                  <option value="Dire Dawa">Dire Dawa</option>
+                  <option value="Hawassa">Hawassa</option>
+                  <option value="Mekelle">Mekelle</option>
+                  <option value="Jimma">Jimma</option>
+                  <option value="Gondar">Gondar</option>
+                  <option value="Dessie">Dessie</option>
+                  <option value="Harar">Harar</option>
+                  <option value="Other">Other (type below)</option>
+                </select>
+                {formData.city_select === 'Other' && (
                   <input
                     type="text"
-                    name="city_custom"
                     placeholder="Enter your city name"
-                    onChange={handleChange}
+                    value={formData.city}
+                    onChange={handleCustomCityChange}
                     className="mt-2 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    required
                   />
-                )}
-                {finalCityDisplay && formData.city !== 'Other' && (
-                  <p className="text-xs text-green-600 mt-1">
-                    Selected city: {finalCityDisplay}
-                  </p>
                 )}
               </div>
             </div>
