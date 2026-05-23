@@ -11,6 +11,7 @@ export default function AdminBankTransfers() {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [selectedTransfer, setSelectedTransfer] = useState(null);
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     checkAdmin();
@@ -44,8 +45,8 @@ export default function AdminBankTransfers() {
         .from('bank_transfers')
         .select(`
           *,
-          profiles!user_id (full_name, email, phone),
-          pools!pool_id (prize_name, target_amount)
+          profiles!user_id (id, full_name, email, phone),
+          pools!pool_id (id, prize_name, target_amount, current_amount)
         `)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
@@ -60,9 +61,30 @@ export default function AdminBankTransfers() {
     }
   }
 
-  async function verifyTransfer(transferId, userId, poolId, amount) {
+  async function verifyTransfer(transferId, userId, poolId, amount, seatNumbers) {
+    setProcessing(true);
+    toast.loading('Verifying payment...', { id: 'verify' });
+
     try {
-      // Update transfer status
+      // 1. Check if seats are still available
+      if (seatNumbers && seatNumbers.length > 0) {
+        const { data: seats, error: seatCheckError } = await supabase
+          .from('pool_seats')
+          .select('seat_number, status')
+          .in('seat_number', seatNumbers)
+          .eq('pool_id', poolId);
+
+        if (seatCheckError) throw seatCheckError;
+
+        const unavailableSeats = seats.filter(s => s.status !== 'available');
+        if (unavailableSeats.length > 0) {
+          toast.error(`Seats ${unavailableSeats.map(s => s.seat_number).join(', ')} are no longer available`, { id: 'verify' });
+          setProcessing(false);
+          return;
+        }
+      }
+
+      // 2. Update transfer status
       const { error: updateError } = await supabase
         .from('bank_transfers')
         .update({
@@ -74,7 +96,22 @@ export default function AdminBankTransfers() {
 
       if (updateError) throw updateError;
 
-      // Create contribution record
+      // 3. Mark seats as taken
+      if (seatNumbers && seatNumbers.length > 0) {
+        const { error: seatError } = await supabase
+          .from('pool_seats')
+          .update({ 
+            status: 'taken', 
+            user_id: userId,
+            taken_at: new Date().toISOString()
+          })
+          .in('seat_number', seatNumbers)
+          .eq('pool_id', poolId);
+
+        if (seatError) throw seatError;
+      }
+
+      // 4. Create contribution record
       const { error: contribError } = await supabase
         .from('contributions')
         .insert({
@@ -83,40 +120,96 @@ export default function AdminBankTransfers() {
           amount: amount,
           status: 'completed',
           payment_method: 'bank_transfer',
+          seat_numbers: seatNumbers,
           created_at: new Date().toISOString()
         });
 
       if (contribError) throw contribError;
 
-      // Update pool current amount
-      await supabase.rpc('increment_pool_amount', {
-        pool_id: poolId,
-        amount: amount
-      });
+      // 5. Update pool current amount
+      const { data: pool } = await supabase
+        .from('pools')
+        .select('current_amount')
+        .eq('id', poolId)
+        .single();
 
-      toast.success('Payment verified! User entry added to pool.');
-      fetchTransfers();
+      await supabase
+        .from('pools')
+        .update({ 
+          current_amount: (pool?.current_amount || 0) + amount
+        })
+        .eq('id', poolId);
+
+      // 6. Send notification to user
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: userId,
+          type: 'payment_verified',
+          title: '✅ Payment Verified!',
+          message: `Your payment of ETB ${amount.toLocaleString()} has been verified. Seats ${seatNumbers?.join(', ')} are now confirmed!`,
+          metadata: { pool_id: poolId, seat_numbers: seatNumbers }
+        });
+
+      toast.success('Payment verified! User seats confirmed.', { id: 'verify' });
+      await fetchTransfers();
       setSelectedTransfer(null);
     } catch (error) {
       console.error('Verification error:', error);
-      toast.error('Failed to verify payment');
+      toast.error('Failed to verify payment', { id: 'verify' });
+    } finally {
+      setProcessing(false);
     }
   }
 
-  async function rejectTransfer(transferId) {
+  async function rejectTransfer(transferId, userId, poolId, seatNumbers) {
+    setProcessing(true);
+    toast.loading('Rejecting payment...', { id: 'reject' });
+
     try {
+      // 1. Update transfer status
       const { error } = await supabase
         .from('bank_transfers')
-        .update({ status: 'rejected' })
+        .update({ 
+          status: 'rejected',
+          rejected_at: new Date().toISOString()
+        })
         .eq('id', transferId);
 
       if (error) throw error;
-      toast.success('Transfer rejected');
-      fetchTransfers();
+
+      // 2. Release seats back to available
+      if (seatNumbers && seatNumbers.length > 0) {
+        await supabase
+          .from('pool_seats')
+          .update({ 
+            status: 'available',
+            user_id: null,
+            reserved_by: null,
+            reserved_until: null
+          })
+          .in('seat_number', seatNumbers)
+          .eq('pool_id', poolId);
+      }
+
+      // 3. Send notification to user
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: userId,
+          type: 'payment_rejected',
+          title: '❌ Payment Rejected',
+          message: `Your payment of ETB ${seatNumbers?.length * 100} could not be verified. Please contact support or try again.`,
+        });
+
+      toast.success('Payment rejected', { id: 'reject' });
+      await fetchTransfers();
       setSelectedTransfer(null);
     } catch (error) {
       console.error('Rejection error:', error);
-      toast.error('Failed to reject transfer');
+      toast.error('Failed to reject payment', { id: 'reject' });
+    } finally {
+      setProcessing(false);
     }
   }
 
@@ -130,6 +223,7 @@ export default function AdminBankTransfers() {
 
         {transfers.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-12 text-center">
+            <div className="text-5xl mb-3">✅</div>
             <p className="text-gray-500">No pending bank transfers to verify</p>
           </div>
         ) : (
@@ -137,22 +231,24 @@ export default function AdminBankTransfers() {
             {transfers.map((transfer) => (
               <div key={transfer.id} className="bg-white rounded-lg shadow p-6">
                 <div className="flex justify-between items-start">
-                  <div>
+                  <div className="space-y-1">
                     <h3 className="font-bold text-lg">{transfer.pools?.prize_name}</h3>
-                    <p className="text-gray-500 text-sm">
-                      User: {transfer.profiles?.full_name} ({transfer.profiles?.email})
+                    <p className="text-gray-600 text-sm">
+                      👤 {transfer.profiles?.full_name} ({transfer.profiles?.email})
                     </p>
-                    <p className="text-gray-500 text-sm">Phone: {transfer.profiles?.phone}</p>
-                    <p className="text-gray-500 text-sm">Amount: ETB {transfer.amount?.toLocaleString()}</p>
-                    <p className="text-gray-500 text-sm">Reference: {transfer.reference}</p>
-                    <p className="text-gray-500 text-sm">
-                      Date: {new Date(transfer.created_at).toLocaleString()}
+                    <p className="text-gray-500 text-sm">📞 {transfer.profiles?.phone || 'No phone'}</p>
+                    <p className="text-gray-500 text-sm">💰 Amount: ETB {transfer.amount?.toLocaleString()}</p>
+                    <p className="text-gray-500 text-sm">🔖 Reference: {transfer.reference}</p>
+                    <p className="text-gray-500 text-sm">🎟️ Seats: {transfer.seat_numbers?.join(', ') || 'N/A'}</p>
+                    <p className="text-gray-400 text-xs">
+                      📅 Submitted: {new Date(transfer.created_at).toLocaleString()}
                     </p>
                   </div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setSelectedTransfer(transfer)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                      disabled={processing}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
                     >
                       View Proof
                     </button>
@@ -168,7 +264,7 @@ export default function AdminBankTransfers() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
-                <h2 className="text-xl font-bold mb-4">Payment Proof</h2>
+                <h2 className="text-xl font-bold mb-4">📸 Payment Proof</h2>
                 
                 {selectedTransfer.proof_image && (
                   <div className="mb-4">
@@ -181,10 +277,13 @@ export default function AdminBankTransfers() {
                 )}
 
                 <div className="space-y-2 mb-6">
-                  <p><strong>User:</strong> {selectedTransfer.profiles?.full_name}</p>
-                  <p><strong>Amount:</strong> ETB {selectedTransfer.amount?.toLocaleString()}</p>
-                  <p><strong>Reference:</strong> {selectedTransfer.reference}</p>
-                  <p><strong>Pool:</strong> {selectedTransfer.pools?.prize_name}</p>
+                  <p><strong>👤 User:</strong> {selectedTransfer.profiles?.full_name}</p>
+                  <p><strong>📞 Phone:</strong> {selectedTransfer.profiles?.phone || 'N/A'}</p>
+                  <p><strong>💰 Amount:</strong> ETB {selectedTransfer.amount?.toLocaleString()}</p>
+                  <p><strong>🔖 Reference:</strong> {selectedTransfer.reference}</p>
+                  <p><strong>🎯 Pool:</strong> {selectedTransfer.pools?.prize_name}</p>
+                  <p><strong>🎟️ Seats:</strong> {selectedTransfer.seat_numbers?.join(', ') || 'N/A'}</p>
+                  <p><strong>📅 Submitted:</strong> {new Date(selectedTransfer.created_at).toLocaleString()}</p>
                 </div>
 
                 <div className="flex gap-3">
@@ -193,15 +292,23 @@ export default function AdminBankTransfers() {
                       selectedTransfer.id,
                       selectedTransfer.user_id,
                       selectedTransfer.pool_id,
-                      selectedTransfer.amount
+                      selectedTransfer.amount,
+                      selectedTransfer.seat_numbers
                     )}
-                    className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+                    disabled={processing}
+                    className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
                   >
-                    ✅ Verify & Activate
+                    {processing ? 'Processing...' : '✅ Verify & Confirm Seats'}
                   </button>
                   <button
-                    onClick={() => rejectTransfer(selectedTransfer.id)}
-                    className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700"
+                    onClick={() => rejectTransfer(
+                      selectedTransfer.id,
+                      selectedTransfer.user_id,
+                      selectedTransfer.pool_id,
+                      selectedTransfer.seat_numbers
+                    )}
+                    disabled={processing}
+                    className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 disabled:opacity-50"
                   >
                     ❌ Reject
                   </button>
