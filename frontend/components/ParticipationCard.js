@@ -3,7 +3,7 @@ import html2canvas from 'html2canvas';
 import QRCode from 'qrcode.react';
 import toast from 'react-hot-toast';
 
-export default function ParticipationCard({ contribution, pool, user, onClose }) {
+export default function ParticipationCard({ contribution, pool, user, selectedSeats = [], onClose }) {
   const cardRef = useRef(null);
   const [downloading, setDownloading] = useState(false);
   const [language, setLanguage] = useState('en');
@@ -16,7 +16,8 @@ export default function ParticipationCard({ contribution, pool, user, onClose })
       participant: 'Participant',
       prizePool: 'Prize Pool',
       entryAmount: 'Entry Amount',
-      ticketSeat: 'Ticket/Seat',
+      seatNumbers: 'Seat Numbers',
+      ticketSeat: 'Seat/Ticket',
       winnerGets: 'Winner Gets',
       dateJoined: 'Date Joined',
       verification: 'VERIFICATION',
@@ -31,6 +32,7 @@ export default function ParticipationCard({ contribution, pool, user, onClose })
       participant: 'ተሳታፊ',
       prizePool: 'የሽልማት መደብ',
       entryAmount: 'የመግቢያ ክፍያ',
+      seatNumbers: 'የመቀመጫ ቁጥሮች',
       ticketSeat: 'ቲኬት / መቀመጫ',
       winnerGets: 'አሸናፊው የሚያገኘው',
       dateJoined: 'የተቀላቀሉበት ቀን',
@@ -46,6 +48,7 @@ export default function ParticipationCard({ contribution, pool, user, onClose })
       participant: 'Hirmaataa',
       prizePool: 'Gosa badhaasaa',
       entryAmount: 'Kaffaltii Seensaa',
+      seatNumbers: 'Lakkoofsa Teessoo',
       ticketSeat: 'Tiiketti / Teessoo',
       winnerGets: 'Moʼaataan kan argatu',
       dateJoined: 'Guyyaa hirmaannaa',
@@ -64,12 +67,19 @@ export default function ParticipationCard({ contribution, pool, user, onClose })
     return date.toLocaleDateString(language === 'en' ? 'en-US' : language === 'am' ? 'am-ET' : 'om-ET', options);
   };
 
-  const generateTicketNumbers = () => {
+  const getSeatDisplay = () => {
+    if (selectedSeats && selectedSeats.length > 0) {
+      if (selectedSeats.length === 1) {
+        return `Seat #${selectedSeats[0]}`;
+      }
+      return `${selectedSeats.length} Seats (${selectedSeats.sort((a,b) => a-b).join(', ')})`;
+    }
+    // Fallback to ticket number from contribution
     const ticketCount = Math.floor(contribution.amount / pool.entry_fee);
     if (ticketCount === 1) {
-      return `#${contribution.ticket_number || contribution.id.slice(-6).toUpperCase()}`;
+      return `Ticket #${contribution.id?.slice(-6).toUpperCase() || 'N/A'}`;
     }
-    return `${ticketCount} Tickets (${contribution.ticket_number || contribution.id.slice(-6).toUpperCase()} + ${ticketCount - 1} more)`;
+    return `${ticketCount} Tickets`;
   };
 
   const getRandomGradient = () => {
@@ -101,7 +111,7 @@ export default function ParticipationCard({ contribution, pool, user, onClose })
       });
       const image = canvas.toDataURL('image/png');
       const link = document.createElement('a');
-      link.download = `AbbaaCarraa_${pool.prize_name.replace(/\s/g, '_')}_${contribution.id.slice(-6)}.png`;
+      link.download = `AbbaaCarraa_${pool.prize_name.replace(/\s/g, '_')}_${contribution.id?.slice(-6)}.png`;
       link.href = image;
       link.click();
       toast.success('🎉 Card saved to your device!');
@@ -114,9 +124,13 @@ export default function ParticipationCard({ contribution, pool, user, onClose })
   };
 
   const shareOnWhatsApp = () => {
+    const seatText = selectedSeats.length > 0 
+      ? `🎟️ Seats: ${selectedSeats.join(', ')}`
+      : `🎟️ Ticket: ${getSeatDisplay()}`;
+    
     const message = `🎉✨ ${language === 'en' ? 'I just joined the' : language === 'am' ? 'አሁን ተቀላቀልኩ' : 'Ani yeroo ammaa makadhe'} "${pool.prize_name}" ${language === 'en' ? 'pool on Abbaa Carraa' : language === 'am' ? 'በአባ ካራ ላይ' : 'kuusaa Abbaa Carraa irratti'}! ✨🎉\n\n` +
                     `💰 ${t.entryAmount}: ETB ${contribution.amount.toLocaleString()}\n` +
-                    `🎟️ ${t.ticketSeat}: ${generateTicketNumbers()}\n\n` +
+                    `${seatText}\n\n` +
                     `🏆 ${t.winnerGets}: ETB ${pool.target_amount?.toLocaleString()}!\n\n` +
                     `💚 ${t.charity}\n\n` +
                     `${language === 'en' ? 'Join me' : language === 'am' ? 'ተቀላቀሉኝ' : 'Na makadhu'} 👇\n` +
@@ -125,9 +139,13 @@ export default function ParticipationCard({ contribution, pool, user, onClose })
   };
 
   const shareOnTelegram = () => {
+    const seatText = selectedSeats.length > 0 
+      ? `🎟️ Seats: ${selectedSeats.join(', ')}`
+      : `🎟️ Ticket: ${getSeatDisplay()}`;
+    
     const message = `🎉✨ ${language === 'en' ? 'I just joined the' : language === 'am' ? 'አሁን ተቀላቀልኩ' : 'Ani yeroo ammaa makadhe'} "${pool.prize_name}" ${language === 'en' ? 'pool on Abbaa Carraa' : language === 'am' ? 'በአባ ካራ ላይ' : 'kuusaa Abbaa Carraa irratti'}! ✨🎉\n\n` +
                     `💰 ${t.entryAmount}: ETB ${contribution.amount.toLocaleString()}\n` +
-                    `🎟️ ${t.ticketSeat}: ${generateTicketNumbers()}\n\n` +
+                    `${seatText}\n\n` +
                     `🏆 ${t.winnerGets}: ETB ${pool.target_amount?.toLocaleString()}!\n\n` +
                     `💚 ${t.charity}`;
     window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.origin + '/pools/' + pool.id)}&text=${encodeURIComponent(message)}`, '_blank');
@@ -222,8 +240,20 @@ export default function ParticipationCard({ contribution, pool, user, onClose })
             </div>
             <div className="flex justify-between items-center border-b border-gray-100 pb-2">
               <span className="text-gray-500 text-sm flex items-center gap-1">🎟️ {t.ticketSeat}</span>
-              <span className="font-mono font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{generateTicketNumbers()}</span>
+              <span className="font-mono font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                {selectedSeats.length > 0 
+                  ? (selectedSeats.length === 1 ? `Seat #${selectedSeats[0]}` : `${selectedSeats.length} Seats`)
+                  : getSeatDisplay()}
+              </span>
             </div>
+            {selectedSeats.length > 1 && (
+              <div className="flex justify-between items-center border-b border-gray-100 pb-2">
+                <span className="text-gray-500 text-sm flex items-center gap-1">🔢 {t.seatNumbers}</span>
+                <span className="text-sm font-mono text-blue-600">
+                  {selectedSeats.sort((a,b) => a-b).join(', ')}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between items-center border-b border-gray-100 pb-2">
               <span className="text-gray-500 text-sm flex items-center gap-1">🏆 {t.winnerGets}</span>
               <span className="font-bold text-purple-600">ETB {pool.target_amount?.toLocaleString()}</span>
@@ -266,7 +296,7 @@ export default function ParticipationCard({ contribution, pool, user, onClose })
           <button
             onClick={downloadCard}
             disabled={downloading}
-            className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg transition-all duration-200 touch-target"
+            className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg transition-all duration-200"
           >
             {downloading ? (
               <>
@@ -286,19 +316,19 @@ export default function ParticipationCard({ contribution, pool, user, onClose })
           <div className="flex gap-3">
             <button
               onClick={shareOnWhatsApp}
-              className="flex-1 bg-green-500 text-white py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-green-600 transition-all duration-200 touch-target"
+              className="flex-1 bg-green-500 text-white py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-green-600 transition-all duration-200"
             >
               📱 WhatsApp
             </button>
             <button
               onClick={shareOnTelegram}
-              className="flex-1 bg-blue-500 text-white py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-blue-600 transition-all duration-200 touch-target"
+              className="flex-1 bg-blue-500 text-white py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-blue-600 transition-all duration-200"
             >
               💬 Telegram
             </button>
             <button
               onClick={onClose}
-              className="flex-1 bg-gray-200 text-gray-700 py-2.5 rounded-xl font-medium hover:bg-gray-300 transition-all duration-200 touch-target"
+              className="flex-1 bg-gray-200 text-gray-700 py-2.5 rounded-xl font-medium hover:bg-gray-300 transition-all duration-200"
             >
               {language === 'en' ? 'Close' : language === 'am' ? 'ዝጋ' : 'Cufi'}
             </button>
