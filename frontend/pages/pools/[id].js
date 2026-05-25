@@ -21,8 +21,8 @@ export default function PoolDetails() {
   const [showBankUpload, setShowBankUpload] = useState(false);
   const [selectedSeatsData, setSelectedSeatsData] = useState(null);
   const [availableSeats, setAvailableSeats] = useState(0);
-  const [reservationId, setReservationId] = useState(null);
   const [reservedSeats, setReservedSeats] = useState([]);
+  const [reservationExpiry, setReservationExpiry] = useState(null);
 
   useEffect(() => {
     if (id) {
@@ -31,6 +31,15 @@ export default function PoolDetails() {
       fetchAvailableSeats();
     }
   }, [id]);
+
+  // Cleanup expired reservations on component unmount
+  useEffect(() => {
+    return () => {
+      if (reservedSeats.length > 0) {
+        releaseSeats(reservedSeats);
+      }
+    };
+  }, [reservedSeats]);
 
   async function getCurrentUser() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -67,6 +76,29 @@ export default function PoolDetails() {
     }
   }
 
+  async function releaseSeats(seatNumbers) {
+    if (!seatNumbers || seatNumbers.length === 0) return;
+    
+    const { error } = await supabase
+      .from('pool_seats')
+      .update({
+        status: 'available',
+        user_id: null,
+        reserved_by: null,
+        reserved_at: null,
+        reserved_until: null
+      })
+      .in('seat_number', seatNumbers)
+      .eq('pool_id', id);
+
+    if (error) {
+      console.error('Error releasing seats:', error);
+    } else {
+      console.log('Seats released:', seatNumbers);
+      await fetchAvailableSeats();
+    }
+  }
+
   const handleJoinNow = () => {
     if (!user) {
       toast.error('Please login to join this pool');
@@ -76,9 +108,13 @@ export default function PoolDetails() {
     setShowSeatSelector(true);
   };
 
-  // When user selects seats, reserve them temporarily
   const handleSeatsSelected = async (seatData) => {
-    // Double-check seat availability before proceeding
+    // First, release any previously reserved seats
+    if (reservedSeats.length > 0) {
+      await releaseSeats(reservedSeats);
+    }
+
+    // Double-check seat availability
     const { data: seats, error: seatCheckError } = await supabase
       .from('pool_seats')
       .select('seat_number, status')
@@ -100,21 +136,23 @@ export default function PoolDetails() {
     }
 
     // Create a temporary reservation (5 minute lock)
-    const reservationExpiry = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+    const expiryTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
     
-    const { data: reservation, error: reserveError } = await supabase
+    const { error: reserveError } = await supabase
       .from('pool_seats')
       .update({
         status: 'reserved',
         user_id: user.id,
-        reserved_until: reservationExpiry
+        reserved_by: user.id,
+        reserved_at: new Date().toISOString(),
+        reserved_until: expiryTime
       })
       .in('seat_number', seatData.seats)
       .eq('pool_id', pool.id)
-      .eq('status', 'available')
-      .select();
+      .eq('status', 'available');
 
-    if (reserveError || !reservation || reservation.length === 0) {
+    if (reserveError) {
+      console.error('Reservation error:', reserveError);
       toast.error('Seats were just taken. Please try different seats.');
       await fetchAvailableSeats();
       setShowSeatSelector(true);
@@ -123,20 +161,28 @@ export default function PoolDetails() {
 
     setSelectedSeatsData(seatData);
     setReservedSeats(seatData.seats);
+    setReservationExpiry(expiryTime);
     setShowSeatSelector(false);
     setShowBankUpload(true);
     
-    toast.success(`Seats ${seatData.seats.join(', ')} reserved for 5 minutes! Complete payment to confirm.`);
+    toast.success(`✅ Seats ${seatData.seats.join(', ')} reserved for 5 minutes! Complete payment to confirm.`);
   };
 
-  // After payment submission, mark seats as taken
   const handlePaymentSuccess = async () => {
     if (reservedSeats.length > 0) {
-      await supabase
+      // Mark seats as taken permanently
+      const { error } = await supabase
         .from('pool_seats')
-        .update({ status: 'taken' })
+        .update({ 
+          status: 'taken',
+          reserved_until: null
+        })
         .in('seat_number', reservedSeats)
         .eq('pool_id', pool.id);
+
+      if (error) {
+        console.error('Error marking seats as taken:', error);
+      }
     }
     setShowBankUpload(false);
     router.push('/dashboard');
@@ -144,21 +190,13 @@ export default function PoolDetails() {
 
   const handleCancelReservation = async () => {
     if (reservedSeats.length > 0) {
-      await supabase
-        .from('pool_seats')
-        .update({
-          status: 'available',
-          user_id: null,
-          reserved_until: null
-        })
-        .in('seat_number', reservedSeats)
-        .eq('pool_id', pool.id);
+      await releaseSeats(reservedSeats);
+      toast.info(`Seats ${reservedSeats.join(', ')} have been released`);
     }
     setReservedSeats([]);
     setSelectedSeatsData(null);
     setShowBankUpload(false);
     setShowSeatSelector(true);
-    toast.info('Seat reservation cancelled');
   };
 
   if (loading) {
@@ -298,7 +336,13 @@ export default function PoolDetails() {
                       entryFee={pool.entry_fee}
                       maxSeats={maxSeatsPerUser}
                       onSeatsSelected={handleSeatsSelected}
-                      onCancel={() => setShowSeatSelector(false)}
+                      onCancel={() => {
+                        if (reservedSeats.length > 0) {
+                          releaseSeats(reservedSeats);
+                          setReservedSeats([]);
+                        }
+                        setShowSeatSelector(false);
+                      }}
                     />
                   )}
                 </div>
