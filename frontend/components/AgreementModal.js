@@ -156,8 +156,18 @@ export default function AgreementModal({ isOpen, onClose, onAccept, userRole }) 
       toast.error(t.scrollToEnable);
       return;
     }
+
     setSaving(true);
-    onAccept();
+    try {
+      // Call the parent's onAccept function which handles the database update
+      await onAccept();
+      // Success toast is shown in parent
+    } catch (err) {
+      console.error('Agreement acceptance error:', err);
+      toast.error('Failed to save agreement: ' + (err.message || 'Please try again'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -178,14 +188,12 @@ export default function AgreementModal({ isOpen, onClose, onAccept, userRole }) 
               </div>
             </div>
             <div className="flex gap-2">
-              {/* Language Selector */}
               <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
                 <button onClick={() => setLanguage('en')} className={`px-3 py-1 rounded-md text-sm font-medium transition ${language === 'en' ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-gray-200'}`}>🇬🇧 English</button>
                 <button onClick={() => setLanguage('am')} className={`px-3 py-1 rounded-md text-sm font-medium transition ${language === 'am' ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-gray-200'}`}>🇪🇹 አማርኛ</button>
                 <button onClick={() => setLanguage('om')} className={`px-3 py-1 rounded-md text-sm font-medium transition ${language === 'om' ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-gray-200'}`}>🇪🇹 Oromoo</button>
               </div>
               
-              {/* Download Button */}
               <div className="relative">
                 <button onClick={() => setShowDownloadMenu(!showDownloadMenu)} className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition flex items-center gap-1">📥 {t.download}</button>
                 {showDownloadMenu && (
@@ -200,7 +208,6 @@ export default function AgreementModal({ isOpen, onClose, onAccept, userRole }) 
             </div>
           </div>
           
-          {/* Role Badge */}
           <div className="mt-3">
             <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold ${
               userRole === 'agent' ? 'bg-yellow-100 text-yellow-700' :
@@ -217,7 +224,6 @@ export default function AgreementModal({ isOpen, onClose, onAccept, userRole }) 
 
         {/* Agreement Content - Scrollable */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6" onScroll={handleScroll} ref={agreementRef}>
-          {/* Role-specific Header */}
           <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-5 border border-green-200">
             <div className="flex items-center gap-3 mb-2">
               <span className="text-3xl">
@@ -231,7 +237,6 @@ export default function AgreementModal({ isOpen, onClose, onAccept, userRole }) 
             <p className="text-gray-600 text-sm">This agreement supplements the general terms and applies specifically to your role as a {userRole}. Please read carefully before accepting.</p>
           </div>
 
-          {/* Agreement Sections */}
           <div className="space-y-6">
             {allSections.map((section, idx) => (
               <div key={idx} className="border-b border-gray-100 pb-4 last:border-0">
@@ -241,7 +246,6 @@ export default function AgreementModal({ isOpen, onClose, onAccept, userRole }) 
             ))}
           </div>
 
-          {/* Legal Footer */}
           <div className="bg-gray-50 rounded-xl p-4 mt-6 text-center text-xs text-gray-500 border-t">
             <p>© 2026 Abbaa Carraa PLC. All rights reserved.</p>
             <p className="mt-1">This agreement is governed by the laws of the Federal Democratic Republic of Ethiopia.</p>
