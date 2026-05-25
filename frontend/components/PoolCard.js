@@ -114,9 +114,7 @@ export default function PoolCard({ pool, featured = false }) {
 
   return (
     <>
-      <div 
-        className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300"
-      >
+      <div className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300">
         {/* Image Section - Clickable to pool details */}
         <Link href={`/pools/${pool.id}`} className="block">
           <div className="relative h-36 sm:h-44 md:h-48 overflow-hidden bg-gray-100 cursor-pointer">
@@ -217,7 +215,7 @@ export default function PoolCard({ pool, featured = false }) {
             )}
           </div>
 
-          {/* Action Buttons */}
+          {/* Action Buttons - UPDATED with login redirect */}
           <div className="space-y-2">
             {isCompleted ? (
               <button
@@ -227,7 +225,10 @@ export default function PoolCard({ pool, featured = false }) {
                 🏆 {t('common.view_winners') || 'View Winner'}
               </button>
             ) : isActive ? (
-              <Link href={`/pools/${pool.id}`} prefetch={false}>
+              <Link 
+                href={`/login?redirect=/pools/${pool.id}`}
+                className="block w-full"
+              >
                 <button 
                   className="w-full bg-green-600 hover:bg-green-700 text-white py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-1 cursor-pointer"
                 >
