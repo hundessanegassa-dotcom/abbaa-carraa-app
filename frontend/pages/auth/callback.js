@@ -39,7 +39,7 @@ export default function AuthCallback() {
         // Check if user has a role and agreement accepted
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('role, user_type, agreement_accepted, agreement_version')
+          .select('role, user_type, agreement_accepted, agreement_version, id')
           .eq('id', session.user.id)
           .maybeSingle();
 
@@ -74,6 +74,7 @@ export default function AuthCallback() {
         
         if (finalRole && ['agent', 'vendor', 'organization', 'individual', 'admin'].includes(finalRole)) {
           setUserRole(finalRole);
+          // Store in both places for redundancy
           localStorage.setItem('pendingRole', finalRole);
           sessionStorage.setItem('pendingRole', finalRole);
           setShowAgreement(true);
@@ -99,21 +100,26 @@ export default function AuthCallback() {
 
   const handleAcceptAgreement = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('No session');
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      // Check if user already has a profile
-      const { data: existingProfile } = await supabase
+      if (sessionError) throw sessionError;
+      if (!session) throw new Error('No session found');
+      
+      console.log('Saving agreement for user:', session.user.id, 'Role:', userRole);
+      
+      // First check if profile exists
+      const { data: existingProfile, error: fetchError } = await supabase
         .from('profiles')
         .select('id')
         .eq('id', session.user.id)
         .maybeSingle();
-
-      let updateError;
+      
+      let result;
       
       if (existingProfile) {
         // Update existing profile
-        const { error } = await supabase
+        console.log('Updating existing profile');
+        result = await supabase
           .from('profiles')
           .update({
             agreement_accepted: true,
@@ -125,10 +131,10 @@ export default function AuthCallback() {
             updated_at: new Date().toISOString()
           })
           .eq('id', session.user.id);
-        updateError = error;
       } else {
         // Create new profile
-        const { error } = await supabase
+        console.log('Creating new profile');
+        result = await supabase
           .from('profiles')
           .insert({
             id: session.user.id,
@@ -143,16 +149,23 @@ export default function AuthCallback() {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           });
-        updateError = error;
       }
       
-      if (updateError) throw updateError;
+      if (result.error) {
+        console.error('Database error:', result.error);
+        throw new Error(result.error.message);
+      }
+      
+      console.log('Agreement saved successfully');
       
       // Clear pending role from storage
       localStorage.removeItem('pendingRole');
       sessionStorage.removeItem('pendingRole');
       
-      toast.success('Agreement accepted!');
+      toast.success('Agreement accepted! Welcome to Abbaa Carraa!');
+      
+      // Small delay to ensure database commit
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // For individual users, redirect immediately
       if (userRole === 'individual') {
@@ -169,7 +182,7 @@ export default function AuthCallback() {
       
     } catch (err) {
       console.error('Accept agreement error:', err);
-      toast.error('Failed to save agreement. Please try again.');
+      toast.error('Failed to save agreement: ' + err.message);
     }
   };
 
