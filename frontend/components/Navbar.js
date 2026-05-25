@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import LanguageToggle from './LanguageToggle';
 import NotificationBell from './NotificationBell';
-import { checkAdminStatus } from '../lib/adminCheck'; // NEW: Only addition
+import { checkAdminStatus } from '../lib/adminCheck';
 
 // Check if running on client side
 const isClient = typeof window !== 'undefined';
@@ -23,7 +23,7 @@ export default function Navbar() {
   const [hasVendorApplication, setHasVendorApplication] = useState(false);
   const [hasOrgApplication, setHasOrgApplication] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false); // NEW: Admin state
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (isClient) {
@@ -51,7 +51,7 @@ export default function Navbar() {
         setUserRole(profile?.role || null);
         setUserType(profile?.user_type || null);
         
-        // NEW: Check if user is admin
+        // Check if user is admin
         const { isAdmin: adminStatus } = await checkAdminStatus();
         setIsAdmin(adminStatus);
         
@@ -89,26 +89,53 @@ export default function Navbar() {
       setIsLoading(true);
       
       if (typeof window !== 'undefined') {
+        // Clear all localStorage
         localStorage.clear();
+        
+        // Clear all sessionStorage
         sessionStorage.clear();
         
+        // Clear pending roles specifically
+        localStorage.removeItem('pendingRole');
+        sessionStorage.removeItem('pendingRole');
+        
+        // Clear redirect storage
+        localStorage.removeItem('redirectAfterLogin');
+        sessionStorage.removeItem('redirectAfterLogin');
+        
+        // Clear all cookies
         document.cookie.split(";").forEach(function(c) {
           document.cookie = c
             .replace(/^ +/, "")
             .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
         });
+        
+        // Clear Supabase-specific storage
+        const keys = Object.keys(localStorage);
+        keys.forEach(key => {
+          if (key.includes('supabase') || key.includes('sb-') || key.includes('abbaa')) {
+            localStorage.removeItem(key);
+          }
+        });
       }
       
+      // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
+      // Reset all states
       setUser(null);
       setUserRole(null);
       setUserType(null);
       setIsAdmin(false);
+      setHasAgentApplication(false);
+      setHasVendorApplication(false);
+      setHasOrgApplication(false);
       
-      toast.success('Logged out successfully');
-      window.location.href = '/';
+      toast.success('Logged out successfully!');
+      
+      // Redirect to login page (not home)
+      window.location.href = '/login';
       
     } catch (error) {
       console.error('Logout error:', error);
@@ -154,6 +181,11 @@ export default function Navbar() {
   const createAction = getCreateAction();
   const becomeLinks = getBecomeLinks();
 
+  // Don't render navbar on login page to avoid confusion
+  if (router.pathname === '/login' || router.pathname === '/register') {
+    return null;
+  }
+
   if (isLoading) {
     return <div className="bg-white shadow-md h-14 sm:h-16"></div>;
   }
@@ -189,7 +221,7 @@ export default function Navbar() {
               <Link href="/winners" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🏆 Winners </Link>
               <Link href="/how-it-works" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🎯 How It Works </Link>
               
-              {/* NEW: Admin Panel Link - Only visible to admin users */}
+              {/* Admin Panel Link - Only visible to admin users */}
               {isAdmin && (
                 <Link href="/admin/dashboard" className="ml-2 bg-red-600 text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-red-700 transition flex items-center gap-1">
                   👑 Admin
@@ -229,7 +261,7 @@ export default function Navbar() {
                         <p className="text-xs text-gray-500">{user.email}</p>
                       </div>
                       
-                      {/* NEW: Admin quick links in dropdown */}
+                      {/* Admin quick links in dropdown */}
                       {isAdmin && (
                         <>
                           <Link href="/admin/dashboard" className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition">
@@ -237,6 +269,9 @@ export default function Navbar() {
                           </Link>
                           <Link href="/admin/bank-transfers" className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition">
                             <span>🏦</span> Verify Payments
+                          </Link>
+                          <Link href="/admin/users" className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition">
+                            <span>👥</span> Manage Users
                           </Link>
                           <div className="border-t my-1"></div>
                         </>
@@ -310,7 +345,7 @@ export default function Navbar() {
               <Link href="/winners" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🏆 Winners </Link>
               <Link href="/how-it-works" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🎯 How It Works </Link>
               
-              {/* NEW: Mobile Admin Link */}
+              {/* Mobile Admin Link */}
               {isAdmin && (
                 <Link href="/admin/dashboard" className="block py-2 px-3 text-sm bg-red-100 text-red-600 rounded-lg font-semibold" onClick={() => setMobileMenuOpen(false)}>
                   👑 Admin Panel
