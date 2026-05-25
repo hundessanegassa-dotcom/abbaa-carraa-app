@@ -8,27 +8,48 @@ export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSe
   const [loading, setLoading] = useState(true);
   const [totalPrice, setTotalPrice] = useState(0);
   const [currentUser, setCurrentUser] = useState(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
 
-  // Fetch current user
+  // Fetch current user with proper session handling
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUser(user);
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) throw sessionError;
+        
+        if (!session?.user) {
+          toast.error('Please login to select seats');
+          onCancel();
+          return;
+        }
+        
+        setCurrentUser(session.user);
+      } catch (err) {
+        console.error('Session error:', err);
+        toast.error('Session error. Please refresh and try again');
+        onCancel();
+      } finally {
+        setSessionLoading(false);
+      }
     };
+    
     getUser();
-  }, []);
+  }, [onCancel]);
 
   // Fetch seats
   useEffect(() => {
-    fetchSeats();
-    
-    // Refresh every 30 seconds
-    const interval = setInterval(() => {
+    if (!sessionLoading && currentUser) {
       fetchSeats();
-    }, 30000);
-    
-    return () => clearInterval(interval);
-  }, [poolId]);
+      
+      // Refresh every 30 seconds
+      const interval = setInterval(() => {
+        fetchSeats();
+      }, 30000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [poolId, sessionLoading, currentUser]);
 
   // Update total price when selected seats change
   useEffect(() => {
@@ -36,16 +57,55 @@ export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSe
   }, [selectedSeats, entryFee]);
 
   async function fetchSeats() {
-    const { data, error } = await supabase
-      .from('pool_seats')
-      .select('*')
-      .eq('pool_id', poolId)
-      .order('seat_number', { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from('pool_seats')
+        .select('*')
+        .eq('pool_id', poolId)
+        .order('seat_number', { ascending: true });
 
-    if (!error && data) {
-      setSeats(data);
+      if (error) throw error;
+      
+      if (data) {
+        // Clean up expired reservations
+        const now = new Date().toISOString();
+        const expiredSeats = data.filter(seat => 
+          seat.status === 'reserved' && 
+          seat.reserved_until && 
+          seat.reserved_until < now &&
+          seat.reserved_by !== currentUser?.id
+        );
+        
+        if (expiredSeats.length > 0) {
+          await supabase
+            .from('pool_seats')
+            .update({
+              status: 'available',
+              reserved_by: null,
+              reserved_at: null,
+              reserved_until: null
+            })
+            .in('seat_number', expiredSeats.map(s => s.seat_number))
+            .eq('pool_id', poolId);
+          
+          // Refetch to get updated data
+          const { data: refreshedData } = await supabase
+            .from('pool_seats')
+            .select('*')
+            .eq('pool_id', poolId)
+            .order('seat_number', { ascending: true });
+          
+          setSeats(refreshedData || []);
+        } else {
+          setSeats(data);
+        }
+      }
+    } catch (err) {
+      console.error('Fetch seats error:', err);
+      toast.error('Failed to load seats');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   async function reserveSeats(seatNumbers) {
@@ -62,13 +122,15 @@ export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSe
         status: 'reserved',
         reserved_by: currentUser.id,
         reserved_at: new Date().toISOString(),
-        reserved_until: reservedUntil
+        reserved_until: reservedUntil,
+        user_id: currentUser.id
       })
       .in('seat_number', seatNumbers)
       .eq('pool_id', poolId)
       .eq('status', 'available');
 
     if (error) {
+      console.error('Reserve error:', error);
       toast.error('Some seats were just taken. Please reselect.');
       await fetchSeats();
       return false;
@@ -124,10 +186,29 @@ export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSe
     });
   };
 
-  if (loading) {
+  if (sessionLoading || loading) {
     return (
-      <div className="flex justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+      <div className="bg-white rounded-2xl shadow-lg p-6">
+        <div className="flex justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+          <span className="ml-2 text-gray-600">Loading seats...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="bg-white rounded-2xl shadow-lg p-6">
+        <div className="text-center py-8">
+          <p className="text-red-600 mb-4">Please login to select seats</p>
+          <button
+            onClick={onCancel}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg"
+          >
+            Go Back
+          </button>
+        </div>
       </div>
     );
   }
@@ -175,7 +256,8 @@ export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSe
 
   const availableCount = seats.filter(s => s.status === 'available').length;
   const takenCount = seats.filter(s => s.status === 'taken').length;
-  const reservedCount = seats.filter(s => s.status === 'reserved').length;
+  const reservedCount = seats.filter(s => s.status === 'reserved' && s.reserved_by !== currentUser?.id).length;
+  const myReservedCount = seats.filter(s => s.status === 'reserved' && s.reserved_by === currentUser?.id).length;
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6">
@@ -188,8 +270,12 @@ export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSe
           <span>Available</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-5 h-5 bg-yellow-400 rounded"></div>
+          <div className="w-5 h-5 bg-green-600 rounded"></div>
           <span>Your Selection</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-5 h-5 bg-yellow-400 rounded"></div>
+          <span>Your Reserved</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-5 h-5 bg-red-300 rounded"></div>
@@ -202,14 +288,18 @@ export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSe
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-4 gap-3 mb-6">
         <div className="bg-green-50 rounded-lg p-3 text-center">
           <p className="text-2xl font-bold text-green-600">{availableCount}</p>
           <p className="text-xs text-gray-500">Available</p>
         </div>
         <div className="bg-yellow-50 rounded-lg p-3 text-center">
-          <p className="text-2xl font-bold text-yellow-600">{reservedCount}</p>
-          <p className="text-xs text-gray-500">Reserved</p>
+          <p className="text-2xl font-bold text-yellow-600">{myReservedCount}</p>
+          <p className="text-xs text-gray-500">Your Reserved</p>
+        </div>
+        <div className="bg-red-50 rounded-lg p-3 text-center">
+          <p className="text-2xl font-bold text-red-600">{reservedCount}</p>
+          <p className="text-xs text-gray-500">Others Reserved</p>
         </div>
         <div className="bg-gray-50 rounded-lg p-3 text-center">
           <p className="text-2xl font-bold text-gray-600">{takenCount}</p>
