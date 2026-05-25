@@ -7,94 +7,92 @@ import toast from 'react-hot-toast';
 
 export default function AuthCallback() {
   const router = useRouter();
-  const { redirect } = router.query;
   const [showAgreement, setShowAgreement] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
   const [error, setError] = useState(null);
+  const [redirectUrl, setRedirectUrl] = useState(null);
 
   useEffect(() => {
     const handleCallback = async () => {
       try {
+        // Get redirect URL from storage (set in login page)
+        let redirect = localStorage.getItem('redirectAfterLogin');
+        if (!redirect) redirect = sessionStorage.getItem('redirectAfterLogin');
+        
+        // Clear immediately to avoid reuse
+        localStorage.removeItem('redirectAfterLogin');
+        sessionStorage.removeItem('redirectAfterLogin');
+        
+        setRedirectUrl(redirect);
+
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) throw sessionError;
         
         if (!session) {
           toast.error('Sign in failed');
-          router.push('/register');
+          router.push('/');
           return;
         }
 
-        // Get role from storage
-        let pendingRole = localStorage.getItem('pendingRole');
-        if (!pendingRole) pendingRole = sessionStorage.getItem('pendingRole');
-        
-        if (!pendingRole) {
-          toast.error('Please select a role first');
-          router.push('/register');
-          return;
-        }
-
-        setUserRole(pendingRole);
-
-        // Check if profile exists and agreement accepted
+        // Check if user has a role and agreement accepted
         const { data: profile } = await supabase
           .from('profiles')
-          .select('agreement_accepted, role')
+          .select('role, user_type, agreement_accepted')
           .eq('id', session.user.id)
           .maybeSingle();
 
-        // Create profile if it doesn't exist
-        if (!profile) {
-          await supabase.from('profiles').insert({
-            id: session.user.id,
-            email: session.user.email,
-            full_name: session.user.user_metadata?.full_name || session.user.email,
-            role: pendingRole,
-            user_type: pendingRole,
-            agreement_accepted: false,
-            created_at: new Date().toISOString()
-          });
-        }
-
-        // If agreement already accepted, redirect to dashboard
-        if (profile?.agreement_accepted === true) {
-          localStorage.removeItem('pendingRole');
-          sessionStorage.removeItem('pendingRole');
-          
-          const dashboards = {
-            agent: '/agent/dashboard',
-            vendor: '/vendor/dashboard',
-            organization: '/organization/dashboard',
-            admin: '/admin/dashboard',
-            individual: '/dashboard'
-          };
-          router.push(dashboards[pendingRole] || redirect || '/dashboard');
+        // If user already has a role and agreement accepted
+        if (profile?.agreement_accepted === true && profile?.role) {
+          // Redirect to stored URL or dashboard
+          if (redirect && redirect.startsWith('/pools/')) {
+            router.push(redirect);
+          } else {
+            const dashboards = {
+              agent: '/agent/dashboard',
+              vendor: '/vendor/dashboard',
+              organization: '/organization/dashboard',
+              admin: '/admin/dashboard',
+              individual: '/dashboard'
+            };
+            router.push(dashboards[profile.role] || '/dashboard');
+          }
           return;
         }
 
-        // Show agreement modal
-        setShowAgreement(true);
-        setLoading(false);
+        // If user has no role, they need to select one
+        // Check if there's a pending role from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const pendingRole = urlParams.get('role');
+        
+        if (pendingRole && ['agent', 'vendor', 'organization', 'individual'].includes(pendingRole)) {
+          setUserRole(pendingRole);
+          localStorage.setItem('pendingRole', pendingRole);
+          sessionStorage.setItem('pendingRole', pendingRole);
+          setShowAgreement(true);
+          setLoading(false);
+          return;
+        }
+        
+        // No role found - redirect to role selection
+        router.push('/register');
         
       } catch (err) {
         console.error('Callback error:', err);
         setError(err.message);
         toast.error('Authentication failed');
-        setTimeout(() => router.push('/register'), 3000);
+        setTimeout(() => router.push('/'), 3000);
       }
     };
 
     handleCallback();
-  }, [router, redirect]);
+  }, [router]);
 
   const handleAcceptAgreement = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      
-      const pendingRole = localStorage.getItem('pendingRole') || sessionStorage.getItem('pendingRole');
       
       // Update profile with agreement accepted
       const { error } = await supabase
@@ -102,29 +100,28 @@ export default function AuthCallback() {
         .update({
           agreement_accepted: true,
           agreement_accepted_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          role: userRole,
+          user_type: userRole,
+          status: userRole === 'individual' ? 'active' : 'pending_approval'
         })
         .eq('id', session.user.id);
       
       if (error) throw error;
       
-      // Clear stored role
-      localStorage.removeItem('pendingRole');
-      sessionStorage.removeItem('pendingRole');
+      toast.success('Agreement accepted!');
       
-      toast.success('Welcome to Abbaa Carraa!');
+      // For individual users, redirect immediately
+      if (userRole === 'individual') {
+        if (redirectUrl && redirectUrl.startsWith('/pools/')) {
+          router.push(redirectUrl);
+        } else {
+          router.push('/dashboard');
+        }
+        return;
+      }
       
-      // Redirect to role dashboard
-      const dashboards = {
-        agent: '/agent/dashboard',
-        vendor: '/vendor/dashboard',
-        organization: '/organization/dashboard',
-        admin: '/admin/dashboard',
-        individual: '/dashboard'
-      };
-      
-      const dashboardPath = dashboards[pendingRole] || '/dashboard';
-      router.push(dashboardPath);
+      // For agents/vendors/organizations, redirect to application form
+      router.push(`/${userRole}/apply`);
       
     } catch (err) {
       console.error('Accept agreement error:', err);
@@ -135,7 +132,7 @@ export default function AuthCallback() {
   const handleClose = () => {
     localStorage.removeItem('pendingRole');
     sessionStorage.removeItem('pendingRole');
-    router.push('/register');
+    router.push('/');
   };
 
   if (error) {
@@ -143,8 +140,8 @@ export default function AuthCallback() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="bg-red-50 p-6 rounded-lg text-center">
           <p className="text-red-600">Error: {error}</p>
-          <button onClick={() => router.push('/register')} className="mt-4 text-green-600">
-            Return to Register
+          <button onClick={() => router.push('/')} className="mt-4 text-green-600">
+            Return to Home
           </button>
         </div>
       </div>
