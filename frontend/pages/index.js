@@ -4,7 +4,6 @@ import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import GlobalAnnouncement from '../components/GlobalAnnouncement';
-import { useRouter } from 'next/router';
 
 // Dynamic imports with no loading state
 const MovingAd = dynamic(() => import('../components/MovingAd'), { ssr: false, loading: () => null });
@@ -22,7 +21,6 @@ export async function getServerSideProps() {
 }
 
 export default function Home() {
-  const router = useRouter();
   const [pools, setPools] = useState([]);
   const [featuredPools, setFeaturedPools] = useState([]);
   const [stats, setStats] = useState({
@@ -93,16 +91,6 @@ export default function Home() {
       setDataLoaded(true);
       setIsInitialLoad(false);
     }
-  };
-
-  // Simple role handlers - just store role and redirect to login
-  const handleRoleSelection = (role) => {
-    // Clear any existing session data
-    sessionStorage.clear();
-    // Store the selected role
-    sessionStorage.setItem('pendingRole', role);
-    // Redirect to login
-    router.push('/login');
   };
 
   if (!dataLoaded && isInitialLoad) {
@@ -178,36 +166,38 @@ export default function Home() {
               <span className="text-green-700 font-medium">2% supports kidney & heart disease patients</span>
             </div>
             
-            {/* Role Buttons - Direct to Google Login */}
+            {/* Role Buttons - Direct to register with role parameter */}
             <div className="flex flex-wrap justify-center gap-3 mt-6">
-              <button 
-                onClick={() => handleRoleSelection('agent')}
+              <Link 
+                href="/register?role=agent" 
                 className="bg-yellow-50 text-yellow-700 px-4 py-2 rounded-full text-sm hover:bg-yellow-100 transition touch-target"
               >
                 🤝 Become an Agent
-              </button>
-              <button 
-                onClick={() => handleRoleSelection('vendor')}
+              </Link>
+              <Link 
+                href="/register?role=vendor" 
                 className="bg-purple-50 text-purple-700 px-4 py-2 rounded-full text-sm hover:bg-purple-100 transition touch-target"
               >
                 🏪 Become a Vendor
-              </button>
-              <button 
-                onClick={() => handleRoleSelection('organization')}
+              </Link>
+              <Link 
+                href="/register?role=organization" 
                 className="bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm hover:bg-blue-100 transition touch-target"
               >
                 🏢 Become an Organization
-              </button>
+              </Link>
             </div>
 
-            {/* Individual Participant Button - Goes to listings */}
+            {/* Individual Participant Button - Goes directly to listings */}
             <div className="flex justify-center mt-4">
-              <button 
-                onClick={() => router.push('/listings')}
-                className="bg-green-600 text-white px-6 py-3 rounded-full font-semibold text-base shadow-md hover:bg-green-700 transition touch-target"
+              <Link 
+                href="/listings" 
+                className="bg-green-600 text-white px-6 py-3 rounded-full font-semibold text-base shadow-md hover:bg-green-700 transition touch-target inline-flex items-center gap-2"
               >
-                🎁 Start Winning Now →
-              </button>
+                <span>🎁</span>
+                Start Winning Now
+                <span>→</span>
+              </Link>
             </div>
 
             <div className="flex flex-wrap justify-center gap-3 mt-10 pt-6 border-t border-gray-200">
@@ -223,10 +213,22 @@ export default function Home() {
         <div className="bg-white border-t border-gray-200 py-8 w-full">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-              <div><div className="text-3xl font-bold text-green-600">{stats.total_pools}+</div><div className="text-gray-500 text-sm">Active Pools</div></div>
-              <div><div className="text-3xl font-bold text-green-600">{stats.total_winners}+</div><div className="text-gray-500 text-sm">Happy Winners</div></div>
-              <div><div className="text-3xl font-bold text-green-600">{stats.total_agents}+</div><div className="text-gray-500 text-sm">Trusted Agents</div></div>
-              <div><div className="text-3xl font-bold text-green-600">ETB {Math.floor(stats.total_raised / 1000)}K+</div><div className="text-gray-500 text-sm">Total Raised</div></div>
+              <div>
+                <div className="text-3xl font-bold text-green-600">{stats.total_pools}+</div>
+                <div className="text-gray-500 text-sm">Active Pools</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-green-600">{stats.total_winners}+</div>
+                <div className="text-gray-500 text-sm">Happy Winners</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-green-600">{stats.total_agents}+</div>
+                <div className="text-gray-500 text-sm">Trusted Agents</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-green-600">ETB {Math.floor(stats.total_raised / 1000)}K+</div>
+                <div className="text-gray-500 text-sm">Total Raised</div>
+              </div>
             </div>
           </div>
         </div>
@@ -279,9 +281,21 @@ export default function Home() {
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
             <div className="grid md:grid-cols-3 gap-8 text-center">
-              <div><div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">1</div><h3 className="font-bold text-xl mb-2">Find a Pool</h3><p className="text-gray-600">Browse available prize pools</p></div>
-              <div><div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">2</div><h3 className="font-bold text-xl mb-2">Contribute</h3><p className="text-gray-600">Make your contribution securely</p></div>
-              <div><div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">3</div><h3 className="font-bold text-xl mb-2">Win!</h3><p className="text-gray-600">Win amazing prizes!</p></div>
+              <div>
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">1</div>
+                <h3 className="font-bold text-xl mb-2">Find a Pool</h3>
+                <p className="text-gray-600">Browse available prize pools</p>
+              </div>
+              <div>
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">2</div>
+                <h3 className="font-bold text-xl mb-2">Contribute</h3>
+                <p className="text-gray-600">Make your contribution securely</p>
+              </div>
+              <div>
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">3</div>
+                <h3 className="font-bold text-xl mb-2">Win!</h3>
+                <p className="text-gray-600">Win amazing prizes!</p>
+              </div>
             </div>
           </div>
         </div>
