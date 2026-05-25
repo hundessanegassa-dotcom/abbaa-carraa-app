@@ -16,12 +16,13 @@ export default function PoolDetails() {
   const { id } = router.query;
   const [pool, setPool] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [contributing, setContributing] = useState(false);
   const [user, setUser] = useState(null);
   const [showSeatSelector, setShowSeatSelector] = useState(false);
   const [showBankUpload, setShowBankUpload] = useState(false);
   const [selectedSeatsData, setSelectedSeatsData] = useState(null);
   const [availableSeats, setAvailableSeats] = useState(0);
+  const [reservationId, setReservationId] = useState(null);
+  const [reservedSeats, setReservedSeats] = useState([]);
 
   useEffect(() => {
     if (id) {
@@ -75,6 +76,7 @@ export default function PoolDetails() {
     setShowSeatSelector(true);
   };
 
+  // When user selects seats, reserve them temporarily
   const handleSeatsSelected = async (seatData) => {
     // Double-check seat availability before proceeding
     const { data: seats, error: seatCheckError } = await supabase
@@ -97,9 +99,66 @@ export default function PoolDetails() {
       return;
     }
 
+    // Create a temporary reservation (5 minute lock)
+    const reservationExpiry = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+    
+    const { data: reservation, error: reserveError } = await supabase
+      .from('pool_seats')
+      .update({
+        status: 'reserved',
+        user_id: user.id,
+        reserved_until: reservationExpiry
+      })
+      .in('seat_number', seatData.seats)
+      .eq('pool_id', pool.id)
+      .eq('status', 'available')
+      .select();
+
+    if (reserveError || !reservation || reservation.length === 0) {
+      toast.error('Seats were just taken. Please try different seats.');
+      await fetchAvailableSeats();
+      setShowSeatSelector(true);
+      return;
+    }
+
     setSelectedSeatsData(seatData);
+    setReservedSeats(seatData.seats);
     setShowSeatSelector(false);
     setShowBankUpload(true);
+    
+    toast.success(`Seats ${seatData.seats.join(', ')} reserved for 5 minutes! Complete payment to confirm.`);
+  };
+
+  // After payment submission, mark seats as taken
+  const handlePaymentSuccess = async () => {
+    if (reservedSeats.length > 0) {
+      await supabase
+        .from('pool_seats')
+        .update({ status: 'taken' })
+        .in('seat_number', reservedSeats)
+        .eq('pool_id', pool.id);
+    }
+    setShowBankUpload(false);
+    router.push('/dashboard');
+  };
+
+  const handleCancelReservation = async () => {
+    if (reservedSeats.length > 0) {
+      await supabase
+        .from('pool_seats')
+        .update({
+          status: 'available',
+          user_id: null,
+          reserved_until: null
+        })
+        .in('seat_number', reservedSeats)
+        .eq('pool_id', pool.id);
+    }
+    setReservedSeats([]);
+    setSelectedSeatsData(null);
+    setShowBankUpload(false);
+    setShowSeatSelector(true);
+    toast.info('Seat reservation cancelled');
   };
 
   if (loading) {
@@ -203,18 +262,9 @@ export default function PoolDetails() {
               <div className="bg-yellow-50 rounded-xl p-4 mb-6">
                 <p className="font-semibold text-yellow-800 text-sm mb-2">💰 Commission Breakdown</p>
                 <div className="grid grid-cols-3 gap-2 text-xs">
-                  <div className="text-center">
-                    <p className="text-gray-600">Winner</p>
-                    <p className="font-bold text-green-600">100% of Target</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-gray-600">Creator</p>
-                    <p className="font-bold text-blue-600">10-20%</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-gray-600">Platform</p>
-                    <p className="font-bold text-purple-600">10%</p>
-                  </div>
+                  <div className="text-center"><p className="text-gray-600">Winner</p><p className="font-bold text-green-600">100% of Target</p></div>
+                  <div className="text-center"><p className="text-gray-600">Creator</p><p className="font-bold text-blue-600">10-20%</p></div>
+                  <div className="text-center"><p className="text-gray-600">Platform</p><p className="font-bold text-purple-600">10%</p></div>
                 </div>
               </div>
 
@@ -233,7 +283,7 @@ export default function PoolDetails() {
                       </div>
                       <button
                         onClick={handleJoinNow}
-                        disabled={contributing || availableSeats === 0}
+                        disabled={availableSeats === 0}
                         className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {availableSeats === 0 ? 'No Seats Available' : '🎯 Select Seat & Join Pool'}
@@ -278,15 +328,8 @@ export default function PoolDetails() {
           poolId={pool.id}
           amount={selectedSeatsData.totalAmount}
           seatNumbers={selectedSeatsData.seats}
-          onSuccess={() => {
-            setShowBankUpload(false);
-            toast.success('Payment proof submitted! Admin will verify within 1 hour.');
-            router.push('/dashboard');
-          }}
-          onClose={() => {
-            setShowBankUpload(false);
-            setShowSeatSelector(true);
-          }}
+          onSuccess={handlePaymentSuccess}
+          onClose={handleCancelReservation}
         />
       )}
     </>
