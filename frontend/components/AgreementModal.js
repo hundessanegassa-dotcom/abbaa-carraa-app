@@ -1,10 +1,223 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import { supabase } from '../lib/supabase';
+import toast from 'react-hot-toast';
+import html2canvas from 'html2canvas';
 
 export default function AgreementModal({ isOpen, onClose, onAccept, userRole }) {
   const [hasScrolled, setHasScrolled] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [language, setLanguage] = useState('en');
+  const [downloading, setDownloading] = useState(false);
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const agreementRef = useRef(null);
+  const router = useRouter();
 
-  if (!isOpen) return null;
+  // Translations for agreement content
+  const translations = {
+    en: {
+      title: 'Abbaa Carraa User Agreement',
+      version: 'Version 1.0',
+      lastUpdated: 'Last Updated: May 25, 2026',
+      governingLaw: 'Governing Law: Federal Democratic Republic of Ethiopia',
+      jurisdiction: 'Jurisdiction: Addis Ababa, Ethiopia',
+      back: 'Back',
+      download: 'Download',
+      cancel: 'Cancel',
+      agree: 'I Agree & Continue',
+      scrollToEnable: 'Please scroll to the bottom to enable agreement'
+    },
+    am: {
+      title: 'የabbaa carraa ተጠቃሚ ስምምነት',
+      version: 'ስሪት 1.0',
+      lastUpdated: 'የመጨረሻ ማሻሻያ: ግንቦት 25, 2026',
+      governingLaw: 'የሚተዳደርበት ህግ: የኢፌዴሪ ህግ',
+      jurisdiction: 'የህግ ስልጣን: አዲስ አበባ, ኢትዮጵያ',
+      back: 'ተመለስ',
+      download: 'አውርድ',
+      cancel: 'ሰርዝ',
+      agree: 'ተስማምኩ እና ቀጥል',
+      scrollToEnable:�ለማስቻል እባክዎ እስከ መጨረሻው ይሸብልሉ'
+    },
+    om: {
+      title: 'Abbaa Carraa Walii Galtee Itti Fayyadamaa',
+      version: 'Gulaala 1.0',
+      lastUpdated: 'Yeroo gulallii: Waxabajjii 25, 2026',
+      governingLaw: 'Seera Itoophiyaa Federaalawaa Dimokraatawaa Rippaabiliika',
+      jurisdiction: 'Murtii: Finfinnee, Itoophiyaa',
+      back: 'Duuba',
+      download: 'Buufadhu',
+      cancel: 'Dhiisi',
+      agree: 'Waliigalee Itti Fufi',
+      scrollToEnable: 'Sassaabuu danda’uuf, gaara xumuraatti gad buusi'
+    }
+  };
+
+  const t = translations[language];
+
+  // Get role-specific agreement content
+  const getRoleSpecificContent = () => {
+    switch (userRole) {
+      case 'agent':
+        return {
+          title: '🤝 Agent Agreement',
+          sections: [
+            {
+              title: '1. Agent Commission Structure',
+              content: 'You earn 10% commission on total pool collection when your pool successfully completes. Commission is added on top of the target amount (winner gets 100% of target).'
+            },
+            {
+              title: '2. Pool Creation Rules',
+              content: 'You must accurately describe prizes. No misleading claims. All pools must have a valid end date and real prize.'
+            },
+            {
+              title: '3. Prize Delivery Obligation',
+              content: 'Within 14 days of winner selection, you must deliver the prize or cash equivalent. Failure results in account suspension.'
+            },
+            {
+              title: '4. Agent Verification',
+              content: 'You must provide valid Digital ID for verification. Your application is subject to admin approval.'
+            },
+            {
+              title: '5. Marketing and Promotion',
+              content: 'You may promote your pools on social media but cannot use false or misleading advertising.'
+            }
+          ]
+        };
+      case 'vendor':
+        return {
+          title: '🏪 Vendor Agreement',
+          sections: [
+            {
+              title: '1. Vendor Commission Structure',
+              content: 'You earn 10% commission on product sales to pool winners. Commission is added on top of product price.'
+            },
+            {
+              title: '2. Product Listing Rules',
+              content: 'Products must be accurately described with real images. No counterfeit or prohibited items.'
+            },
+            {
+              title: '3. Inventory Management',
+              content: 'You must maintain accurate stock levels. Products out of stock will be automatically disabled.'
+            },
+            {
+              title: '4. Delivery Obligation',
+              content: 'You must deliver product to winner within 14 days of purchase. Provide tracking information.'
+            },
+            {
+              title: '5. Business License',
+              content: 'You must provide valid business license and TIN certificate. Your application is subject to admin approval.'
+            },
+            {
+              title: '6. Discount for Non-Winners',
+              content: 'You are encouraged to offer discount codes (5-50%) to non-winners to convert them into customers.'
+            }
+          ]
+        };
+      case 'organization':
+        return {
+          title: '🏢 Organization Agreement',
+          sections: [
+            {
+              title: '1. Organization Commission Structure',
+              content: 'You earn 10% commission on private pools created for your members. Commission added on top of target.'
+            },
+            {
+              title: '2. Private Pool Rules',
+              content: 'Pools marked as private are restricted to approved organization members only.'
+            },
+            {
+              title: '3. Member Verification',
+              content: 'You are responsible for verifying that all members joining your private pools are legitimate organization members.'
+            },
+            {
+              title: '4. Payout Responsibility',
+              content: 'You must pay the winner within 14 days of pool completion or provide cash equivalent.'
+            },
+            {
+              title: '5. Organization Verification',
+              content: 'You must provide valid organization registration documents and letter of authorization.'
+            },
+            {
+              title: '6. Member Data Protection',
+              content: 'You must protect member data in accordance with Ethiopian Data Protection Proclamation No. 1321/2024.'
+            }
+          ]
+        };
+      default: // Individual
+        return {
+          title: '👤 Individual Participant Agreement',
+          sections: [
+            {
+              title: '1. Participation Rules',
+              content: 'You may join active pools by paying the entry fee. Each entry fee equals one seat/ticket in the pool.'
+            },
+            {
+              title: '2. Winner Selection',
+              content: 'Winners are selected randomly using a cryptographically secure system. The draw result is final and binding.'
+            },
+            {
+              title: '3. Prize Delivery',
+              content: 'Winner must provide valid delivery address within 7 days of notification. Prizes delivered within 14 days.'
+            },
+            {
+              title: '4. Cash Equivalent Guarantee',
+              content: 'If the physical product is unavailable, you receive 100% cash equivalent of the target amount.'
+            },
+            {
+              title: '5. No Commission',
+              content: 'Individual participants do not earn commissions. You participate solely for a chance to win prizes.'
+            },
+            {
+              title: '6. Profile Completion',
+              content: 'You must complete your profile (phone, address) to qualify for prize delivery.'
+            }
+          ]
+        };
+    }
+  };
+
+  const getCommonSections = () => {
+    return [
+      {
+        title: '1. Eligibility',
+        content: 'You must be at least 18 years old to use this platform. By registering, you confirm you meet this requirement.'
+      },
+      {
+        title: '2. Account Responsibility',
+        content: 'You are responsible for maintaining the security of your account and for all activities that occur under your account.'
+      },
+      {
+        title: '3. Prohibited Activities',
+        content: 'You may not manipulate pools, create fake entries, exploit bugs, use bots, or engage in any fraudulent activity.'
+      },
+      {
+        title: '4. Data Privacy',
+        content: 'Your personal data is handled according to our Privacy Policy and Ethiopian Data Protection Proclamation No. 1321/2024. We do not sell your personal information.'
+      },
+      {
+        title: '5. Termination',
+        content: 'We reserve the right to suspend or terminate accounts that violate these terms, with or without notice.'
+      },
+      {
+        title: '6. Dispute Resolution',
+        content: 'Disputes will first be mediated by our support team. If unresolved, binding arbitration in Addis Ababa, Ethiopia.'
+      },
+      {
+        title: '7. Limitation of Liability',
+        content: 'Abbaa Carraa is not liable for any indirect, incidental, or consequential damages arising from your use of the platform.'
+      },
+      {
+        title: '8. Governing Law',
+        content: 'This agreement is governed by the laws of the Federal Democratic Republic of Ethiopia. Any legal action shall be brought in Addis Ababa.'
+      }
+    ];
+  };
+
+  const roleContent = getRoleSpecificContent();
+  const commonSections = getCommonSections();
+  const allSections = [...commonSections, ...roleContent.sections];
 
   const handleScroll = (e) => {
     const element = e.target;
@@ -14,156 +227,225 @@ export default function AgreementModal({ isOpen, onClose, onAccept, userRole }) 
     }
   };
 
-  const handleDownload = () => {
-    const agreementText = `ABBA CARRAA USER AGREEMENT
-Last Updated: ${new Date().toLocaleDateString()}
-
-By using ABBA CARRAA, you agree to the following terms:
-
-1. ELIGIBILITY
-You must be at least 18 years old to use this platform.
-
-2. USER CONDUCT
-- Provide accurate information
-- Do not manipulate pools or listings
-- Do not create fake accounts
-- Respect other users
-
-3. FEES AND COMMISSIONS
-- Platform fees apply to all transactions
-- Agents earn 10% commission on referrals
-- Vendors pay 5% commission on sales
-
-4. POOL RULES
-- All pool entries are final
-- Winners are selected randomly
-- Prizes are distributed within 48 hours
-
-5. ACCOUNT SUSPENSION
-We reserve the right to suspend accounts that violate these terms.
-
-6. PRIVACY
-Your data is handled according to our Privacy Policy.
-
-For full terms, visit: ${window.location.origin}/terms
-
-By clicking "I Agree", you acknowledge that you have read and understood this agreement.`;
-
-    const blob = new Blob([agreementText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'abba-carraa-agreement.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const getRoleTitle = () => {
-    switch (userRole) {
-      case 'agent': return 'Agent Agreement';
-      case 'vendor': return 'Vendor Agreement';
-      case 'organization': return 'Organization Agreement';
-      case 'individual': return 'Participant Agreement';
-      default: return 'User Agreement';
+  const handleDownload = async (format = 'png') => {
+    if (!agreementRef.current) return;
+    setDownloading(true);
+    try {
+      const canvas = await html2canvas(agreementRef.current, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        logging: false
+      });
+      const image = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = `AbbaaCarraa_Agreement_${userRole}_${new Date().toISOString().split('T')[0]}.png`;
+      link.href = image;
+      link.click();
+      toast.success('Agreement downloaded!');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download agreement');
+    } finally {
+      setDownloading(false);
+      setShowDownloadMenu(false);
     }
   };
 
-  const getRoleDescription = () => {
-    switch (userRole) {
-      case 'agent':
-        return 'As an Agent, you agree to create pools fairly and pay winners promptly. You earn 10% commission.';
-      case 'vendor':
-        return 'As a Vendor, you agree to deliver products to winners or provide cash equivalent. You earn 10% commission.';
-      case 'organization':
-        return 'As an Organization, you agree to manage private pools for your members fairly. You earn 10% commission.';
-      default:
-        return 'As a Participant, you agree to contribute fairly and accept draw results.';
+  const downloadPDF = () => {
+    // For PDF, open print dialog
+    window.print();
+    setShowDownloadMenu(false);
+  };
+
+  const handleAccept = async () => {
+    if (!agreed || !hasScrolled) {
+      toast.error(t.scrollToEnable);
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          agreement_accepted: true,
+          agreement_accepted_at: new Date().toISOString(),
+          agreement_version: '1.0',
+          role: userRole,
+          user_type: userRole,
+          agreement_language: language
+        })
+        .eq('id', session.user.id);
+
+      if (error) throw error;
+
+      toast.success('Agreement accepted!');
+      onAccept();
+    } catch (err) {
+      console.error('Accept agreement error:', err);
+      toast.error('Failed to save agreement. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
-        <div className="p-6 border-b">
-          <h2 className="text-2xl font-bold text-gray-800">{getRoleTitle()}</h2>
-          <p className="text-gray-500 mt-1">Please read carefully before continuing</p>
-          <p className="text-sm text-green-600 mt-1 capitalize">Role: {userRole}</p>
-          <p className="text-xs text-gray-400 mt-1">{getRoleDescription()}</p>
-        </div>
-        
-        <div 
-          className="flex-1 overflow-y-auto p-6 space-y-4"
-          onScroll={handleScroll}
-        >
-          <div className="prose max-w-none">
-            <h3 className="text-lg font-semibold mt-4 first:mt-0">1. Introduction</h3>
-            <p>Welcome to Abbaa Carraa. By using our platform, you agree to these terms.</p>
-            
-            <h3 className="text-lg font-semibold mt-4">2. Eligibility</h3>
-            <p>You must be at least 18 years old to use this platform.</p>
-            
-            <h3 className="text-lg font-semibold mt-4">3. Your Role</h3>
-            <p>You are registering as a <strong className="capitalize">{userRole}</strong>. Your responsibilities and benefits are defined based on this role.</p>
-            
-            <h3 className="text-lg font-semibold mt-4">4. Commission Structure</h3>
-            <p>• Admin personal pools: 20% commission<br/>
-            • Agents/Organizations/Vendors: 10% commission<br/>
-            • Platform fee: 10% on agent/organization/vendor pools<br/>
-            • Winner receives: 100% of target amount</p>
-            
-            <h3 className="text-lg font-semibold mt-4">5. Prohibited Activities</h3>
-            <p>Fraud, manipulation, or abuse of the platform is strictly prohibited.</p>
-            
-            <h3 className="text-lg font-semibold mt-4">6. Privacy</h3>
-            <p>Your data is handled according to our Privacy Policy.</p>
-            
-            <h3 className="text-lg font-semibold mt-4">7. Termination</h3>
-            <p>We reserve the right to suspend accounts violating these terms.</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="sticky top-0 bg-white rounded-t-2xl border-b p-5">
+          <div className="flex justify-between items-center flex-wrap gap-3">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800">{t.title}</h2>
+              <div className="flex flex-wrap gap-3 text-xs text-gray-500 mt-1">
+                <span>{t.version}</span>
+                <span>{t.lastUpdated}</span>
+                <span>{t.governingLaw}</span>
+                <span>{t.jurisdiction}</span>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {/* Language Selector */}
+              <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setLanguage('en')}
+                  className={`px-3 py-1 rounded-md text-sm font-medium transition ${language === 'en' ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-gray-200'}`}
+                >
+                  🇬🇧 English
+                </button>
+                <button
+                  onClick={() => setLanguage('am')}
+                  className={`px-3 py-1 rounded-md text-sm font-medium transition ${language === 'am' ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-gray-200'}`}
+                >
+                  🇪🇹 አማርኛ
+                </button>
+                <button
+                  onClick={() => setLanguage('om')}
+                  className={`px-3 py-1 rounded-md text-sm font-medium transition ${language === 'om' ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-gray-200'}`}
+                >
+                  🇪🇹 Oromoo
+                </button>
+              </div>
+              
+              {/* Download Button */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                  className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition flex items-center gap-1"
+                >
+                  📥 {t.download}
+                </button>
+                {showDownloadMenu && (
+                  <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border z-20">
+                    <button onClick={() => handleDownload('png')} className="w-full px-4 py-2 text-left hover:bg-gray-50 text-sm">📸 Download as PNG</button>
+                    <button onClick={downloadPDF} className="w-full px-4 py-2 text-left hover:bg-gray-50 text-sm">📄 Download as PDF</button>
+                  </div>
+                )}
+              </div>
+              
+              <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+            </div>
+          </div>
+          
+          {/* Role Badge */}
+          <div className="mt-3">
+            <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold ${
+              userRole === 'agent' ? 'bg-yellow-100 text-yellow-700' :
+              userRole === 'vendor' ? 'bg-purple-100 text-purple-700' :
+              userRole === 'organization' ? 'bg-blue-100 text-blue-700' :
+              'bg-green-100 text-green-700'
+            }`}>
+              {userRole === 'agent' && '🤝 Agent Agreement'}
+              {userRole === 'vendor' && '🏪 Vendor Agreement'}
+              {userRole === 'organization' && '🏢 Organization Agreement'}
+              {userRole === 'individual' && '👤 Individual Agreement'}
+            </span>
           </div>
         </div>
-        
-        <div className="p-6 border-t">
-          <button
-            onClick={handleDownload}
-            className="text-green-600 hover:text-green-700 text-sm flex items-center gap-1 mb-4"
-          >
-            📄 Download Agreement (TXT)
-          </button>
-          
-          <label className="flex items-start gap-3 mb-4 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={agreed}
-              onChange={(e) => setAgreed(e.target.checked)}
-              disabled={!hasScrolled}
-              className="w-5 h-5 mt-0.5 cursor-pointer disabled:cursor-not-allowed"
-            />
-            <span className={!hasScrolled ? 'text-gray-400' : 'text-gray-700'}>
-              I have read and agree to the Terms and Conditions
-              {!hasScrolled && <span className="text-xs text-gray-400 block">(Please scroll to the bottom to enable)</span>}
-            </span>
-          </label>
-          
-          <div className="flex gap-3">
-            <button
-              onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={onAccept}
-              disabled={!agreed}
-              className={`flex-1 px-4 py-2 rounded-lg transition ${
-                agreed
-                  ? 'bg-green-600 text-white hover:bg-green-700' 
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
-            >
-              I Agree & Continue
-            </button>
+
+        {/* Agreement Content - Scrollable */}
+        <div 
+          className="flex-1 overflow-y-auto p-6 space-y-6"
+          onScroll={handleScroll}
+          ref={agreementRef}
+        >
+          {/* Role-specific Header */}
+          <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-5 border border-green-200">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-3xl">
+                {userRole === 'agent' && '🤝'}
+                {userRole === 'vendor' && '🏪'}
+                {userRole === 'organization' && '🏢'}
+                {userRole === 'individual' && '👤'}
+              </span>
+              <h3 className="text-xl font-bold text-gray-800">{roleContent.title}</h3>
+            </div>
+            <p className="text-gray-600 text-sm">
+              This agreement supplements the general terms and applies specifically to your role as a {userRole}.
+              Please read carefully before accepting.
+            </p>
+          </div>
+
+          {/* Agreement Sections */}
+          <div className="space-y-6">
+            {allSections.map((section, idx) => (
+              <div key={idx} className="border-b border-gray-100 pb-4 last:border-0">
+                <h4 className="font-bold text-gray-800 text-lg mb-2">{section.title}</h4>
+                <p className="text-gray-600 leading-relaxed">{section.content}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Legal Footer */}
+          <div className="bg-gray-50 rounded-xl p-4 mt-6 text-center text-xs text-gray-500 border-t">
+            <p>© 2026 Abbaa Carraa PLC. All rights reserved.</p>
+            <p className="mt-1">This agreement is governed by the laws of the Federal Democratic Republic of Ethiopia. </p>
+            <p>Any disputes shall be resolved through binding arbitration in Addis Ababa, Ethiopia.</p>
+            <p className="mt-2">💚 2% of every contribution supports kidney and heart disease patients in Ethiopia.</p>
+          </div>
+        </div>
+
+        {/* Footer with Agreement Checkbox */}
+        <div className="sticky bottom-0 bg-white border-t p-5 rounded-b-2xl">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                disabled={!hasScrolled}
+                className="w-5 h-5 cursor-pointer disabled:cursor-not-allowed"
+              />
+              <span className={!hasScrolled ? 'text-gray-400' : 'text-gray-700'}>
+                I have read and agree to the Terms and Conditions
+                {!hasScrolled && <span className="text-xs text-gray-400 block">({t.scrollToEnable})</span>}
+              </span>
+            </label>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium"
+              >
+                {t.cancel}
+              </button>
+              <button
+                onClick={handleAccept}
+                disabled={!agreed || !hasScrolled || saving}
+                className={`px-6 py-2 rounded-lg font-semibold transition ${
+                  agreed && hasScrolled && !saving
+                    ? 'bg-green-600 text-white hover:bg-green-700' 
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {saving ? 'Saving...' : t.agree}
+              </button>
+            </div>
           </div>
         </div>
       </div>
