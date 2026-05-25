@@ -32,64 +32,75 @@ export default function AuthCallback() {
         
         if (!session) {
           toast.error('Sign in failed');
-          router.push('/');
+          router.push('/login'); // Changed from '/' to '/login'
           return;
         }
 
-        // Check if user has a role and agreement accepted
+        // IMPORTANT: Get pending role from sessionStorage (set in login page)
+        let pendingRole = sessionStorage.getItem('pendingRole');
+        if (!pendingRole) pendingRole = localStorage.getItem('pendingRole');
+        
+        console.log('Pending role:', pendingRole);
+        console.log('User email:', session.user.email);
+
+        // Check if user already has a profile
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('role, user_type, agreement_accepted, agreement_version, id')
+          .select('role, user_type, agreement_accepted, agreement_version, id, status')
           .eq('id', session.user.id)
           .maybeSingle();
 
-        // If user already has a role and agreement accepted
+        // If user has a profile with agreement accepted
         if (profile?.agreement_accepted === true && profile?.role) {
-          // Redirect to stored URL or dashboard
-          if (redirect && redirect.startsWith('/pools/')) {
-            router.push(redirect);
+          // Clear pending role
+          sessionStorage.removeItem('pendingRole');
+          localStorage.removeItem('pendingRole');
+          
+          toast.success(`Welcome back, ${session.user.email}!`);
+          
+          // Redirect based on role and status
+          if (profile.role === 'individual') {
+            if (redirect && redirect.startsWith('/pools/')) {
+              router.push(redirect);
+            } else {
+              router.push('/dashboard');
+            }
+          } else if (profile.role === 'admin') {
+            router.push('/admin/dashboard');
+          } else if (profile.status === 'approved') {
+            router.push(`/${profile.role}/dashboard`);
           } else {
-            const dashboards = {
-              agent: '/agent/dashboard',
-              vendor: '/vendor/dashboard',
-              organization: '/organization/dashboard',
-              admin: '/admin/dashboard',
-              individual: '/dashboard'
-            };
-            router.push(dashboards[profile.role] || '/dashboard');
+            router.push(`/${profile.role}/apply`);
           }
           return;
         }
 
-        // If user has no role, they need to select one
-        // Check if there's a pending role from URL or storage
-        let pendingRole = localStorage.getItem('pendingRole');
-        if (!pendingRole) pendingRole = sessionStorage.getItem('pendingRole');
-        
-        // Also check URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlRole = urlParams.get('role');
-        
-        const finalRole = pendingRole || urlRole;
-        
-        if (finalRole && ['agent', 'vendor', 'organization', 'individual', 'admin'].includes(finalRole)) {
-          setUserRole(finalRole);
-          // Store in both places for redundancy
-          localStorage.setItem('pendingRole', finalRole);
-          sessionStorage.setItem('pendingRole', finalRole);
+        // If user has a profile but agreement not accepted, use their existing role
+        if (profile && !profile.agreement_accepted && profile.role) {
+          setUserRole(profile.role);
+          sessionStorage.setItem('pendingRole', profile.role);
+          setShowAgreement(true);
+          setLoading(false);
+          return;
+        }
+
+        // For new users, use the pending role from login
+        if (pendingRole && ['agent', 'vendor', 'organization', 'individual', 'admin'].includes(pendingRole)) {
+          setUserRole(pendingRole);
           setShowAgreement(true);
           setLoading(false);
           return;
         }
         
-        // No role found - redirect to role selection
-        router.push('/register');
+        // No role found - redirect to role selection (login page)
+        toast.error('Please select a role to continue');
+        router.push('/login');
         
       } catch (err) {
         console.error('Callback error:', err);
         setError(err.message);
         toast.error('Authentication failed');
-        setTimeout(() => router.push('/'), 3000);
+        setTimeout(() => router.push('/login'), 3000);
       } finally {
         setLoading(false);
       }
@@ -139,7 +150,7 @@ export default function AuthCallback() {
           .insert({
             id: session.user.id,
             email: session.user.email,
-            full_name: session.user.user_metadata?.full_name || session.user.email,
+            full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
             role: userRole,
             user_type: userRole,
             agreement_accepted: true,
@@ -167,13 +178,18 @@ export default function AuthCallback() {
       // Small delay to ensure database commit
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // For individual users, redirect immediately
+      // Redirect based on role
       if (userRole === 'individual') {
         if (redirectUrl && redirectUrl.startsWith('/pools/')) {
           router.push(redirectUrl);
         } else {
           router.push('/dashboard');
         }
+        return;
+      }
+      
+      if (userRole === 'admin') {
+        router.push('/admin/dashboard');
         return;
       }
       
@@ -187,9 +203,11 @@ export default function AuthCallback() {
   };
 
   const handleClose = () => {
+    // Clear all storage and sign out
     localStorage.removeItem('pendingRole');
     sessionStorage.removeItem('pendingRole');
-    router.push('/');
+    supabase.auth.signOut();
+    router.push('/login');
   };
 
   if (error) {
@@ -200,10 +218,10 @@ export default function AuthCallback() {
           <h2 className="text-xl font-bold mb-2">Authentication Error</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <button 
-            onClick={() => router.push('/')} 
+            onClick={() => router.push('/login')} 
             className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
           >
-            Return to Home
+            Back to Login
           </button>
         </div>
       </div>
