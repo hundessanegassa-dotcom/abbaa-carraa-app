@@ -3,6 +3,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import GlobalAnnouncement from '../components/GlobalAnnouncement'; // ADD THIS LINE
 
 // Dynamic imports with no loading state
 const MovingAd = dynamic(() => import('../components/MovingAd'), { ssr: false, loading: () => null });
@@ -112,6 +113,9 @@ export default function Home() {
       </Head>
 
       <div className="min-h-screen bg-white w-full">
+        {/* ADD THIS LINE - Global Announcement Banner */}
+        <GlobalAnnouncement />
+        
         <CashEquivalentBanner />
         <CharityBanner />
 
