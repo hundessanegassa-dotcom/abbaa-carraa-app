@@ -37,9 +37,9 @@ export default function AuthCallback() {
         }
 
         // Check if user has a role and agreement accepted
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('role, user_type, agreement_accepted')
+          .select('role, user_type, agreement_accepted, agreement_version')
           .eq('id', session.user.id)
           .maybeSingle();
 
@@ -62,14 +62,20 @@ export default function AuthCallback() {
         }
 
         // If user has no role, they need to select one
-        // Check if there's a pending role from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const pendingRole = urlParams.get('role');
+        // Check if there's a pending role from URL or storage
+        let pendingRole = localStorage.getItem('pendingRole');
+        if (!pendingRole) pendingRole = sessionStorage.getItem('pendingRole');
         
-        if (pendingRole && ['agent', 'vendor', 'organization', 'individual'].includes(pendingRole)) {
-          setUserRole(pendingRole);
-          localStorage.setItem('pendingRole', pendingRole);
-          sessionStorage.setItem('pendingRole', pendingRole);
+        // Also check URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlRole = urlParams.get('role');
+        
+        const finalRole = pendingRole || urlRole;
+        
+        if (finalRole && ['agent', 'vendor', 'organization', 'individual', 'admin'].includes(finalRole)) {
+          setUserRole(finalRole);
+          localStorage.setItem('pendingRole', finalRole);
+          sessionStorage.setItem('pendingRole', finalRole);
           setShowAgreement(true);
           setLoading(false);
           return;
@@ -83,6 +89,8 @@ export default function AuthCallback() {
         setError(err.message);
         toast.error('Authentication failed');
         setTimeout(() => router.push('/'), 3000);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -92,21 +100,57 @@ export default function AuthCallback() {
   const handleAcceptAgreement = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      if (!session) throw new Error('No session');
       
-      // Update profile with agreement accepted
-      const { error } = await supabase
+      // Check if user already has a profile
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .update({
-          agreement_accepted: true,
-          agreement_accepted_at: new Date().toISOString(),
-          role: userRole,
-          user_type: userRole,
-          status: userRole === 'individual' ? 'active' : 'pending_approval'
-        })
-        .eq('id', session.user.id);
+        .select('id')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      let updateError;
       
-      if (error) throw error;
+      if (existingProfile) {
+        // Update existing profile
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            agreement_accepted: true,
+            agreement_accepted_at: new Date().toISOString(),
+            agreement_version: '1.0',
+            role: userRole,
+            user_type: userRole,
+            status: userRole === 'individual' ? 'active' : 'pending_approval',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', session.user.id);
+        updateError = error;
+      } else {
+        // Create new profile
+        const { error } = await supabase
+          .from('profiles')
+          .insert({
+            id: session.user.id,
+            email: session.user.email,
+            full_name: session.user.user_metadata?.full_name || session.user.email,
+            role: userRole,
+            user_type: userRole,
+            agreement_accepted: true,
+            agreement_accepted_at: new Date().toISOString(),
+            agreement_version: '1.0',
+            status: userRole === 'individual' ? 'active' : 'pending_approval',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+        updateError = error;
+      }
+      
+      if (updateError) throw updateError;
+      
+      // Clear pending role from storage
+      localStorage.removeItem('pendingRole');
+      sessionStorage.removeItem('pendingRole');
       
       toast.success('Agreement accepted!');
       
@@ -138,9 +182,14 @@ export default function AuthCallback() {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-red-50 p-6 rounded-lg text-center">
-          <p className="text-red-600">Error: {error}</p>
-          <button onClick={() => router.push('/')} className="mt-4 text-green-600">
+        <div className="bg-red-50 p-6 rounded-lg text-center max-w-md">
+          <div className="text-red-600 text-5xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold mb-2">Authentication Error</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={() => router.push('/')} 
+            className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
+          >
             Return to Home
           </button>
         </div>
