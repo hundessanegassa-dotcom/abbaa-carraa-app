@@ -7,9 +7,12 @@ import PoolCard from '../components/PoolCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import BackButton from '../components/BackButton';
 import toast from 'react-hot-toast';
+import GlobalAnnouncement from '../components/GlobalAnnouncement'; // ADD THIS LINE
+
 export async function getServerSideProps() {
   return { props: {} };
 }
+
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -255,6 +258,9 @@ export default function Dashboard() {
       profile={profile}
     >
       <BackButton fallbackHref="/" />
+      
+      {/* ADD THIS LINE - Global Announcement Banner */}
+      <GlobalAnnouncement />
       
       {/* Role Description Card */}
       <div className="bg-gradient-to-r from-green-50 to-teal-50 border-l-4 border-green-500 rounded-xl p-5 mb-8">
