@@ -3,7 +3,8 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import GlobalAnnouncement from '../components/GlobalAnnouncement'; // ADD THIS LINE
+import GlobalAnnouncement from '../components/GlobalAnnouncement';
+import { useRouter } from 'next/router';
 
 // Dynamic imports with no loading state
 const MovingAd = dynamic(() => import('../components/MovingAd'), { ssr: false, loading: () => null });
@@ -21,6 +22,7 @@ export async function getServerSideProps() {
 }
 
 export default function Home() {
+  const router = useRouter();
   const [pools, setPools] = useState([]);
   const [featuredPools, setFeaturedPools] = useState([]);
   const [stats, setStats] = useState({
@@ -93,6 +95,16 @@ export default function Home() {
     }
   };
 
+  // Simple role handlers - just store role and redirect to login
+  const handleRoleSelection = (role) => {
+    // Clear any existing session data
+    sessionStorage.clear();
+    // Store the selected role
+    sessionStorage.setItem('pendingRole', role);
+    // Redirect to login
+    router.push('/login');
+  };
+
   if (!dataLoaded && isInitialLoad) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -113,7 +125,6 @@ export default function Home() {
       </Head>
 
       <div className="min-h-screen bg-white w-full">
-        {/* ADD THIS LINE - Global Announcement Banner */}
         <GlobalAnnouncement />
         
         <CashEquivalentBanner />
@@ -169,34 +180,34 @@ export default function Home() {
             
             {/* Role Buttons - Direct to Google Login */}
             <div className="flex flex-wrap justify-center gap-3 mt-6">
-              <Link 
-                href="/register?role=agent" 
+              <button 
+                onClick={() => handleRoleSelection('agent')}
                 className="bg-yellow-50 text-yellow-700 px-4 py-2 rounded-full text-sm hover:bg-yellow-100 transition touch-target"
               >
                 🤝 Become an Agent
-              </Link>
-              <Link 
-                href="/register?role=vendor" 
+              </button>
+              <button 
+                onClick={() => handleRoleSelection('vendor')}
                 className="bg-purple-50 text-purple-700 px-4 py-2 rounded-full text-sm hover:bg-purple-100 transition touch-target"
               >
                 🏪 Become a Vendor
-              </Link>
-              <Link 
-                href="/register?role=organization" 
+              </button>
+              <button 
+                onClick={() => handleRoleSelection('organization')}
                 className="bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm hover:bg-blue-100 transition touch-target"
               >
                 🏢 Become an Organization
-              </Link>
+              </button>
             </div>
 
-            {/* Individual Participant Button */}
+            {/* Individual Participant Button - Goes to listings */}
             <div className="flex justify-center mt-4">
-              <Link 
-                href="/register?role=individual" 
+              <button 
+                onClick={() => router.push('/listings')}
                 className="bg-green-600 text-white px-6 py-3 rounded-full font-semibold text-base shadow-md hover:bg-green-700 transition touch-target"
               >
                 🎁 Start Winning Now →
-              </Link>
+              </button>
             </div>
 
             <div className="flex flex-wrap justify-center gap-3 mt-10 pt-6 border-t border-gray-200">
