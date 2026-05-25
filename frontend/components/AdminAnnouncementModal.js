@@ -47,6 +47,7 @@ export default function AdminAnnouncementModal({ isOpen, onClose, onSuccess }) {
       .upload(fileName, file);
     
     if (error) {
+      console.error('Upload error:', error);
       toast.error('Upload failed');
       setUploading(false);
       return;
@@ -94,7 +95,8 @@ export default function AdminAnnouncementModal({ isOpen, onClose, onSuccess }) {
       });
     
     if (error) {
-      toast.error('Failed to create announcement');
+      console.error('Insert error:', error);
+      toast.error('Failed to create announcement: ' + error.message);
     } else {
       toast.success('Announcement published!');
       setFormData({
