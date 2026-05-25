@@ -12,31 +12,27 @@ export default function Register() {
   const roles = {
     individual: { 
       name: 'Individual Participant', 
-      dashboard: '/dashboard', 
-      bgColor: 'from-green-500 to-teal-500', 
       icon: '🎁',
-      description: 'Join pools and win amazing prizes'
+      description: 'Join pools and win amazing prizes',
+      color: 'from-green-600 to-teal-600'
     },
     agent: { 
       name: 'Agent', 
-      dashboard: '/agent/dashboard', 
-      bgColor: 'from-yellow-500 to-orange-500', 
       icon: '🤝',
-      description: 'Create pools and earn 10% commission'
+      description: 'Create pools and earn commission',
+      color: 'from-yellow-600 to-orange-600'
     },
     vendor: { 
       name: 'Vendor', 
-      dashboard: '/vendor/dashboard', 
-      bgColor: 'from-purple-500 to-pink-500', 
       icon: '🏪',
-      description: 'List products, earn 10% commission'
+      description: 'List products and earn commission',
+      color: 'from-purple-600 to-pink-600'
     },
     organization: { 
-      name: 'Organization Organizer', 
-      dashboard: '/organization/dashboard', 
-      bgColor: 'from-blue-500 to-cyan-500', 
+      name: 'Organization', 
       icon: '🏢',
-      description: 'Create private pools for members, earn 10% commission'
+      description: 'Create private pools for members',
+      color: 'from-blue-600 to-cyan-600'
     }
   };
 
@@ -50,22 +46,33 @@ export default function Register() {
   const startGoogleLogin = async (role) => {
     setLoading(true);
     
-    // Store selected role for callback
-    localStorage.setItem('pendingRole', role);
-    sessionStorage.setItem('pendingRole', role);
-    
-    const roleConfig = roles[role];
-    const redirectPath = roleConfig.dashboard;
-    
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?redirect=${redirectPath}`
-      }
-    });
-    
-    if (error) {
-      toast.error(error.message);
+    try {
+      // Clear any existing session first
+      await supabase.auth.signOut();
+      
+      // Clear any old storage
+      localStorage.removeItem('pendingRole');
+      sessionStorage.removeItem('pendingRole');
+      
+      // Store selected role for callback
+      sessionStorage.setItem('pendingRole', role);
+      
+      // Force Google account selector
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            prompt: 'select_account', // Always show account selector
+          },
+        },
+      });
+      
+      if (error) throw error;
+      
+    } catch (error) {
+      console.error('Google login error:', error);
+      toast.error('Failed to sign in: ' + error.message);
       setLoading(false);
     }
   };
@@ -83,9 +90,11 @@ export default function Register() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
           <p className="text-gray-600 text-lg">Redirecting to Google...</p>
           {roleInfo && (
-            <p className="text-sm text-gray-400 mt-2">
-              {roleInfo.icon} {roleInfo.name}
-            </p>
+            <div className="mt-4">
+              <div className="text-4xl mb-2">{roleInfo.icon}</div>
+              <p className="text-sm text-gray-500 font-medium">{roleInfo.name}</p>
+              <p className="text-xs text-gray-400 mt-2">Please select your Google account</p>
+            </div>
           )}
         </div>
       </div>
@@ -95,35 +104,39 @@ export default function Register() {
   return (
     <>
       <Head>
-        <title>Register - Abbaa Carraa</title>
+        <title>Choose Role - Abbaa Carraa</title>
+        <meta name="description" content="Choose how you want to participate in Abbaa Carraa" />
       </Head>
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4 w-full">
+      
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">🎁</span>
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full shadow-lg mb-4">
+              <span className="text-4xl">🎯</span>
             </div>
             <h1 className="text-3xl font-bold text-gray-800">Join Abbaa Carraa</h1>
-            <p className="text-gray-500 mt-2">Choose your role to get started</p>
+            <p className="text-gray-500 mt-2">Select your role to continue</p>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {Object.entries(roles).map(([id, role]) => (
               <button
                 key={id}
                 onClick={() => handleRoleSelect(id)}
-                className={`bg-gradient-to-r ${role.bgColor} rounded-xl p-6 text-white text-left hover:shadow-xl transition transform hover:-translate-y-1 touch-target`}
+                className={`bg-gradient-to-r ${role.color} rounded-xl p-6 text-white text-left hover:shadow-xl transition-all hover:scale-105 active:scale-95`}
               >
-                <div className="text-4xl mb-3">{role.icon}</div>
-                <h3 className="text-xl font-bold mb-2">{role.name}</h3>
-                <p className="text-sm opacity-90">{role.description}</p>
+                <div className="text-5xl mb-3">{role.icon}</div>
+                <h3 className="text-lg font-bold mb-2">{role.name}</h3>
+                <p className="text-xs opacity-90 leading-relaxed">{role.description}</p>
               </button>
             ))}
           </div>
           
-          <p className="text-center text-gray-500 text-xs mt-6">
-            By continuing, you agree to our Terms and Conditions and Privacy Policy
-          </p>
+          <div className="mt-10 text-center">
+            <p className="text-xs text-gray-400">
+              By continuing, you agree to our Terms and Conditions
+            </p>
+          </div>
         </div>
       </div>
     </>
