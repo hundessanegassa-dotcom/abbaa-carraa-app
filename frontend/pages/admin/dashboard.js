@@ -1,16 +1,17 @@
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
+import { supabase } from '../../lib/supabase';
+import toast from 'react-hot-toast';
+import BackButton from '../../components/BackButton';
+
 export async function getServerSideProps() {
   return { props: {} };
 }
 
-import BackButton from '../../components/BackButton';
-import { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
-import { useRouter } from 'next/router';
-import Link from 'next/link';
-import toast from 'react-hot-toast';
-
 export default function AdminDashboard() {
   const router = useRouter();
+  const isMounted = useRef(true);
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -97,6 +98,13 @@ export default function AdminDashboard() {
     monthly: { name: 'Monthly Legend', contribution: 5000, prize: 40000000, frequency: 'monthly', winnerCount: 1, slogan: 'Make ONE participant a MILLIONAIRE This Month!' }
   };
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
   useEffect(() => {
     checkAdmin();
   }, []);
@@ -105,6 +113,8 @@ export default function AdminDashboard() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push('/login'); return; }
+      
+      if (!isMounted.current) return;
       setUser(user);
       
       const { data: profile } = await supabase
@@ -112,6 +122,8 @@ export default function AdminDashboard() {
         .select('*')
         .eq('id', user.id)
         .maybeSingle();
+      
+      if (!isMounted.current) return;
       setProfile(profile);
       
       const { data: adminRecord } = await supabase
@@ -133,34 +145,35 @@ export default function AdminDashboard() {
       console.error('Admin check error:', error);
       router.push('/login');
     } finally {
-      setLoading(false);
+      if (isMounted.current) setLoading(false);
     }
   }
 
   async function loadMerkatoData() {
-    // Load Merkato pools
+    if (!isMounted.current) return;
+    
     const { data: pools } = await supabase
       .from('merkato_vip_pools')
       .select('*')
       .order('created_at', { ascending: false });
+    if (!isMounted.current) return;
     setMerkatoPools(pools || []);
     
-    // Load participants
     const { data: participants } = await supabase
       .from('merkato_vip_participants')
       .select('*')
       .order('created_at', { ascending: false });
+    if (!isMounted.current) return;
     setMerkatoParticipants(participants || []);
     
-    // Load winners
     const { data: winners } = await supabase
       .from('merkato_vip_pools')
       .select('*')
       .eq('status', 'completed')
       .not('winner_id', 'is', null);
+    if (!isMounted.current) return;
     setMerkatoWinners(winners || []);
     
-    // Calculate stats
     const dailyParticipants = participants?.filter(p => p.pool_type === 'daily' && p.payment_status === 'confirmed')?.length || 0;
     const weeklyParticipants = participants?.filter(p => p.pool_type === 'weekly' && p.payment_status === 'confirmed')?.length || 0;
     const monthlyParticipants = participants?.filter(p => p.pool_type === 'monthly' && p.payment_status === 'confirmed')?.length || 0;
@@ -168,6 +181,7 @@ export default function AdminDashboard() {
     const totalPaidOut = winners?.reduce((sum, w) => sum + (w.prize_amount || 0), 0) || 0;
     const pendingDraws = pools?.filter(p => p.status === 'active' && new Date(p.draw_time) <= new Date())?.length || 0;
     
+    if (!isMounted.current) return;
     setMerkatoStats({
       total_participants: participants?.length || 0,
       daily_participants: dailyParticipants,
@@ -223,7 +237,7 @@ export default function AdminDashboard() {
       });
     });
     activities.sort((a, b) => new Date(b.date) - new Date(a.date));
-    setRecentActivity(activities.slice(0, 5));
+    if (isMounted.current) setRecentActivity(activities.slice(0, 5));
   }
 
   async function loadStats() {
@@ -251,6 +265,7 @@ export default function AdminDashboard() {
     const platform_revenue = total_volume * 0.10;
     const charity_total = total_volume * 0.02;
     
+    if (!isMounted.current) return;
     setStats({
       total_users: results[0]?.count || 0,
       total_agents: results[1]?.count || 0,
@@ -275,6 +290,7 @@ export default function AdminDashboard() {
       .select('*')
       .eq('created_by', user?.id)
       .order('created_at', { ascending: false });
+    if (!isMounted.current) return;
     setMyPools(pools || []);
     
     const totalRaised = pools?.reduce((sum, p) => sum + (p.current_amount || 0), 0) || 0;
@@ -285,6 +301,7 @@ export default function AdminDashboard() {
     const totalCommission = commissions?.reduce((sum, c) => sum + c.amount, 0) || 0;
     const pendingCommission = commissions?.filter(c => c.status === 'pending').reduce((sum, c) => sum + c.amount, 0) || 0;
     
+    if (!isMounted.current) return;
     setMyStats({
       total_pools: pools?.length || 0,
       active_pools: pools?.filter(p => p.status === 'active')?.length || 0,
@@ -301,6 +318,7 @@ export default function AdminDashboard() {
       supabase.from('vendors').select('*, profiles!user_id(full_name, email)').eq('verified', false),
       supabase.from('organizations').select('*, profiles!user_id(full_name, email)').eq('verified', false)
     ]);
+    if (!isMounted.current) return;
     setPendingAgents(results[0]?.data || []);
     setPendingVendors(results[1]?.data || []);
     setPendingOrganizations(results[2]?.data || []);
@@ -312,7 +330,7 @@ export default function AdminDashboard() {
       .select('*, profiles(full_name, email)')
       .eq('status', 'pending')
       .order('requested_at', { ascending: false });
-    setWithdrawalRequests(data || []);
+    if (isMounted.current) setWithdrawalRequests(data || []);
   }
 
   async function loadBankTransfers() {
@@ -326,8 +344,10 @@ export default function AdminDashboard() {
       .eq('status', 'pending')
       .order('created_at', { ascending: false });
     
-    setBankTransfers(data || []);
-    setPendingBankTransfers(data?.length || 0);
+    if (isMounted.current) {
+      setBankTransfers(data || []);
+      setPendingBankTransfers(data?.length || 0);
+    }
   }
 
   async function loadUsers() {
@@ -336,7 +356,7 @@ export default function AdminDashboard() {
       .select('*')
       .order('created_at', { ascending: false })
       .limit(100);
-    setUsers(data || []);
+    if (isMounted.current) setUsers(data || []);
   }
 
   async function loadAllPools() {
@@ -345,7 +365,7 @@ export default function AdminDashboard() {
       .select('*, profiles!created_by(full_name)')
       .order('created_at', { ascending: false })
       .limit(100);
-    setAllPools(data || []);
+    if (isMounted.current) setAllPools(data || []);
   }
 
   async function loadFeaturedPools() {
@@ -354,7 +374,7 @@ export default function AdminDashboard() {
       .select('*')
       .eq('is_featured', true)
       .eq('status', 'active');
-    setFeaturedPools(data || []);
+    if (isMounted.current) setFeaturedPools(data || []);
   }
 
   async function loadCharityData() {
@@ -363,7 +383,7 @@ export default function AdminDashboard() {
       .select('*')
       .order('created_at', { ascending: false })
       .limit(20);
-    setCharityTransactions(data || []);
+    if (isMounted.current) setCharityTransactions(data || []);
   }
 
   async function loadDisputes() {
@@ -371,7 +391,7 @@ export default function AdminDashboard() {
       .from('disputes')
       .select('*, pool:pools(prize_name), user:profiles(full_name)')
       .eq('status', 'pending');
-    setDisputes(data || []);
+    if (isMounted.current) setDisputes(data || []);
   }
 
   // Approval functions
@@ -430,7 +450,6 @@ export default function AdminDashboard() {
     setLoading(true);
     
     try {
-      // Calculate next draw time
       let drawDate = new Date();
       if (newMerkatoPool.tier === 'daily') {
         drawDate.setDate(drawDate.getDate() + 1);
@@ -469,7 +488,7 @@ export default function AdminDashboard() {
       console.error('Create Merkato pool error:', error);
       toast.error('Failed to create pool: ' + error.message);
     } finally {
-      setLoading(false);
+      if (isMounted.current) setLoading(false);
     }
   }
 
@@ -477,7 +496,6 @@ export default function AdminDashboard() {
     if (!confirm('Draw winner for this pool? This action cannot be undone.')) return;
     
     try {
-      // Get participants
       const { data: participants, error: participantError } = await supabase
         .from('merkato_vip_participants')
         .select('*')
@@ -485,17 +503,14 @@ export default function AdminDashboard() {
         .eq('payment_status', 'confirmed');
       
       if (participantError) throw participantError;
-      
       if (!participants || participants.length === 0) {
         toast.error('No confirmed participants in this pool');
         return;
       }
       
-      // Random selection
       const randomIndex = Math.floor(Math.random() * participants.length);
       const winner = participants[randomIndex];
       
-      // Get pool details
       const { data: pool, error: poolError } = await supabase
         .from('merkato_vip_pools')
         .select('*')
@@ -504,8 +519,7 @@ export default function AdminDashboard() {
       
       if (poolError) throw poolError;
       
-      // Update pool with winner
-      const { error: updateError } = await supabase
+      await supabase
         .from('merkato_vip_pools')
         .update({
           status: 'completed',
@@ -518,15 +532,11 @@ export default function AdminDashboard() {
         })
         .eq('id', poolId);
       
-      if (updateError) throw updateError;
-      
-      // Mark participant as winner
       await supabase
         .from('merkato_vip_participants')
         .update({ is_winner: true })
         .eq('id', winner.id);
       
-      // Record draw history
       await supabase
         .from('merkato_vip_draws')
         .insert({
@@ -652,13 +662,13 @@ export default function AdminDashboard() {
     const fileName = `pool-${Date.now()}.${fileExt}`;
     const filePath = `pools/${fileName}`;
     
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('pool-images')
       .upload(filePath, file);
     
     if (error) {
       console.error('Upload error:', error);
-      toast.error('Upload failed. Make sure bucket "pool-images" exists.');
+      toast.error('Upload failed.');
       setUploading(false);
       return;
     }
@@ -667,8 +677,10 @@ export default function AdminDashboard() {
       .from('pool-images')
       .getPublicUrl(filePath);
     
-    setNewPool({ ...newPool, image_url: publicUrl });
-    setUploading(false);
+    if (isMounted.current) {
+      setNewPool({ ...newPool, image_url: publicUrl });
+      setUploading(false);
+    }
     toast.success('Image uploaded');
   }
 
@@ -679,7 +691,7 @@ export default function AdminDashboard() {
     }
     
     setLoading(true);
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('pools')
       .insert({
         prize_name: newPool.prize_name,
@@ -712,7 +724,7 @@ export default function AdminDashboard() {
       loadMyPools();
       loadRecentActivity();
     }
-    setLoading(false);
+    if (isMounted.current) setLoading(false);
   }
 
   if (loading) {
@@ -802,7 +814,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Overview Tab */}
+        {/* Overview Tab - Full content */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
@@ -857,10 +869,7 @@ export default function AdminDashboard() {
                   recentActivity.map((activity, idx) => (
                     <div key={idx} className="flex items-center gap-3 p-2 border-b border-gray-100">
                       <span className="text-xl">{activity.icon}</span>
-                      <div className="flex-1">
-                        <p className="text-sm text-gray-700">{activity.action}</p>
-                        <p className="text-xs text-gray-400">{new Date(activity.date).toLocaleString()}</p>
-                      </div>
+                      <div className="flex-1"><p className="text-sm text-gray-700">{activity.action}</p><p className="text-xs text-gray-400">{new Date(activity.date).toLocaleString()}</p></div>
                     </div>
                   ))
                 )}
@@ -882,9 +891,7 @@ export default function AdminDashboard() {
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr><th className="px-4 py-3 text-left">Prize</th><th className="px-4 py-3 text-left">Target</th><th className="px-4 py-3 text-left">Raised</th><th className="px-4 py-3 text-left">Your 20%</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Action</th></tr>
-                    </thead>
+                    <thead className="bg-gray-50"><tr><th className="px-4 py-3 text-left">Prize</th><th className="px-4 py-3 text-left">Target</th><th className="px-4 py-3 text-left">Raised</th><th className="px-4 py-3 text-left">Your 20%</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Action</th></tr></thead>
                     <tbody>
                       {myPools.map(pool => (
                         <tr key={pool.id} className="border-b hover:bg-gray-50">
@@ -904,30 +911,16 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Merkato VIP Tab */}
+        {/* Merkato VIP Tab - Full content */}
         {activeTab === 'merkato' && (
           <div className="space-y-6">
-            {/* Merkato Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-gradient-to-r from-yellow-500 to-orange-600 rounded-xl p-4 text-white text-center">
-                <p className="text-2xl font-bold">{merkatoStats.total_participants}</p>
-                <p className="text-sm opacity-90">Total Participants</p>
-              </div>
-              <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl p-4 text-white text-center">
-                <p className="text-2xl font-bold">ETB {(merkatoStats.total_collected / 1000000).toFixed(1)}M</p>
-                <p className="text-sm opacity-90">Total Collected</p>
-              </div>
-              <div className="bg-gradient-to-r from-green-500 to-teal-600 rounded-xl p-4 text-white text-center">
-                <p className="text-2xl font-bold">ETB {(merkatoStats.total_paid_out / 1000000).toFixed(1)}M</p>
-                <p className="text-sm opacity-90">Paid Out</p>
-              </div>
-              <div className="bg-gradient-to-r from-red-500 to-rose-600 rounded-xl p-4 text-white text-center">
-                <p className="text-2xl font-bold">{merkatoStats.pending_draws}</p>
-                <p className="text-sm opacity-90">Pending Draws</p>
-              </div>
+              <div className="bg-gradient-to-r from-yellow-500 to-orange-600 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">{merkatoStats.total_participants}</p><p className="text-sm opacity-90">Total Participants</p></div>
+              <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">ETB {(merkatoStats.total_collected / 1000000).toFixed(1)}M</p><p className="text-sm opacity-90">Total Collected</p></div>
+              <div className="bg-gradient-to-r from-green-500 to-teal-600 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">ETB {(merkatoStats.total_paid_out / 1000000).toFixed(1)}M</p><p className="text-sm opacity-90">Paid Out</p></div>
+              <div className="bg-gradient-to-r from-red-500 to-rose-600 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">{merkatoStats.pending_draws}</p><p className="text-sm opacity-90">Pending Draws</p></div>
             </div>
 
-            {/* Active Merkato Pools */}
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
               <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
                 <h2 className="font-bold text-lg">🏪 Active Merkato VIP Pools</h2>
@@ -941,11 +934,7 @@ export default function AdminDashboard() {
                     {merkatoPools.filter(p => p.status === 'active').map(pool => (
                       <div key={pool.id} className="border rounded-lg p-4 flex justify-between items-center">
                         <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-2xl">{pool.tier === 'daily' ? '⭐' : pool.tier === 'weekly' ? '🏆' : '👑'}</span>
-                            <span className="font-bold">{pool.name}</span>
-                            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{pool.tier}</span>
-                          </div>
+                          <div className="flex items-center gap-2"><span className="text-2xl">{pool.tier === 'daily' ? '⭐' : pool.tier === 'weekly' ? '🏆' : '👑'}</span><span className="font-bold">{pool.name}</span><span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{pool.tier}</span></div>
                           <p className="text-sm text-gray-500 mt-1">Prize: ETB {pool.prize_amount?.toLocaleString()} | Entry: ETB {pool.contribution_amount?.toLocaleString()}</p>
                           <p className="text-xs text-gray-400">Draw: {new Date(pool.draw_time).toLocaleString()}</p>
                         </div>
@@ -959,11 +948,8 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Recent Winners */}
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
-              <div className="px-6 py-4 bg-gray-50 border-b">
-                <h2 className="font-bold text-lg">🏆 Recent Merkato Winners</h2>
-              </div>
+              <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">🏆 Recent Merkato Winners</h2></div>
               <div className="p-4">
                 {merkatoWinners.length === 0 ? (
                   <p className="text-gray-400 text-center py-8">No winners yet</p>
@@ -971,14 +957,8 @@ export default function AdminDashboard() {
                   <div className="space-y-3">
                     {merkatoWinners.slice(0, 5).map(winner => (
                       <div key={winner.id} className="border-b pb-3 flex justify-between items-center">
-                        <div>
-                          <p className="font-semibold">{winner.winner_name || winner.winner_email}</p>
-                          <p className="text-sm text-gray-500">{winner.name}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-green-600">ETB {winner.prize_amount?.toLocaleString()}</p>
-                          <p className="text-xs text-gray-400">{new Date(winner.drawn_at).toLocaleDateString()}</p>
-                        </div>
+                        <div><p className="font-semibold">{winner.winner_name || winner.winner_email}</p><p className="text-sm text-gray-500">{winner.name}</p></div>
+                        <div className="text-right"><p className="font-bold text-green-600">ETB {winner.prize_amount?.toLocaleString()}</p><p className="text-xs text-gray-400">{new Date(winner.drawn_at).toLocaleDateString()}</p></div>
                       </div>
                     ))}
                   </div>
@@ -988,29 +968,21 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Users Tab - Same as your original */}
+        {/* Users Tab */}
         {activeTab === 'users' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">👥 User Management</h2></div>
             <div className="overflow-x-auto p-4">
               <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr><th className="px-4 py-3 text-left">Name</th><th className="px-4 py-3 text-left">Email</th><th className="px-4 py-3 text-left">Role</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Actions</th></tr>
-                </thead>
+                <thead className="bg-gray-50"><tr><th className="px-4 py-3 text-left">Name</th><th className="px-4 py-3 text-left">Email</th><th className="px-4 py-3 text-left">Role</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Actions</th></tr></thead>
                 <tbody>
                   {users.map(u => (
                     <tr key={u.id} className="border-b hover:bg-gray-50">
                       <td className="px-4 py-3">{u.full_name || 'N/A'}</td>
                       <td className="px-4 py-3">{u.email}</td>
-                      <td className="px-4 py-3">
-                        <select onChange={(e) => updateUserRole(u.id, e.target.value)} defaultValue={u.role || 'individual'} className="border rounded px-2 py-1 text-sm">
-                          <option value="individual">Individual</option><option value="agent">Agent</option><option value="vendor">Vendor</option><option value="organization">Organization</option><option value="admin">Admin</option>
-                        </select>
-                      </td>
+                      <td className="px-4 py-3"><select onChange={(e) => updateUserRole(u.id, e.target.value)} defaultValue={u.role || 'individual'} className="border rounded px-2 py-1 text-sm"><option value="individual">Individual</option><option value="agent">Agent</option><option value="vendor">Vendor</option><option value="organization">Organization</option><option value="admin">Admin</option></select></td>
                       <td className="px-4 py-3">{u.is_banned ? <span className="text-red-600 font-medium">Banned</span> : <span className="text-green-600">Active</span>}</td>
-                      <td className="px-4 py-3">
-                        <button onClick={() => toggleUserBan(u.id, u.is_banned)} className={`px-3 py-1 rounded text-xs ${u.is_banned ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>{u.is_banned ? 'Unban' : 'Ban'}</button>
-                      </td>
+                      <td className="px-4 py-3"><button onClick={() => toggleUserBan(u.id, u.is_banned)} className={`px-3 py-1 rounded text-xs ${u.is_banned ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>{u.is_banned ? 'Unban' : 'Ban'}</button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -1025,9 +997,7 @@ export default function AdminDashboard() {
             <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">🌊 All Platform Pools</h2></div>
             <div className="overflow-x-auto p-4">
               <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr><th className="px-4 py-3 text-left">Prize</th><th className="px-4 py-3 text-left">Creator</th><th className="px-4 py-3 text-left">Target</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Featured</th><th className="px-4 py-3 text-left">Actions</th></tr>
-                </thead>
+                <thead className="bg-gray-50"><tr><th className="px-4 py-3 text-left">Prize</th><th className="px-4 py-3 text-left">Creator</th><th className="px-4 py-3 text-left">Target</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Featured</th><th className="px-4 py-3 text-left">Actions</th></tr></thead>
                 <tbody>
                   {allPools.map(p => (
                     <tr key={p.id} className="border-b hover:bg-gray-50">
@@ -1036,12 +1006,7 @@ export default function AdminDashboard() {
                       <td className="px-4 py-3">ETB {p.target_amount?.toLocaleString()}</td>
                       <td className="px-4 py-3"><span className={`px-2 py-1 rounded-full text-xs ${p.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{p.status}</span></td>
                       <td className="px-4 py-3">{p.is_featured ? '⭐ Featured' : ''}</td>
-                      <td className="px-4 py-3 flex gap-1 flex-wrap">
-                        <button onClick={() => togglePoolStatus(p.id, p.status)} className="bg-yellow-600 text-white px-2 py-1 rounded text-xs">{p.status === 'active' ? 'Pause' : 'Activate'}</button>
-                        <button onClick={() => toggleFeaturedPool(p.id, p.is_featured)} className="bg-blue-600 text-white px-2 py-1 rounded text-xs">{p.is_featured ? 'Unfeature' : 'Feature'}</button>
-                        <button onClick={() => deletePool(p.id)} className="bg-red-600 text-white px-2 py-1 rounded text-xs">Delete</button>
-                        <Link href={`/pools/${p.id}`} className="bg-gray-600 text-white px-2 py-1 rounded text-xs">View</Link>
-                      </td>
+                      <td className="px-4 py-3 flex gap-1 flex-wrap"><button onClick={() => togglePoolStatus(p.id, p.status)} className="bg-yellow-600 text-white px-2 py-1 rounded text-xs">{p.status === 'active' ? 'Pause' : 'Activate'}</button><button onClick={() => toggleFeaturedPool(p.id, p.is_featured)} className="bg-blue-600 text-white px-2 py-1 rounded text-xs">{p.is_featured ? 'Unfeature' : 'Feature'}</button><button onClick={() => deletePool(p.id)} className="bg-red-600 text-white px-2 py-1 rounded text-xs">Delete</button><Link href={`/pools/${p.id}`} className="bg-gray-600 text-white px-2 py-1 rounded text-xs">View</Link></td>
                     </tr>
                   ))}
                 </tbody>
@@ -1050,7 +1015,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Approvals Tab - Same as original */}
+        {/* Approvals Tab */}
         {activeTab === 'approvals' && (
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-md p-6"><h3 className="font-bold text-lg mb-4">🤝 Pending Agents ({pendingAgents.length})</h3>
@@ -1078,10 +1043,7 @@ export default function AdminDashboard() {
         {/* Bank Transfers Tab */}
         {activeTab === 'bank-transfers' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
-            <div className="px-6 py-4 bg-gray-50 border-b">
-              <h2 className="font-bold text-lg">🏦 Bank Transfer Verification</h2>
-              <p className="text-sm text-gray-500">Verify user payment proofs to confirm their seats</p>
-            </div>
+            <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">🏦 Bank Transfer Verification</h2><p className="text-sm text-gray-500">Verify user payment proofs to confirm their seats</p></div>
             <div className="p-4">
               {bankTransfers.length === 0 ? (
                 <div className="text-center py-12"><div className="text-5xl mb-3">✅</div><p className="text-gray-500">No pending bank transfers</p></div>
@@ -1098,16 +1060,9 @@ export default function AdminDashboard() {
                           <p className="text-sm font-bold text-green-600">💰 ETB {transfer.amount?.toLocaleString()}</p>
                           <p className="text-xs text-gray-400">Submitted: {new Date(transfer.created_at).toLocaleString()}</p>
                         </div>
-                        <div className="flex gap-2">
-                          {transfer.proof_image && (
-                            <button onClick={() => window.open(transfer.proof_image, '_blank')} className="bg-blue-600 text-white px-3 py-1 rounded text-sm">📸 View Proof</button>
-                          )}
-                        </div>
+                        <div className="flex gap-2">{transfer.proof_image && (<button onClick={() => window.open(transfer.proof_image, '_blank')} className="bg-blue-600 text-white px-3 py-1 rounded text-sm">📸 View Proof</button>)}</div>
                       </div>
-                      <div className="flex gap-3 mt-4 pt-3 border-t">
-                        <button onClick={() => verifyBankTransfer(transfer.id, transfer.user_id, transfer.pool_id, transfer.amount, transfer.seat_numbers, true)} className="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold">✅ Approve & Confirm Seats</button>
-                        <button onClick={() => verifyBankTransfer(transfer.id, transfer.user_id, transfer.pool_id, transfer.amount, transfer.seat_numbers, false)} className="flex-1 bg-red-600 text-white py-2 rounded-lg font-semibold">❌ Reject</button>
-                      </div>
+                      <div className="flex gap-3 mt-4 pt-3 border-t"><button onClick={() => verifyBankTransfer(transfer.id, transfer.user_id, transfer.pool_id, transfer.amount, transfer.seat_numbers, true)} className="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold">✅ Approve & Confirm Seats</button><button onClick={() => verifyBankTransfer(transfer.id, transfer.user_id, transfer.pool_id, transfer.amount, transfer.seat_numbers, false)} className="flex-1 bg-red-600 text-white py-2 rounded-lg font-semibold">❌ Reject</button></div>
                     </div>
                   ))}
                 </div>
@@ -1150,10 +1105,7 @@ export default function AdminDashboard() {
       {showPoolModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
-              <h2 className="text-xl font-bold">✨ Create Featured Pool (20% Commission)</h2>
-              <button onClick={() => setShowPoolModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
-            </div>
+            <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center"><h2 className="text-xl font-bold">✨ Create Featured Pool (20% Commission)</h2><button onClick={() => setShowPoolModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button></div>
             <div className="p-6 space-y-5">
               <div><label className="block text-sm font-medium mb-1">Prize Name *</label><input type="text" className="w-full border rounded-lg p-3" placeholder="e.g., iPhone 15 Pro Max" value={newPool.prize_name} onChange={(e) => setNewPool({...newPool, prize_name: e.target.value})} /></div>
               <div><label className="block text-sm font-medium mb-1">Description</label><textarea rows="3" className="w-full border rounded-lg p-3" placeholder="Describe the prize and pool rules..." value={newPool.description} onChange={(e) => setNewPool({...newPool, description: e.target.value})} /></div>
@@ -1172,53 +1124,15 @@ export default function AdminDashboard() {
       {showMerkatoModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-md w-full">
-            <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
-              <h2 className="text-xl font-bold">🏪 Create Merkato VIP Pool</h2>
-              <button onClick={() => setShowMerkatoModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
-            </div>
+            <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center"><h2 className="text-xl font-bold">🏪 Create Merkato VIP Pool</h2><button onClick={() => setShowMerkatoModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button></div>
             <div className="p-6 space-y-5">
-              <div>
-                <label className="block text-sm font-medium mb-2">Select Tier</label>
-                <div className="grid grid-cols-3 gap-3">
-                  {Object.entries(tierConfig).map(([key, config]) => (
-                    <button
-                      key={key}
-                      onClick={() => setNewMerkatoPool({...newMerkatoPool, tier: key, contribution_amount: config.contribution, prize_amount: config.prize})}
-                      className={`p-3 rounded-xl text-center transition ${newMerkatoPool.tier === key ? 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700'}`}
-                    >
-                      <div className="text-2xl">{key === 'daily' ? '⭐' : key === 'weekly' ? '🏆' : '👑'}</div>
-                      <div className="font-bold text-xs">{config.name}</div>
-                      <div className="text-xs">{config.prize.toLocaleString()} ETB</div>
-                    </button>
-                  ))}
-                </div>
+              <div><label className="block text-sm font-medium mb-2">Select Tier</label>
+                <div className="grid grid-cols-3 gap-3">{Object.entries(tierConfig).map(([key, config]) => (<button key={key} onClick={() => setNewMerkatoPool({...newMerkatoPool, tier: key, contribution_amount: config.contribution, prize_amount: config.prize})} className={`p-3 rounded-xl text-center transition ${newMerkatoPool.tier === key ? 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700'}`}><div className="text-2xl">{key === 'daily' ? '⭐' : key === 'weekly' ? '🏆' : '👑'}</div><div className="font-bold text-xs">{config.name}</div><div className="text-xs">{config.prize.toLocaleString()} ETB</div></button>))}</div>
               </div>
-
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex justify-between mb-2"><span>Entry Fee:</span><span className="font-bold">{newMerkatoPool.contribution_amount.toLocaleString()} ETB</span></div>
-                <div className="flex justify-between mb-2"><span>Prize:</span><span className="font-bold text-green-600">{newMerkatoPool.prize_amount.toLocaleString()} ETB</span></div>
-                <div className="flex justify-between"><span>Winner:</span><span>1 Lucky Winner</span></div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Draw Time (Ethiopia Time)</label>
-                <input type="time" className="w-full border rounded-lg p-3" value={newMerkatoPool.draw_time} onChange={(e) => setNewMerkatoPool({...newMerkatoPool, draw_time: e.target.value})} />
-              </div>
-
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
-                <p className="font-semibold">📝 Pool Rules:</p>
-                <ul className="text-xs mt-1 space-y-1">
-                  <li>• Daily: 500 ETB entry → Win 1,000,000 ETB</li>
-                  <li>• Weekly: 2,500 ETB entry → Win 10,000,000 ETB</li>
-                  <li>• Monthly: 5,000 ETB entry → Win 40,000,000 ETB</li>
-                  <li>• Draw happens automatically or via admin</li>
-                </ul>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button onClick={createMerkatoPool} disabled={loading} className="flex-1 bg-gradient-to-r from-yellow-600 to-orange-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition">{loading ? 'Creating...' : '✨ Create Merkato Pool'}</button>
-                <button onClick={() => setShowMerkatoModal(false)} className="flex-1 border border-gray-300 py-3 rounded-lg hover:bg-gray-50">Cancel</button>
-              </div>
+              <div className="bg-gray-50 rounded-lg p-4"><div className="flex justify-between mb-2"><span>Entry Fee:</span><span className="font-bold">{newMerkatoPool.contribution_amount.toLocaleString()} ETB</span></div><div className="flex justify-between mb-2"><span>Prize:</span><span className="font-bold text-green-600">{newMerkatoPool.prize_amount.toLocaleString()} ETB</span></div><div className="flex justify-between"><span>Winner:</span><span>1 Lucky Winner</span></div></div>
+              <div><label className="block text-sm font-medium mb-2">Draw Time (Ethiopia Time)</label><input type="time" className="w-full border rounded-lg p-3" value={newMerkatoPool.draw_time} onChange={(e) => setNewMerkatoPool({...newMerkatoPool, draw_time: e.target.value})} /></div>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm"><p className="font-semibold">📝 Pool Rules:</p><ul className="text-xs mt-1 space-y-1"><li>• Daily: 500 ETB entry → Win 1,000,000 ETB</li><li>• Weekly: 2,500 ETB entry → Win 10,000,000 ETB</li><li>• Monthly: 5,000 ETB entry → Win 40,000,000 ETB</li><li>• Draw happens automatically or via admin</li></ul></div>
+              <div className="flex gap-3 pt-4"><button onClick={createMerkatoPool} disabled={loading} className="flex-1 bg-gradient-to-r from-yellow-600 to-orange-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition">{loading ? 'Creating...' : '✨ Create Merkato Pool'}</button><button onClick={() => setShowMerkatoModal(false)} className="flex-1 border border-gray-300 py-3 rounded-lg hover:bg-gray-50">Cancel</button></div>
             </div>
           </div>
         </div>
