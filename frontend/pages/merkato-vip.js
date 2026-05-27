@@ -35,11 +35,11 @@ export default function MerkatoVip() {
     }
   };
 
-  // VIP Pool Data with NEW PRIZES
+  // VIP Pool Data with UPDATED TEXT
   const vipPools = {
     daily: {
       name: "ዕለታዊ ሚሊየነር | Daily Millionaire",
-      tier: "VIP 2",
+      tier: "መርካቶ ለሁሉም | Merkato for all",
       frequency: "Daily",
       contribution: "500 ETB",
       prize: "1,000,000 ETB",
@@ -53,7 +53,7 @@ export default function MerkatoVip() {
     },
     weekly: {
       name: "ሳምንታዊ ግዙፍ አሸናፊ | Weekly Mega Winner",
-      tier: "VIP 2",
+      tier: "መርካቶ ለሁሉም | Merkato for all",
       frequency: "Weekly",
       contribution: "2,500 ETB",
       prize: "10,000,000 ETB",
@@ -62,12 +62,12 @@ export default function MerkatoVip() {
       time: "Every Sunday at 6:00 PM",
       color: "from-purple-500 to-pink-600",
       icon: "🏆",
-      slogan: "አንድን ተሳታፊ ሳምንቱን ሚሊየነር እናድርገው! | Make ONE participant a MILLIONAIRE This Week!",
+      slogan: "አንድን ተሳታፊ በዚህ ሳምንት ሚሊየነር እናድርገው! | Make ONE participant a MILLIONAIRE This Week!",
       description: "Ten MILLION Birr changes everything. This is the pool that creates market LEGENDS!"
     },
     monthly: {
       name: "ወርሃዊ አፈ ታሪክ | Monthly Legend",
-      tier: "VIP 1 (Merkato VIP 1)",
+      tier: "መርካቶ ለሁሉም | Merkato for all",
       frequency: "Monthly",
       contribution: "5,000 ETB",
       prize: "40,000,000 ETB",
@@ -76,14 +76,13 @@ export default function MerkatoVip() {
       time: "Last Day of Month at 8:00 PM",
       color: "from-green-600 to-teal-700",
       icon: "👑",
-      slogan: "አንድን ተሳታፊ ወሩን ሚሊየነር እናድርገው! | Make ONE participant a MILLIONAIRE This Month!",
+      slogan: "አንድን ተሳታፊ በዚህ ወር ሚሊየነር እናድርገው! | Make ONE participant a MILLIONAIRE This Month!",
       description: "The ULTIMATE Merkato prize pool. FORTY MILLION Birr. Become a legend that the market will talk about for generations!"
     }
   };
 
   const handleJoinPool = async (poolType) => {
     if (!user) {
-      // Store intent and redirect to login
       sessionStorage.setItem('pendingRole', 'individual');
       sessionStorage.setItem('pendingPoolType', poolType);
       sessionStorage.setItem('pendingPoolSource', 'merkato-vip');
@@ -93,7 +92,6 @@ export default function MerkatoVip() {
       return;
     }
     
-    // Show pool selection modal
     setSelectedPool(poolType);
   };
 
@@ -109,7 +107,6 @@ export default function MerkatoVip() {
         return;
       }
 
-      // Check if user already has a pending payment
       const { data: existingParticipant } = await supabase
         .from('merkato_vip_participants')
         .select('id')
@@ -124,7 +121,6 @@ export default function MerkatoVip() {
         return;
       }
 
-      // Create participant record
       const { data: participant, error: participantError } = await supabase
         .from('merkato_vip_participants')
         .insert({
@@ -142,7 +138,6 @@ export default function MerkatoVip() {
 
       if (participantError) throw participantError;
 
-      // Store payment intent
       const paymentIntent = {
         participantId: participant.id,
         poolType: selectedPool,
@@ -156,8 +151,6 @@ export default function MerkatoVip() {
       sessionStorage.setItem('merkatoPaymentIntent', JSON.stringify(paymentIntent));
       
       toast.success(`እንኳን ደህና መጡ! Welcome to ${pool.name}!`);
-      
-      // Redirect to payment page
       router.push(`/payment/merkato?type=${selectedPool}&participant=${participant.id}`);
       
     } catch (error) {
@@ -171,7 +164,6 @@ export default function MerkatoVip() {
 
   const PoolCard = ({ type, pool }) => (
     <div className="group relative bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl">
-      {/* Prize Amount Badge */}
       <div className="absolute top-4 right-4 z-10 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-4 py-2 rounded-full font-bold text-sm shadow-lg">
         🏆 {pool.prize}
       </div>
@@ -185,7 +177,6 @@ export default function MerkatoVip() {
           <div className="text-5xl">{pool.icon}</div>
         </div>
         
-        {/* Slogan - The HEART of the message */}
         <div className="mt-3 bg-white/20 backdrop-blur rounded-lg p-2 text-center">
           <p className="text-sm font-bold">{pool.slogan}</p>
         </div>
@@ -243,9 +234,8 @@ export default function MerkatoVip() {
       </Head>
 
       <div className="min-h-screen bg-gray-50">
-        {/* Hero Section - Merkato Grand Entrance */}
+        {/* Hero Section */}
         <div className="relative bg-gradient-to-r from-amber-900 via-orange-800 to-red-900 text-white overflow-hidden">
-          {/* Decorative Market Elements */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-10 left-10 text-9xl animate-bounce">🏪</div>
             <div className="absolute bottom-10 right-10 text-9xl animate-pulse">🛺</div>
@@ -263,7 +253,6 @@ export default function MerkatoVip() {
               <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">VIP</span>
             </h1>
             
-            {/* The Big Promise - Bilingual */}
             <div className="max-w-4xl mx-auto space-y-4 my-8">
               <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 backdrop-blur rounded-xl p-4">
                 <p className="text-2xl md:text-3xl font-bold text-yellow-300">
@@ -276,7 +265,7 @@ export default function MerkatoVip() {
               
               <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur rounded-xl p-4">
                 <p className="text-2xl md:text-3xl font-bold text-purple-300">
-                  "አንድን ተሳታፊ ሳምንቱን ሚሊየነር እናድርገው!"
+                  "አንድን ተሳታፊ በዚህ ሳምንት ሚሊየነር እናድርገው!"
                 </p>
                 <p className="text-xl text-purple-200">
                   "Let's Make ONE Participant a MILLIONAIRE This Week!"
@@ -285,7 +274,7 @@ export default function MerkatoVip() {
               
               <div className="bg-gradient-to-r from-green-500/20 to-teal-500/20 backdrop-blur rounded-xl p-4">
                 <p className="text-2xl md:text-3xl font-bold text-green-300">
-                  "አንድን ተሳታፊ ወሩን ሚሊየነር እናድርገው!"
+                  "አንድን ተሳታፊ በዚህ ወር ሚሊየነር እናድርገው!"
                 </p>
                 <p className="text-xl text-green-200">
                   "Let's Make ONE Participant a MILLIONAIRE This Month!"
@@ -293,7 +282,6 @@ export default function MerkatoVip() {
               </div>
             </div>
 
-            {/* Prize Showcase */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto mt-8">
               <div className="bg-white/10 backdrop-blur rounded-xl p-3 text-center">
                 <p className="text-xs opacity-80">ዕለታዊ ሽልማት | Daily Prize</p>
@@ -326,7 +314,7 @@ export default function MerkatoVip() {
           </div>
         </div>
 
-        {/* About Merkato + Other Major Markets Section */}
+        {/* About Merkato Section */}
         <div className="container mx-auto px-4 py-12">
           <div className="bg-white rounded-2xl shadow-lg p-8 mb-12">
             <div className="grid md:grid-cols-2 gap-8">
@@ -354,28 +342,24 @@ export default function MerkatoVip() {
               </div>
               
               <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl p-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-3">💎 ሌሎች ትላልቅ ገበያዎች | Other Major Markets</h3>
-                <div className="space-y-4">
-                  <div className="border-b border-yellow-200 pb-3">
-                    <p className="font-bold text-gray-800">📍 ሽሮ ሜዳ | Shiro Meda</p>
-                    <p className="text-sm text-gray-600">Traditional clothing and souvenirs - the heart of Ethiopian cultural fashion</p>
+                <h3 className="text-xl font-bold text-gray-800 mb-3">💎 መርካቶ ለሁሉም | Merkato for All</h3>
+                <p className="text-gray-700 text-sm mb-4">
+                  ይህ ፕሮግራም ለሁሉም ነጋዴዎች እና ተሳታፊዎች ክፍት ነው! 
+                  This program is OPEN to ALL Merkato traders and participants!
+                </p>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-green-600">✓</span>
+                    <span>በየቀኑ አንድ ሚሊየነር | One Millionaire Every Day</span>
                   </div>
-                  <div className="border-b border-yellow-200 pb-3">
-                    <p className="font-bold text-gray-800">📍 ቦሌ ሚዳን | Bole Medhanialem</p>
-                    <p className="text-sm text-gray-600">Premium shopping district - Medhanialem Mall, Mafi City, Friendship Commercial</p>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-green-600">✓</span>
+                    <span>በየሳምንቱ አንድ ሚሊየነር | One Millionaire Every Week</span>
                   </div>
-                  <div className="border-b border-yellow-200 pb-3">
-                    <p className="font-bold text-gray-800">📍 ፒያሳ | Piassa / Churchill Road</p>
-                    <p className="text-sm text-gray-600">Electronics, books, and traditional goods hub</p>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-green-600">✓</span>
+                    <span>በየወሩ አንድ ሚሊየነር | One Millionaire Every Month</span>
                   </div>
-                  <div className="pb-2">
-                    <p className="font-bold text-gray-800">📍 አየር ማረፊያ | Old Airport / Megenagna</p>
-                    <p className="text-sm text-gray-600">Shoa Hypermarket, Zefmesh Mall - one-stop shopping destinations</p>
-                  </div>
-                </div>
-                <div className="mt-4 p-3 bg-yellow-100 rounded-lg">
-                  <p className="text-sm font-semibold text-center">✨ ሁሉም በአንድ ላይ | All Together Now!</p>
-                  <p className="text-xs text-center mt-1">በመላው አዲስ አበባ ያሉ ነጋዴዎች | Traders from ALL Addis Ababa markets are welcome!</p>
                 </div>
               </div>
             </div>
@@ -405,7 +389,6 @@ export default function MerkatoVip() {
             </button>
           </div>
 
-          {/* Active Pool Card */}
           <div className="max-w-4xl mx-auto">
             <PoolCard type={activeTab} pool={vipPools[activeTab]} />
           </div>
@@ -428,21 +411,21 @@ export default function MerkatoVip() {
               <tbody className="divide-y divide-gray-200">
                 <tr className="hover:bg-yellow-50 transition">
                   <td className="px-6 py-4 font-semibold">⭐ Daily Millionaire</td>
-                  <td className="px-6 py-4"><span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm">VIP 2</span></td>
+                  <td className="px-6 py-4"><span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm">መርካቶ ለሁሉም | Merkato for All</span></td>
                   <td className="px-6 py-4 font-bold">500 ብር</td>
                   <td className="px-6 py-4 font-bold text-green-600">1,000,000 ብር</td>
                   <td className="px-6 py-4">Every Day at 8 PM</td>
                 </tr>
                 <tr className="hover:bg-purple-50 transition">
                   <td className="px-6 py-4 font-semibold">🏆 Weekly Mega Winner</td>
-                  <td className="px-6 py-4"><span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">VIP 2</span></td>
+                  <td className="px-6 py-4"><span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">መርካቶ ለሁሉም | Merkato for All</span></td>
                   <td className="px-6 py-4 font-bold">2,500 ብር</td>
                   <td className="px-6 py-4 font-bold text-purple-600">10,000,000 ብር</td>
                   <td className="px-6 py-4">Every Sunday at 6 PM</td>
                 </tr>
                 <tr className="hover:bg-green-50 transition">
                   <td className="px-6 py-4 font-semibold">👑 Monthly Legend</td>
-                  <td className="px-6 py-4"><span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">VIP 1</span></td>
+                  <td className="px-6 py-4"><span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">መርካቶ ለሁሉም | Merkato for All</span></td>
                   <td className="px-6 py-4 font-bold">5,000 ብር</td>
                   <td className="px-6 py-4 font-bold text-green-600">40,000,000 ብር</td>
                   <td className="px-6 py-4">Last Day of Month at 8 PM</td>
@@ -452,7 +435,7 @@ export default function MerkatoVip() {
           </div>
         </div>
 
-        {/* How It Works - Equb Style */}
+        {/* How It Works */}
         <div className="bg-gray-100 py-16">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-4">እንዴት እንሳተፋለን? | How It Works</h2>
@@ -460,27 +443,21 @@ export default function MerkatoVip() {
             
             <div className="grid md:grid-cols-3 gap-8">
               <div className="text-center">
-                <div className="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg">
-                  1️⃣
-                </div>
+                <div className="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg">1️⃣</div>
                 <h3 className="font-bold text-xl mb-2">ምረጥ | Choose</h3>
                 <p className="text-gray-600">በየቀኑ፣ በየሳምንቱ ወይም በየወሩ የሚካሄደውን ፑል ምረጥ</p>
                 <p className="text-green-600 font-semibold text-sm mt-1">Choose Daily, Weekly, or Monthly Millionaire pool</p>
               </div>
               
               <div className="text-center">
-                <div className="w-20 h-20 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg">
-                  2️⃣
-                </div>
+                <div className="w-20 h-20 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg">2️⃣</div>
                 <h3 className="font-bold text-xl mb-2">ክፈል | Pay</h3>
                 <p className="text-gray-600">በቴሌብር ወይም በንግድ ባንክ መጠነኛ ክፍያ ክፈል</p>
                 <p className="text-green-600 font-semibold text-sm mt-1">Pay via TeleBirr or CBE Bank Transfer</p>
               </div>
               
               <div className="text-center">
-                <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg">
-                  3️⃣
-                </div>
+                <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg">3️⃣</div>
                 <h3 className="font-bold text-xl mb-2">ሽለም | WIN!</h3>
                 <p className="text-gray-600">እጣው ይወሰዳል እና ሚሊየነር ትሆናለህ!</p>
                 <p className="text-green-600 font-semibold text-sm mt-1">Lottery drawn - YOU become a MILLIONAIRE!</p>
@@ -492,31 +469,6 @@ export default function MerkatoVip() {
                 <span className="text-green-600">💚</span>
                 <span className="text-green-800">2% of every contribution supports kidney & heart disease patients</span>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Testimonials from Merkato */}
-        <div className="container mx-auto px-4 py-16">
-          <h2 className="text-3xl font-bold text-center mb-8">ከመርካቶ ነጋዴዎች | From Merkato Traders</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition">
-              <div className="text-yellow-500 text-4xl mb-2">⭐⭐⭐⭐⭐</div>
-              <p className="text-gray-600 italic">"የዕለታዊ ሚሊየነር ፑሉን ተቀላቀልኩ! በሳምንቱ አሸነፍኩ - ንግዴን ለማስፋት ችያለሁ!"</p>
-              <p className="font-semibold mt-3">- አለም ተክሌ፣ የጨርቃጨርቅ ነጋዴ</p>
-              <p className="text-sm text-gray-400">"Joined Daily Millionaire pool - Won in my first week!"</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition">
-              <div className="text-yellow-500 text-4xl mb-2">⭐⭐⭐⭐⭐</div>
-              <p className="text-gray-600 italic">"እንደ እኩብ አሰራር ነገር ግን ዘመናዊ እና አስተማማኝ። 10 ሚሊዮን ማሸነፍ ጥሩ ነው!"</p>
-              <p className="font-semibold mt-3">- ፋሲል አበበ፣ የኤሌክትሮኒክስ ነጋዴ</p>
-              <p className="text-sm text-gray-400">"Like Equb but modern and trustworthy. Winning 10M is great!"</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition">
-              <div className="text-yellow-500 text-4xl mb-2">⭐⭐⭐⭐⭐</div>
-              <p className="text-gray-600 italic">"ለመርካቶ ነጋዴዎች በጣም ጥሩ እድል! ሁሉም ይሳተፉ - 40 ሚሊዮን ህልም ነው!"</p>
-              <p className="font-semibold mt-3">- ዘላለም ኃይሉ፣ የቅመማቅመም ነጋዴ</p>
-              <p className="text-sm text-gray-400">"Great opportunity for Merkato traders! Everyone join - 40M is a dream!"</p>
             </div>
           </div>
         </div>
