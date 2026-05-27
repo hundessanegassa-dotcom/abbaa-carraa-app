@@ -2,7 +2,15 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
-export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSelected, onCancel }) {
+export default function SeatSelector({ 
+  poolId, 
+  entryFee, 
+  maxSeats = 5, 
+  totalSeats,      // NEW: Total seats from parent
+  availableSeats,  // NEW: Available seats from parent
+  onSeatsSelected, 
+  onCancel 
+}) {
   const [seats, setSeats] = useState([]);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -214,8 +222,8 @@ export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSe
   }
 
   // Calculate grid dimensions
-  const totalSeats = seats.length;
-  const cols = Math.ceil(Math.sqrt(totalSeats));
+  const totalSeatsCount = seats.length;
+  const cols = Math.ceil(Math.sqrt(totalSeatsCount));
   
   // Group seats into rows
   const seatRows = [];
@@ -262,6 +270,15 @@ export default function SeatSelector({ poolId, entryFee, maxSeats = 5, onSeatsSe
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6">
       <h3 className="text-xl font-bold mb-4">🎯 Select Your Seat(s)</h3>
+      
+      {/* Pool Summary */}
+      <div className="bg-blue-50 rounded-lg p-3 mb-4 text-center">
+        <p className="text-sm text-blue-800">
+          💺 Total Seats: {(totalSeats || totalSeatsCount).toLocaleString()} | 
+          📊 Available: {availableCount.toLocaleString()} | 
+          🎫 Entry Fee: ETB {entryFee.toLocaleString()}
+        </p>
+      </div>
       
       {/* Legend */}
       <div className="flex flex-wrap gap-4 mb-6 text-sm">
