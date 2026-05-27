@@ -10,6 +10,7 @@ export default function AgentApply() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   
   const [formData, setFormData] = useState({
     full_name: '',
@@ -44,6 +45,13 @@ export default function AgentApply() {
       email: user.email
     }));
     
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle();
+    setProfile(profile);
+    
     // Check if already applied
     const { data: existing } = await supabase
       .from('agents')
@@ -61,54 +69,113 @@ export default function AgentApply() {
     }
   };
 
-  const handleFileUpload = async (file, type) => {
-    if (!file) return null;
-    
-    setUploading(true);
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${user.id}_${type}_${Date.now()}.${fileExt}`;
+  // Compress image before upload
+  const compressImage = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          const maxWidth = 1024;
+          const maxHeight = 1024;
+          
+          if (width > height) {
+            if (width > maxWidth) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = (width * maxHeight) / height;
+              height = maxHeight;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          canvas.toBlob((blob) => {
+            const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          }, 'image/jpeg', 0.7);
+        };
+        img.onerror = reject;
+      };
+      reader.onerror = reject;
+    });
+  };
+
+  const uploadFile = async (file, userId, type) => {
+    const fileExt = 'jpg';
+    const fileName = `${userId}_${type}_${Date.now()}.${fileExt}`;
     const filePath = `agent-documents/${fileName}`;
     
-    const { error: uploadError } = await supabase.storage
+    const { error, data } = await supabase.storage
       .from('verification-docs')
-      .upload(filePath, file);
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
     
-    if (uploadError) {
-      toast.error('Upload failed: ' + uploadError.message);
-      setUploading(false);
-      return null;
-    }
+    if (error) throw error;
     
     const { data: { publicUrl } } = supabase.storage
       .from('verification-docs')
       .getPublicUrl(filePath);
     
-    setUploading(false);
     return publicUrl;
   };
 
-  const handleFileChange = (e, field) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const handleFileChange = async (e, field) => {
+    const selectedFile = e.target.files[0];
+    if (!selectedFile) return;
     
-    if (!file.type.startsWith('image/')) {
+    if (!selectedFile.type.startsWith('image/')) {
       toast.error('Please upload an image file');
       return;
     }
     
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('File too large. Max 5MB');
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      toast.error('File too large. Max 10MB');
       return;
     }
     
-    setFormData(prev => ({ ...prev, [field]: file }));
+    toast.loading('Compressing image...', { id: `compress-${field}` });
     
-    // Preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreviews(prev => ({ ...prev, [field]: reader.result }));
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedFile = await compressImage(selectedFile);
+      setFormData(prev => ({ ...prev, [field]: compressedFile }));
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviews(prev => ({ ...prev, [field]: reader.result }));
+      };
+      reader.readAsDataURL(compressedFile);
+      
+      toast.success('Image ready!', { id: `compress-${field}` });
+    } catch (error) {
+      console.error('Compression error:', error);
+      toast.error('Using original image', { id: `compress-${field}` });
+      setFormData(prev => ({ ...prev, [field]: selectedFile }));
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviews(prev => ({ ...prev, [field]: reader.result }));
+      };
+      reader.readAsDataURL(selectedFile);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -130,15 +197,15 @@ export default function AgentApply() {
     }
     
     setLoading(true);
+    setUploadProgress(0);
     
     try {
-      // Upload documents
-      const frontUrl = await handleFileUpload(formData.digital_id_front, 'id_front');
-      const backUrl = await handleFileUpload(formData.digital_id_back, 'id_back');
+      setUploadProgress(20);
+      const frontUrl = await uploadFile(formData.digital_id_front, user.id, 'id_front');
+      setUploadProgress(50);
+      const backUrl = await uploadFile(formData.digital_id_back, user.id, 'id_back');
+      setUploadProgress(80);
       
-      if (!frontUrl || !backUrl) throw new Error('Document upload failed');
-      
-      // Create agent application
       const { error } = await supabase
         .from('agents')
         .insert({
@@ -156,12 +223,12 @@ export default function AgentApply() {
       
       if (error) throw error;
       
-      // Update profile user_type
       await supabase
         .from('profiles')
         .update({ user_type: 'agent', role: 'agent' })
         .eq('id', user.id);
       
+      setUploadProgress(100);
       toast.success('Application submitted! Admin will review within 24-48 hours.');
       setTimeout(() => router.push('/dashboard'), 2000);
       
@@ -170,6 +237,7 @@ export default function AgentApply() {
       toast.error('Failed to submit: ' + error.message);
     } finally {
       setLoading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -298,6 +366,22 @@ export default function AgentApply() {
                 </div>
               </div>
               
+              {/* Upload Progress */}
+              {loading && uploadProgress > 0 && (
+                <div className="mt-3">
+                  <div className="flex justify-between text-xs text-gray-600 mb-1">
+                    <span>Uploading documents...</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-yellow-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+              
               {/* Commission Info */}
               <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
                 <h3 className="font-bold text-yellow-800 mb-2">💰 Agent Commission Structure</h3>
@@ -316,7 +400,7 @@ export default function AgentApply() {
                   disabled={loading || uploading}
                   className="w-full bg-gradient-to-r from-yellow-600 to-orange-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50"
                 >
-                  {loading ? 'Submitting...' : uploading ? 'Uploading...' : 'Submit Application'}
+                  {loading ? 'Submitting...' : 'Submit Application'}
                 </button>
                 <p className="text-xs text-gray-400 text-center mt-3">
                   Application will be reviewed within 24-48 hours. You'll be notified via email.
