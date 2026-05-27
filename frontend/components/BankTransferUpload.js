@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/router';
@@ -11,6 +11,7 @@ export default function BankTransferUpload({
   onClose 
 }) {
   const router = useRouter();
+  const isMounted = useRef(true);
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
@@ -21,6 +22,13 @@ export default function BankTransferUpload({
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('telebirr');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [reference, setReference] = useState('');
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const getSession = async () => {
@@ -36,7 +44,7 @@ export default function BankTransferUpload({
           return;
         }
         
-        setUser(session.user);
+        if (isMounted.current) setUser(session.user);
         
         const { data: profile } = await supabase
           .from('profiles')
@@ -44,14 +52,14 @@ export default function BankTransferUpload({
           .eq('id', session.user.id)
           .maybeSingle();
         
-        setUserProfile(profile);
+        if (isMounted.current) setUserProfile(profile);
         
       } catch (err) {
         console.error('Session error:', err);
         toast.error('Session error. Please refresh and try again');
         onClose();
       } finally {
-        setSessionLoading(false);
+        if (isMounted.current) setSessionLoading(false);
       }
     };
 
@@ -60,9 +68,11 @@ export default function BankTransferUpload({
 
   useEffect(() => {
     if (timeLeft > 0 && !sessionLoading) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      const timer = setTimeout(() => {
+        if (isMounted.current) setTimeLeft(prev => prev - 1);
+      }, 1000);
       return () => clearTimeout(timer);
-    } else if (timeLeft === 0 && !sessionLoading) {
+    } else if (timeLeft === 0 && !sessionLoading && isMounted.current) {
       toast.error('Reservation expired! Please reselect seats.');
       onClose();
     }
@@ -141,16 +151,16 @@ export default function BankTransferUpload({
     
     try {
       const compressedFile = await compressImage(selectedFile);
-      setFile(compressedFile);
+      if (isMounted.current) setFile(compressedFile);
       const previewUrl = URL.createObjectURL(compressedFile);
-      setUploadedImageUrl(previewUrl);
+      if (isMounted.current) setUploadedImageUrl(previewUrl);
       toast.success('Image ready!', { id: 'compress' });
     } catch (error) {
       console.error('Compression error:', error);
       toast.error('Using original image', { id: 'compress' });
-      setFile(selectedFile);
+      if (isMounted.current) setFile(selectedFile);
       const previewUrl = URL.createObjectURL(selectedFile);
-      setUploadedImageUrl(previewUrl);
+      if (isMounted.current) setUploadedImageUrl(previewUrl);
     }
   };
 
@@ -161,13 +171,15 @@ export default function BankTransferUpload({
     
     // Simulate progress
     const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 90) {
-          clearInterval(interval);
-          return 90;
-        }
-        return prev + 10;
-      });
+      if (isMounted.current) {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(interval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }
     }, 300);
     
     const { error, data } = await supabase.storage
@@ -178,7 +190,7 @@ export default function BankTransferUpload({
       });
     
     clearInterval(interval);
-    setUploadProgress(100);
+    if (isMounted.current) setUploadProgress(100);
     
     if (error) throw error;
     
@@ -206,8 +218,8 @@ export default function BankTransferUpload({
       return;
     }
 
-    setUploading(true);
-    setUploadProgress(0);
+    if (isMounted.current) setUploading(true);
+    if (isMounted.current) setUploadProgress(0);
 
     try {
       // Upload image
@@ -268,15 +280,17 @@ export default function BankTransferUpload({
       toast.success('Payment proof submitted! Admin will verify within 24 hours.');
       
       setTimeout(() => {
-        if (onSuccess) onSuccess();
+        if (onSuccess && isMounted.current) onSuccess();
       }, 2000);
       
     } catch (err) {
       console.error('Upload error:', err);
       toast.error('Failed to submit payment: ' + err.message);
     } finally {
-      setUploading(false);
-      setUploadProgress(0);
+      if (isMounted.current) {
+        setUploading(false);
+        setUploadProgress(0);
+      }
     }
   };
 
