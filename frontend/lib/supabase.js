@@ -51,6 +51,7 @@ export async function checkSupabaseConnection() {
 let poolsCache = null;
 let poolsCacheTime = 0;
 const CACHE_DURATION = 60000; // 1 minute cache
+
 export async function getPoolsWithCache() {
   const now = Date.now();
   if (poolsCache && (now - poolsCacheTime) < CACHE_DURATION) {
@@ -148,9 +149,41 @@ export async function getPoolsPaginated(page = 0, pageSize = 12, filters = {}) {
     
     const { data, error, count } = await query;
     
-    return { data, error, count, hasMore: count > (page + 1) * pageSize };
+    return { 
+      data: data || [], 
+      error, 
+      count: count || 0, 
+      hasMore: (count || 0) > (page + 1) * pageSize 
+    };
   } catch (error) {
     console.error('Error fetching paginated pools:', error);
     return { data: [], error, count: 0, hasMore: false };
   }
+}
+
+// Helper function to format currency
+export function formatCurrency(amount) {
+  if (!amount) return 'ETB 0';
+  return `ETB ${amount.toLocaleString()}`;
+}
+
+// Helper function to calculate pool progress
+export function calculatePoolProgress(currentAmount, targetAmount) {
+  if (!targetAmount || targetAmount === 0) return 0;
+  const totalCollection = targetAmount * 1.2; // +20% commission
+  return Math.min((currentAmount / totalCollection) * 100, 100);
+}
+
+// Helper function to calculate total seats
+export function calculateTotalSeats(targetAmount, entryFee) {
+  if (!targetAmount || !entryFee) return 0;
+  const totalCollection = targetAmount * 1.2;
+  return Math.floor(totalCollection / entryFee);
+}
+
+// Helper function to calculate commission
+export function calculateCommission(targetAmount) {
+  if (!targetAmount) return 0;
+  const totalCollection = targetAmount * 1.2;
+  return totalCollection * 0.2;
 }
