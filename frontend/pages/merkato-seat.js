@@ -43,50 +43,82 @@ export default function MerkatoSeat() {
     checkUser();
     if (type && vipPools[type]) {
       setPoolInfo(vipPools[type]);
-    } else {
+    } else if (type && !vipPools[type]) {
+      toast.error('Invalid pool type');
       router.push('/merkato-vip');
     }
   }, [type]);
 
   const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      sessionStorage.setItem('pendingRole', 'individual');
-      sessionStorage.setItem('pendingPoolType', type);
-      sessionStorage.setItem('redirectAfterLogin', `/merkato-seat?type=${type}`);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        // Store the intended pool type and redirect to login
+        sessionStorage.setItem('pendingRole', 'individual');
+        sessionStorage.setItem('pendingPoolType', type);
+        sessionStorage.setItem('redirectAfterLogin', `/merkato-seat?type=${type}`);
+        toast.loading('Please login to select seats...');
+        router.push('/login');
+        return;
+      }
+      setUser(user);
+    } catch (error) {
+      console.error('Error checking user:', error);
+      toast.error('Please login to continue');
       router.push('/login');
-      return;
+    } finally {
+      setLoading(false);
     }
-    setUser(user);
-    setLoading(false);
   };
 
   const handleSeatsSelected = async (seatData) => {
-    // Create participant record with seat numbers
-    const { data: participant, error } = await supabase
-      .from('merkato_vip_participants')
-      .insert({
-        user_id: user.id,
-        user_email: user.email,
-        user_name: user.user_metadata?.full_name || user.email.split('@')[0],
-        pool_type: type,
-        seat_numbers: seatData.seats,
-        contribution_amount: seatData.totalAmount,
-        prize_amount: poolInfo.prize,
-        payment_status: 'pending',
-        ticket_number: `MC-${type?.toUpperCase()}-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-        created_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-
-    if (error) {
-      toast.error('Failed to create participant record');
+    if (!user) {
+      toast.error('Please login to continue');
+      router.push('/login');
       return;
     }
 
-    // Redirect to payment page
-    router.push(`/payment/merkato?type=${type}&participant=${participant.id}&seats=${seatData.seats.join(',')}&amount=${seatData.totalAmount}`);
+    setLoading(true);
+    
+    try {
+      // Generate unique ticket number
+      const ticketNumber = `MC-${type?.toUpperCase()}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+      
+      // Create participant record with seat numbers
+      const { data: participant, error } = await supabase
+        .from('merkato_vip_participants')
+        .insert({
+          user_id: user.id,
+          user_email: user.email,
+          user_name: user.user_metadata?.full_name || user.email.split('@')[0],
+          phone: user.user_metadata?.phone || null,
+          pool_type: type,
+          seat_numbers: seatData.seats,
+          contribution_amount: seatData.totalAmount,
+          prize_amount: poolInfo.prize,
+          payment_status: 'pending',
+          ticket_number: ticketNumber,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      toast.success(`Seats ${seatData.seats.join(', ')} reserved! Proceed to payment.`);
+      
+      // Redirect to payment page with seats as comma-separated string
+      router.push(`/payment/merkato?type=${type}&participant=${participant.id}&seats=${seatData.seats.join(',')}&amount=${seatData.totalAmount}`);
+      
+    } catch (error) {
+      console.error('Error saving seats:', error);
+      toast.error('Failed to reserve seats: ' + error.message);
+      setLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    router.push('/merkato-vip');
   };
 
   if (loading) {
@@ -103,38 +135,93 @@ export default function MerkatoSeat() {
     <>
       <Head>
         <title>Select Seats - {poolInfo.name} | Abbaa Carraa</title>
+        <meta name="description" content={`Select your seats for ${poolInfo.name}. Entry fee: ${poolInfo.entryFee} ETB, Prize: ${poolInfo.prize.toLocaleString()} ETB`} />
       </Head>
 
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="container mx-auto px-4 max-w-5xl">
+          {/* Back Button */}
           <button 
             onClick={() => router.back()} 
-            className="text-gray-600 hover:text-gray-800 mb-4 inline-flex items-center gap-1"
+            className="text-gray-600 hover:text-gray-800 mb-4 inline-flex items-center gap-1 transition"
           >
-            ← Back
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Merkato VIP
           </button>
 
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          {/* Pool Header Card */}
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-6">
             <div className={`bg-gradient-to-r ${poolInfo.color} p-6 text-white`}>
-              <h1 className="text-2xl font-bold">Select Your Seats</h1>
-              <p className="text-gray-200 mt-1">{poolInfo.name}</p>
-              <div className="mt-3 flex gap-4 text-sm">
-                <span>💰 Prize: ETB {poolInfo.prize.toLocaleString()}</span>
-                <span>🎫 Entry Fee: ETB {poolInfo.entryFee.toLocaleString()}</span>
-                <span>💺 Total Seats: {poolInfo.totalSeats.toLocaleString()}</span>
+              <div className="flex justify-between items-center flex-wrap gap-4">
+                <div>
+                  <div className="text-sm opacity-80 mb-1">Merkato VIP Program</div>
+                  <h1 className="text-2xl md:text-3xl font-bold">{poolInfo.name}</h1>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm opacity-80">Guaranteed Prize</div>
+                  <div className="text-2xl md:text-3xl font-bold">ETB {poolInfo.prize.toLocaleString()}</div>
+                </div>
               </div>
             </div>
-
+            
             <div className="p-6">
-              <SeatSelector
-                poolId={`merkato_${type}`}
-                entryFee={poolInfo.entryFee}
-                maxSeats={5}
-                totalSeats={poolInfo.totalSeats}
-                onSeatsSelected={handleSeatsSelected}
-                onCancel={() => router.push('/merkato-vip')}
-              />
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <p className="text-xs text-gray-500">Entry Fee</p>
+                  <p className="text-xl font-bold text-blue-600">ETB {poolInfo.entryFee.toLocaleString()}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-gray-500">Total Seats</p>
+                  <p className="text-xl font-bold text-purple-600">{poolInfo.totalSeats.toLocaleString()}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-gray-500">Draw Frequency</p>
+                  <p className="text-xl font-bold text-green-600">{poolInfo.frequency}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-gray-500">Max Seats Per Person</p>
+                  <p className="text-xl font-bold text-orange-600">5</p>
+                </div>
+              </div>
             </div>
+          </div>
+
+          {/* Seat Selector Component */}
+          <SeatSelector
+            poolId={`merkato_${type}`}
+            entryFee={poolInfo.entryFee}
+            maxSeats={5}
+            totalSeats={poolInfo.totalSeats}
+            onSeatsSelected={handleSeatsSelected}
+            onCancel={handleCancel}
+          />
+
+          {/* Info Box */}
+          <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-100">
+            <div className="flex items-start gap-3">
+              <div className="text-blue-600 text-xl">💡</div>
+              <div>
+                <p className="text-sm font-semibold text-blue-800">How it works:</p>
+                <ul className="text-xs text-blue-700 mt-1 space-y-1">
+                  <li>• Select up to 5 seats (more seats = higher chance to win!)</li>
+                  <li>• Each seat costs ETB {poolInfo.entryFee.toLocaleString()}</li>
+                  <li>• Your seats are reserved for 10 minutes</li>
+                  <li>• Complete payment via TeleBirr or CBE Bank</li>
+                  <li>• Get your UNVERIFIED ticket immediately after payment submission</li>
+                  <li>• Admin verifies payment → Your ticket becomes VERIFIED</li>
+                  <li>• Winner is drawn randomly on the scheduled date</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Charity Note */}
+          <div className="mt-4 text-center">
+            <p className="text-xs text-gray-400">
+              💚 2% of every contribution supports kidney & heart disease patients in Ethiopia
+            </p>
           </div>
         </div>
       </div>
