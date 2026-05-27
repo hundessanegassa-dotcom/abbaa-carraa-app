@@ -1,7 +1,9 @@
+
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
 import GlobalAnnouncement from '../components/GlobalAnnouncement';
 
@@ -21,6 +23,7 @@ export async function getServerSideProps() {
 }
 
 export default function Home() {
+  const router = useRouter();
   const [pools, setPools] = useState([]);
   const [featuredPools, setFeaturedPools] = useState([]);
   const [stats, setStats] = useState({
@@ -91,6 +94,24 @@ export default function Home() {
       setDataLoaded(true);
       setIsInitialLoad(false);
     }
+  };
+
+  // Role selection handlers - store role and redirect to login
+  const handleRoleSelection = (role) => {
+    // Clear any existing pending data
+    sessionStorage.removeItem('pendingRole');
+    sessionStorage.removeItem('pendingPoolId');
+    
+    // Store the selected role
+    sessionStorage.setItem('pendingRole', role);
+    
+    // Redirect to login page
+    router.push('/login');
+  };
+
+  // Individual flow - go to listings (they will login later if needed)
+  const handleStartWinning = () => {
+    router.push('/listings');
   };
 
   if (!dataLoaded && isInitialLoad) {
@@ -166,38 +187,38 @@ export default function Home() {
               <span className="text-green-700 font-medium">2% supports kidney & heart disease patients</span>
             </div>
             
-            {/* Role Buttons - Direct to register with role parameter */}
+            {/* Role Buttons - Now store role and go to login directly */}
             <div className="flex flex-wrap justify-center gap-3 mt-6">
-              <Link 
-                href="/register?role=agent" 
+              <button
+                onClick={() => handleRoleSelection('agent')}
                 className="bg-yellow-50 text-yellow-700 px-4 py-2 rounded-full text-sm hover:bg-yellow-100 transition touch-target"
               >
                 🤝 Become an Agent
-              </Link>
-              <Link 
-                href="/register?role=vendor" 
+              </button>
+              <button
+                onClick={() => handleRoleSelection('vendor')}
                 className="bg-purple-50 text-purple-700 px-4 py-2 rounded-full text-sm hover:bg-purple-100 transition touch-target"
               >
                 🏪 Become a Vendor
-              </Link>
-              <Link 
-                href="/register?role=organization" 
+              </button>
+              <button
+                onClick={() => handleRoleSelection('organization')}
                 className="bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm hover:bg-blue-100 transition touch-target"
               >
                 🏢 Become an Organization
-              </Link>
+              </button>
             </div>
 
             {/* Individual Participant Button - Goes directly to listings */}
             <div className="flex justify-center mt-4">
-              <Link 
-                href="/listings" 
+              <button
+                onClick={handleStartWinning}
                 className="bg-green-600 text-white px-6 py-3 rounded-full font-semibold text-base shadow-md hover:bg-green-700 transition touch-target inline-flex items-center gap-2"
               >
                 <span>🎁</span>
                 Start Winning Now
                 <span>→</span>
-              </Link>
+              </button>
             </div>
 
             <div className="flex flex-wrap justify-center gap-3 mt-10 pt-6 border-t border-gray-200">
@@ -231,6 +252,41 @@ export default function Home() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* MERKATO VIP SECTION - NEW */}
+        <div className="container mx-auto px-4 py-8">
+          <Link href="/merkato-vip">
+            <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 rounded-2xl p-6 text-white cursor-pointer transform hover:scale-105 transition shadow-xl">
+              <div className="flex justify-between items-center flex-wrap gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-5xl">🏪</span>
+                  <div>
+                    <div className="font-bold text-2xl">መርካቶ VIP</div>
+                    <div className="text-sm opacity-90">Merkato Special Program</div>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="font-bold text-xl">ዕለታዊ · ሳምንታዊ · ወርሃዊ</div>
+                  <div className="text-sm">Daily · Weekly · Monthly</div>
+                </div>
+                <div className="flex gap-2">
+                  <div className="bg-yellow-500 text-gray-900 px-3 py-1 rounded-full text-xs font-bold">1M ETB</div>
+                  <div className="bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-bold">10M ETB</div>
+                  <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">40M ETB</div>
+                </div>
+                <div className="bg-yellow-500 text-gray-900 px-6 py-2 rounded-full font-bold">
+                  ይቀላቀሉ! Join Now →
+                </div>
+              </div>
+              <div className="mt-3 text-sm font-semibold text-center">
+                "አንድን ተሳታፊ ዛሬ ሚሊየነር፣ ሳምንቱን ሚሊየነር፣ ወሩን ሚሊየነር እናድርገው"
+              </div>
+              <div className="mt-2 text-center text-xs opacity-75">
+                Let's Make One Participant a MILLIONAIRE Today, One This Week, One This Month!
+              </div>
+            </div>
+          </Link>
         </div>
 
         <MovingAd />
