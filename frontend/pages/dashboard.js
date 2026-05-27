@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -35,8 +35,15 @@ export default function Dashboard() {
   const [recentActivities, setRecentActivities] = useState([]);
   const [badges, setBadges] = useState([]);
   
+  // Add mounted ref to prevent state updates after unmount
+  const isMounted = useRef(true);
+
   useEffect(() => {
     checkUser();
+    
+    return () => {
+      isMounted.current = false;
+    };
   }, []);
 
   async function checkUser() {
@@ -46,6 +53,8 @@ export default function Dashboard() {
         router.push('/login');
         return;
       }
+      
+      if (!isMounted.current) return;
       setUser(user);
 
       const { data: profile } = await supabase
@@ -54,6 +63,7 @@ export default function Dashboard() {
         .eq('id', user.id)
         .maybeSingle();
 
+      if (!isMounted.current) return;
       setProfile(profile || {});
       
       if (profile && profile.agreement_accepted !== true) {
@@ -66,8 +76,9 @@ export default function Dashboard() {
       
     } catch (error) {
       console.error('Error:', error);
+      if (!isMounted.current) return;
     } finally {
-      setLoading(false);
+      if (isMounted.current) setLoading(false);
     }
   }
 
@@ -137,6 +148,8 @@ export default function Dashboard() {
       const winRate = totalSpent > 0 ? (totalWon / totalSpent) * 100 : 0;
       const loyaltyPoints = Math.floor(totalSpent / 100) + (wins?.length || 0) * 10;
       
+      if (!isMounted.current) return;
+      
       setStats({ 
         totalSpent, 
         totalWon, 
@@ -155,7 +168,7 @@ export default function Dashboard() {
       
     } catch (error) {
       console.error('Error loading dashboard data:', error);
-      toast.error('Failed to load dashboard data');
+      if (isMounted.current) toast.error('Failed to load dashboard data');
     }
   }
 
@@ -175,6 +188,8 @@ export default function Dashboard() {
 
       if (error) throw error;
       
+      if (!isMounted.current) return;
+      
       if (reset) {
         setActivePools(data || []);
         setPage(1);
@@ -187,7 +202,7 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Error loading pools:', error);
     } finally {
-      setLoadingMore(false);
+      if (isMounted.current) setLoadingMore(false);
     }
   }
 
@@ -228,7 +243,7 @@ export default function Dashboard() {
         }))
       ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
 
-      setRecentActivities(activities);
+      if (isMounted.current) setRecentActivities(activities);
     } catch (error) {
       console.error('Error loading activities:', error);
     }
@@ -247,14 +262,14 @@ export default function Dashboard() {
       badgesList.push({ name: 'Newcomer', icon: '🌱', color: 'bg-gray-100 text-gray-700' });
     }
     
-    setBadges(badgesList);
+    if (isMounted.current) setBadges(badgesList);
   }
 
-  const copyReferralLink = () => {
+  const copyReferralLink = useCallback(() => {
     const link = `${window.location.origin}/register?ref=${user?.id}`;
     navigator.clipboard.writeText(link);
     toast.success('Referral link copied! Share with friends to earn bonuses.');
-  };
+  }, [user?.id]);
 
   if (loading) {
     return <LoadingSpinner fullPage message="Loading your dashboard..." />;
