@@ -1,4 +1,3 @@
-
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -98,18 +97,13 @@ export default function Home() {
 
   // Role selection handlers - store role and redirect to login
   const handleRoleSelection = (role) => {
-    // Clear any existing pending data
     sessionStorage.removeItem('pendingRole');
     sessionStorage.removeItem('pendingPoolId');
-    
-    // Store the selected role
     sessionStorage.setItem('pendingRole', role);
-    
-    // Redirect to login page
     router.push('/login');
   };
 
-  // Individual flow - go to listings (they will login later if needed)
+  // Individual flow - go to listings
   const handleStartWinning = () => {
     router.push('/listings');
   };
@@ -187,7 +181,7 @@ export default function Home() {
               <span className="text-green-700 font-medium">2% supports kidney & heart disease patients</span>
             </div>
             
-            {/* Role Buttons - Now store role and go to login directly */}
+            {/* Role Buttons */}
             <div className="flex flex-wrap justify-center gap-3 mt-6">
               <button
                 onClick={() => handleRoleSelection('agent')}
@@ -209,7 +203,7 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Individual Participant Button - Goes directly to listings */}
+            {/* Individual Participant Button */}
             <div className="flex justify-center mt-4">
               <button
                 onClick={handleStartWinning}
@@ -254,10 +248,10 @@ export default function Home() {
           </div>
         </div>
 
-        {/* MERKATO VIP SECTION - NEW */}
+        {/* MERKATO VIP SECTION - UPDATED with Grey Theme and Correct Amharic Text */}
         <div className="container mx-auto px-4 py-8">
           <Link href="/merkato-vip">
-            <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 rounded-2xl p-6 text-white cursor-pointer transform hover:scale-105 transition shadow-xl">
+            <div className="bg-gradient-to-r from-gray-700 via-gray-800 to-gray-900 rounded-2xl p-6 text-white cursor-pointer transform hover:scale-105 transition shadow-xl">
               <div className="flex justify-between items-center flex-wrap gap-4">
                 <div className="flex items-center gap-3">
                   <span className="text-5xl">🏪</span>
@@ -275,15 +269,15 @@ export default function Home() {
                   <div className="bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-bold">10M ETB</div>
                   <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">40M ETB</div>
                 </div>
-                <div className="bg-yellow-500 text-gray-900 px-6 py-2 rounded-full font-bold">
+                <div className="bg-gray-600 text-white px-6 py-2 rounded-full font-bold hover:bg-gray-500 transition">
                   ይቀላቀሉ! Join Now →
                 </div>
               </div>
-              <div className="mt-3 text-sm font-semibold text-center">
-                "አንድን ተሳታፊ ዛሬ ሚሊየነር፣ ሳምንቱን ሚሊየነር፣ ወሩን ሚሊየነር እናድርገው"
+              <div className="mt-3 text-sm font-semibold text-center text-gray-200">
+                "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው"
               </div>
-              <div className="mt-2 text-center text-xs opacity-75">
-                Let's Make One Participant a MILLIONAIRE Today, One This Week, One This Month!
+              <div className="mt-2 text-center text-xs opacity-75 text-gray-300">
+                Let's make one participant a millionaire today, this week and this month!
               </div>
             </div>
           </Link>
