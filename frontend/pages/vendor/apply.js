@@ -1,176 +1,294 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { supabase } from '../../lib/supabase';
 import Head from 'next/head';
 import toast from 'react-hot-toast';
 
-export default function VendorApplication() {
+export default function VendorApply() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  
   const [formData, setFormData] = useState({
-    business_name: '',
-    business_license_number: '',
-    tin_number: '',
+    full_name: '',
+    email: '',
     phone: '',
-    city: '',
+    business_name: '',
+    business_type: '',
+    tin_number: '',
     business_address: '',
-    business_license_image: null
+    description: '',
+    digital_id_front: null,
+    digital_id_back: null,
+    business_license: null
   });
-  const [preview, setPreview] = useState(null);
+  
+  const [previews, setPreviews] = useState({
+    digital_id_front: null,
+    digital_id_back: null,
+    business_license: null
+  });
 
   useEffect(() => {
     checkUser();
   }, []);
 
-  async function checkUser() {
+  const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       router.push('/login');
       return;
     }
-    setUser(user);
     
+    setUser(user);
+    setFormData(prev => ({
+      ...prev,
+      full_name: user.user_metadata?.full_name || '',
+      email: user.email
+    }));
+    
+    // Check if already applied
     const { data: existing } = await supabase
-      .from('vendor_applications')
-      .select('status')
+      .from('vendors')
+      .select('id, verified')
       .eq('user_id', user.id)
       .maybeSingle();
     
     if (existing) {
-      toast.info('You have already submitted an application');
-      router.push('/dashboard');
+      if (existing.verified) {
+        toast.success('You are already an approved vendor!');
+        router.push('/vendor/dashboard');
+      } else {
+        toast.loading('Your application is pending review', { duration: 3000 });
+      }
+    }
+  };
+
+  const handleFileUpload = async (file, type) => {
+    if (!file) return null;
+    
+    setUploading(true);
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}_${type}_${Date.now()}.${fileExt}`;
+    const filePath = `vendor-documents/${fileName}`;
+    
+    const { error: uploadError } = await supabase.storage
+      .from('verification-docs')
+      .upload(filePath, file);
+    
+    if (uploadError) {
+      toast.error('Upload failed: ' + uploadError.message);
+      setUploading(false);
+      return null;
+    }
+    
+    const { data: { publicUrl } } = supabase.storage
+      .from('verification-docs')
+      .getPublicUrl(filePath);
+    
+    setUploading(false);
+    return publicUrl;
+  };
+
+  const handleFileChange = (e, field) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
       return;
     }
     
-    setLoading(false);
-  }
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData({ ...formData, business_license_image: file });
-      setPreview(URL.createObjectURL(file));
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File too large. Max 5MB');
+      return;
     }
+    
+    setFormData(prev => ({ ...prev, [field]: file }));
+    
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviews(prev => ({ ...prev, [field]: reader.result }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.business_license_number || !formData.business_license_image) {
-      toast.error('Please provide business license number and upload license image');
+    
+    if (!formData.digital_id_front) {
+      toast.error('Please upload your Digital ID (Front)');
       return;
     }
     
-    setSubmitting(true);
+    if (!formData.digital_id_back) {
+      toast.error('Please upload your Digital ID (Back)');
+      return;
+    }
     
-    let imageUrl = null;
-    if (formData.business_license_image) {
-      const fileExt = formData.business_license_image.name.split('.').pop();
-      const fileName = `vendor_licenses/${user.id}-${Date.now()}.${fileExt}`;
-      const { data, error } = await supabase.storage
-        .from('applications')
-        .upload(fileName, formData.business_license_image);
+    if (!formData.business_license) {
+      toast.error('Please upload your Business License');
+      return;
+    }
+    
+    if (!formData.business_name || !formData.tin_number) {
+      toast.error('Please fill all required fields');
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      const frontUrl = await handleFileUpload(formData.digital_id_front, 'id_front');
+      const backUrl = await handleFileUpload(formData.digital_id_back, 'id_back');
+      const licenseUrl = await handleFileUpload(formData.business_license, 'license');
       
-      if (!error) {
-        const { data: { publicUrl } } = supabase.storage
-          .from('applications')
-          .getPublicUrl(fileName);
-        imageUrl = publicUrl;
-      }
+      if (!frontUrl || !backUrl || !licenseUrl) throw new Error('Document upload failed');
+      
+      const { error } = await supabase
+        .from('vendors')
+        .insert({
+          user_id: user.id,
+          full_name: formData.full_name,
+          email: formData.email,
+          phone: formData.phone,
+          business_name: formData.business_name,
+          business_type: formData.business_type,
+          tin_number: formData.tin_number,
+          business_address: formData.business_address,
+          description: formData.description,
+          digital_id_front_url: frontUrl,
+          digital_id_back_url: backUrl,
+          business_license_url: licenseUrl,
+          verified: false,
+          created_at: new Date().toISOString()
+        });
+      
+      if (error) throw error;
+      
+      await supabase
+        .from('profiles')
+        .update({ user_type: 'vendor', role: 'vendor' })
+        .eq('id', user.id);
+      
+      toast.success('Application submitted! Admin will review within 24-48 hours.');
+      setTimeout(() => router.push('/dashboard'), 2000);
+      
+    } catch (error) {
+      console.error('Submit error:', error);
+      toast.error('Failed to submit: ' + error.message);
+    } finally {
+      setLoading(false);
     }
-    
-    const { error } = await supabase
-      .from('vendor_applications')
-      .insert({
-        user_id: user.id,
-        business_name: formData.business_name,
-        business_license_number: formData.business_license_number,
-        tin_number: formData.tin_number,
-        phone: formData.phone,
-        city: formData.city,
-        business_address: formData.business_address,
-        business_license_image: imageUrl,
-        status: 'pending',
-        created_at: new Date().toISOString()
-      });
-    
-    if (error) {
-      toast.error('Failed to submit application');
-    } else {
-      toast.success('Application submitted! Admin will review within 48 hours.');
-      router.push('/dashboard');
-    }
-    setSubmitting(false);
   };
-
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div></div>;
-  }
 
   return (
     <>
-      <Head><title>Vendor Application - Abbaa Carraa</title></Head>
-      <div className="min-h-screen bg-gray-50 py-12">
-        <div className="container mx-auto px-4 max-w-2xl">
+      <Head>
+        <title>Become a Vendor - Abbaa Carraa</title>
+      </Head>
+      
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="container mx-auto px-4 max-w-3xl">
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 text-white">
-              <h1 className="text-2xl font-bold">🏪 Become a Vendor</h1>
-              <p className="text-sm opacity-90">Complete your application to start listing products</p>
+            <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-6">
+              <div className="flex items-center gap-3">
+                <span className="text-4xl">🏪</span>
+                <div>
+                  <h1 className="text-2xl font-bold text-white">Become a Vendor</h1>
+                  <p className="text-purple-100">List products and earn 10% commission</p>
+                </div>
+              </div>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-6 space-y-5">
-              <div>
-                <label className="block text-sm font-medium mb-1">Business Name *</label>
-                <input type="text" name="business_name" value={formData.business_name} onChange={handleChange} className="w-full border rounded-lg p-3" required />
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              {/* Personal Information */}
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold text-gray-800 border-b pb-2">Personal Information</h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                    <input type="text" value={formData.full_name} disabled className="w-full border rounded-lg px-4 py-2 bg-gray-100" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                    <input type="email" value={formData.email} disabled className="w-full border rounded-lg px-4 py-2 bg-gray-100" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+                    <input type="tel" required placeholder="09XXXXXXXX" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500" />
+                  </div>
+                </div>
               </div>
               
-              <div>
-                <label className="block text-sm font-medium mb-1">Business License Number *</label>
-                <input type="text" name="business_license_number" value={formData.business_license_number} onChange={handleChange} className="w-full border rounded-lg p-3" required />
+              {/* Business Information */}
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold text-gray-800 border-b pb-2">Business Information</h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Business Name *</label>
+                    <input type="text" required placeholder="Your business name" value={formData.business_name} onChange={(e) => setFormData({...formData, business_name: e.target.value})} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Business Type</label>
+                    <select value={formData.business_type} onChange={(e) => setFormData({...formData, business_type: e.target.value})} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500">
+                      <option value="">Select type</option>
+                      <option value="retail">Retail</option>
+                      <option value="wholesale">Wholesale</option>
+                      <option value="manufacturing">Manufacturing</option>
+                      <option value="service">Service</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">TIN Number *</label>
+                    <input type="text" required placeholder="Your Tax Identification Number" value={formData.tin_number} onChange={(e) => setFormData({...formData, tin_number: e.target.value})} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Business Address</label>
+                    <input type="text" placeholder="Location, city, sub-city" value={formData.business_address} onChange={(e) => setFormData({...formData, business_address: e.target.value})} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500" />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Business Description</label>
+                  <textarea rows="2" placeholder="Describe what products you sell..." value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500" />
+                </div>
               </div>
               
-              <div>
-                <label className="block text-sm font-medium mb-1">TIN Number *</label>
-                <input type="text" name="tin_number" value={formData.tin_number} onChange={handleChange} className="w-full border rounded-lg p-3" required />
+              {/* Document Uploads */}
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold text-gray-800 border-b pb-2">Document Verification</h2>
+                <p className="text-sm text-gray-500">Please upload clear images of your documents</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Digital ID - Front *</label>
+                    <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'digital_id_front')} className="w-full border rounded-lg px-3 py-2" />
+                    {previews.digital_id_front && <img src={previews.digital_id_front} alt="ID Front" className="mt-2 max-h-24 rounded border" />}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Digital ID - Back *</label>
+                    <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'digital_id_back')} className="w-full border rounded-lg px-3 py-2" />
+                    {previews.digital_id_back && <img src={previews.digital_id_back} alt="ID Back" className="mt-2 max-h-24 rounded border" />}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Business License *</label>
+                    <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'business_license')} className="w-full border rounded-lg px-3 py-2" />
+                    {previews.business_license && <img src={previews.business_license} alt="License" className="mt-2 max-h-24 rounded border" />}
+                  </div>
+                </div>
               </div>
               
-              <div>
-                <label className="block text-sm font-medium mb-1">Phone Number *</label>
-                <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className="w-full border rounded-lg p-3" required />
+              {/* Submit */}
+              <div className="pt-4">
+                <button type="submit" disabled={loading || uploading} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50">
+                  {loading ? 'Submitting...' : uploading ? 'Uploading...' : 'Submit Application'}
+                </button>
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">City *</label>
-                <select name="city" value={formData.city} onChange={handleChange} className="w-full border rounded-lg p-3" required>
-                  <option value="">Select City</option>
-                  <option value="Addis Ababa">Addis Ababa</option>
-                  <option value="Adama">Adama</option>
-                  <option value="Bahir Dar">Bahir Dar</option>
-                  <option value="Dire Dawa">Dire Dawa</option>
-                  <option value="Hawassa">Hawassa</option>
-                  <option value="Mekelle">Mekelle</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Business Address *</label>
-                <input type="text" name="business_address" value={formData.business_address} onChange={handleChange} className="w-full border rounded-lg p-3" required />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Business License Image *</label>
-                <input type="file" accept="image/*" onChange={handleFileChange} className="w-full border rounded-lg p-2" required />
-                {preview && <img src={preview} alt="Preview" className="mt-2 w-32 h-32 object-cover rounded-lg" />}
-              </div>
-              
-              <button type="submit" disabled={submitting} className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition">
-                {submitting ? 'Submitting...' : 'Submit Application'}
-              </button>
             </form>
           </div>
         </div>
