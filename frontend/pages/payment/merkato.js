@@ -58,16 +58,26 @@ export default function MerkatoPayment() {
     setShowPayment(false);
     setTicketGenerated(true);
     
-    // Update participant status
+    // Parse seat numbers into array
+    const seatNumbersArray = seats ? (typeof seats === 'string' ? seats.split(',') : seats) : [];
+    
+    // Update participant status with seat numbers
     await supabase
       .from('merkato_vip_participants')
       .update({ 
         payment_status: 'pending_verification',
-        payment_submitted_at: new Date().toISOString()
+        payment_submitted_at: new Date().toISOString(),
+        seat_numbers: seatNumbersArray
       })
       .eq('id', participant);
     
     toast.success('Payment submitted! Your unverified ticket is ready.');
+  };
+
+  // Parse seat numbers for Ticket component
+  const getSeatNumbersArray = () => {
+    if (!seats) return [];
+    return typeof seats === 'string' ? seats.split(',') : seats;
   };
 
   if (!poolInfo) return null;
@@ -91,7 +101,7 @@ export default function MerkatoPayment() {
             <BankTransferUpload
               poolId={`merkato_${type}`}
               amount={parseInt(amount) || poolInfo.entryFee}
-              seatNumbers={seats?.split(',') || []}
+              seatNumbers={getSeatNumbersArray()}
               onSuccess={handlePaymentSuccess}
               onClose={() => router.push('/merkato-vip')}
             />
@@ -104,7 +114,7 @@ export default function MerkatoPayment() {
                 participant={participantData}
                 pool={poolInfo}
                 isVerified={false}
-                seatNumbers={seats?.split(',') || []}
+                seatNumbers={getSeatNumbersArray()}
               />
               <div className="text-center mt-6">
                 <p className="text-sm text-yellow-600">
