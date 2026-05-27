@@ -9,6 +9,7 @@ import i18n from '../lib/i18n';
 import Head from 'next/head';
 import useMediaQuery from '../hooks/useMediaQuery';
 import LoadingSpinner from '../components/LoadingSpinner';
+import LoadingScreen from '../components/LoadingScreen'; // ADD THIS
 
 // Dynamic imports with error boundaries
 const Navbar = dynamic(() => import('../components/Navbar').catch(() => () => <div className="h-16 bg-gray-100 animate-pulse" />), { 
@@ -36,8 +37,19 @@ function MyApp({ Component, pageProps }) {
   const [mounted, setMounted] = useState(false);
   const [routerLoading, setRouterLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [showInitialLoading, setShowInitialLoading] = useState(true); // ADD THIS
   const router = useRouter();
   const isMobile = useMediaQuery('(max-width: 768px)');
+
+  // Handle initial loading screen
+  useEffect(() => {
+    // Show loading screen for at least 2.5 seconds for better UX
+    const timer = setTimeout(() => {
+      setShowInitialLoading(false);
+    }, 2800);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   // Handle router loading states with React 19 transition
   useEffect(() => {
@@ -114,7 +126,12 @@ function MyApp({ Component, pageProps }) {
     return titles[path] || 'Abbaa Carraa';
   };
 
-  // Show loading only during router navigation or before mount
+  // Show initial loading screen first (beautiful rotating object)
+  if (showInitialLoading) {
+    return <LoadingScreen onLoadingComplete={() => setShowInitialLoading(false)} />;
+  }
+
+  // Show loading during router navigation or before mount
   if (!mounted || routerLoading || isPending) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
