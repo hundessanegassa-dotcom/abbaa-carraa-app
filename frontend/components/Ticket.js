@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import html2canvas from 'html2canvas';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -11,6 +11,17 @@ export default function Ticket({
 }) {
   const ticketRef = useRef(null);
   const [downloading, setDownloading] = useState(false);
+  const isMounted = useRef(true);
+
+  // Cleanup on unmount
+  const cleanup = useCallback(() => {
+    isMounted.current = false;
+  }, []);
+
+  // Set up cleanup on unmount
+  useState(() => {
+    return cleanup;
+  }, [cleanup]);
 
   const formatNumber = (num) => {
     if (!num) return '0';
@@ -42,6 +53,8 @@ export default function Ticket({
 
   const downloadTicket = async () => {
     if (!ticketRef.current) return;
+    if (!isMounted.current) return;
+    
     setDownloading(true);
     try {
       const canvas = await html2canvas(ticketRef.current, {
@@ -49,16 +62,19 @@ export default function Ticket({
         backgroundColor: '#ffffff',
         logging: false
       });
+      
+      if (!isMounted.current) return;
+      
       const image = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       link.download = `AbbaaCarraa_Ticket_${participant?.ticket_number || 'pending'}.png`;
       link.href = image;
       link.click();
-      if (onDownload) onDownload();
+      if (onDownload && isMounted.current) onDownload();
     } catch (error) {
       console.error('Download error:', error);
     } finally {
-      setDownloading(false);
+      if (isMounted.current) setDownloading(false);
     }
   };
 
