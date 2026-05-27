@@ -3,19 +3,51 @@ import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import toast from 'react-hot-toast';
-import AdminGuard from '../../components/AdminGuard';
 
 export default function DrawWinner() {
   const router = useRouter();
   const [pools, setPools] = useState([]);
   const [selectedPool, setSelectedPool] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [drawing, setDrawing] = useState(false);
   const [winner, setWinner] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checkingAdmin, setCheckingAdmin] = useState(true);
 
+  // Check admin access
   useEffect(() => {
-    fetchActivePools();
-  }, []);
+    const checkAdmin = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      
+      const { data: adminRecord } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .maybeSingle();
+      
+      if (profile?.role !== 'admin' && !adminRecord) {
+        router.push('/');
+        return;
+      }
+      
+      setIsAdmin(true);
+      setCheckingAdmin(false);
+      fetchActivePools();
+    };
+    
+    checkAdmin();
+  }, [router]);
 
   const fetchActivePools = async () => {
     const { data, error } = await supabase
@@ -27,6 +59,7 @@ export default function DrawWinner() {
     if (!error && data) {
       setPools(data);
     }
+    setLoading(false);
   };
 
   const fetchParticipants = async (poolId) => {
@@ -115,6 +148,9 @@ export default function DrawWinner() {
       
       toast.success(`Winner drawn! ${winner.user_name || winner.user_email} wins ${selectedPool.prize_amount.toLocaleString()} ETB!`);
       
+      // Refresh pools list
+      await fetchActivePools();
+      
     } catch (error) {
       console.error('Draw error:', error);
       toast.error('Failed to draw winner');
@@ -127,117 +163,142 @@ export default function DrawWinner() {
     return num?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
+  const getTierIcon = (tier) => {
+    if (tier === 'daily') return '⭐';
+    if (tier === 'weekly') return '🏆';
+    return '👑';
+  };
+
+  if (checkingAdmin || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-600"></div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return null;
+  }
+
   return (
-    <AdminGuard>
-      <>
-        <Head>
-          <title>Draw Merkato Winner - Admin</title>
-        </Head>
-        
-        <div className="min-h-screen bg-gray-100 py-8">
-          <div className="container mx-auto px-4 max-w-4xl">
-            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-              <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-4">
-                <h1 className="text-2xl font-bold text-white">Draw Merkato VIP Winner</h1>
-                <p className="text-purple-100 text-sm">Select a pool and draw the lucky winner</p>
+    <>
+      <Head>
+        <title>Draw Merkato Winner - Admin</title>
+      </Head>
+      
+      <div className="min-h-screen bg-gray-100 py-8">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="mb-4">
+            <button onClick={() => router.push('/admin/dashboard')} className="text-gray-600 hover:text-gray-800">
+              ← Back to Dashboard
+            </button>
+          </div>
+          
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-4">
+              <h1 className="text-2xl font-bold text-white">Draw Merkato VIP Winner</h1>
+              <p className="text-purple-100 text-sm">Select a pool and draw the lucky winner</p>
+            </div>
+            
+            <div className="p-6">
+              {/* Pool Selection */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Pool to Draw
+                </label>
+                <select
+                  value={selectedPool?.id || ''}
+                  onChange={(e) => {
+                    const pool = pools.find(p => p.id === e.target.value);
+                    setSelectedPool(pool);
+                    setWinner(null);
+                  }}
+                  className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="">-- Select a pool --</option>
+                  {pools.map(pool => (
+                    <option key={pool.id} value={pool.id}>
+                      {getTierIcon(pool.tier)} {pool.name} - {formatNumber(pool.prize_amount)} ETB
+                    </option>
+                  ))}
+                </select>
+                {pools.length === 0 && (
+                  <p className="text-sm text-gray-500 mt-2">No active pools available. Create one first.</p>
+                )}
               </div>
               
-              <div className="p-6">
-                {/* Pool Selection */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Pool to Draw
-                  </label>
-                  <select
-                    value={selectedPool?.id || ''}
-                    onChange={(e) => {
-                      const pool = pools.find(p => p.id === e.target.value);
-                      setSelectedPool(pool);
-                      setWinner(null);
-                    }}
-                    className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
-                  >
-                    <option value="">-- Select a pool --</option>
-                    {pools.map(pool => (
-                      <option key={pool.id} value={pool.id}>
-                        {pool.name} - {formatNumber(pool.prize_amount)} ETB
-                      </option>
-                    ))}
-                  </select>
+              {/* Pool Details */}
+              {selectedPool && (
+                <div className="bg-gray-50 rounded-xl p-6 mb-6">
+                  <h3 className="font-bold text-lg mb-3">Pool Details</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-gray-500 text-sm">Pool Name</p>
+                      <p className="font-semibold">{getTierIcon(selectedPool.tier)} {selectedPool.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 text-sm">Prize Amount</p>
+                      <p className="font-bold text-green-600">{formatNumber(selectedPool.prize_amount)} ETB</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 text-sm">Entry Fee</p>
+                      <p>{formatNumber(selectedPool.contribution_amount)} ETB</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 text-sm">Draw Time</p>
+                      <p>{new Date(selectedPool.draw_time).toLocaleString()}</p>
+                    </div>
+                  </div>
                 </div>
-                
-                {/* Pool Details */}
-                {selectedPool && (
-                  <div className="bg-gray-50 rounded-xl p-6 mb-6">
-                    <h3 className="font-bold text-lg mb-3">Pool Details</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-gray-500 text-sm">Pool Name</p>
-                        <p className="font-semibold">{selectedPool.name}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500 text-sm">Prize Amount</p>
-                        <p className="font-bold text-green-600">{formatNumber(selectedPool.prize_amount)} ETB</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500 text-sm">Entry Fee</p>
-                        <p>{formatNumber(selectedPool.contribution_amount)} ETB</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500 text-sm">Draw Time</p>
-                        <p>{new Date(selectedPool.draw_time).toLocaleString()}</p>
-                      </div>
+              )}
+              
+              {/* Winner Display */}
+              {winner && (
+                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-6 mb-6 border-2 border-yellow-400">
+                  <div className="text-center">
+                    <div className="text-6xl mb-3">🏆</div>
+                    <h3 className="text-2xl font-bold text-gray-800">WINNER!</h3>
+                    <p className="text-4xl font-bold text-green-600 my-3">{formatNumber(winner.prize)} ETB</p>
+                    <div className="bg-white rounded-lg p-4 mt-4">
+                      <p className="font-semibold">{winner.user_name || 'Anonymous Winner'}</p>
+                      <p className="text-gray-500 text-sm">{winner.user_email}</p>
+                      <p className="text-gray-400 text-xs mt-2">Ticket: {winner.ticketNumber}</p>
                     </div>
+                    <p className="text-sm text-gray-500 mt-4">from {winner.poolName}</p>
                   </div>
-                )}
-                
-                {/* Winner Display */}
-                {winner && (
-                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-6 mb-6 border-2 border-yellow-400">
-                    <div className="text-center">
-                      <div className="text-6xl mb-3">🏆</div>
-                      <h3 className="text-2xl font-bold text-gray-800">WINNER!</h3>
-                      <p className="text-4xl font-bold text-green-600 my-3">{formatNumber(winner.prize)} ETB</p>
-                      <div className="bg-white rounded-lg p-4 mt-4">
-                        <p className="font-semibold">{winner.user_name || 'Anonymous Winner'}</p>
-                        <p className="text-gray-500 text-sm">{winner.user_email}</p>
-                        <p className="text-gray-400 text-xs mt-2">Ticket: {winner.ticketNumber}</p>
-                      </div>
-                      <p className="text-sm text-gray-500 mt-4">from {winner.poolName}</p>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Draw Button */}
-                {selectedPool && !winner && (
-                  <button
-                    onClick={drawWinner}
-                    disabled={drawing}
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50"
-                  >
-                    {drawing ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Drawing...
-                      </span>
-                    ) : (
-                      'Draw Winner Now'
-                    )}
-                  </button>
-                )}
-                
-                {/* Back Button */}
+                </div>
+              )}
+              
+              {/* Draw Button */}
+              {selectedPool && !winner && (
                 <button
-                  onClick={() => router.push('/admin/dashboard')}
-                  className="w-full mt-3 py-2 text-gray-600 hover:text-gray-800 transition"
+                  onClick={drawWinner}
+                  disabled={drawing}
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50"
                 >
-                  Back to Dashboard
+                  {drawing ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Drawing...
+                    </span>
+                  ) : (
+                    'Draw Winner Now'
+                  )}
                 </button>
-              </div>
+              )}
+              
+              {/* Back Button */}
+              <button
+                onClick={() => router.push('/admin/dashboard')}
+                className="w-full mt-3 py-2 text-gray-600 hover:text-gray-800 transition"
+              >
+                Back to Dashboard
+              </button>
             </div>
           </div>
         </div>
-      </>
-    </AdminGuard>
+      </div>
+    </>
   );
 }
