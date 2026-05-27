@@ -9,6 +9,7 @@ export default function OrganizationApply() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   
   const [formData, setFormData] = useState({
     full_name: '',
@@ -57,53 +58,109 @@ export default function OrganizationApply() {
     }
   };
 
-  const handleFileUpload = async (file) => {
-    if (!file) return null;
-    
-    setUploading(true);
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${user.id}_org_id_${Date.now()}.${fileExt}`;
+  const compressImage = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          const maxWidth = 1024;
+          const maxHeight = 1024;
+          
+          if (width > height) {
+            if (width > maxWidth) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = (width * maxHeight) / height;
+              height = maxHeight;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          canvas.toBlob((blob) => {
+            const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          }, 'image/jpeg', 0.7);
+        };
+        img.onerror = reject;
+      };
+      reader.onerror = reject;
+    });
+  };
+
+  const uploadFile = async (file, userId) => {
+    const fileExt = 'jpg';
+    const fileName = `${userId}_org_id_${Date.now()}.${fileExt}`;
     const filePath = `organization-documents/${fileName}`;
     
-    const { error: uploadError } = await supabase.storage
+    const { error, data } = await supabase.storage
       .from('verification-docs')
-      .upload(filePath, file);
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
     
-    if (uploadError) {
-      toast.error('Upload failed: ' + uploadError.message);
-      setUploading(false);
-      return null;
-    }
+    if (error) throw error;
     
     const { data: { publicUrl } } = supabase.storage
       .from('verification-docs')
       .getPublicUrl(filePath);
     
-    setUploading(false);
     return publicUrl;
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const handleFileChange = async (e) => {
+    const selectedFile = e.target.files[0];
+    if (!selectedFile) return;
     
-    if (!file.type.startsWith('image/')) {
+    if (!selectedFile.type.startsWith('image/')) {
       toast.error('Please upload an image file');
       return;
     }
     
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('File too large. Max 5MB');
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      toast.error('File too large. Max 10MB');
       return;
     }
     
-    setFormData(prev => ({ ...prev, organization_id_image: file }));
+    toast.loading('Compressing image...', { id: 'compress' });
     
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreview(reader.result);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedFile = await compressImage(selectedFile);
+      setFormData(prev => ({ ...prev, organization_id_image: compressedFile }));
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result);
+      };
+      reader.readAsDataURL(compressedFile);
+      
+      toast.success('Image ready!', { id: 'compress' });
+    } catch (error) {
+      toast.error('Using original image', { id: 'compress' });
+      setFormData(prev => ({ ...prev, organization_id_image: selectedFile }));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result);
+      };
+      reader.readAsDataURL(selectedFile);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -113,27 +170,26 @@ export default function OrganizationApply() {
       toast.error('Please enter your organization name');
       return;
     }
-    
     if (!formData.organization_id_number) {
       toast.error('Please enter your organization ID number');
       return;
     }
-    
     if (!formData.organization_id_image) {
       toast.error('Please upload your organization ID card');
       return;
     }
-    
     if (!formData.position) {
       toast.error('Please enter your position in the organization');
       return;
     }
     
     setLoading(true);
+    setUploadProgress(0);
     
     try {
-      const idUrl = await handleFileUpload(formData.organization_id_image);
-      if (!idUrl) throw new Error('Document upload failed');
+      setUploadProgress(50);
+      const idUrl = await uploadFile(formData.organization_id_image, user.id);
+      setUploadProgress(85);
       
       const { error } = await supabase
         .from('organizations')
@@ -158,6 +214,7 @@ export default function OrganizationApply() {
         .update({ user_type: 'organization', role: 'organization' })
         .eq('id', user.id);
       
+      setUploadProgress(100);
       toast.success('Application submitted! Admin will review within 24-48 hours.');
       setTimeout(() => router.push('/dashboard'), 2000);
       
@@ -166,6 +223,7 @@ export default function OrganizationApply() {
       toast.error('Failed to submit: ' + error.message);
     } finally {
       setLoading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -189,10 +247,8 @@ export default function OrganizationApply() {
             </div>
             
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              {/* Personal Information */}
               <div className="space-y-4">
                 <h2 className="text-xl font-bold text-gray-800 border-b pb-2">Personal Information</h2>
-                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
@@ -213,10 +269,8 @@ export default function OrganizationApply() {
                 </div>
               </div>
               
-              {/* Organization Information */}
               <div className="space-y-4">
                 <h2 className="text-xl font-bold text-gray-800 border-b pb-2">Organization Information</h2>
-                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Organization Name *</label>
@@ -227,18 +281,15 @@ export default function OrganizationApply() {
                     <input type="text" required placeholder="Your employee/organization ID number" value={formData.organization_id_number} onChange={(e) => setFormData({...formData, organization_id_number: e.target.value})} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500" />
                   </div>
                 </div>
-                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Why do you want to create private pools for your organization? *</label>
                   <textarea rows="3" required placeholder="Tell us about your organization and how you plan to use private pools for your members..." value={formData.reason} onChange={(e) => setFormData({...formData, reason: e.target.value})} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500" />
                 </div>
               </div>
               
-              {/* Organization ID Upload */}
               <div className="space-y-4">
                 <h2 className="text-xl font-bold text-gray-800 border-b pb-2">Verification Document</h2>
                 <p className="text-sm text-gray-500">Please upload your organization ID card or employee badge showing you work for this organization</p>
-                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Organization ID Card / Employee Badge *</label>
                   <input type="file" accept="image/*" onChange={handleFileChange} className="w-full border rounded-lg px-3 py-2" />
@@ -247,11 +298,21 @@ export default function OrganizationApply() {
                       <img src={preview} alt="Organization ID" className="max-h-32 rounded border" />
                     </div>
                   )}
-                  <p className="text-xs text-gray-400 mt-1">This proves you are a legitimate member/employee of the organization</p>
                 </div>
               </div>
               
-              {/* Info Box */}
+              {loading && uploadProgress > 0 && (
+                <div className="mt-3">
+                  <div className="flex justify-between text-xs text-gray-600 mb-1">
+                    <span>Uploading document...</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                  </div>
+                </div>
+              )}
+              
               <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
                 <h3 className="font-bold text-blue-800 mb-2">🏢 Organization Benefits</h3>
                 <ul className="text-sm text-blue-700 space-y-1">
@@ -262,18 +323,10 @@ export default function OrganizationApply() {
                 </ul>
               </div>
               
-              {/* Submit Button */}
               <div className="pt-4">
-                <button
-                  type="submit"
-                  disabled={loading || uploading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50"
-                >
-                  {loading ? 'Submitting...' : uploading ? 'Uploading...' : 'Submit Application'}
+                <button type="submit" disabled={loading || uploading} className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50">
+                  {loading ? 'Submitting...' : 'Submit Application'}
                 </button>
-                <p className="text-xs text-gray-400 text-center mt-3">
-                  Application will be reviewed within 24-48 hours. You'll be notified via email.
-                </p>
               </div>
             </form>
           </div>
