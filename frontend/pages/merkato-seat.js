@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
 import Head from 'next/head';
@@ -7,6 +7,7 @@ import SeatSelector from '../components/SeatSelector';
 
 export default function MerkatoSeat() {
   const router = useRouter();
+  const isMounted = useRef(true);
   const { type } = router.query;
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -39,10 +40,17 @@ export default function MerkatoSeat() {
     }
   };
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
   useEffect(() => {
     checkUser();
     if (type && vipPools[type]) {
-      setPoolInfo(vipPools[type]);
+      if (isMounted.current) setPoolInfo(vipPools[type]);
     } else if (type && !vipPools[type]) {
       toast.error('Invalid pool type');
       router.push('/merkato-vip');
@@ -61,13 +69,13 @@ export default function MerkatoSeat() {
         router.push('/login');
         return;
       }
-      setUser(user);
+      if (isMounted.current) setUser(user);
     } catch (error) {
       console.error('Error checking user:', error);
       toast.error('Please login to continue');
       router.push('/login');
     } finally {
-      setLoading(false);
+      if (isMounted.current) setLoading(false);
     }
   };
 
@@ -113,7 +121,7 @@ export default function MerkatoSeat() {
     } catch (error) {
       console.error('Error saving seats:', error);
       toast.error('Failed to reserve seats: ' + error.message);
-      setLoading(false);
+      if (isMounted.current) setLoading(false);
     }
   };
 
