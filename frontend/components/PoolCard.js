@@ -10,18 +10,24 @@ export default function PoolCard({ pool, featured = false }) {
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // Fix: Use useEffect instead of useState for mounting
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const progress = useMemo(() => {
-    return (pool.current_amount / pool.target_amount) * 100;
-  }, [pool.current_amount, pool.target_amount]);
-
-  const totalCollection = useMemo(() => {
-    return pool.target_amount * 1.2;
-  }, [pool.target_amount]);
+  // FIXED: Calculate based on correct formula
+  // Total Collection = Winner's Prize × 1.2 (includes 20% commission)
+  // Total Seats = Total Collection ÷ Entry Fee
+  const winnerPrize = pool.target_amount || 0;
+  const entryFee = pool.contribution_amount || pool.entry_fee || 10;
+  const totalCollection = winnerPrize * 1.2; // Winner Prize + 20% commission
+  const totalSeats = Math.floor(totalCollection / entryFee);
+  const adminCommission = totalCollection * 0.2;
+  
+  // Progress based on total collection (not just winner prize)
+  const progress = ((pool.current_amount || 0) / totalCollection) * 100;
+  
+  const currentSeatsFilled = Math.floor((pool.current_amount || 0) / entryFee);
+  const availableSeats = totalSeats - currentSeatsFilled;
 
   const isCompleted = pool.status === 'completed' && pool.winner_id;
   const isActive = pool.status === 'active';
@@ -56,8 +62,10 @@ export default function PoolCard({ pool, featured = false }) {
     const message = `*🏆 ABBAA CARRAA | ባለ እድል 🏆*\n\n` +
                     `*🎁 GRAND PRIZE:* ${pool.prize_name}\n\n` +
                     `${pool.description || 'Join this amazing prize pool for a chance to win big!'}\n\n` +
-                    `*💰 Entry Fee:* ETB ${formatPrice(pool.contribution_amount)}\n` +
-                    `*🏆 Winner Gets:* ETB ${formatPrice(pool.target_amount)} (Cash Equivalent Guaranteed)\n\n` +
+                    `*💰 Entry Fee:* ETB ${formatPrice(entryFee)}\n` +
+                    `*🏆 Winner Gets:* ETB ${formatPrice(winnerPrize)} (Cash Equivalent Guaranteed)\n` +
+                    `*💺 Total Seats:* ${totalSeats.toLocaleString()}\n` +
+                    `*📊 Available Seats:* ${availableSeats.toLocaleString()}\n\n` +
                     `👉 *Join Here:* ${poolUrl}\n\n` +
                     `💚 *2% of income supports kidney & heart disease patients.*`;
     
@@ -71,8 +79,9 @@ export default function PoolCard({ pool, featured = false }) {
     const message = `🏆 *ABBAA CARRAA | ባለ እድል* 🏆\n\n` +
                     `🎁 *GRAND PRIZE:* ${pool.prize_name}\n\n` +
                     `${pool.description || 'Join this amazing prize pool for a chance to win big!'}\n\n` +
-                    `💰 *Entry Fee:* ETB ${formatPrice(pool.contribution_amount)}\n` +
-                    `🏆 *Winner Gets:* ETB ${formatPrice(pool.target_amount)} (Cash Equivalent Guaranteed)\n\n` +
+                    `💰 *Entry Fee:* ETB ${formatPrice(entryFee)}\n` +
+                    `🏆 *Winner Gets:* ETB ${formatPrice(winnerPrize)} (Cash Equivalent Guaranteed)\n` +
+                    `💺 *Total Seats:* ${totalSeats.toLocaleString()}\n\n` +
                     `💚 *2% of income supports kidney & heart disease patients.*`;
     
     window.open(`https://t.me/share/url?url=${encodeURIComponent(poolUrl)}&text=${encodeURIComponent(message)}`, '_blank');
@@ -83,8 +92,8 @@ export default function PoolCard({ pool, featured = false }) {
     const poolUrl = `${window.location.origin}/pools/${pool.id}`;
     const message = `🏆 ABBAA CARRAA | ባለ እድል 🏆\n\n` +
                     `🎁 GRAND PRIZE: ${pool.prize_name}\n` +
-                    `💰 Entry Fee: ETB ${formatPrice(pool.contribution_amount)}\n` +
-                    `🏆 Winner Gets: ETB ${formatPrice(pool.target_amount)}\n\n` +
+                    `💰 Entry Fee: ETB ${formatPrice(entryFee)}\n` +
+                    `🏆 Winner Gets: ETB ${formatPrice(winnerPrize)}\n\n` +
                     `Join me for a chance to win!`;
     
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(poolUrl)}&quote=${encodeURIComponent(message)}`, '_blank');
@@ -98,7 +107,6 @@ export default function PoolCard({ pool, featured = false }) {
     setShowShareMenu(false);
   };
 
-  // If not mounted, return a placeholder to prevent hydration errors
   if (!mounted) {
     return (
       <div className="bg-white rounded-xl overflow-hidden shadow-md">
@@ -115,7 +123,7 @@ export default function PoolCard({ pool, featured = false }) {
   return (
     <>
       <div className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300">
-        {/* Image Section - Clickable to pool details */}
+        {/* Image Section */}
         <Link href={`/pools/${pool.id}`} className="block">
           <div className="relative h-36 sm:h-44 md:h-48 overflow-hidden bg-gray-100 cursor-pointer">
             {pool.image_url && !imageError ? (
@@ -143,7 +151,7 @@ export default function PoolCard({ pool, featured = false }) {
                 ✅ {t('common.completed') || 'Completed'}
               </div>
             ) : isActive ? (
-              <div className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-md z-10">
+              <div className="absolute top-2 left-2 bg-green-600 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-md z-10">
                 🔴 {t('common.active') || 'Active'}
               </div>
             ) : (
@@ -156,7 +164,7 @@ export default function PoolCard({ pool, featured = false }) {
 
         {/* Content Section */}
         <div className="p-3 sm:p-4">
-          {/* Prize Name - Clickable */}
+          {/* Prize Name */}
           <Link href={`/pools/${pool.id}`} className="block">
             <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-800 mb-1 line-clamp-1 hover:text-green-600 transition cursor-pointer">
               {pool.prize_name}
@@ -168,8 +176,36 @@ export default function PoolCard({ pool, featured = false }) {
             {pool.description || t('pools.join_now') || 'Join this pool for a chance to win!'}
           </p>
 
-          {/* Progress Bar */}
-          <div className="mb-2">
+          {/* FIXED: Stats Grid with correct calculations */}
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mb-3 text-[11px] sm:text-xs">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">{t('pools.winner_gets') || '🏆 Winner Gets'}:</span>
+              <span className="font-bold text-green-600 text-xs sm:text-sm">ETB {formatPrice(winnerPrize)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">{t('pools.entry_fee') || '🎫 Entry Fee'}:</span>
+              <span className="font-semibold text-xs sm:text-sm">ETB {formatPrice(entryFee)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">{t('pools.total_seats') || '💺 Total Seats'}:</span>
+              <span className="font-semibold">{totalSeats.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">{t('pools.available_seats') || '📊 Available'}:</span>
+              <span className="font-semibold text-orange-600">{Math.max(0, availableSeats).toLocaleString()}</span>
+            </div>
+            {daysLeft !== null && daysLeft > 0 && !isCompleted && (
+              <div className="flex justify-between items-center col-span-2">
+                <span className="text-gray-500">{t('pools.days_left') || '⏰ Days left'}:</span>
+                <span className={`font-semibold ${daysLeft < 7 ? 'text-red-600' : 'text-orange-600'}`}>
+                  {daysLeft} {t('pools.days_left') || 'days'}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Progress Bar - based on TOTAL COLLECTION */}
+          <div className="mb-3">
             <div className="flex justify-between text-[10px] sm:text-xs text-gray-500 mb-0.5">
               <span>{t('pools.progress') || 'Progress'}</span>
               <span>{Math.min(Math.round(progress), 100)}%</span>
@@ -182,40 +218,13 @@ export default function PoolCard({ pool, featured = false }) {
                 style={{ width: `${Math.min(progress, 100)}%` }}
               />
             </div>
+            <div className="flex justify-between text-[9px] text-gray-400 mt-0.5">
+              <span>ETB {formatPrice(pool.current_amount || 0)} raised</span>
+              <span>Target: ETB {formatPrice(totalCollection)}</span>
+            </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mb-3 text-[11px] sm:text-xs">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500">{t('pools.winner_gets') || '🏆 Winner Gets'}:</span>
-              <span className="font-bold text-green-600 text-xs sm:text-sm">ETB {formatPrice(pool.target_amount)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500">{t('pools.total_collection') || '💰 Total'}:</span>
-              <div className="text-right">
-                <span className="font-semibold text-xs sm:text-sm">ETB {formatPrice(totalCollection)}</span>
-                <span className="text-[9px] text-gray-400 ml-0.5">({t('pools.incl_commission') || 'incl.20%'})</span>
-              </div>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500">{t('pools.entry_fee') || '🎫 Entry Fee'}:</span>
-              <span className="font-semibold text-xs sm:text-sm">ETB {formatPrice(pool.contribution_amount)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500">{t('pools.participants') || '👥 Participants'}:</span>
-              <span className="font-semibold">{pool.participants_count || 0}</span>
-            </div>
-            {daysLeft !== null && daysLeft > 0 && !isCompleted && (
-              <div className="flex justify-between items-center col-span-2">
-                <span className="text-gray-500">{t('pools.days_left') || '⏰ Days left'}:</span>
-                <span className={`font-semibold ${daysLeft < 7 ? 'text-red-600' : 'text-orange-600'}`}>
-                  {daysLeft} {t('pools.days_left') || 'days'}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Action Buttons - UPDATED with login redirect */}
+          {/* Action Buttons */}
           <div className="space-y-2">
             {isCompleted ? (
               <button
@@ -232,7 +241,7 @@ export default function PoolCard({ pool, featured = false }) {
                 <button 
                   className="w-full bg-green-600 hover:bg-green-700 text-white py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-1 cursor-pointer"
                 >
-                  🎯 {t('pools.join_now') || 'Join Now'}
+                  🎯 {t('pools.join_now') || 'Join Now'} (ETB {formatPrice(entryFee)})
                 </button>
               </Link>
             ) : (
