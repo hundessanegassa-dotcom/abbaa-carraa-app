@@ -1,6 +1,7 @@
 export async function getServerSideProps() {
   return { props: {} };
 }
+
 import BackButton from '../../components/BackButton';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -21,6 +22,17 @@ export default function AdminDashboard() {
     total_pools: 0, active_pools: 0, completed_pools: 0, pending_pools: 0,
     total_volume: 0, total_commission_paid: 0, pending_commission: 0,
     charity_total: 0, lives_impacted: 0, platform_revenue: 0
+  });
+  
+  // Merkato VIP Stats
+  const [merkatoStats, setMerkatoStats] = useState({
+    total_participants: 0,
+    daily_participants: 0,
+    weekly_participants: 0,
+    monthly_participants: 0,
+    total_collected: 0,
+    total_paid_out: 0,
+    pending_draws: 0
   });
   
   // Admin's personal pools (20% commission)
@@ -48,6 +60,18 @@ export default function AdminDashboard() {
   const [disputes, setDisputes] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
   
+  // Merkato VIP specific state
+  const [merkatoPools, setMerkatoPools] = useState([]);
+  const [merkatoParticipants, setMerkatoParticipants] = useState([]);
+  const [merkatoWinners, setMerkatoWinners] = useState([]);
+  const [showMerkatoModal, setShowMerkatoModal] = useState(false);
+  const [newMerkatoPool, setNewMerkatoPool] = useState({
+    tier: 'daily',
+    contribution_amount: 500,
+    prize_amount: 1000000,
+    draw_time: '20:00'
+  });
+  
   // Announcement modal
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [newAnnouncement, setNewAnnouncement] = useState({ title: '', content: '', target_audience: 'all' });
@@ -66,6 +90,12 @@ export default function AdminDashboard() {
     image_url: '',
     is_featured: true
   });
+
+  const tierConfig = {
+    daily: { name: 'Daily Millionaire', contribution: 500, prize: 1000000, frequency: 'daily', winnerCount: 1, slogan: 'Make ONE participant a MILLIONAIRE Today!' },
+    weekly: { name: 'Weekly Mega Winner', contribution: 2500, prize: 10000000, frequency: 'weekly', winnerCount: 1, slogan: 'Make ONE participant a MILLIONAIRE This Week!' },
+    monthly: { name: 'Monthly Legend', contribution: 5000, prize: 40000000, frequency: 'monthly', winnerCount: 1, slogan: 'Make ONE participant a MILLIONAIRE This Month!' }
+  };
 
   useEffect(() => {
     checkAdmin();
@@ -98,12 +128,55 @@ export default function AdminDashboard() {
       
       await loadAllData();
       await loadRecentActivity();
+      await loadMerkatoData();
     } catch (error) {
       console.error('Admin check error:', error);
       router.push('/login');
     } finally {
       setLoading(false);
     }
+  }
+
+  async function loadMerkatoData() {
+    // Load Merkato pools
+    const { data: pools } = await supabase
+      .from('merkato_vip_pools')
+      .select('*')
+      .order('created_at', { ascending: false });
+    setMerkatoPools(pools || []);
+    
+    // Load participants
+    const { data: participants } = await supabase
+      .from('merkato_vip_participants')
+      .select('*')
+      .order('created_at', { ascending: false });
+    setMerkatoParticipants(participants || []);
+    
+    // Load winners
+    const { data: winners } = await supabase
+      .from('merkato_vip_pools')
+      .select('*')
+      .eq('status', 'completed')
+      .not('winner_id', 'is', null);
+    setMerkatoWinners(winners || []);
+    
+    // Calculate stats
+    const dailyParticipants = participants?.filter(p => p.pool_type === 'daily' && p.payment_status === 'confirmed')?.length || 0;
+    const weeklyParticipants = participants?.filter(p => p.pool_type === 'weekly' && p.payment_status === 'confirmed')?.length || 0;
+    const monthlyParticipants = participants?.filter(p => p.pool_type === 'monthly' && p.payment_status === 'confirmed')?.length || 0;
+    const totalCollected = (participants?.filter(p => p.payment_status === 'confirmed').reduce((sum, p) => sum + (p.contribution_amount || 0), 0)) || 0;
+    const totalPaidOut = winners?.reduce((sum, w) => sum + (w.prize_amount || 0), 0) || 0;
+    const pendingDraws = pools?.filter(p => p.status === 'active' && new Date(p.draw_time) <= new Date())?.length || 0;
+    
+    setMerkatoStats({
+      total_participants: participants?.length || 0,
+      daily_participants: dailyParticipants,
+      weekly_participants: weeklyParticipants,
+      monthly_participants: monthlyParticipants,
+      total_collected: totalCollected,
+      total_paid_out: totalPaidOut,
+      pending_draws: pendingDraws
+    });
   }
 
   async function loadAllData() {
@@ -346,6 +419,136 @@ export default function AdminDashboard() {
     if (error) toast.error('Failed'); else { toast.success('Pool deleted'); loadAllPools(); loadStats(); loadMyPools(); }
   }
 
+  // Merkato VIP Pool Management
+  async function createMerkatoPool() {
+    if (!newMerkatoPool.tier) {
+      toast.error('Please select a tier');
+      return;
+    }
+    
+    const config = tierConfig[newMerkatoPool.tier];
+    setLoading(true);
+    
+    try {
+      // Calculate next draw time
+      let drawDate = new Date();
+      if (newMerkatoPool.tier === 'daily') {
+        drawDate.setDate(drawDate.getDate() + 1);
+      } else if (newMerkatoPool.tier === 'weekly') {
+        drawDate.setDate(drawDate.getDate() + (7 - drawDate.getDay()));
+      } else {
+        drawDate.setMonth(drawDate.getMonth() + 1);
+        drawDate.setDate(1);
+      }
+      
+      const [hours, minutes] = newMerkatoPool.draw_time.split(':');
+      drawDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      
+      const { data, error } = await supabase
+        .from('merkato_vip_pools')
+        .insert({
+          tier: newMerkatoPool.tier,
+          name: config.name,
+          contribution_amount: config.contribution,
+          prize_amount: config.prize,
+          winner_count: config.winnerCount,
+          draw_time: drawDate.toISOString(),
+          draw_frequency: newMerkatoPool.tier,
+          status: 'active'
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      toast.success(`${config.name} pool created successfully!`);
+      setShowMerkatoModal(false);
+      setNewMerkatoPool({ tier: 'daily', contribution_amount: 500, prize_amount: 1000000, draw_time: '20:00' });
+      await loadMerkatoData();
+    } catch (error) {
+      console.error('Create Merkato pool error:', error);
+      toast.error('Failed to create pool: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function drawMerkatoWinner(poolId) {
+    if (!confirm('Draw winner for this pool? This action cannot be undone.')) return;
+    
+    try {
+      // Get participants
+      const { data: participants, error: participantError } = await supabase
+        .from('merkato_vip_participants')
+        .select('*')
+        .eq('pool_id', poolId)
+        .eq('payment_status', 'confirmed');
+      
+      if (participantError) throw participantError;
+      
+      if (!participants || participants.length === 0) {
+        toast.error('No confirmed participants in this pool');
+        return;
+      }
+      
+      // Random selection
+      const randomIndex = Math.floor(Math.random() * participants.length);
+      const winner = participants[randomIndex];
+      
+      // Get pool details
+      const { data: pool, error: poolError } = await supabase
+        .from('merkato_vip_pools')
+        .select('*')
+        .eq('id', poolId)
+        .single();
+      
+      if (poolError) throw poolError;
+      
+      // Update pool with winner
+      const { error: updateError } = await supabase
+        .from('merkato_vip_pools')
+        .update({
+          status: 'completed',
+          winner_id: winner.user_id,
+          winner_email: winner.user_email,
+          winner_name: winner.user_name,
+          drawn_at: new Date().toISOString(),
+          total_participants: participants.length,
+          total_collected: participants.length * pool.contribution_amount
+        })
+        .eq('id', poolId);
+      
+      if (updateError) throw updateError;
+      
+      // Mark participant as winner
+      await supabase
+        .from('merkato_vip_participants')
+        .update({ is_winner: true })
+        .eq('id', winner.id);
+      
+      // Record draw history
+      await supabase
+        .from('merkato_vip_draws')
+        .insert({
+          pool_id: poolId,
+          drawn_at: new Date().toISOString(),
+          winner_id: winner.user_id,
+          winner_email: winner.user_email,
+          winner_name: winner.user_name,
+          prize_amount: pool.prize_amount,
+          ticket_number: `${pool.tier.toUpperCase()}-${Date.now()}-${randomIndex + 1}`,
+          random_seed: Math.random().toString(),
+          verification_hash: btoa(`${poolId}-${winner.user_id}-${Date.now()}`)
+        });
+      
+      toast.success(`Winner drawn! ${winner.user_name || winner.user_email} wins ${pool.prize_amount.toLocaleString()} ETB!`);
+      await loadMerkatoData();
+    } catch (error) {
+      console.error('Draw error:', error);
+      toast.error('Failed to draw winner');
+    }
+  }
+
   // Bank Transfer verification
   async function verifyBankTransfer(transferId, userId, poolId, amount, seatNumbers, approved) {
     if (!confirm(approved ? 'Approve this payment and confirm seats?' : 'Reject this payment?')) return;
@@ -527,9 +730,10 @@ export default function AdminDashboard() {
               <h1 className="text-3xl font-bold">Admin Command Center</h1>
               <p className="text-red-100">Welcome, {profile?.full_name || 'Admin'}</p>
             </div>
-            <div className="flex gap-3">
-              <Link href="/admin/draw" className="bg-white text-red-600 px-6 py-2 rounded-full font-semibold">🎲 Draw Management</Link>
-              <button onClick={() => setShowPoolModal(true)} className="bg-white text-red-600 px-6 py-2 rounded-full font-semibold">+ Create Featured Pool (20%)</button>
+            <div className="flex gap-3 flex-wrap">
+              <Link href="/admin/draw" className="bg-white text-red-600 px-4 py-2 rounded-full font-semibold text-sm">🎲 Draw Management</Link>
+              <button onClick={() => setShowPoolModal(true)} className="bg-white text-red-600 px-4 py-2 rounded-full font-semibold text-sm">+ Create Pool (20%)</button>
+              <button onClick={() => setShowMerkatoModal(true)} className="bg-yellow-500 text-gray-900 px-4 py-2 rounded-full font-semibold text-sm">🏪 Create Merkato VIP Pool</button>
               <Link href="/dashboard" className="bg-white/20 px-4 py-2 rounded-full text-sm">Home</Link>
             </div>
           </div>
@@ -550,41 +754,30 @@ export default function AdminDashboard() {
 
       {/* Quick Actions */}
       <div className="container mx-auto px-4 mt-6">
-        <div className="grid grid-cols-2 md:grid-cols-7 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-8 gap-3">
           <button onClick={() => setShowPoolModal(true)} className="bg-gradient-to-r from-red-600 to-rose-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
-            <div className="text-2xl mb-1">➕</div>
-            <p className="font-semibold text-xs">Create Pool</p>
-            <p className="text-xs opacity-80">20% commission</p>
+            <div className="text-2xl mb-1">➕</div><p className="font-semibold text-xs">Create Pool</p><p className="text-xs opacity-80">20%</p>
+          </button>
+          <button onClick={() => setShowMerkatoModal(true)} className="bg-gradient-to-r from-yellow-600 to-orange-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
+            <div className="text-2xl mb-1">🏪</div><p className="font-semibold text-xs">Merkato VIP</p><p className="text-xs opacity-80">1M/10M/40M</p>
           </button>
           <button onClick={() => setActiveTab('approvals')} className="bg-yellow-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
-            <div className="text-2xl mb-1">📝</div>
-            <p className="font-semibold text-xs">Approvals</p>
-            <p className="text-xs opacity-80">{pendingAgents.length + pendingVendors.length + pendingOrganizations.length}</p>
+            <div className="text-2xl mb-1">📝</div><p className="font-semibold text-xs">Approvals</p><p className="text-xs opacity-80">{pendingAgents.length + pendingVendors.length + pendingOrganizations.length}</p>
           </button>
           <button onClick={() => setActiveTab('withdrawals')} className="bg-green-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
-            <div className="text-2xl mb-1">💰</div>
-            <p className="font-semibold text-xs">Withdrawals</p>
-            <p className="text-xs opacity-80">{withdrawalRequests.length}</p>
+            <div className="text-2xl mb-1">💰</div><p className="font-semibold text-xs">Withdrawals</p><p className="text-xs opacity-80">{withdrawalRequests.length}</p>
           </button>
           <button onClick={() => setActiveTab('bank-transfers')} className="bg-blue-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
-            <div className="text-2xl mb-1">🏦</div>
-            <p className="font-semibold text-xs">Bank Transfers</p>
-            <p className="text-xs opacity-80">{pendingBankTransfers}</p>
+            <div className="text-2xl mb-1">🏦</div><p className="font-semibold text-xs">Bank Transfers</p><p className="text-xs opacity-80">{pendingBankTransfers}</p>
+          </button>
+          <button onClick={() => setActiveTab('merkato')} className="bg-purple-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
+            <div className="text-2xl mb-1">🏆</div><p className="font-semibold text-xs">Merkato VIP</p><p className="text-xs opacity-80">Manage</p>
           </button>
           <button onClick={() => setActiveTab('disputes')} className="bg-orange-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
-            <div className="text-2xl mb-1">⚖️</div>
-            <p className="font-semibold text-xs">Disputes</p>
-            <p className="text-xs opacity-80">{disputes.length}</p>
+            <div className="text-2xl mb-1">⚖️</div><p className="font-semibold text-xs">Disputes</p><p className="text-xs opacity-80">{disputes.length}</p>
           </button>
           <button onClick={() => setShowAnnouncementModal(true)} className="bg-purple-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
-            <div className="text-2xl mb-1">📢</div>
-            <p className="font-semibold text-xs">Announce</p>
-            <p className="text-xs opacity-80">Send message</p>
-          </button>
-          <button onClick={() => setActiveTab('settings')} className="bg-gray-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
-            <div className="text-2xl mb-1">⚙️</div>
-            <p className="font-semibold text-xs">Settings</p>
-            <p className="text-xs opacity-80">Platform</p>
+            <div className="text-2xl mb-1">📢</div><p className="font-semibold text-xs">Announce</p>
           </button>
         </div>
       </div>
@@ -595,12 +788,12 @@ export default function AdminDashboard() {
           <div className="flex gap-1 min-w-max">
             <button onClick={() => setActiveTab('overview')} className={`px-4 py-3 font-semibold ${activeTab === 'overview' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>📊 Overview</button>
             <button onClick={() => setActiveTab('my-pools')} className={`px-4 py-3 font-semibold ${activeTab === 'my-pools' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🎯 My Pools (20%)</button>
+            <button onClick={() => setActiveTab('merkato')} className={`px-4 py-3 font-semibold ${activeTab === 'merkato' ? 'border-b-2 border-yellow-600 text-yellow-600' : 'text-gray-500'}`}>🏪 Merkato VIP</button>
             <button onClick={() => setActiveTab('users')} className={`px-4 py-3 font-semibold ${activeTab === 'users' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>👥 Users</button>
             <button onClick={() => setActiveTab('pools')} className={`px-4 py-3 font-semibold ${activeTab === 'pools' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🌊 All Pools</button>
             <button onClick={() => setActiveTab('approvals')} className={`px-4 py-3 font-semibold ${activeTab === 'approvals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>📝 Approvals ({pendingAgents.length + pendingVendors.length + pendingOrganizations.length})</button>
             <button onClick={() => setActiveTab('withdrawals')} className={`px-4 py-3 font-semibold ${activeTab === 'withdrawals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>💰 Withdrawals ({withdrawalRequests.length})</button>
             <button onClick={() => setActiveTab('bank-transfers')} className={`px-4 py-3 font-semibold ${activeTab === 'bank-transfers' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🏦 Bank Transfers ({pendingBankTransfers})</button>
-            <button onClick={() => setActiveTab('featured')} className={`px-4 py-3 font-semibold ${activeTab === 'featured' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>⭐ Featured</button>
             <button onClick={() => setActiveTab('finance')} className={`px-4 py-3 font-semibold ${activeTab === 'finance' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>💰 Finance</button>
             <button onClick={() => setActiveTab('disputes')} className={`px-4 py-3 font-semibold ${activeTab === 'disputes' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>⚖️ Disputes ({disputes.length})</button>
             <button onClick={() => setActiveTab('settings')} className={`px-4 py-3 font-semibold ${activeTab === 'settings' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>⚙️ Settings</button>
@@ -623,26 +816,35 @@ export default function AdminDashboard() {
               <div className="bg-gradient-to-r from-red-500 to-pink-500 rounded-xl p-3 text-center text-white shadow-sm"><p className="text-2xl font-bold">{stats.lives_impacted}</p><p className="text-xs">Lives Saved</p></div>
             </div>
             
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-3 gap-6">
               <div className="bg-white rounded-xl shadow-md p-6">
                 <h3 className="font-bold text-lg mb-4">💰 Financial Summary</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between border-b pb-2"><span className="text-gray-600">Total Volume:</span><span className="font-bold">ETB {stats.total_volume.toLocaleString()}</span></div>
-                  <div className="flex justify-between border-b pb-2"><span className="text-gray-600">Commission Paid:</span><span className="font-bold text-yellow-600">ETB {stats.total_commission_paid.toLocaleString()}</span></div>
-                  <div className="flex justify-between border-b pb-2"><span className="text-gray-600">Pending Commission:</span><span className="font-bold text-orange-600">ETB {stats.pending_commission.toLocaleString()}</span></div>
                   <div className="flex justify-between border-b pb-2"><span className="text-gray-600">Platform Revenue (10%):</span><span className="font-bold text-blue-600">ETB {stats.platform_revenue.toLocaleString()}</span></div>
+                  <div className="flex justify-between border-b pb-2"><span className="text-gray-600">Commission Paid:</span><span className="font-bold text-yellow-600">ETB {stats.total_commission_paid.toLocaleString()}</span></div>
                   <div className="flex justify-between"><span className="text-gray-600">Charity Fund (2%):</span><span className="font-bold text-pink-600">ETB {Math.floor(stats.charity_total).toLocaleString()}</span></div>
                 </div>
               </div>
               
               <div className="bg-white rounded-xl shadow-md p-6">
-                <h3 className="font-bold text-lg mb-4">👑 Admin's Personal Stats (20% Commission)</h3>
+                <h3 className="font-bold text-lg mb-4">👑 Admin's Personal Stats (20%)</h3>
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div><p className="text-2xl font-bold text-red-600">{myStats.total_pools}</p><p className="text-xs text-gray-500">My Pools</p></div>
                   <div><p className="text-2xl font-bold text-green-600">{myStats.active_pools}</p><p className="text-xs text-gray-500">Active</p></div>
-                  <div><p className="text-2xl font-bold text-yellow-600">ETB {myStats.total_commission.toLocaleString()}</p><p className="text-xs text-gray-500">Commission Earned</p></div>
+                  <div><p className="text-2xl font-bold text-yellow-600">ETB {myStats.total_commission.toLocaleString()}</p><p className="text-xs text-gray-500">Commission</p></div>
                 </div>
-                <button onClick={() => setShowPoolModal(true)} className="mt-4 w-full bg-red-600 text-white py-2 rounded-lg font-semibold">+ Create New Featured Pool</button>
+              </div>
+              
+              <div className="bg-gradient-to-r from-yellow-500 to-orange-600 rounded-xl shadow-md p-6 text-white">
+                <h3 className="font-bold text-lg mb-4">🏪 Merkato VIP Program</h3>
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div><p className="text-2xl font-bold">{merkatoStats.total_participants}</p><p className="text-xs opacity-90">Participants</p></div>
+                  <div><p className="text-2xl font-bold">ETB {(merkatoStats.total_collected / 1000000).toFixed(1)}M</p><p className="text-xs opacity-90">Collected</p></div>
+                  <div><p className="text-2xl font-bold">{merkatoStats.daily_participants}</p><p className="text-xs opacity-90">Daily</p></div>
+                  <div><p className="text-2xl font-bold">{merkatoStats.pending_draws}</p><p className="text-xs opacity-90">Pending Draws</p></div>
+                </div>
+                <button onClick={() => setActiveTab('merkato')} className="mt-3 w-full bg-white text-orange-600 py-1 rounded-lg text-sm font-semibold">Manage →</button>
               </div>
             </div>
 
@@ -663,17 +865,6 @@ export default function AdminDashboard() {
                   ))
                 )}
               </div>
-            </div>
-
-            <div className="bg-gradient-to-r from-red-50 to-rose-50 rounded-xl p-6 border border-red-100">
-              <h3 className="font-bold text-red-800 text-lg mb-3">💰 Platform Commission Structure</h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                <div className="bg-white rounded-lg p-3 text-center"><p className="font-bold text-red-600">Admin Personal Pool</p><p className="text-2xl font-bold">20%</p><p className="text-xs text-gray-500">Commission</p></div>
-                <div className="bg-white rounded-lg p-3 text-center"><p className="font-bold text-yellow-600">Agent Pool</p><p className="text-2xl font-bold">10%</p><p className="text-xs text-gray-500">+ 10% platform fee</p></div>
-                <div className="bg-white rounded-lg p-3 text-center"><p className="font-bold text-cyan-600">Organization Pool</p><p className="text-2xl font-bold">10%</p><p className="text-xs text-gray-500">+ 10% platform fee</p></div>
-                <div className="bg-white rounded-lg p-3 text-center"><p className="font-bold text-purple-600">Vendor Sale</p><p className="text-2xl font-bold">10%</p><p className="text-xs text-gray-500">+ 10% platform fee</p></div>
-              </div>
-              <p className="text-xs text-red-600 text-center mt-3">💚 2% of all contributions goes to kidney & heart disease treatment</p>
             </div>
           </div>
         )}
@@ -713,7 +904,91 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Users Tab */}
+        {/* Merkato VIP Tab */}
+        {activeTab === 'merkato' && (
+          <div className="space-y-6">
+            {/* Merkato Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-gradient-to-r from-yellow-500 to-orange-600 rounded-xl p-4 text-white text-center">
+                <p className="text-2xl font-bold">{merkatoStats.total_participants}</p>
+                <p className="text-sm opacity-90">Total Participants</p>
+              </div>
+              <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl p-4 text-white text-center">
+                <p className="text-2xl font-bold">ETB {(merkatoStats.total_collected / 1000000).toFixed(1)}M</p>
+                <p className="text-sm opacity-90">Total Collected</p>
+              </div>
+              <div className="bg-gradient-to-r from-green-500 to-teal-600 rounded-xl p-4 text-white text-center">
+                <p className="text-2xl font-bold">ETB {(merkatoStats.total_paid_out / 1000000).toFixed(1)}M</p>
+                <p className="text-sm opacity-90">Paid Out</p>
+              </div>
+              <div className="bg-gradient-to-r from-red-500 to-rose-600 rounded-xl p-4 text-white text-center">
+                <p className="text-2xl font-bold">{merkatoStats.pending_draws}</p>
+                <p className="text-sm opacity-90">Pending Draws</p>
+              </div>
+            </div>
+
+            {/* Active Merkato Pools */}
+            <div className="bg-white rounded-xl shadow-md overflow-hidden">
+              <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
+                <h2 className="font-bold text-lg">🏪 Active Merkato VIP Pools</h2>
+                <button onClick={() => setShowMerkatoModal(true)} className="bg-yellow-600 text-white px-4 py-1 rounded-full text-sm">+ Create Pool</button>
+              </div>
+              <div className="p-4">
+                {merkatoPools.filter(p => p.status === 'active').length === 0 ? (
+                  <p className="text-gray-400 text-center py-8">No active Merkato pools</p>
+                ) : (
+                  <div className="space-y-3">
+                    {merkatoPools.filter(p => p.status === 'active').map(pool => (
+                      <div key={pool.id} className="border rounded-lg p-4 flex justify-between items-center">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl">{pool.tier === 'daily' ? '⭐' : pool.tier === 'weekly' ? '🏆' : '👑'}</span>
+                            <span className="font-bold">{pool.name}</span>
+                            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{pool.tier}</span>
+                          </div>
+                          <p className="text-sm text-gray-500 mt-1">Prize: ETB {pool.prize_amount?.toLocaleString()} | Entry: ETB {pool.contribution_amount?.toLocaleString()}</p>
+                          <p className="text-xs text-gray-400">Draw: {new Date(pool.draw_time).toLocaleString()}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Link href={`/admin/merkato-draw?pool=${pool.id}`} className="bg-purple-600 text-white px-3 py-1 rounded text-sm">Draw Winner</Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Recent Winners */}
+            <div className="bg-white rounded-xl shadow-md overflow-hidden">
+              <div className="px-6 py-4 bg-gray-50 border-b">
+                <h2 className="font-bold text-lg">🏆 Recent Merkato Winners</h2>
+              </div>
+              <div className="p-4">
+                {merkatoWinners.length === 0 ? (
+                  <p className="text-gray-400 text-center py-8">No winners yet</p>
+                ) : (
+                  <div className="space-y-3">
+                    {merkatoWinners.slice(0, 5).map(winner => (
+                      <div key={winner.id} className="border-b pb-3 flex justify-between items-center">
+                        <div>
+                          <p className="font-semibold">{winner.winner_name || winner.winner_email}</p>
+                          <p className="text-sm text-gray-500">{winner.name}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-green-600">ETB {winner.prize_amount?.toLocaleString()}</p>
+                          <p className="text-xs text-gray-400">{new Date(winner.drawn_at).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Users Tab - Same as your original */}
         {activeTab === 'users' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">👥 User Management</h2></div>
@@ -744,7 +1019,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* All Pools Tab */}
+        {/* Pools Tab */}
         {activeTab === 'pools' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">🌊 All Platform Pools</h2></div>
@@ -775,7 +1050,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Approvals Tab */}
+        {/* Approvals Tab - Same as original */}
         {activeTab === 'approvals' && (
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-md p-6"><h3 className="font-bold text-lg mb-4">🤝 Pending Agents ({pendingAgents.length})</h3>
@@ -809,23 +1084,18 @@ export default function AdminDashboard() {
             </div>
             <div className="p-4">
               {bankTransfers.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="text-5xl mb-3">✅</div>
-                  <p className="text-gray-500">No pending bank transfers</p>
-                </div>
+                <div className="text-center py-12"><div className="text-5xl mb-3">✅</div><p className="text-gray-500">No pending bank transfers</p></div>
               ) : (
                 <div className="space-y-4">
                   {bankTransfers.map((transfer) => (
                     <div key={transfer.id} className="border rounded-lg p-4 hover:shadow-md transition">
-                      <div className="flex justify-between items-start">
+                      <div className="flex justify-between items-start flex-wrap gap-4">
                         <div className="space-y-1">
                           <p className="font-semibold text-lg">{transfer.profiles?.full_name}</p>
                           <p className="text-sm text-gray-500">{transfer.profiles?.email}</p>
-                          <p className="text-sm text-gray-500">📞 {transfer.profiles?.phone || 'No phone'}</p>
                           <p className="text-sm">🎯 Pool: <span className="font-medium">{transfer.pools?.prize_name}</span></p>
                           <p className="text-sm">🎟️ Seats: <span className="font-mono">{transfer.seat_numbers?.join(', ')}</span></p>
-                          <p className="text-sm">💰 Amount: <span className="font-bold text-green-600">ETB {transfer.amount?.toLocaleString()}</span></p>
-                          <p className="text-xs text-gray-400">Reference: {transfer.reference}</p>
+                          <p className="text-sm font-bold text-green-600">💰 ETB {transfer.amount?.toLocaleString()}</p>
                           <p className="text-xs text-gray-400">Submitted: {new Date(transfer.created_at).toLocaleString()}</p>
                         </div>
                         <div className="flex gap-2">
@@ -842,21 +1112,6 @@ export default function AdminDashboard() {
                   ))}
                 </div>
               )}
-            </div>
-          </div>
-        )}
-
-        {/* Featured Tab */}
-        {activeTab === 'featured' && (
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="font-bold text-lg mb-4">⭐ Manage Featured Pools</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {allPools.filter(p => p.status === 'active').map(p => (
-                <div key={p.id} className="border rounded-lg p-4 flex justify-between items-center">
-                  <div><p className="font-medium">{p.prize_name}</p><p className="text-sm text-gray-500">ETB {p.target_amount?.toLocaleString()}</p></div>
-                  <button onClick={() => toggleFeaturedPool(p.id, p.is_featured)} className={`px-3 py-1 rounded text-sm ${p.is_featured ? 'bg-gray-300 text-gray-700' : 'bg-yellow-500 text-white'}`}>{p.is_featured ? 'Remove' : 'Feature'}</button>
-                </div>
-              ))}
             </div>
           </div>
         )}
@@ -908,6 +1163,62 @@ export default function AdminDashboard() {
               <div className="flex items-center gap-3"><input type="checkbox" id="is_featured" checked={newPool.is_featured} onChange={(e) => setNewPool({...newPool, is_featured: e.target.checked})} className="w-5 h-5" /><label htmlFor="is_featured" className="text-sm font-medium">⭐ Feature this pool on homepage</label></div>
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm"><p className="font-semibold text-yellow-800">💰 Admin Commission: 20%</p><p className="text-yellow-700 text-xs mt-1">When this pool reaches target, you earn 20% of the total amount. Target: ETB {parseFloat(newPool.target_amount || 0).toLocaleString()} → Your commission: ETB {(parseFloat(newPool.target_amount || 0) * 0.20).toLocaleString()}</p></div>
               <div className="flex gap-3 pt-4"><button onClick={createAdminPool} disabled={loading || uploading} className="flex-1 bg-gradient-to-r from-red-600 to-rose-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition">{loading ? 'Creating...' : '✨ Create Featured Pool'}</button><button onClick={() => setShowPoolModal(false)} className="flex-1 border border-gray-300 py-3 rounded-lg hover:bg-gray-50">Cancel</button></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Merkato VIP Pool Creation Modal */}
+      {showMerkatoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-md w-full">
+            <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
+              <h2 className="text-xl font-bold">🏪 Create Merkato VIP Pool</h2>
+              <button onClick={() => setShowMerkatoModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+            </div>
+            <div className="p-6 space-y-5">
+              <div>
+                <label className="block text-sm font-medium mb-2">Select Tier</label>
+                <div className="grid grid-cols-3 gap-3">
+                  {Object.entries(tierConfig).map(([key, config]) => (
+                    <button
+                      key={key}
+                      onClick={() => setNewMerkatoPool({...newMerkatoPool, tier: key, contribution_amount: config.contribution, prize_amount: config.prize})}
+                      className={`p-3 rounded-xl text-center transition ${newMerkatoPool.tier === key ? 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700'}`}
+                    >
+                      <div className="text-2xl">{key === 'daily' ? '⭐' : key === 'weekly' ? '🏆' : '👑'}</div>
+                      <div className="font-bold text-xs">{config.name}</div>
+                      <div className="text-xs">{config.prize.toLocaleString()} ETB</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex justify-between mb-2"><span>Entry Fee:</span><span className="font-bold">{newMerkatoPool.contribution_amount.toLocaleString()} ETB</span></div>
+                <div className="flex justify-between mb-2"><span>Prize:</span><span className="font-bold text-green-600">{newMerkatoPool.prize_amount.toLocaleString()} ETB</span></div>
+                <div className="flex justify-between"><span>Winner:</span><span>1 Lucky Winner</span></div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Draw Time (Ethiopia Time)</label>
+                <input type="time" className="w-full border rounded-lg p-3" value={newMerkatoPool.draw_time} onChange={(e) => setNewMerkatoPool({...newMerkatoPool, draw_time: e.target.value})} />
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
+                <p className="font-semibold">📝 Pool Rules:</p>
+                <ul className="text-xs mt-1 space-y-1">
+                  <li>• Daily: 500 ETB entry → Win 1,000,000 ETB</li>
+                  <li>• Weekly: 2,500 ETB entry → Win 10,000,000 ETB</li>
+                  <li>• Monthly: 5,000 ETB entry → Win 40,000,000 ETB</li>
+                  <li>• Draw happens automatically or via admin</li>
+                </ul>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button onClick={createMerkatoPool} disabled={loading} className="flex-1 bg-gradient-to-r from-yellow-600 to-orange-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition">{loading ? 'Creating...' : '✨ Create Merkato Pool'}</button>
+                <button onClick={() => setShowMerkatoModal(false)} className="flex-1 border border-gray-300 py-3 rounded-lg hover:bg-gray-50">Cancel</button>
+              </div>
             </div>
           </div>
         </div>
