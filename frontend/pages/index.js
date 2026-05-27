@@ -164,10 +164,10 @@ export default function Home() {
         {/* Text Content */}
         <div className="bg-white py-12 w-full">
           <div className="container mx-auto px-4 text-center">
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-4 py-1.5 rounded-full text-sm font-semibold mb-5">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-4 py-1.5 rounded-full text-sm font-semibold mb-5 animate-pulse">
               🔥 Ethiopia's #1 Prize Platform 🏆
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 animate-fade-in">
               Welcome to{' '}
               <span className="bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
                 Abbaa Carraa
@@ -185,19 +185,19 @@ export default function Home() {
             <div className="flex flex-wrap justify-center gap-3 mt-6">
               <button
                 onClick={() => handleRoleSelection('agent')}
-                className="bg-yellow-50 text-yellow-700 px-4 py-2 rounded-full text-sm hover:bg-yellow-100 transition touch-target"
+                className="bg-yellow-50 text-yellow-700 px-4 py-2 rounded-full text-sm hover:bg-yellow-100 transition hover:scale-105 transform touch-target"
               >
                 🤝 Become an Agent
               </button>
               <button
                 onClick={() => handleRoleSelection('vendor')}
-                className="bg-purple-50 text-purple-700 px-4 py-2 rounded-full text-sm hover:bg-purple-100 transition touch-target"
+                className="bg-purple-50 text-purple-700 px-4 py-2 rounded-full text-sm hover:bg-purple-100 transition hover:scale-105 transform touch-target"
               >
                 🏪 Become a Vendor
               </button>
               <button
                 onClick={() => handleRoleSelection('organization')}
-                className="bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm hover:bg-blue-100 transition touch-target"
+                className="bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm hover:bg-blue-100 transition hover:scale-105 transform touch-target"
               >
                 🏢 Become an Organization
               </button>
@@ -207,7 +207,7 @@ export default function Home() {
             <div className="flex justify-center mt-4">
               <button
                 onClick={handleStartWinning}
-                className="bg-green-600 text-white px-6 py-3 rounded-full font-semibold text-base shadow-md hover:bg-green-700 transition touch-target inline-flex items-center gap-2"
+                className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-6 py-3 rounded-full font-semibold text-base shadow-md hover:shadow-lg transition hover:scale-105 transform touch-target inline-flex items-center gap-2"
               >
                 <span>🎁</span>
                 Start Winning Now
@@ -216,10 +216,10 @@ export default function Home() {
             </div>
 
             <div className="flex flex-wrap justify-center gap-3 mt-10 pt-6 border-t border-gray-200">
-              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">✓ Cash Guarantee</div>
-              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">✓ Blockchain Verified</div>
-              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">💚 2% for Health</div>
-              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">✓ 24/7 Support</div>
+              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full hover:bg-gray-200 transition">✓ Cash Guarantee</div>
+              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full hover:bg-gray-200 transition">✓ Blockchain Verified</div>
+              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full hover:bg-gray-200 transition">💚 2% for Health</div>
+              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full hover:bg-gray-200 transition">✓ 24/7 Support</div>
             </div>
           </div>
         </div>
@@ -228,19 +228,19 @@ export default function Home() {
         <div className="bg-white border-t border-gray-200 py-8 w-full">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-              <div>
+              <div className="hover:scale-105 transition">
                 <div className="text-3xl font-bold text-green-600">{stats.total_pools}+</div>
                 <div className="text-gray-500 text-sm">Active Pools</div>
               </div>
-              <div>
+              <div className="hover:scale-105 transition">
                 <div className="text-3xl font-bold text-green-600">{stats.total_winners}+</div>
                 <div className="text-gray-500 text-sm">Happy Winners</div>
               </div>
-              <div>
+              <div className="hover:scale-105 transition">
                 <div className="text-3xl font-bold text-green-600">{stats.total_agents}+</div>
                 <div className="text-gray-500 text-sm">Trusted Agents</div>
               </div>
-              <div>
+              <div className="hover:scale-105 transition">
                 <div className="text-3xl font-bold text-green-600">ETB {Math.floor(stats.total_raised / 1000)}K+</div>
                 <div className="text-gray-500 text-sm">Total Raised</div>
               </div>
@@ -248,36 +248,81 @@ export default function Home() {
           </div>
         </div>
 
-        {/* MERKATO VIP SECTION - UPDATED with Grey Theme and Correct Amharic Text */}
+        {/* MERKATO VIP SECTION - EYE-CATCHING ANIMATED BANNER */}
         <div className="container mx-auto px-4 py-8">
           <Link href="/merkato-vip">
-            <div className="bg-gradient-to-r from-gray-700 via-gray-800 to-gray-900 rounded-2xl p-6 text-white cursor-pointer transform hover:scale-105 transition shadow-xl">
-              <div className="flex justify-between items-center flex-wrap gap-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-5xl">🏪</span>
-                  <div>
-                    <div className="font-bold text-2xl">መርካቶ VIP</div>
-                    <div className="text-sm opacity-90">Merkato Special Program</div>
+            <div className="relative bg-gradient-to-r from-yellow-500 via-orange-500 to-red-600 rounded-2xl p-8 text-white cursor-pointer transform hover:scale-105 transition-all duration-500 shadow-2xl overflow-hidden group">
+              
+              {/* Animated background elements */}
+              <div className="absolute inset-0 opacity-20">
+                <div className="absolute -top-10 -left-10 text-8xl animate-bounce">🏪</div>
+                <div className="absolute -bottom-10 -right-10 text-8xl animate-pulse">💰</div>
+                <div className="absolute top-1/2 left-1/4 text-6xl animate-spin-slow">⭐</div>
+                <div className="absolute top-1/4 right-1/4 text-5xl animate-ping">🎯</div>
+              </div>
+              
+              {/* Glowing border effect */}
+              <div className="absolute inset-0 border-2 border-yellow-300 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              {/* Shine effect on hover */}
+              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"></div>
+              
+              <div className="relative z-10">
+                <div className="flex justify-between items-center flex-wrap gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="text-6xl animate-bounce">🏪</div>
+                    <div>
+                      <div className="font-bold text-3xl">መርካቶ VIP</div>
+                      <div className="text-sm opacity-90">Merkato Special Program</div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="font-bold text-2xl">ዕለታዊ · ሳምንታዊ · ወርሃዊ</div>
+                    <div className="text-sm">Daily · Weekly · Monthly</div>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <div className="bg-yellow-400 text-gray-900 px-4 py-2 rounded-full text-sm font-bold shadow-lg animate-pulse">⭐ 1M ETB</div>
+                    <div className="bg-purple-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">🏆 10M ETB</div>
+                    <div className="bg-green-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">👑 40M ETB</div>
+                  </div>
+                  
+                  <div className="bg-white text-gray-900 px-6 py-3 rounded-full font-bold hover:bg-gray-100 transition transform hover:scale-105 shadow-xl flex items-center gap-2 group-hover:gap-3 transition-all">
+                    <span>ይቀላቀሉ!</span>
+                    <span className="text-xl group-hover:translate-x-1 transition">→</span>
                   </div>
                 </div>
-                <div className="text-center">
-                  <div className="font-bold text-xl">ዕለታዊ · ሳምንታዊ · ወርሃዊ</div>
-                  <div className="text-sm">Daily · Weekly · Monthly</div>
+                
+                <div className="mt-4 text-center">
+                  <div className="text-lg font-bold animate-pulse">
+                    "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው"
+                  </div>
+                  <div className="text-sm opacity-90 mt-1">
+                    Let's make one participant a millionaire today, this week and this month!
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <div className="bg-yellow-500 text-gray-900 px-3 py-1 rounded-full text-xs font-bold">1M ETB</div>
-                  <div className="bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-bold">10M ETB</div>
-                  <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">40M ETB</div>
+                
+                {/* Progress bar animation */}
+                <div className="mt-4 w-full bg-white/30 rounded-full h-1 overflow-hidden">
+                  <div className="bg-yellow-300 h-1 rounded-full animate-progress" style={{ width: '60%' }}></div>
                 </div>
-                <div className="bg-gray-600 text-white px-6 py-2 rounded-full font-bold hover:bg-gray-500 transition">
-                  ይቀላቀሉ! Join Now →
+                
+                {/* Prize indicators */}
+                <div className="flex justify-center gap-6 mt-4 text-center">
+                  <div className="text-xs">
+                    <span className="block text-yellow-300 text-lg">⭐</span>
+                    <span>Daily</span>
+                  </div>
+                  <div className="text-xs">
+                    <span className="block text-purple-300 text-lg">🏆</span>
+                    <span>Weekly</span>
+                  </div>
+                  <div className="text-xs">
+                    <span className="block text-green-300 text-lg">👑</span>
+                    <span>Monthly</span>
+                  </div>
                 </div>
-              </div>
-              <div className="mt-3 text-sm font-semibold text-center text-gray-200">
-                "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው"
-              </div>
-              <div className="mt-2 text-center text-xs opacity-75 text-gray-300">
-                Let's make one participant a millionaire today, this week and this month!
               </div>
             </div>
           </Link>
@@ -331,17 +376,17 @@ export default function Home() {
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
             <div className="grid md:grid-cols-3 gap-8 text-center">
-              <div>
+              <div className="hover:scale-105 transition transform">
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">1</div>
                 <h3 className="font-bold text-xl mb-2">Find a Pool</h3>
                 <p className="text-gray-600">Browse available prize pools</p>
               </div>
-              <div>
+              <div className="hover:scale-105 transition transform">
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">2</div>
                 <h3 className="font-bold text-xl mb-2">Contribute</h3>
                 <p className="text-gray-600">Make your contribution securely</p>
               </div>
-              <div>
+              <div className="hover:scale-105 transition transform">
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">3</div>
                 <h3 className="font-bold text-xl mb-2">Win!</h3>
                 <p className="text-gray-600">Win amazing prizes!</p>
