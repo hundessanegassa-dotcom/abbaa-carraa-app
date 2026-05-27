@@ -1,3 +1,4 @@
+
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -104,7 +105,10 @@ export default function PoolDetails() {
 
   const handleJoinNow = () => {
     if (!user) {
-      toast.error('Please login');
+      // Store the pool ID to redirect back after login
+      sessionStorage.setItem('pendingPoolId', id);
+      sessionStorage.setItem('pendingRole', 'individual');
+      toast.error('Please login to join this pool');
       router.push('/login');
       return;
     }
@@ -128,7 +132,7 @@ export default function PoolDetails() {
       return;
     }
 
-    // KEY FIX: Seats are unavailable if NOT available AND NOT reserved by current user
+    // Seats are unavailable if NOT available AND NOT reserved by current user
     const unavailableSeats = seats.filter(s => s.status !== 'available' && s.reserved_by !== user?.id);
     
     if (unavailableSeats.length > 0) {
@@ -202,9 +206,20 @@ export default function PoolDetails() {
     return <div className="min-h-screen flex items-center justify-center"><div className="text-center"><h1 className="text-2xl font-bold">Pool not found</h1><Link href="/listings" className="text-green-600 mt-4 inline-block">Back to listings</Link></div></div>;
   }
 
-  const progress = (pool.current_amount / pool.target_amount) * 100;
-  const totalCollection = pool.target_amount * 1.2;
-  const maxSeatsPerUser = 5;
+  // FIXED: Correct calculations
+  const winnerPrize = pool.target_amount || 0;
+  const entryFee = pool.entry_fee || pool.ticket_price || 10;
+  const totalCollection = winnerPrize * 1.2; // +20% commission
+  const totalSeats = Math.floor(totalCollection / entryFee);
+  const adminCommission = totalCollection * 0.2;
+  const currentAmount = pool.current_amount || 0;
+  const currentSeatsFilled = Math.floor(currentAmount / entryFee);
+  const availableSeatsCount = totalSeats - currentSeatsFilled;
+  
+  // Progress based on TOTAL COLLECTION (not just winner prize)
+  const progress = (currentAmount / totalCollection) * 100;
+
+  const maxSeatsPerUser = Math.min(10, Math.floor(availableSeatsCount / 2) || 5);
 
   return (
     <>
@@ -228,31 +243,90 @@ export default function PoolDetails() {
 
             <div className="p-6">
               <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">{pool.prize_name}</h1>
-              <p className="text-gray-600 mb-4">{pool.description}</p>
+              <p className="text-gray-600 mb-6">{pool.description || 'Join this amazing pool for a chance to win big!'}</p>
 
-              <div className="mb-6">
-                <div className="flex justify-between text-sm text-gray-600 mb-1"><span>Pool Progress</span><span>{Math.round(progress)}%</span></div>
-                <div className="w-full bg-gray-200 rounded-full h-3"><div className="bg-green-600 h-3 rounded-full" style={{ width: `${Math.min(progress, 100)}%` }}></div></div>
-              </div>
-
+              {/* FIXED: Stats Grid with correct calculations */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                <div className="bg-green-50 rounded-xl p-3 text-center"><p className="text-gray-500 text-xs">Winner Gets</p><p className="text-lg font-bold text-green-600">ETB {pool.target_amount?.toLocaleString()}</p></div>
-                <div className="bg-blue-50 rounded-xl p-3 text-center"><p className="text-gray-500 text-xs">Entry Fee</p><p className="text-lg font-bold text-blue-600">ETB {pool.entry_fee?.toLocaleString()}</p></div>
-                <div className="bg-purple-50 rounded-xl p-3 text-center"><p className="text-gray-500 text-xs">Total Collection</p><p className="text-lg font-bold text-purple-600">ETB {totalCollection.toLocaleString()}</p></div>
-                <div className="bg-orange-50 rounded-xl p-3 text-center"><p className="text-gray-500 text-xs">Available Seats</p><p className="text-lg font-bold text-orange-600">{availableSeats}</p></div>
+                <div className="bg-green-50 rounded-xl p-3 text-center border border-green-100">
+                  <p className="text-gray-500 text-xs">🏆 Winner Gets</p>
+                  <p className="text-lg font-bold text-green-600">ETB {winnerPrize.toLocaleString()}</p>
+                </div>
+                <div className="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
+                  <p className="text-gray-500 text-xs">🎫 Entry Fee</p>
+                  <p className="text-lg font-bold text-blue-600">ETB {entryFee.toLocaleString()}</p>
+                </div>
+                <div className="bg-purple-50 rounded-xl p-3 text-center border border-purple-100">
+                  <p className="text-gray-500 text-xs">💺 Total Seats</p>
+                  <p className="text-lg font-bold text-purple-600">{totalSeats.toLocaleString()}</p>
+                </div>
+                <div className="bg-orange-50 rounded-xl p-3 text-center border border-orange-100">
+                  <p className="text-gray-500 text-xs">📊 Available Seats</p>
+                  <p className="text-lg font-bold text-orange-600">{Math.max(0, availableSeatsCount).toLocaleString()}</p>
+                </div>
               </div>
 
+              {/* Progress Bar - based on TOTAL COLLECTION */}
+              <div className="mb-6">
+                <div className="flex justify-between text-sm text-gray-600 mb-1">
+                  <span>Pool Progress</span>
+                  <span>{Math.min(Math.round(progress), 100)}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div 
+                    className="bg-green-600 h-3 rounded-full transition-all duration-300" 
+                    style={{ width: `${Math.min(progress, 100)}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <span>ETB {currentAmount.toLocaleString()} raised</span>
+                  <span>Target: ETB {totalCollection.toLocaleString()}</span>
+                </div>
+              </div>
+
+              {/* Commission Breakdown */}
+              <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 mb-6">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-600 text-sm">💰 Total Collection (Prize + 20% Commission):</span>
+                  <span className="font-bold text-gray-800">ETB {totalCollection.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-600 text-sm">👑 Platform/Agent Commission (20% of collection):</span>
+                  <span className="font-bold text-orange-600">ETB {adminCommission.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 text-sm">🎯 Winner Receives:</span>
+                  <span className="font-bold text-green-600">ETB {winnerPrize.toLocaleString()}</span>
+                </div>
+                <div className="mt-3 pt-2 border-t border-gray-200">
+                  <p className="text-xs text-gray-500 text-center">
+                    💚 2% of total collection supports kidney & heart disease patients
+                  </p>
+                  <p className="text-xs text-gray-400 text-center mt-1">
+                    {totalSeats.toLocaleString()} seats × ETB {entryFee.toLocaleString()} = ETB {totalCollection.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+
+              {/* Join Section */}
               {pool.status === 'active' && (
                 <div className="border-t pt-6">
                   {!showSeatSelector && !showBankUpload ? (
-                    <button onClick={handleJoinNow} disabled={availableSeats === 0} className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-4 rounded-xl font-semibold text-lg">
-                      {availableSeats === 0 ? 'No Seats Available' : '🎯 Select Seat & Join Pool'}
+                    <button 
+                      onClick={handleJoinNow} 
+                      disabled={availableSeatsCount === 0} 
+                      className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg transition disabled:opacity-50"
+                    >
+                      {availableSeatsCount === 0 
+                        ? 'No Seats Available' 
+                        : `🎯 Select Seat & Join Pool (ETB ${entryFee.toLocaleString()} per seat)`}
                     </button>
                   ) : showSeatSelector && (
                     <SeatSelector
                       poolId={pool.id}
-                      entryFee={pool.entry_fee}
+                      entryFee={entryFee}
                       maxSeats={maxSeatsPerUser}
+                      totalSeats={totalSeats}
+                      availableSeats={availableSeatsCount}
                       onSeatsSelected={handleSeatsSelected}
                       onCancel={handleCancelSeatSelection}
                     />
