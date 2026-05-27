@@ -1,5 +1,5 @@
 import '../styles/globals.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { Toaster } from 'react-hot-toast';
@@ -11,13 +11,17 @@ import useMediaQuery from '../hooks/useMediaQuery';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 // Dynamic imports with error boundaries
-const Navbar = dynamic(() => import('../components/Navbar').catch(() => () => <div>Navbar Error</div>), { ssr: false, loading: () => <div className="h-16 bg-gray-100 animate-pulse" /> });
+const Navbar = dynamic(() => import('../components/Navbar').catch(() => () => <div className="h-16 bg-gray-100 animate-pulse" />), { 
+  ssr: false, 
+  loading: () => <div className="h-16 bg-gray-100 animate-pulse" /> 
+});
 const Footer = dynamic(() => import('../components/Footer').catch(() => () => null), { ssr: false });
 const ChatBot = dynamic(() => import('../components/ChatBot').catch(() => () => null), { ssr: false });
 const LanguageToggle = dynamic(() => import('../components/LanguageToggle').catch(() => () => null), { ssr: false });
 const MobileBottomNav = dynamic(() => import('../components/MobileBottomNav').catch(() => () => null), { ssr: false });
 const MobileHeader = dynamic(() => import('../components/MobileHeader').catch(() => () => <div className="h-14 bg-white" />), { ssr: false });
 
+// Create queryClient outside component to prevent recreation
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -31,14 +35,27 @@ const queryClient = new QueryClient({
 function MyApp({ Component, pageProps }) {
   const [mounted, setMounted] = useState(false);
   const [routerLoading, setRouterLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  // Handle router loading states
+  // Handle router loading states with React 19 transition
   useEffect(() => {
-    const handleStart = () => setRouterLoading(true);
-    const handleComplete = () => setRouterLoading(false);
-    const handleError = () => setRouterLoading(false);
+    const handleStart = () => {
+      startTransition(() => {
+        setRouterLoading(true);
+      });
+    };
+    const handleComplete = () => {
+      startTransition(() => {
+        setRouterLoading(false);
+      });
+    };
+    const handleError = () => {
+      startTransition(() => {
+        setRouterLoading(false);
+      });
+    };
 
     router.events.on('routeChangeStart', handleStart);
     router.events.on('routeChangeComplete', handleComplete);
@@ -49,22 +66,25 @@ function MyApp({ Component, pageProps }) {
       router.events.off('routeChangeComplete', handleComplete);
       router.events.off('routeChangeError', handleError);
     };
-  }, [router]);
+  }, [router, startTransition]);
 
   // Set mounted with a safety timeout
   useEffect(() => {
-    // Safety timeout - force mounted to true after 3 seconds
     const timeoutId = setTimeout(() => {
       if (!mounted) {
         console.warn('Forcing mounted state due to timeout');
-        setMounted(true);
+        startTransition(() => {
+          setMounted(true);
+        });
       }
     }, 3000);
 
-    setMounted(true);
+    startTransition(() => {
+      setMounted(true);
+    });
     
     return () => clearTimeout(timeoutId);
-  }, []);
+  }, [mounted, startTransition]);
 
   const getPageTitle = () => {
     const path = router.pathname;
@@ -86,18 +106,23 @@ function MyApp({ Component, pageProps }) {
       '/create-pool': 'Create Pool',
       '/register': 'Register',
       '/login': 'Login',
+      '/auth/callback': 'Authenticating',
       '/merkato-vip': 'Merkato VIP',
+      '/merkato-seat': 'Select Seats',
+      '/payment/merkato': 'Merkato Payment',
     };
     return titles[path] || 'Abbaa Carraa';
   };
 
   // Show loading only during router navigation or before mount
-  if (!mounted || routerLoading) {
+  if (!mounted || routerLoading || isPending) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-green-200 border-t-green-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-500 text-sm">Loading...</p>
+          <p className="text-gray-500 text-sm">
+            {routerLoading ? 'Loading page...' : isPending ? 'Processing...' : 'Loading...'}
+          </p>
         </div>
       </div>
     );
