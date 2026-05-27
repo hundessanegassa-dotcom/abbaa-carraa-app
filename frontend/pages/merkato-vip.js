@@ -1,17 +1,25 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
 
 export default function MerkatoVip() {
   const router = useRouter();
+  const isMounted = useRef(true);
   const [activeTab, setActiveTab] = useState('daily');
   const [selectedPool, setSelectedPool] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [pools, setPools] = useState([]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     checkUser();
@@ -19,19 +27,27 @@ export default function MerkatoVip() {
   }, []);
 
   const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (isMounted.current) setUser(user);
+    } catch (error) {
+      console.error('Error checking user:', error);
+    }
   };
 
   const fetchActivePools = async () => {
-    const { data, error } = await supabase
-      .from('merkato_vip_pools')
-      .select('*')
-      .eq('status', 'active')
-      .order('created_at', { ascending: false });
-    
-    if (!error && data) {
-      setPools(data);
+    try {
+      const { data, error } = await supabase
+        .from('merkato_vip_pools')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+      
+      if (!error && data && isMounted.current) {
+        setPools(data);
+      }
+    } catch (error) {
+      console.error('Error fetching pools:', error);
     }
   };
 
