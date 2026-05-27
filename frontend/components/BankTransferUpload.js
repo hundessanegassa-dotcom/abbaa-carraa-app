@@ -15,12 +15,13 @@ export default function BankTransferUpload({
   const [file, setFile] = useState(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
   const [user, setUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [sessionLoading, setSessionLoading] = useState(true);
-  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes countdown
+  const [timeLeft, setTimeLeft] = useState(600);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('telebirr');
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [reference, setReference] = useState('');
 
-  // Get session safely on mount
   useEffect(() => {
     const getSession = async () => {
       try {
@@ -36,6 +37,15 @@ export default function BankTransferUpload({
         }
         
         setUser(session.user);
+        
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('phone, full_name')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        
+        setUserProfile(profile);
+        
       } catch (err) {
         console.error('Session error:', err);
         toast.error('Session error. Please refresh and try again');
@@ -48,7 +58,6 @@ export default function BankTransferUpload({
     getSession();
   }, [router, onClose]);
 
-  // Countdown timer
   useEffect(() => {
     if (timeLeft > 0 && !sessionLoading) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
@@ -65,8 +74,8 @@ export default function BankTransferUpload({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Optimize image before upload
-  const optimizeImage = (file) => {
+  // Compress image before upload
+  const compressImage = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
@@ -74,14 +83,12 @@ export default function BankTransferUpload({
         const img = new Image();
         img.src = event.target.result;
         img.onload = () => {
-          // Create canvas for compression
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
           
-          // Max dimensions (max 1200px)
-          const maxWidth = 1200;
-          const maxHeight = 1200;
+          const maxWidth = 1024;
+          const maxHeight = 1024;
           
           if (width > height) {
             if (width > maxWidth) {
@@ -101,19 +108,13 @@ export default function BankTransferUpload({
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
           
-          // Compress to JPEG with 0.8 quality
-          const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-          
-          // Convert data URL to Blob
-          const blob = dataURLToBlob(optimizedDataUrl);
-          
-          // Create a new File object
-          const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
-            type: 'image/jpeg',
-            lastModified: Date.now(),
-          });
-          
-          resolve(optimizedFile);
+          canvas.toBlob((blob) => {
+            const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          }, 'image/jpeg', 0.7);
         };
         img.onerror = reject;
       };
@@ -121,108 +122,74 @@ export default function BankTransferUpload({
     });
   };
 
-  // Helper function to convert data URL to Blob
-  const dataURLToBlob = (dataURL) => {
-    const parts = dataURL.split(';base64,');
-    const contentType = parts[0].split(':')[1];
-    const raw = window.atob(parts[1]);
-    const rawLength = raw.length;
-    const uInt8Array = new Uint8Array(rawLength);
-    
-    for (let i = 0; i < rawLength; ++i) {
-      uInt8Array[i] = raw.charCodeAt(i);
-    }
-    
-    return new Blob([uInt8Array], { type: contentType });
-  };
-
   const handleFileChange = async (e) => {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
     
-    // Check file size (original - 10MB max before compression)
     if (selectedFile.size > 10 * 1024 * 1024) {
-      toast.error('File too large. Max 10MB before compression');
+      toast.error('File too large. Max 10MB');
       return;
     }
     
-    // Check file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(selectedFile.type)) {
-      toast.error('Please upload an image file (JPG, PNG, GIF, WEBP)');
+      toast.error('Please upload an image file');
       return;
     }
     
-    toast.loading('Optimizing image...', { id: 'optimize' });
+    toast.loading('Compressing image...', { id: 'compress' });
     
     try {
-      // Optimize the image
-      const optimizedFile = await optimizeImage(selectedFile);
-      
-      console.log(`Original size: ${(selectedFile.size / 1024).toFixed(2)} KB`);
-      console.log(`Optimized size: ${(optimizedFile.size / 1024).toFixed(2)} KB`);
-      
-      setFile(optimizedFile);
-      
-      // Create preview
-      const previewUrl = URL.createObjectURL(optimizedFile);
+      const compressedFile = await compressImage(selectedFile);
+      setFile(compressedFile);
+      const previewUrl = URL.createObjectURL(compressedFile);
       setUploadedImageUrl(previewUrl);
-      
-      toast.success('Image optimized! Ready to upload', { id: 'optimize' });
+      toast.success('Image ready!', { id: 'compress' });
     } catch (error) {
-      console.error('Image optimization error:', error);
-      toast.error('Failed to optimize image', { id: 'optimize' });
-      // Fallback to original file
+      console.error('Compression error:', error);
+      toast.error('Using original image', { id: 'compress' });
       setFile(selectedFile);
       const previewUrl = URL.createObjectURL(selectedFile);
       setUploadedImageUrl(previewUrl);
     }
   };
 
-  const uploadToSupabase = async (file, userId) => {
-    return new Promise((resolve, reject) => {
-      const fileName = `${userId}_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
-      const filePath = `payment-proofs/${fileName}`;
-      
-      // Simulate progress for better UX
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 200);
-      
-      supabase.storage
-        .from('payment-proofs')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        })
-        .then(({ error, data }) => {
-          clearInterval(progressInterval);
-          setUploadProgress(100);
-          
-          if (error) {
-            reject(error);
-            return;
-          }
-          
-          // Get public URL
-          const { data: { publicUrl } } = supabase.storage
-            .from('payment-proofs')
-            .getPublicUrl(filePath);
-          
-          resolve(publicUrl);
-        })
-        .catch(reject);
-    });
+  const uploadFile = async (file, userId) => {
+    const fileExt = 'jpg';
+    const fileName = `${userId}_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const filePath = `bank-transfers/${fileName}`;
+    
+    // Simulate progress
+    const interval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(interval);
+          return 90;
+        }
+        return prev + 10;
+      });
+    }, 300);
+    
+    const { error, data } = await supabase.storage
+      .from('payment-proofs')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+    
+    clearInterval(interval);
+    setUploadProgress(100);
+    
+    if (error) throw error;
+    
+    const { data: { publicUrl } } = supabase.storage
+      .from('payment-proofs')
+      .getPublicUrl(filePath);
+    
+    return publicUrl;
   };
 
   const handleUpload = async () => {
-    // Check session before proceeding
     if (sessionLoading) {
       toast.loading('Checking session...', { duration: 1000 });
       return;
@@ -234,7 +201,7 @@ export default function BankTransferUpload({
       return;
     }
 
-    if (!file && !uploadedImageUrl) {
+    if (!file) {
       toast.error('Please upload a payment screenshot');
       return;
     }
@@ -243,54 +210,65 @@ export default function BankTransferUpload({
     setUploadProgress(0);
 
     try {
-      let imageUrl = uploadedImageUrl;
+      // Upload image
+      toast.loading('Uploading screenshot...', { id: 'upload' });
+      const imageUrl = await uploadFile(file, user.id);
+      toast.success('Screenshot uploaded!', { id: 'upload' });
 
-      // Upload image if new file selected
-      if (file && !uploadedImageUrl?.startsWith('http')) {
-        toast.loading('Uploading screenshot...', { id: 'upload' });
-        imageUrl = await uploadToSupabase(file, user.id);
-        toast.success('Screenshot uploaded!', { id: 'upload' });
-      }
-
-      // Create payment record
-      const { data: payment, error: paymentError } = await supabase
-        .from('payments')
+      // Create bank transfer record for admin verification
+      const { data: transfer, error: transferError } = await supabase
+        .from('bank_transfers')
         .insert({
           user_id: user.id,
+          user_name: userProfile?.full_name || user.email,
+          user_email: user.email,
+          user_phone: userProfile?.phone || '',
           pool_id: poolId,
           amount: amount,
           seat_numbers: seatNumbers,
           payment_method: selectedPaymentMethod,
-          payment_proof_url: imageUrl,
-          status: 'pending_verification',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          reference: reference || `TRF-${Date.now()}`,
+          proof_image: imageUrl,
+          status: 'pending',
+          created_at: new Date().toISOString()
         })
         .select()
         .single();
 
-      if (paymentError) throw paymentError;
+      if (transferError) throw transferError;
 
-      // Mark seats as pending payment
-      const { error: seatUpdateError } = await supabase
-        .from('pool_seats')
-        .update({
-          status: 'payment_pending',
-          payment_id: payment.id,
-          updated_at: new Date().toISOString()
-        })
-        .in('seat_number', seatNumbers)
-        .eq('pool_id', poolId);
-
-      if (seatUpdateError) throw seatUpdateError;
-
-      toast.success('Payment submitted! Verification within 24 hours.');
-      
-      // Wait a moment before redirecting
-      setTimeout(() => {
-        if (onSuccess) {
-          onSuccess();
+      // If this is for Merkato VIP, update participant
+      if (poolId?.startsWith('merkato_')) {
+        const participantId = sessionStorage.getItem('merkatoParticipantId');
+        if (participantId) {
+          await supabase
+            .from('merkato_vip_participants')
+            .update({
+              payment_status: 'pending_verification',
+              payment_proof_url: imageUrl,
+              bank_transfer_id: transfer.id,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', participantId);
         }
+      } else {
+        // For regular pools, update pool_seats
+        if (seatNumbers && seatNumbers.length > 0) {
+          await supabase
+            .from('pool_seats')
+            .update({
+              status: 'pending_verification',
+              bank_transfer_id: transfer.id
+            })
+            .in('seat_number', seatNumbers)
+            .eq('pool_id', poolId);
+        }
+      }
+
+      toast.success('Payment proof submitted! Admin will verify within 24 hours.');
+      
+      setTimeout(() => {
+        if (onSuccess) onSuccess();
       }, 2000);
       
     } catch (err) {
@@ -338,7 +316,7 @@ export default function BankTransferUpload({
       <div className="bg-white rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Complete Your Payment</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl">
             ✕
           </button>
         </div>
@@ -384,12 +362,10 @@ export default function BankTransferUpload({
           </div>
         </div>
 
-        {/* Payment Details based on selection */}
+        {/* Payment Details */}
         {selectedPaymentMethod === 'telebirr' ? (
           <div className="bg-blue-50 rounded-lg p-4 mb-4">
-            <h3 className="font-semibold mb-2 flex items-center gap-2">
-              <span>📱</span> TeleBirr Payment Details
-            </h3>
+            <h3 className="font-semibold mb-2 flex items-center gap-2">📱 TeleBirr Payment Details</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between items-center pb-2 border-b border-blue-200">
                 <span className="text-gray-600">Account Name:</span>
@@ -419,9 +395,7 @@ export default function BankTransferUpload({
           </div>
         ) : (
           <div className="bg-blue-50 rounded-lg p-4 mb-4">
-            <h3 className="font-semibold mb-2 flex items-center gap-2">
-              <span>🏦</span> CBE Bank Payment Details
-            </h3>
+            <h3 className="font-semibold mb-2 flex items-center gap-2">🏦 CBE Bank Payment Details</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between items-center pb-2 border-b border-blue-200">
                 <span className="text-gray-600">Account Name:</span>
@@ -451,16 +425,27 @@ export default function BankTransferUpload({
           </div>
         )}
 
+        {/* Reference Number (Optional) */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-1">Reference Number (Optional)</label>
+          <input
+            type="text"
+            value={reference}
+            onChange={(e) => setReference(e.target.value)}
+            placeholder="e.g., Transaction ID from bank"
+            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+          />
+          <p className="text-xs text-gray-400 mt-1">Helps us verify your payment faster</p>
+        </div>
+
         {/* Upload Section */}
         <div className="space-y-4 mb-4">
           <div>
-            <label className="block text-sm font-medium mb-2">
-              Upload Payment Screenshot/Photo *
-            </label>
+            <label className="block text-sm font-medium mb-2">Upload Payment Screenshot/Photo *</label>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-green-500 transition">
               <input
                 type="file"
-                accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                accept="image/*"
                 onChange={handleFileChange}
                 className="hidden"
                 id="payment-screenshot"
@@ -474,10 +459,10 @@ export default function BankTransferUpload({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <span className="text-sm text-gray-600">
-                  {file ? file.name : 'Click or drag to upload screenshot'}
+                  {file ? file.name : 'Click to upload screenshot'}
                 </span>
                 <span className="text-xs text-gray-400 mt-1">
-                  JPG, PNG, GIF (Max 10MB) - Auto-compressed
+                  JPG, PNG (Max 10MB) - Auto-compressed
                 </span>
               </label>
             </div>
@@ -486,12 +471,12 @@ export default function BankTransferUpload({
           {uploadedImageUrl && (
             <div className="mt-2">
               <p className="text-sm font-medium mb-1">Preview:</p>
-              <img src={uploadedImageUrl} alt="Payment Screenshot" className="max-h-40 rounded border mx-auto" />
+              <img src={uploadedImageUrl} alt="Payment Screenshot" className="max-h-32 rounded border mx-auto" />
             </div>
           )}
 
           {/* Upload Progress */}
-          {uploading && uploadProgress > 0 && uploadProgress < 100 && (
+          {uploading && uploadProgress > 0 && (
             <div className="mt-3">
               <div className="flex justify-between text-xs text-gray-600 mb-1">
                 <span>Uploading...</span>
@@ -501,7 +486,7 @@ export default function BankTransferUpload({
                 <div 
                   className="bg-green-600 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
-                ></div>
+                />
               </div>
             </div>
           )}
@@ -531,7 +516,7 @@ export default function BankTransferUpload({
             <li>• Use your registered phone number as reference</li>
             <li>• Upload a CLEAR screenshot showing transaction details</li>
             <li>• Seats will be confirmed after payment verification (24 hours)</li>
-            <li>• Screenshot will be automatically optimized</li>
+            <li>• Screenshot will be automatically compressed</li>
           </ul>
         </div>
 
@@ -539,7 +524,7 @@ export default function BankTransferUpload({
         <div className="flex gap-3">
           <button
             onClick={handleUpload}
-            disabled={uploading || (!file && !uploadedImageUrl)}
+            disabled={uploading || !file}
             className="flex-1 bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
           >
             {uploading ? (
