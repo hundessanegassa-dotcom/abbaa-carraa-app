@@ -8,7 +8,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent; /* Removes grey tap highlight on mobile */
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* HTML and BODY - Full width fix */
@@ -27,7 +27,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Next.js root div - Ensures full height and width */
+/* Next.js root div */
 #__next {
   width: 100%;
   min-height: 100vh;
@@ -35,7 +35,7 @@ body {
   flex-direction: column;
 }
 
-/* Main wrapper for all pages */
+/* Main wrapper */
 main {
   flex: 1;
   width: 100%;
@@ -54,7 +54,6 @@ main {
   padding-right: 1rem;
 }
 
-/* Responsive container padding for smaller phones */
 @media (max-width: 640px) {
   .container {
     padding-left: 0.75rem;
@@ -63,7 +62,7 @@ main {
 }
 
 /* ========================================
-   TOUCH & CLICK FIXES - Makes everything clickable
+   TOUCH & CLICK FIXES
    ======================================== */
 
 button,
@@ -76,7 +75,6 @@ a,
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Ensures buttons have minimum tap area (Apple recommendation: 44x44px) */
 button,
 a.button,
 .btn {
@@ -84,7 +82,6 @@ a.button,
   min-width: 44px;
 }
 
-/* Remove default button styles but keep clickable */
 button {
   background: none;
   border: none;
@@ -92,7 +89,7 @@ button {
 }
 
 /* ========================================
-   IMAGE FIXES - Prevents overflow
+   IMAGE FIXES
    ======================================== */
 
 img {
@@ -101,24 +98,119 @@ img {
   display: block;
 }
 
-/* Fix for background images */
-.bg-cover-fix {
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+
+/* Fade In Animation */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 1s ease-out;
+}
+
+/* Slide Up Animation */
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.8s ease-out;
+}
+
+/* Slide Down Animation */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-down {
+  animation: slideDown 0.2s ease-out;
+}
+
+/* Slow Spin Animation */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}
+
+/* Progress Bar Animation */
+@keyframes progress {
+  from { width: 0%; }
+  to { width: 60%; }
+}
+
+.animate-progress {
+  animation: progress 1.5s ease-out;
+}
+
+/* Slow Pulse Animation */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.95; transform: scale(1.01); }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s ease-in-out infinite;
+}
+
+/* Bounce Animation */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-bounce {
+  animation: bounce 1s ease-in-out infinite;
+}
+
+/* Ping Animation */
+@keyframes ping {
+  0% { transform: scale(1); opacity: 1; }
+  75%, 100% { transform: scale(1.5); opacity: 0; }
+}
+
+.animate-ping {
+  animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Pulse Animation */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Spin Animation */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
 }
 
 /* ========================================
    GRID & FLEX FIXES
    ======================================== */
 
-/* Prevent grid from breaking on small screens */
 .grid {
   display: grid;
   gap: 1rem;
 }
 
-/* Responsive grid helper */
 .grid-responsive {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -126,11 +218,11 @@ img {
 }
 
 /* ========================================
-   TYPOGRAPHY - Readable on all phones
+   TYPOGRAPHY
    ======================================== */
 
 html {
-  font-size: 16px; /* Base size - prevents zoom issues on input focus */
+  font-size: 16px;
 }
 
 @media (max-width: 640px) {
@@ -139,7 +231,6 @@ html {
   }
 }
 
-/* Prevent text from being too small on landscape mode */
 @media (max-width: 640px) and (orientation: landscape) {
   html {
     font-size: 12px;
@@ -150,14 +241,12 @@ html {
    SCROLLING & OVERFLOW FIXES
    ======================================== */
 
-/* Smooth scrolling but not on reduced motion preference */
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
   }
 }
 
-/* Hide scrollbar for cleaner look on mobile (optional) */
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -171,41 +260,17 @@ html {
    UTILITY CLASSES
    ======================================== */
 
-/* Full width helper */
-.w-full {
-  width: 100%;
-}
-
-/* Full height helper */
-.h-full {
-  height: 100%;
-}
-
-/* Min height screen */
-.min-h-screen {
-  min-height: 100vh;
-}
-
-/* Flex column helper */
-.flex-column {
-  display: flex;
-  flex-direction: column;
-}
-
-/* No overflow */
-.overflow-hidden {
-  overflow: hidden;
-}
-
-.overflow-x-hidden {
-  overflow-x: hidden;
-}
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+.min-h-screen { min-height: 100vh; }
+.flex-column { display: flex; flex-direction: column; }
+.overflow-hidden { overflow: hidden; }
+.overflow-x-hidden { overflow-x: hidden; }
 
 /* ========================================
-   ANIMATION FIXES
+   REDUCED MOTION PREFERENCE
    ======================================== */
 
-/* Reduced motion preference - important for accessibility */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -221,13 +286,11 @@ html {
    FOCUS & ACCESSIBILITY
    ======================================== */
 
-/* Visible focus for keyboard navigation */
 :focus-visible {
   outline: 2px solid #16a34a;
   outline-offset: 2px;
 }
 
-/* But better to remove default outline on touch devices */
 @media (hover: none) and (pointer: coarse) {
   :focus {
     outline: none;
@@ -254,7 +317,7 @@ html {
 }
 
 /* ========================================
-   LOADING STATE
+   LOADING SPINNER
    ======================================== */
 
 .loading-spinner {
@@ -266,13 +329,8 @@ html {
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 /* ========================================
-   CUSTOM SCROLLBAR (Optional - Nice to have)
+   CUSTOM SCROLLBAR
    ======================================== */
 
 ::-webkit-scrollbar {
@@ -299,50 +357,34 @@ html {
    ======================================== */
 
 @supports (padding: max(0px)) {
-  .safe-top {
-    padding-top: max(1rem, env(safe-area-inset-top));
-  }
-  
-  .safe-bottom {
-    padding-bottom: max(1rem, env(safe-area-inset-bottom));
-  }
-  
-  .safe-left {
-    padding-left: max(1rem, env(safe-area-inset-left));
-  }
-  
-  .safe-right {
-    padding-right: max(1rem, env(safe-area-inset-right));
-  }
+  .safe-top { padding-top: max(1rem, env(safe-area-inset-top)); }
+  .safe-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+  .safe-left { padding-left: max(1rem, env(safe-area-inset-left)); }
+  .safe-right { padding-right: max(1rem, env(safe-area-inset-right)); }
 }
 
 /* ========================================
-   PREVENT ZOOM ON INPUT FOCUS (iOS fix)
+   PREVENT ZOOM ON INPUT FOCUS (iOS)
    ======================================== */
 
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
-  select,
-  textarea,
-  input {
-    font-size: 16px; /* Prevents iOS zoom on focus */
+  select, textarea, input {
+    font-size: 16px;
   }
 }
 
 /* ========================================
-   TAILWCSS OVERRIDES (if needed)
+   TAILWIND CSS
    ======================================== */
 
-/* Ensure Tailwind's container doesn't break */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Override any Tailwind width issues */
 @layer base {
   body {
     @apply w-full overflow-x-hidden;
   }
-  
   #__next {
     @apply w-full min-h-screen flex flex-col;
   }
@@ -352,44 +394,16 @@ html {
    RESPONSIVE BREAKPOINTS UTILITIES
    ======================================== */
 
-/* Mobile first - this is already handled but adding helpers */
-.hide-on-mobile {
-  display: block;
-}
+.hide-on-mobile { display: block; }
+@media (max-width: 768px) { .hide-on-mobile { display: none; } }
 
-@media (max-width: 768px) {
-  .hide-on-mobile {
-    display: none;
-  }
-}
-
-.show-on-mobile {
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .show-on-mobile {
-    display: block;
-  }
-}
+.show-on-mobile { display: none; }
+@media (max-width: 768px) { .show-on-mobile { display: block; } }
 
 /* ========================================
-   PRINT STYLES (Optional)
+   MOBILE OPTIMIZATIONS
    ======================================== */
 
-@media print {
-  body {
-    background: white;
-    color: black;
-  }
-  
-  .no-print {
-    display: none;
-  }
-}
-/* Add to the end of your globals.css file */
-
-/* Mobile optimizations for hero section */
 @media (max-width: 640px) {
   .hero-image {
     max-height: 30vh;
@@ -397,7 +411,6 @@ html {
   }
 }
 
-/* Smooth hover effects */
 .hover-lift {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -407,35 +420,11 @@ html {
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
-/* Gradient text utility */
 .gradient-text {
   background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-}
-
-/* Button hover animations */
-.btn-hover-effect {
-  transition: all 0.3s ease;
-}
-
-.btn-hover-effect:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-}
-
-/* Trust badge icons */
-.trust-badge-icon {
-  transition: transform 0.2s ease;
-}
-
-.trust-badge-icon:hover {
-  transform: scale(1.1);
-}
-/* Mobile Safe Area for notches */
-.pb-safe {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* Touch-friendly targets */
@@ -444,30 +433,34 @@ html {
   min-width: 44px;
 }
 
-/* Mobile Responsive - Keep multiple columns, just adjust spacing */
 @media (max-width: 768px) {
-  button, 
-  a[href*="/register"],
-  a[href*="/login"],
-  .touch-target {
+  button, a[href*="/register"], a[href*="/login"], .touch-target {
     min-height: 48px;
   }
-  
   body {
     font-size: 16px;
   }
-  
   .container {
     padding-left: 12px;
     padding-right: 12px;
   }
 }
 
-/* Animation */
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  .no-print {
+    display: none;
+  }
 }
-.animate-slide-up {
-  animation: slideUp 0.3s ease-out;
+
+/* Mobile Safe Area for notches */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
