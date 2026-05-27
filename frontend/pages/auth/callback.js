@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
 import AgreementModal from '../../components/AgreementModal';
@@ -13,7 +13,105 @@ export default function AuthCallback() {
   const [error, setError] = useState(null);
   const [redirectUrl, setRedirectUrl] = useState(null);
 
+  const handleAcceptAgreement = useCallback(async () => {
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) throw sessionError;
+      if (!session) throw new Error('No session found');
+      
+      console.log('Saving agreement for user:', session.user.id, 'Role:', userRole);
+      
+      // First check if profile exists
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', session.user.id)
+        .maybeSingle();
+      
+      if (existingProfile) {
+        // Update existing profile
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            agreement_accepted: true,
+            agreement_accepted_at: new Date().toISOString(),
+            agreement_version: '1.0',
+            role: userRole,
+            user_type: userRole,
+            status: userRole === 'individual' ? 'active' : 'pending_approval',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', session.user.id);
+        
+        if (updateError) throw updateError;
+      } else {
+        // Create new profile
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: session.user.id,
+            email: session.user.email,
+            full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+            role: userRole,
+            user_type: userRole,
+            agreement_accepted: true,
+            agreement_accepted_at: new Date().toISOString(),
+            agreement_version: '1.0',
+            status: userRole === 'individual' ? 'active' : 'pending_approval',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+        
+        if (insertError) throw insertError;
+      }
+      
+      console.log('Agreement saved successfully');
+      
+      // Clear pending role from storage
+      localStorage.removeItem('pendingRole');
+      sessionStorage.removeItem('pendingRole');
+      
+      toast.success('Agreement accepted! Welcome to Abbaa Carraa!');
+      
+      // Small delay to ensure database commit
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Redirect based on role
+      if (userRole === 'individual') {
+        if (redirectUrl && redirectUrl.startsWith('/pools/')) {
+          router.push(redirectUrl);
+        } else {
+          router.push('/dashboard');
+        }
+        return;
+      }
+      
+      if (userRole === 'admin') {
+        router.push('/admin/dashboard');
+        return;
+      }
+      
+      // For agents/vendors/organizations, redirect to application form
+      router.push(`/${userRole}/apply`);
+      
+    } catch (err) {
+      console.error('Accept agreement error:', err);
+      toast.error('Failed to save agreement: ' + err.message);
+    }
+  }, [userRole, redirectUrl, router]);
+
+  const handleClose = useCallback(() => {
+    // Clear all storage and sign out
+    localStorage.removeItem('pendingRole');
+    sessionStorage.removeItem('pendingRole');
+    supabase.auth.signOut();
+    router.push('/login');
+  }, [router]);
+
   useEffect(() => {
+    let isMounted = true;
+
     const handleCallback = async () => {
       try {
         // Get redirect URL from storage (set in login page)
@@ -24,7 +122,7 @@ export default function AuthCallback() {
         localStorage.removeItem('redirectAfterLogin');
         sessionStorage.removeItem('redirectAfterLogin');
         
-        setRedirectUrl(redirect);
+        if (isMounted) setRedirectUrl(redirect);
 
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
@@ -32,11 +130,11 @@ export default function AuthCallback() {
         
         if (!session) {
           toast.error('Sign in failed');
-          router.push('/login'); // Changed from '/' to '/login'
+          router.push('/login');
           return;
         }
 
-        // IMPORTANT: Get pending role from sessionStorage (set in login page)
+        // Get pending role from sessionStorage
         let pendingRole = sessionStorage.getItem('pendingRole');
         if (!pendingRole) pendingRole = localStorage.getItem('pendingRole');
         
@@ -77,138 +175,47 @@ export default function AuthCallback() {
 
         // If user has a profile but agreement not accepted, use their existing role
         if (profile && !profile.agreement_accepted && profile.role) {
-          setUserRole(profile.role);
-          sessionStorage.setItem('pendingRole', profile.role);
-          setShowAgreement(true);
-          setLoading(false);
+          if (isMounted) {
+            setUserRole(profile.role);
+            sessionStorage.setItem('pendingRole', profile.role);
+            setShowAgreement(true);
+            setLoading(false);
+          }
           return;
         }
 
         // For new users, use the pending role from login
         if (pendingRole && ['agent', 'vendor', 'organization', 'individual', 'admin'].includes(pendingRole)) {
-          setUserRole(pendingRole);
-          setShowAgreement(true);
-          setLoading(false);
+          if (isMounted) {
+            setUserRole(pendingRole);
+            setShowAgreement(true);
+            setLoading(false);
+          }
           return;
         }
         
-        // No role found - redirect to role selection (login page)
+        // No role found - redirect to login
         toast.error('Please select a role to continue');
         router.push('/login');
         
       } catch (err) {
         console.error('Callback error:', err);
-        setError(err.message);
-        toast.error('Authentication failed');
+        if (isMounted) {
+          setError(err.message);
+          toast.error('Authentication failed');
+        }
         setTimeout(() => router.push('/login'), 3000);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     handleCallback();
+
+    return () => {
+      isMounted = false;
+    };
   }, [router]);
-
-  const handleAcceptAgreement = async () => {
-    try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) throw sessionError;
-      if (!session) throw new Error('No session found');
-      
-      console.log('Saving agreement for user:', session.user.id, 'Role:', userRole);
-      
-      // First check if profile exists
-      const { data: existingProfile, error: fetchError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', session.user.id)
-        .maybeSingle();
-      
-      let result;
-      
-      if (existingProfile) {
-        // Update existing profile
-        console.log('Updating existing profile');
-        result = await supabase
-          .from('profiles')
-          .update({
-            agreement_accepted: true,
-            agreement_accepted_at: new Date().toISOString(),
-            agreement_version: '1.0',
-            role: userRole,
-            user_type: userRole,
-            status: userRole === 'individual' ? 'active' : 'pending_approval',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', session.user.id);
-      } else {
-        // Create new profile
-        console.log('Creating new profile');
-        result = await supabase
-          .from('profiles')
-          .insert({
-            id: session.user.id,
-            email: session.user.email,
-            full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
-            role: userRole,
-            user_type: userRole,
-            agreement_accepted: true,
-            agreement_accepted_at: new Date().toISOString(),
-            agreement_version: '1.0',
-            status: userRole === 'individual' ? 'active' : 'pending_approval',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-      }
-      
-      if (result.error) {
-        console.error('Database error:', result.error);
-        throw new Error(result.error.message);
-      }
-      
-      console.log('Agreement saved successfully');
-      
-      // Clear pending role from storage
-      localStorage.removeItem('pendingRole');
-      sessionStorage.removeItem('pendingRole');
-      
-      toast.success('Agreement accepted! Welcome to Abbaa Carraa!');
-      
-      // Small delay to ensure database commit
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Redirect based on role
-      if (userRole === 'individual') {
-        if (redirectUrl && redirectUrl.startsWith('/pools/')) {
-          router.push(redirectUrl);
-        } else {
-          router.push('/dashboard');
-        }
-        return;
-      }
-      
-      if (userRole === 'admin') {
-        router.push('/admin/dashboard');
-        return;
-      }
-      
-      // For agents/vendors/organizations, redirect to application form
-      router.push(`/${userRole}/apply`);
-      
-    } catch (err) {
-      console.error('Accept agreement error:', err);
-      toast.error('Failed to save agreement: ' + err.message);
-    }
-  };
-
-  const handleClose = () => {
-    // Clear all storage and sign out
-    localStorage.removeItem('pendingRole');
-    sessionStorage.removeItem('pendingRole');
-    supabase.auth.signOut();
-    router.push('/login');
-  };
 
   if (error) {
     return (
