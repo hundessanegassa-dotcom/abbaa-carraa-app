@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -6,17 +6,25 @@ export default function SeatSelector({
   poolId, 
   entryFee, 
   maxSeats = 5, 
-  totalSeats,      // NEW: Total seats from parent
-  availableSeats,  // NEW: Available seats from parent
+  totalSeats,      // Total seats from parent
+  availableSeats,  // Available seats from parent
   onSeatsSelected, 
   onCancel 
 }) {
+  const isMounted = useRef(true);
   const [seats, setSeats] = useState([]);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [totalPrice, setTotalPrice] = useState(0);
   const [currentUser, setCurrentUser] = useState(null);
   const [sessionLoading, setSessionLoading] = useState(true);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   // Fetch current user with proper session handling
   useEffect(() => {
@@ -32,13 +40,13 @@ export default function SeatSelector({
           return;
         }
         
-        setCurrentUser(session.user);
+        if (isMounted.current) setCurrentUser(session.user);
       } catch (err) {
         console.error('Session error:', err);
         toast.error('Session error. Please refresh and try again');
         onCancel();
       } finally {
-        setSessionLoading(false);
+        if (isMounted.current) setSessionLoading(false);
       }
     };
     
@@ -61,7 +69,7 @@ export default function SeatSelector({
 
   // Update total price when selected seats change
   useEffect(() => {
-    setTotalPrice(selectedSeats.length * entryFee);
+    if (isMounted.current) setTotalPrice(selectedSeats.length * entryFee);
   }, [selectedSeats, entryFee]);
 
   async function fetchSeats() {
@@ -74,7 +82,7 @@ export default function SeatSelector({
 
       if (error) throw error;
       
-      if (data) {
+      if (data && isMounted.current) {
         // Clean up expired reservations
         const now = new Date().toISOString();
         const expiredSeats = data.filter(seat => 
@@ -103,7 +111,7 @@ export default function SeatSelector({
             .eq('pool_id', poolId)
             .order('seat_number', { ascending: true });
           
-          setSeats(refreshedData || []);
+          if (isMounted.current) setSeats(refreshedData || []);
         } else {
           setSeats(data);
         }
@@ -112,7 +120,7 @@ export default function SeatSelector({
       console.error('Fetch seats error:', err);
       toast.error('Failed to load seats');
     } finally {
-      setLoading(false);
+      if (isMounted.current) setLoading(false);
     }
   }
 
