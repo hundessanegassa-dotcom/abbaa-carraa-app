@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import html2canvas from 'html2canvas';
-import QRCode from 'qrcode';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function Ticket({ 
   participant, 
@@ -11,29 +11,11 @@ export default function Ticket({
 }) {
   const ticketRef = useRef(null);
   const [downloading, setDownloading] = useState(false);
-  const [qrCodeUrl, setQrCodeUrl] = useState(null);
 
   const formatNumber = (num) => {
     if (!num) return '0';
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
-
-  // Generate QR code on mount
-  useState(() => {
-    const generateQR = async () => {
-      const ticketData = JSON.stringify({
-        ticketNumber: participant?.ticket_number,
-        participant: participant?.user_name,
-        pool: pool?.name,
-        seats: seatNumbers,
-        verified: isVerified,
-        date: new Date().toISOString()
-      });
-      const qr = await QRCode.toDataURL(ticketData);
-      setQrCodeUrl(qr);
-    };
-    if (participant) generateQR();
-  }, [participant, isVerified]);
 
   const getTicketStatus = () => {
     return isVerified ? '✓ VERIFIED TICKET' : '⏳ UNVERIFIED - PENDING VERIFICATION';
@@ -41,6 +23,21 @@ export default function Ticket({
 
   const getStatusColor = () => {
     return isVerified ? 'text-green-600 border-green-600' : 'text-yellow-600 border-yellow-600';
+  };
+
+  // Generate QR code data
+  const getQRCodeData = () => {
+    const ticketData = {
+      ticketNumber: participant?.ticket_number || 'PENDING',
+      participantName: participant?.user_name || 'N/A',
+      participantEmail: participant?.user_email || 'N/A',
+      poolName: pool?.name || 'Merkato VIP Pool',
+      seats: seatNumbers || [],
+      prize: pool?.prize || 0,
+      verified: isVerified,
+      issuedAt: new Date().toISOString()
+    };
+    return JSON.stringify(ticketData);
   };
 
   const downloadTicket = async () => {
@@ -120,11 +117,16 @@ export default function Ticket({
           </div>
           
           {/* QR Code */}
-          {qrCodeUrl && (
-            <div className="flex justify-center mb-4">
-              <img src={qrCodeUrl} alt="QR Code" className="w-24 h-24" />
-            </div>
-          )}
+          <div className="flex justify-center mb-4">
+            <QRCodeSVG 
+              value={getQRCodeData()} 
+              size={100}
+              bgColor="#ffffff"
+              fgColor="#000000"
+              level="L"
+              includeMargin={false}
+            />
+          </div>
           
           {/* Participant Info */}
           <div className="space-y-2 mb-4">
@@ -143,15 +145,15 @@ export default function Ticket({
           </div>
           
           {/* Seat Info */}
-          {seatNumbers.length > 0 && (
+          {seatNumbers && seatNumbers.length > 0 && (
             <div className="bg-gray-50 rounded-lg p-3 mb-4">
               <div className="flex justify-between text-sm mb-1">
                 <span className="text-gray-500">Selected Seats:</span>
-                <span className="font-mono font-bold">{seatNumbers.sort((a,b)=>a-b).join(', ')}</span>
+                <span className="font-mono font-bold">{Array.isArray(seatNumbers) ? seatNumbers.sort((a,b)=>a-b).join(', ') : seatNumbers}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Number of Seats:</span>
-                <span className="font-semibold">{seatNumbers.length}</span>
+                <span className="font-semibold">{Array.isArray(seatNumbers) ? seatNumbers.length : 1}</span>
               </div>
             </div>
           )}
