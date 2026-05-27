@@ -3,13 +3,18 @@ import { supabase } from '../lib/supabase';
 import Link from 'next/link';
 import Head from 'next/head';
 import { useTranslation } from 'react-i18next';
+import PoolCard from '../components/PoolCard';
+
 export async function getServerSideProps() {
   return { props: {} };
 }
+
 export default function Listings() {
   const { t } = useTranslation();
   const [pools, setPools] = useState([]);
+  const [featuredPools, setFeaturedPools] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all'); // all, featured, lowToHigh, highToLow
 
   useEffect(() => {
     fetchPools();
@@ -24,13 +29,40 @@ export default function Listings() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPools(data || []);
+      
+      const allPools = data || [];
+      setPools(allPools);
+      setFeaturedPools(allPools.filter(pool => pool.is_featured === true));
+      
     } catch (error) {
       console.error('Error loading pools:', error);
     } finally {
       setLoading(false);
     }
   }
+
+  // Filter pools based on selection
+  const getFilteredPools = () => {
+    let filtered = [...pools];
+    
+    switch (filter) {
+      case 'featured':
+        filtered = filtered.filter(p => p.is_featured === true);
+        break;
+      case 'lowToHigh':
+        filtered.sort((a, b) => (a.entry_fee || a.contribution_amount || 0) - (b.entry_fee || b.contribution_amount || 0));
+        break;
+      case 'highToLow':
+        filtered.sort((a, b) => (b.entry_fee || b.contribution_amount || 0) - (a.entry_fee || a.contribution_amount || 0));
+        break;
+      default:
+        break;
+    }
+    
+    return filtered;
+  };
+
+  const displayPools = getFilteredPools();
 
   return (
     <>
@@ -44,11 +76,55 @@ export default function Listings() {
           <h1 className="text-3xl font-bold text-center mb-2">{t('common.browse_prizes')}</h1>
           <p className="text-center text-gray-600 mb-8">{t('common.join_prize_pools')}</p>
           
+          {/* Filter Bar */}
+          <div className="flex flex-wrap justify-center gap-2 mb-8">
+            <button
+              onClick={() => setFilter('all')}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                filter === 'all' 
+                  ? 'bg-green-600 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              All Pools
+            </button>
+            <button
+              onClick={() => setFilter('featured')}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                filter === 'featured' 
+                  ? 'bg-yellow-500 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              ⭐ Featured
+            </button>
+            <button
+              onClick={() => setFilter('lowToHigh')}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                filter === 'lowToHigh' 
+                  ? 'bg-green-600 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Price: Low to High
+            </button>
+            <button
+              onClick={() => setFilter('highToLow')}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                filter === 'highToLow' 
+                  ? 'bg-green-600 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Price: High to Low
+            </button>
+          </div>
+          
           {loading ? (
             <div className="flex justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
             </div>
-          ) : pools.length === 0 ? (
+          ) : displayPools.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-lg shadow">
               <p className="text-gray-500 mb-4">{t('pools.no_pools')}</p>
               <Link href="/create-pool" className="text-green-600 hover:text-green-700">
@@ -57,39 +133,12 @@ export default function Listings() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {pools.map((pool) => (
-                <div key={pool.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-300">
-                  {pool.image_url ? (
-                    <img src={pool.image_url} alt={pool.prize_name} className="w-full h-48 object-cover" />
-                  ) : (
-                    <div className="w-full h-48 bg-gradient-to-r from-green-100 to-blue-100 flex items-center justify-center">
-                      <span className="text-4xl">🎁</span>
-                    </div>
-                  )}
-                  <div className="p-4">
-                    <h3 className="text-xl font-bold text-green-600 mb-2">{pool.prize_name}</h3>
-                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">{pool.description || t('pools.join_now')}</p>
-                    <div className="space-y-2 mb-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-500">{t('pools.target_amount')}:</span>
-                        <span className="font-bold">ETB {pool.target_amount?.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-500">{t('pools.entry_fee')}:</span>
-                        <span className="font-bold text-green-600">ETB {pool.contribution_amount?.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-500">{t('filters.city')}:</span>
-                        <span className="font-semibold">{pool.city || t('common.all_cities')}</span>
-                      </div>
-                    </div>
-                    <Link href={`/pools/${pool.id}`}>
-                      <button className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition">
-                        {t('pools.join_now')}
-                      </button>
-                    </Link>
-                  </div>
-                </div>
+              {displayPools.map((pool) => (
+                <PoolCard 
+                  key={pool.id} 
+                  pool={pool} 
+                  featured={pool.is_featured === true}
+                />
               ))}
             </div>
           )}
