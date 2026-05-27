@@ -9,6 +9,7 @@ export default function VendorApply() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   
   const [formData, setFormData] = useState({
     full_name: '',
@@ -48,7 +49,6 @@ export default function VendorApply() {
       email: user.email
     }));
     
-    // Check if already applied
     const { data: existing } = await supabase
       .from('vendors')
       .select('id, verified')
@@ -65,53 +65,109 @@ export default function VendorApply() {
     }
   };
 
-  const handleFileUpload = async (file, type) => {
-    if (!file) return null;
-    
-    setUploading(true);
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${user.id}_${type}_${Date.now()}.${fileExt}`;
+  const compressImage = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          const maxWidth = 1024;
+          const maxHeight = 1024;
+          
+          if (width > height) {
+            if (width > maxWidth) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = (width * maxHeight) / height;
+              height = maxHeight;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          canvas.toBlob((blob) => {
+            const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          }, 'image/jpeg', 0.7);
+        };
+        img.onerror = reject;
+      };
+      reader.onerror = reject;
+    });
+  };
+
+  const uploadFile = async (file, userId, type) => {
+    const fileExt = 'jpg';
+    const fileName = `${userId}_${type}_${Date.now()}.${fileExt}`;
     const filePath = `vendor-documents/${fileName}`;
     
-    const { error: uploadError } = await supabase.storage
+    const { error, data } = await supabase.storage
       .from('verification-docs')
-      .upload(filePath, file);
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
     
-    if (uploadError) {
-      toast.error('Upload failed: ' + uploadError.message);
-      setUploading(false);
-      return null;
-    }
+    if (error) throw error;
     
     const { data: { publicUrl } } = supabase.storage
       .from('verification-docs')
       .getPublicUrl(filePath);
     
-    setUploading(false);
     return publicUrl;
   };
 
-  const handleFileChange = (e, field) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const handleFileChange = async (e, field) => {
+    const selectedFile = e.target.files[0];
+    if (!selectedFile) return;
     
-    if (!file.type.startsWith('image/')) {
+    if (!selectedFile.type.startsWith('image/')) {
       toast.error('Please upload an image file');
       return;
     }
     
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('File too large. Max 5MB');
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      toast.error('File too large. Max 10MB');
       return;
     }
     
-    setFormData(prev => ({ ...prev, [field]: file }));
+    toast.loading('Compressing image...', { id: `compress-${field}` });
     
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreviews(prev => ({ ...prev, [field]: reader.result }));
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedFile = await compressImage(selectedFile);
+      setFormData(prev => ({ ...prev, [field]: compressedFile }));
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviews(prev => ({ ...prev, [field]: reader.result }));
+      };
+      reader.readAsDataURL(compressedFile);
+      
+      toast.success('Image ready!', { id: `compress-${field}` });
+    } catch (error) {
+      toast.error('Using original image', { id: `compress-${field}` });
+      setFormData(prev => ({ ...prev, [field]: selectedFile }));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviews(prev => ({ ...prev, [field]: reader.result }));
+      };
+      reader.readAsDataURL(selectedFile);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -121,30 +177,30 @@ export default function VendorApply() {
       toast.error('Please upload your Digital ID (Front)');
       return;
     }
-    
     if (!formData.digital_id_back) {
       toast.error('Please upload your Digital ID (Back)');
       return;
     }
-    
     if (!formData.business_license) {
       toast.error('Please upload your Business License');
       return;
     }
-    
     if (!formData.business_name || !formData.tin_number) {
       toast.error('Please fill all required fields');
       return;
     }
     
     setLoading(true);
+    setUploadProgress(0);
     
     try {
-      const frontUrl = await handleFileUpload(formData.digital_id_front, 'id_front');
-      const backUrl = await handleFileUpload(formData.digital_id_back, 'id_back');
-      const licenseUrl = await handleFileUpload(formData.business_license, 'license');
-      
-      if (!frontUrl || !backUrl || !licenseUrl) throw new Error('Document upload failed');
+      setUploadProgress(15);
+      const frontUrl = await uploadFile(formData.digital_id_front, user.id, 'id_front');
+      setUploadProgress(35);
+      const backUrl = await uploadFile(formData.digital_id_back, user.id, 'id_back');
+      setUploadProgress(60);
+      const licenseUrl = await uploadFile(formData.business_license, user.id, 'license');
+      setUploadProgress(85);
       
       const { error } = await supabase
         .from('vendors')
@@ -172,6 +228,7 @@ export default function VendorApply() {
         .update({ user_type: 'vendor', role: 'vendor' })
         .eq('id', user.id);
       
+      setUploadProgress(100);
       toast.success('Application submitted! Admin will review within 24-48 hours.');
       setTimeout(() => router.push('/dashboard'), 2000);
       
@@ -180,6 +237,7 @@ export default function VendorApply() {
       toast.error('Failed to submit: ' + error.message);
     } finally {
       setLoading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -203,10 +261,8 @@ export default function VendorApply() {
             </div>
             
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              {/* Personal Information */}
               <div className="space-y-4">
                 <h2 className="text-xl font-bold text-gray-800 border-b pb-2">Personal Information</h2>
-                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
@@ -223,10 +279,8 @@ export default function VendorApply() {
                 </div>
               </div>
               
-              {/* Business Information */}
               <div className="space-y-4">
                 <h2 className="text-xl font-bold text-gray-800 border-b pb-2">Business Information</h2>
-                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Business Name *</label>
@@ -252,14 +306,12 @@ export default function VendorApply() {
                     <input type="text" placeholder="Location, city, sub-city" value={formData.business_address} onChange={(e) => setFormData({...formData, business_address: e.target.value})} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500" />
                   </div>
                 </div>
-                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Business Description</label>
                   <textarea rows="2" placeholder="Describe what products you sell..." value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500" />
                 </div>
               </div>
               
-              {/* Document Uploads */}
               <div className="space-y-4">
                 <h2 className="text-xl font-bold text-gray-800 border-b pb-2">Document Verification</h2>
                 <p className="text-sm text-gray-500">Please upload clear images of your documents</p>
@@ -283,10 +335,21 @@ export default function VendorApply() {
                 </div>
               </div>
               
-              {/* Submit */}
+              {loading && uploadProgress > 0 && (
+                <div className="mt-3">
+                  <div className="flex justify-between text-xs text-gray-600 mb-1">
+                    <span>Uploading documents...</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="bg-purple-600 h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                  </div>
+                </div>
+              )}
+              
               <div className="pt-4">
                 <button type="submit" disabled={loading || uploading} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50">
-                  {loading ? 'Submitting...' : uploading ? 'Uploading...' : 'Submit Application'}
+                  {loading ? 'Submitting...' : 'Submit Application'}
                 </button>
               </div>
             </form>
