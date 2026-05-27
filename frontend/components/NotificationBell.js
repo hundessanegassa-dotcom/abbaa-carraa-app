@@ -11,15 +11,29 @@ export default function NotificationBell() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [userId, setUserId] = useState(null);
   const dropdownRef = useRef(null);
+  const subscriptionRef = useRef(null);
 
   // Only run on client side
   useEffect(() => {
     setIsClient(true);
+    getCurrentUser();
   }, []);
 
+  async function getCurrentUser() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    } catch (error) {
+      console.error('Error getting user:', error);
+    }
+  }
+
   useEffect(() => {
-    if (!isClient) return;
+    if (!isClient || !userId) return;
     
     fetchNotifications();
     subscribeToNotifications();
@@ -33,21 +47,21 @@ export default function NotificationBell() {
     
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      if (subscriptionRef.current) {
+        supabase.removeChannel(subscriptionRef.current);
+      }
     };
-  }, [isClient]);
+  }, [isClient, userId]);
 
   async function fetchNotifications() {
-    if (!isClient) return;
-    
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+    if (!userId) return;
 
+    try {
       setLoading(true);
       const { data } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -60,17 +74,24 @@ export default function NotificationBell() {
     }
   }
 
-  function subscribeToNotifications() {
-    if (!isClient) return;
+  async function subscribeToNotifications() {
+    if (!userId) return;
     
     try {
-      const { data: { user } } = supabase.auth.getUser();
-      if (!user) return;
+      // Remove existing subscription if any
+      if (subscriptionRef.current) {
+        await supabase.removeChannel(subscriptionRef.current);
+      }
 
-      supabase
-        .channel('notifications')
+      const channel = supabase
+        .channel(`notifications-${userId}`)
         .on('postgres_changes', 
-          { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+          { 
+            event: 'INSERT', 
+            schema: 'public', 
+            table: 'notifications', 
+            filter: `user_id=eq.${userId}` 
+          },
           (payload) => {
             const newNotification = payload.new;
             setNotifications(prev => [newNotification, ...prev]);
@@ -105,8 +126,10 @@ export default function NotificationBell() {
               </div>
             ), { duration: 5000 });
           }
-        )
-        .subscribe();
+        );
+
+      subscriptionRef.current = channel;
+      await channel.subscribe();
     } catch (error) {
       console.error('Error subscribing to notifications:', error);
     }
@@ -148,9 +171,6 @@ export default function NotificationBell() {
 
   async function markAllAsRead() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
       const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
       if (unreadIds.length === 0) {
         toast('No unread notifications', { icon: '🔔' });
@@ -209,8 +229,8 @@ export default function NotificationBell() {
     return date.toLocaleDateString();
   };
 
-  // Don't render anything during SSR
-  if (!isClient) {
+  // Don't render anything during SSR or without userId
+  if (!isClient || !userId) {
     return <div className="relative w-8 h-8"></div>;
   }
 
