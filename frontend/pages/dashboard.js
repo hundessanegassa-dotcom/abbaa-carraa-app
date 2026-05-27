@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase, getPoolsPaginated } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import DashboardLayout from '../components/DashboardLayout';
@@ -7,7 +7,7 @@ import PoolCard from '../components/PoolCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import BackButton from '../components/BackButton';
 import toast from 'react-hot-toast';
-import GlobalAnnouncement from '../components/GlobalAnnouncement'; // ADD THIS LINE
+import GlobalAnnouncement from '../components/GlobalAnnouncement';
 
 export async function getServerSideProps() {
   return { props: {} };
@@ -22,7 +22,13 @@ export default function Dashboard() {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   
-  const [stats, setStats] = useState({ totalSpent: 0, totalWon: 0, activeEntries: 0, winRate: 0, loyaltyPoints: 0 });
+  const [stats, setStats] = useState({ 
+    totalSpent: 0, 
+    totalWon: 0, 
+    activeEntries: 0, 
+    winRate: 0, 
+    loyaltyPoints: 0 
+  });
   const [activePools, setActivePools] = useState([]);
   const [myEntries, setMyEntries] = useState([]);
   const [myWins, setMyWins] = useState([]);
@@ -51,13 +57,12 @@ export default function Dashboard() {
       setProfile(profile || {});
       
       if (profile && profile.agreement_accepted !== true) {
-        router.push('/register');
+        router.push('/login');
         return;
       }
       
       await loadDashboardData(user.id);
       await loadRecentActivities(user.id);
-      await loadBadges(user.id);
       
     } catch (error) {
       console.error('Error:', error);
@@ -81,6 +86,8 @@ export default function Dashboard() {
             name,
             prize_name,
             target_amount,
+            entry_fee,
+            contribution_amount,
             status,
             winner_id
           )
@@ -97,11 +104,17 @@ export default function Dashboard() {
       const activeEntriesMap = new Map();
       contributions?.forEach(c => {
         if (c.pools && c.pools.status === 'active') {
+          const entryFee = c.pools.entry_fee || c.pools.contribution_amount || 10;
+          const totalCollection = c.pools.target_amount * 1.2;
+          const totalSeats = Math.floor(totalCollection / entryFee);
+          
           if (!activeEntriesMap.has(c.pool_id)) {
             activeEntriesMap.set(c.pool_id, { 
               pool: c.pools, 
               totalAmount: c.amount,
-              joinedDate: c.created_at
+              joinedDate: c.created_at,
+              entryFee: entryFee,
+              totalSeats: totalSeats
             });
           } else {
             activeEntriesMap.get(c.pool_id).totalAmount += c.amount;
@@ -134,7 +147,10 @@ export default function Dashboard() {
       setMyEntries(activeEntries);
       setMyWins(wins || []);
       
-      // Fetch general active pools with pagination
+      // Load badges after wins are set
+      await loadBadges(userId, wins?.length || 0, totalSpent, profile);
+      
+      // Fetch active pools
       await loadMorePools(0, true);
       
     } catch (error) {
@@ -218,14 +234,13 @@ export default function Dashboard() {
     }
   }
 
-  async function loadBadges(userId) {
-    const winsCount = myWins.length || 0;
+  async function loadBadges(userId, winsCount, totalSpent, profile) {
     const badgesList = [];
     
     if (winsCount >= 1) badgesList.push({ name: 'First Win', icon: '🥇', color: 'bg-yellow-100 text-yellow-700' });
     if (winsCount >= 5) badgesList.push({ name: 'Rising Star', icon: '⭐', color: 'bg-blue-100 text-blue-700' });
     if (winsCount >= 10) badgesList.push({ name: 'Champion', icon: '🏆', color: 'bg-purple-100 text-purple-700' });
-    if (stats.totalSpent >= 10000) badgesList.push({ name: 'Big Spender', icon: '💰', color: 'bg-green-100 text-green-700' });
+    if (totalSpent >= 10000) badgesList.push({ name: 'Big Spender', icon: '💰', color: 'bg-green-100 text-green-700' });
     if (profile?.referral_count >= 5) badgesList.push({ name: 'Super Referrer', icon: '🤝', color: 'bg-orange-100 text-orange-700' });
     
     if (badgesList.length === 0) {
@@ -259,7 +274,6 @@ export default function Dashboard() {
     >
       <BackButton fallbackHref="/" />
       
-      {/* ADD THIS LINE - Global Announcement Banner */}
       <GlobalAnnouncement />
       
       {/* Role Description Card */}
@@ -291,7 +305,7 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Quick Stats - Added Loyalty Points */}
+      {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
           <div className="flex items-center gap-3">
@@ -363,7 +377,7 @@ export default function Dashboard() {
               <>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {activePools.map((pool) => (
-                    <PoolCard key={pool.id} pool={pool} compact={true} />
+                    <PoolCard key={pool.id} pool={pool} />
                   ))}
                 </div>
                 {hasMore && (
@@ -455,27 +469,35 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="space-y-3 max-h-80 overflow-y-auto">
-                {myEntries.map((entry, idx) => (
-                  <Link 
-                    key={idx} 
-                    href={`/pools/${entry.pool.id}`} 
-                    className="block p-3 rounded-xl border hover:border-green-300 hover:shadow-sm transition bg-gray-50"
-                  >
-                    <p className="font-semibold text-gray-800 truncate text-sm">{entry.pool.prize_name || entry.pool.name}</p>
-                    <div className="flex justify-between mt-2 text-xs">
-                      <span className="text-green-600 font-medium">Contributed: {entry.totalAmount.toLocaleString()} ETB</span>
-                      <span className="text-gray-500">Target: {entry.pool.target_amount?.toLocaleString()} ETB</span>
-                    </div>
-                    <div className="mt-1">
-                      <div className="w-full bg-gray-200 rounded-full h-1">
-                        <div 
-                          className="bg-green-600 h-1 rounded-full" 
-                          style={{ width: `${Math.min((entry.totalAmount / entry.pool.target_amount) * 100, 100)}%` }}
-                        ></div>
+                {myEntries.map((entry, idx) => {
+                  const totalCollection = entry.pool.target_amount * 1.2;
+                  const progress = (entry.totalAmount / totalCollection) * 100;
+                  
+                  return (
+                    <Link 
+                      key={idx} 
+                      href={`/pools/${entry.pool.id}`} 
+                      className="block p-3 rounded-xl border hover:border-green-300 hover:shadow-sm transition bg-gray-50"
+                    >
+                      <p className="font-semibold text-gray-800 truncate text-sm">{entry.pool.prize_name || entry.pool.name}</p>
+                      <div className="flex justify-between mt-2 text-xs">
+                        <span className="text-green-600 font-medium">Contributed: {entry.totalAmount.toLocaleString()} ETB</span>
+                        <span className="text-gray-500">Target: {entry.pool.target_amount?.toLocaleString()} ETB</span>
                       </div>
-                    </div>
-                  </Link>
-                ))}
+                      <div className="mt-1">
+                        <div className="w-full bg-gray-200 rounded-full h-1">
+                          <div 
+                            className="bg-green-600 h-1 rounded-full" 
+                            style={{ width: `${Math.min(progress, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {entry.entryFee} ETB per seat • {entry.totalSeats.toLocaleString()} total seats
+                      </p>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>
