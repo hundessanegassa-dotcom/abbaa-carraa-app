@@ -876,7 +876,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Overview Tab - Full content */}
+        {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
@@ -954,7 +954,14 @@ export default function AdminDashboard() {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-gray-50">
-                      <tr><th className="px-4 py-3 text-left">Prize</th><th className="px-4 py-3 text-left">Target</th><th className="px-4 py-3 text-left">Raised</th><th className="px-4 py-3 text-left">Your 20%</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Action</th></tr>
+                      <tr>
+                        <th className="px-4 py-3 text-left">Prize</th>
+                        <th className="px-4 py-3 text-left">Target</th>
+                        <th className="px-4 py-3 text-left">Raised</th>
+                        <th className="px-4 py-3 text-left">Your 20%</th>
+                        <th className="px-4 py-3 text-left">Status</th>
+                        <th className="px-4 py-3 text-left">Action</th>
+                      </tr>
                     </thead>
                     <tbody>
                       {myPools.map(pool => (
@@ -965,7 +972,7 @@ export default function AdminDashboard() {
                           <td className="px-4 py-3 font-bold text-green-600">ETB {((pool.target_amount || 0) * 0.20).toLocaleString()}</td>
                           <td className="px-4 py-3"><span className={`px-2 py-1 rounded-full text-xs ${pool.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{pool.status}</span></td>
                           <td className="px-4 py-3"><Link href={`/pools/${pool.id}`} className="text-red-600 text-sm hover:underline">View</Link></td>
-                        </table>
+                        </tr>
                       ))}
                     </tbody>
                   </table>
@@ -975,7 +982,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Merkato VIP Tab - With Edit Functionality */}
+        {/* Merkato VIP Tab */}
         {activeTab === 'merkato' && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -985,7 +992,6 @@ export default function AdminDashboard() {
               <div className="bg-gradient-to-r from-red-500 to-rose-600 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">{merkatoStats.pending_draws}</p><p className="text-sm opacity-90">Pending Draws</p></div>
             </div>
 
-            {/* Merkato Pools with Edit Button */}
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
               <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
                 <h2 className="font-bold text-lg">🏪 Merkato VIP Pools</h2>
@@ -1056,7 +1062,6 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Recent Winners */}
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
               <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">🏆 Recent Merkato Winners</h2></div>
               <div className="p-4">
@@ -1083,15 +1088,33 @@ export default function AdminDashboard() {
             <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">👥 User Management</h2></div>
             <div className="overflow-x-auto p-4">
               <table className="w-full">
-                <thead className="bg-gray-50"><tr><th className="px-4 py-3 text-left">Name</th><th className="px-4 py-3 text-left">Email</th><th className="px-4 py-3 text-left">Role</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Actions</th></tr></thead>
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left">Name</th>
+                    <th className="px-4 py-3 text-left">Email</th>
+                    <th className="px-4 py-3 text-left">Role</th>
+                    <th className="px-4 py-3 text-left">Status</th>
+                    <th className="px-4 py-3 text-left">Actions</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {users.map(u => (
                     <tr key={u.id} className="border-b hover:bg-gray-50">
                       <td className="px-4 py-3">{u.full_name || 'N/A'}</td>
                       <td className="px-4 py-3">{u.email}</td>
-                      <td className="px-4 py-3"><select onChange={(e) => updateUserRole(u.id, e.target.value)} defaultValue={u.role || 'individual'} className="border rounded px-2 py-1 text-sm"><option value="individual">Individual</option><option value="agent">Agent</option><option value="vendor">Vendor</option><option value="organization">Organization</option><option value="admin">Admin</option></select></td>
+                      <td className="px-4 py-3">
+                        <select onChange={(e) => updateUserRole(u.id, e.target.value)} defaultValue={u.role || 'individual'} className="border rounded px-2 py-1 text-sm">
+                          <option value="individual">Individual</option>
+                          <option value="agent">Agent</option>
+                          <option value="vendor">Vendor</option>
+                          <option value="organization">Organization</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                      </td>
                       <td className="px-4 py-3">{u.is_banned ? <span className="text-red-600 font-medium">Banned</span> : <span className="text-green-600">Active</span>}</td>
-                      <td className="px-4 py-3"><button onClick={() => toggleUserBan(u.id, u.is_banned)} className={`px-3 py-1 rounded text-xs ${u.is_banned ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>{u.is_banned ? 'Unban' : 'Ban'}</button></td>
+                      <td className="px-4 py-3">
+                        <button onClick={() => toggleUserBan(u.id, u.is_banned)} className={`px-3 py-1 rounded text-xs ${u.is_banned ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>{u.is_banned ? 'Unban' : 'Ban'}</button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -1106,7 +1129,16 @@ export default function AdminDashboard() {
             <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">🌊 All Platform Pools</h2></div>
             <div className="overflow-x-auto p-4">
               <table className="w-full">
-                <thead className="bg-gray-50"><tr><th className="px-4 py-3 text-left">Prize</th><th className="px-4 py-3 text-left">Creator</th><th className="px-4 py-3 text-left">Target</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Featured</th><th className="px-4 py-3 text-left">Actions</th></tr></thead>
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left">Prize</th>
+                    <th className="px-4 py-3 text-left">Creator</th>
+                    <th className="px-4 py-3 text-left">Target</th>
+                    <th className="px-4 py-3 text-left">Status</th>
+                    <th className="px-4 py-3 text-left">Featured</th>
+                    <th className="px-4 py-3 text-left">Actions</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {allPools.map(p => (
                     <tr key={p.id} className="border-b hover:bg-gray-50">
@@ -1115,7 +1147,12 @@ export default function AdminDashboard() {
                       <td className="px-4 py-3">ETB {p.target_amount?.toLocaleString()}</td>
                       <td className="px-4 py-3"><span className={`px-2 py-1 rounded-full text-xs ${p.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{p.status}</span></td>
                       <td className="px-4 py-3">{p.is_featured ? '⭐ Featured' : ''}</td>
-                      <td className="px-4 py-3 flex gap-1 flex-wrap"><button onClick={() => togglePoolStatus(p.id, p.status)} className="bg-yellow-600 text-white px-2 py-1 rounded text-xs">{p.status === 'active' ? 'Pause' : 'Activate'}</button><button onClick={() => toggleFeaturedPool(p.id, p.is_featured)} className="bg-blue-600 text-white px-2 py-1 rounded text-xs">{p.is_featured ? 'Unfeature' : 'Feature'}</button><button onClick={() => deletePool(p.id)} className="bg-red-600 text-white px-2 py-1 rounded text-xs">Delete</button><Link href={`/pools/${p.id}`} className="bg-gray-600 text-white px-2 py-1 rounded text-xs">View</Link></td>
+                      <td className="px-4 py-3 flex gap-1 flex-wrap">
+                        <button onClick={() => togglePoolStatus(p.id, p.status)} className="bg-yellow-600 text-white px-2 py-1 rounded text-xs">{p.status === 'active' ? 'Pause' : 'Activate'}</button>
+                        <button onClick={() => toggleFeaturedPool(p.id, p.is_featured)} className="bg-blue-600 text-white px-2 py-1 rounded text-xs">{p.is_featured ? 'Unfeature' : 'Feature'}</button>
+                        <button onClick={() => deletePool(p.id)} className="bg-red-600 text-white px-2 py-1 rounded text-xs">Delete</button>
+                        <Link href={`/pools/${p.id}`} className="bg-gray-600 text-white px-2 py-1 rounded text-xs">View</Link>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -1364,8 +1401,16 @@ export default function AdminDashboard() {
             <h3 className="text-xl font-bold mb-4">Create Announcement</h3>
             <input type="text" placeholder="Title" className="w-full border rounded-lg p-2 mb-3" value={newAnnouncement.title} onChange={(e) => setNewAnnouncement({...newAnnouncement, title: e.target.value})} />
             <textarea placeholder="Content" rows="4" className="w-full border rounded-lg p-2 mb-3" value={newAnnouncement.content} onChange={(e) => setNewAnnouncement({...newAnnouncement, content: e.target.value})}></textarea>
-            <select className="w-full border rounded-lg p-2 mb-4" value={newAnnouncement.target_audience} onChange={(e) => setNewAnnouncement({...newAnnouncement, target_audience: e.target.value})}><option value="all">All Users</option><option value="agents">Agents</option><option value="vendors">Vendors</option><option value="individuals">Individuals</option></select>
-            <div className="flex gap-3"><button onClick={createAnnouncement} className="flex-1 bg-blue-600 text-white py-2 rounded-lg">Publish</button><button onClick={() => setShowAnnouncementModal(false)} className="flex-1 bg-gray-200 py-2 rounded-lg">Cancel</button></div>
+            <select className="w-full border rounded-lg p-2 mb-4" value={newAnnouncement.target_audience} onChange={(e) => setNewAnnouncement({...newAnnouncement, target_audience: e.target.value})}>
+              <option value="all">All Users</option>
+              <option value="agents">Agents</option>
+              <option value="vendors">Vendors</option>
+              <option value="individuals">Individuals</option>
+            </select>
+            <div className="flex gap-3">
+              <button onClick={createAnnouncement} className="flex-1 bg-blue-600 text-white py-2 rounded-lg">Publish</button>
+              <button onClick={() => setShowAnnouncementModal(false)} className="flex-1 bg-gray-200 py-2 rounded-lg">Cancel</button>
+            </div>
           </div>
         </div>
       )}
