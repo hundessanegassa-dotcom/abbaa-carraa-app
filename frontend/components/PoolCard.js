@@ -9,6 +9,7 @@ export default function PoolCard({ pool, featured = false }) {
   const [imageError, setImageError] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isJoining, setIsJoining] = useState(false); // NEW: Loading state for join button
 
   useEffect(() => {
     setMounted(true);
@@ -124,7 +125,7 @@ export default function PoolCard({ pool, featured = false }) {
     <>
       <div className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300">
         {/* Image Section */}
-        <Link href={`/pools/${pool.id}`} className="block">
+        <Link href={`/pools/${pool.id}`} className="block" onClick={() => setIsJoining(false)}>
           <div className="relative h-36 sm:h-44 md:h-48 overflow-hidden bg-gray-100 cursor-pointer">
             {pool.image_url && !imageError ? (
               <img 
@@ -165,7 +166,7 @@ export default function PoolCard({ pool, featured = false }) {
         {/* Content Section */}
         <div className="p-3 sm:p-4">
           {/* Prize Name */}
-          <Link href={`/pools/${pool.id}`} className="block">
+          <Link href={`/pools/${pool.id}`} className="block" onClick={() => setIsJoining(false)}>
             <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-800 mb-1 line-clamp-1 hover:text-green-600 transition cursor-pointer">
               {pool.prize_name}
             </h3>
@@ -237,11 +238,20 @@ export default function PoolCard({ pool, featured = false }) {
               <Link 
                 href={`/login?redirect=/pools/${pool.id}`}
                 className="block w-full"
+                onClick={() => setIsJoining(true)}
               >
                 <button 
-                  className="w-full bg-green-600 hover:bg-green-700 text-white py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-1 cursor-pointer"
+                  className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-1 cursor-pointer disabled:opacity-70"
+                  disabled={isJoining}
                 >
-                  🎯 {t('pools.join_now') || 'Join Now'} (ETB {formatPrice(entryFee)})
+                  {isJoining ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Redirecting...
+                    </span>
+                  ) : (
+                    <>🎯 {t('pools.join_now') || 'Join Now'} (ETB {formatPrice(entryFee)})</>
+                  )}
                 </button>
               </Link>
             ) : (
