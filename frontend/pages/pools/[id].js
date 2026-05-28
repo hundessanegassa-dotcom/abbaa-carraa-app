@@ -1,4 +1,3 @@
-
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -32,6 +31,7 @@ export default function PoolDetails() {
     }
   }, [id]);
 
+  // Cleanup reserved seats on unmount
   useEffect(() => {
     return () => {
       if (reservedSeats.length > 0) {
@@ -39,6 +39,17 @@ export default function PoolDetails() {
       }
     };
   }, [reservedSeats]);
+
+  // NEW: Clear stored redirect values once user is on the pool page
+  useEffect(() => {
+    if (user) {
+      // Clear any stored redirect values to prevent accidental reuse
+      sessionStorage.removeItem('redirectAfterLogin');
+      sessionStorage.removeItem('pendingPoolId');
+      sessionStorage.removeItem('pendingRole');
+      console.log('Cleared stored redirect values after successful login');
+    }
+  }, [user]);
 
   async function getCurrentUser() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -108,6 +119,7 @@ export default function PoolDetails() {
       // Store the pool ID to redirect back after login
       sessionStorage.setItem('pendingPoolId', id);
       sessionStorage.setItem('pendingRole', 'individual');
+      sessionStorage.setItem('redirectAfterLogin', `/pools/${id}`);
       toast.error('Please login to join this pool');
       router.push('/login');
       return;
@@ -245,7 +257,7 @@ export default function PoolDetails() {
               <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">{pool.prize_name}</h1>
               <p className="text-gray-600 mb-6">{pool.description || 'Join this amazing pool for a chance to win big!'}</p>
 
-              {/* FIXED: Stats Grid with correct calculations */}
+              {/* Stats Grid with correct calculations */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                 <div className="bg-green-50 rounded-xl p-3 text-center border border-green-100">
                   <p className="text-gray-500 text-xs">🏆 Winner Gets</p>
