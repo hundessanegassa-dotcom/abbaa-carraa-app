@@ -73,6 +73,19 @@ export default function AdminDashboard() {
     draw_time: '20:00'
   });
   
+  // Edit Merkato Pool State
+  const [editingMerkatoPool, setEditingMerkatoPool] = useState(null);
+  const [showEditMerkatoModal, setShowEditMerkatoModal] = useState(false);
+  const [editMerkatoData, setEditMerkatoData] = useState({
+    id: '',
+    tier: '',
+    name: '',
+    contribution_amount: 0,
+    prize_amount: 0,
+    draw_time: '',
+    status: ''
+  });
+  
   // Announcement modal
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [newAnnouncement, setNewAnnouncement] = useState({ title: '', content: '', target_audience: 'all' });
@@ -492,6 +505,55 @@ export default function AdminDashboard() {
     }
   }
 
+  // Update Merkato Pool
+  async function updateMerkatoPool() {
+    if (!editMerkatoData.id) {
+      toast.error('No pool selected');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('merkato_vip_pools')
+        .update({
+          contribution_amount: editMerkatoData.contribution_amount,
+          prize_amount: editMerkatoData.prize_amount,
+          draw_time: editMerkatoData.draw_time,
+          name: editMerkatoData.name,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editMerkatoData.id);
+
+      if (error) throw error;
+
+      toast.success('Merkato pool updated successfully!');
+      setShowEditMerkatoModal(false);
+      setEditingMerkatoPool(null);
+      await loadMerkatoData();
+    } catch (error) {
+      console.error('Update Merkato pool error:', error);
+      toast.error('Failed to update pool: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Open edit modal
+  function openEditMerkatoModal(pool) {
+    setEditMerkatoData({
+      id: pool.id,
+      tier: pool.tier,
+      name: pool.name,
+      contribution_amount: pool.contribution_amount,
+      prize_amount: pool.prize_amount,
+      draw_time: pool.draw_time ? new Date(pool.draw_time).toISOString().slice(0, 16) : '',
+      status: pool.status
+    });
+    setEditingMerkatoPool(pool);
+    setShowEditMerkatoModal(true);
+  }
+
   async function drawMerkatoWinner(poolId) {
     if (!confirm('Draw winner for this pool? This action cannot be undone.')) return;
     
@@ -891,7 +953,9 @@ export default function AdminDashboard() {
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-gray-50"><tr><th className="px-4 py-3 text-left">Prize</th><th className="px-4 py-3 text-left">Target</th><th className="px-4 py-3 text-left">Raised</th><th className="px-4 py-3 text-left">Your 20%</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Action</th></tr></thead>
+                    <thead className="bg-gray-50">
+                      <tr><th className="px-4 py-3 text-left">Prize</th><th className="px-4 py-3 text-left">Target</th><th className="px-4 py-3 text-left">Raised</th><th className="px-4 py-3 text-left">Your 20%</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Action</th></tr>
+                    </thead>
                     <tbody>
                       {myPools.map(pool => (
                         <tr key={pool.id} className="border-b hover:bg-gray-50">
@@ -901,7 +965,7 @@ export default function AdminDashboard() {
                           <td className="px-4 py-3 font-bold text-green-600">ETB {((pool.target_amount || 0) * 0.20).toLocaleString()}</td>
                           <td className="px-4 py-3"><span className={`px-2 py-1 rounded-full text-xs ${pool.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{pool.status}</span></td>
                           <td className="px-4 py-3"><Link href={`/pools/${pool.id}`} className="text-red-600 text-sm hover:underline">View</Link></td>
-                        </tr>
+                        </table>
                       ))}
                     </tbody>
                   </table>
@@ -911,7 +975,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Merkato VIP Tab - Full content */}
+        {/* Merkato VIP Tab - With Edit Functionality */}
         {activeTab === 'merkato' && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -921,33 +985,78 @@ export default function AdminDashboard() {
               <div className="bg-gradient-to-r from-red-500 to-rose-600 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">{merkatoStats.pending_draws}</p><p className="text-sm opacity-90">Pending Draws</p></div>
             </div>
 
+            {/* Merkato Pools with Edit Button */}
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
               <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
-                <h2 className="font-bold text-lg">🏪 Active Merkato VIP Pools</h2>
+                <h2 className="font-bold text-lg">🏪 Merkato VIP Pools</h2>
                 <button onClick={() => setShowMerkatoModal(true)} className="bg-yellow-600 text-white px-4 py-1 rounded-full text-sm">+ Create Pool</button>
               </div>
               <div className="p-4">
-                {merkatoPools.filter(p => p.status === 'active').length === 0 ? (
-                  <p className="text-gray-400 text-center py-8">No active Merkato pools</p>
+                {merkatoPools.length === 0 ? (
+                  <p className="text-gray-400 text-center py-8">No Merkato pools created yet</p>
                 ) : (
                   <div className="space-y-3">
-                    {merkatoPools.filter(p => p.status === 'active').map(pool => (
-                      <div key={pool.id} className="border rounded-lg p-4 flex justify-between items-center">
-                        <div>
-                          <div className="flex items-center gap-2"><span className="text-2xl">{pool.tier === 'daily' ? '⭐' : pool.tier === 'weekly' ? '🏆' : '👑'}</span><span className="font-bold">{pool.name}</span><span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{pool.tier}</span></div>
-                          <p className="text-sm text-gray-500 mt-1">Prize: ETB {pool.prize_amount?.toLocaleString()} | Entry: ETB {pool.contribution_amount?.toLocaleString()}</p>
-                          <p className="text-xs text-gray-400">Draw: {new Date(pool.draw_time).toLocaleString()}</p>
+                    {merkatoPools.map(pool => {
+                      const getTierColors = (tier) => {
+                        switch(tier) {
+                          case 'daily': return { bg: 'from-yellow-500 to-orange-600', icon: '⭐', label: 'Daily (1M)' };
+                          case 'weekly': return { bg: 'from-purple-500 to-pink-600', icon: '🏆', label: 'Weekly (10M)' };
+                          case 'monthly': return { bg: 'from-green-600 to-teal-700', icon: '👑', label: 'Monthly (40M)' };
+                          default: return { bg: 'from-gray-600 to-gray-800', icon: '🎯', label: tier };
+                        }
+                      };
+                      const colors = getTierColors(pool.tier);
+                      
+                      return (
+                        <div key={pool.id} className={`bg-gradient-to-r ${colors.bg} rounded-lg p-4 text-white`}>
+                          <div className="flex justify-between items-center flex-wrap gap-3">
+                            <div className="flex items-center gap-3">
+                              <span className="text-3xl">{colors.icon}</span>
+                              <div>
+                                <div className="font-bold text-lg">{pool.name}</div>
+                                <div className="text-xs opacity-90">{colors.label}</div>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-4 text-center text-sm">
+                              <div>
+                                <p className="text-xs opacity-75">Entry Fee</p>
+                                <p className="font-bold">ETB {pool.contribution_amount?.toLocaleString()}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs opacity-75">Prize</p>
+                                <p className="font-bold">ETB {pool.prize_amount?.toLocaleString()}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs opacity-75">Total Seats</p>
+                                <p className="font-bold">{Math.floor((pool.prize_amount * 1.2) / pool.contribution_amount).toLocaleString()}</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button 
+                                onClick={() => openEditMerkatoModal(pool)}
+                                className="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-lg text-sm transition flex items-center gap-1"
+                              >
+                                ✏️ Edit
+                              </button>
+                              {pool.status === 'active' && (
+                                <Link href={`/admin/merkato-draw?pool=${pool.id}`} className="bg-purple-600 text-white px-3 py-1 rounded text-sm">
+                                  Draw Winner
+                                </Link>
+                              )}
+                            </div>
+                          </div>
+                          <div className="mt-2 text-xs opacity-75">
+                            Draw Time: {pool.draw_time ? new Date(pool.draw_time).toLocaleString() : 'Not set'}
+                          </div>
                         </div>
-                        <div className="flex gap-2">
-                          <Link href={`/admin/merkato-draw?pool=${pool.id}`} className="bg-purple-600 text-white px-3 py-1 rounded text-sm">Draw Winner</Link>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
             </div>
 
+            {/* Recent Winners */}
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
               <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">🏆 Recent Merkato Winners</h2></div>
               <div className="p-4">
@@ -1133,6 +1242,116 @@ export default function AdminDashboard() {
               <div><label className="block text-sm font-medium mb-2">Draw Time (Ethiopia Time)</label><input type="time" className="w-full border rounded-lg p-3" value={newMerkatoPool.draw_time} onChange={(e) => setNewMerkatoPool({...newMerkatoPool, draw_time: e.target.value})} /></div>
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm"><p className="font-semibold">📝 Pool Rules:</p><ul className="text-xs mt-1 space-y-1"><li>• Daily: 500 ETB entry → Win 1,000,000 ETB</li><li>• Weekly: 2,500 ETB entry → Win 10,000,000 ETB</li><li>• Monthly: 5,000 ETB entry → Win 40,000,000 ETB</li><li>• Draw happens automatically or via admin</li></ul></div>
               <div className="flex gap-3 pt-4"><button onClick={createMerkatoPool} disabled={loading} className="flex-1 bg-gradient-to-r from-yellow-600 to-orange-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition">{loading ? 'Creating...' : '✨ Create Merkato Pool'}</button><button onClick={() => setShowMerkatoModal(false)} className="flex-1 border border-gray-300 py-3 rounded-lg hover:bg-gray-50">Cancel</button></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Merkato VIP Pool Modal */}
+      {showEditMerkatoModal && editingMerkatoPool && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-md w-full">
+            <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
+              <h2 className="text-xl font-bold">✏️ Edit Merkato VIP Pool</h2>
+              <button onClick={() => setShowEditMerkatoModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+            </div>
+            <div className="p-6 space-y-5">
+              {/* Pool Preview with Color */}
+              <div className={`bg-gradient-to-r ${editingMerkatoPool.tier === 'daily' ? 'from-yellow-500 to-orange-600' : editingMerkatoPool.tier === 'weekly' ? 'from-purple-500 to-pink-600' : 'from-green-600 to-teal-700'} rounded-xl p-4 text-white text-center`}>
+                <div className="text-3xl mb-1">{editingMerkatoPool.tier === 'daily' ? '⭐' : editingMerkatoPool.tier === 'weekly' ? '🏆' : '👑'}</div>
+                <p className="font-bold">{editingMerkatoPool.name}</p>
+                <p className="text-xs opacity-80">{editingMerkatoPool.tier === 'daily' ? 'Daily Millionaire' : editingMerkatoPool.tier === 'weekly' ? 'Weekly Mega Winner' : 'Monthly Winner'}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Pool Name</label>
+                <input
+                  type="text"
+                  value={editMerkatoData.name}
+                  onChange={(e) => setEditMerkatoData({...editMerkatoData, name: e.target.value})}
+                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Entry Fee (ETB)</label>
+                  <input
+                    type="number"
+                    value={editMerkatoData.contribution_amount}
+                    onChange={(e) => {
+                      const newEntryFee = parseInt(e.target.value);
+                      setEditMerkatoData({...editMerkatoData, contribution_amount: newEntryFee});
+                    }}
+                    className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    Current: ETB {editMerkatoData.contribution_amount?.toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Prize Amount (ETB)</label>
+                  <input
+                    type="number"
+                    value={editMerkatoData.prize_amount}
+                    onChange={(e) => {
+                      const newPrize = parseInt(e.target.value);
+                      setEditMerkatoData({...editMerkatoData, prize_amount: newPrize});
+                    }}
+                    className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    Current: ETB {editMerkatoData.prize_amount?.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+
+              {/* Live Calculation Display */}
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-sm font-semibold text-gray-700 mb-2">📊 Updated Calculations:</p>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Total Collection (+20%):</span>
+                    <span className="font-bold text-green-600">ETB {(editMerkatoData.prize_amount * 1.2).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Total Seats:</span>
+                    <span className="font-bold text-blue-600">{Math.floor((editMerkatoData.prize_amount * 1.2) / editMerkatoData.contribution_amount).toLocaleString()} seats</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Admin Commission (20%):</span>
+                    <span className="font-bold text-orange-600">ETB {(editMerkatoData.prize_amount * 0.2).toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Draw Time</label>
+                <input
+                  type="datetime-local"
+                  value={editMerkatoData.draw_time}
+                  onChange={(e) => setEditMerkatoData({...editMerkatoData, draw_time: e.target.value})}
+                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500"
+                />
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
+                <p className="font-semibold text-yellow-800">📝 Note:</p>
+                <p className="text-xs text-yellow-700 mt-1">
+                  • Changing entry fee or prize amount will automatically recalculate total seats<br/>
+                  • Colors will remain the same (Yellow for Daily, Purple for Weekly, Green for Monthly)<br/>
+                  • Changes take effect immediately for new participants
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button onClick={updateMerkatoPool} disabled={loading} className="flex-1 bg-gradient-to-r from-yellow-600 to-orange-600 text-white py-2 rounded-lg font-semibold hover:shadow-lg transition">
+                  {loading ? 'Saving...' : '💾 Save Changes'}
+                </button>
+                <button onClick={() => setShowEditMerkatoModal(false)} className="flex-1 border border-gray-300 py-2 rounded-lg hover:bg-gray-50 transition">
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>
