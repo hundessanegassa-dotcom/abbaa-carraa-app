@@ -34,6 +34,7 @@ export default function Home() {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [showRoleButtons, setShowRoleButtons] = useState(false); // NEW: Track when to show buttons
 
   useEffect(() => {
     const cachedData = sessionStorage.getItem('homepage_data');
@@ -48,6 +49,20 @@ export default function Home() {
     } else {
       loadData();
     }
+
+    // NEW: Detect when user scrolls to bottom to show role buttons
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + window.innerHeight;
+      const pageHeight = document.documentElement.scrollHeight;
+      
+      // Show buttons when user is near the bottom (last 200px)
+      if (scrollPosition >= pageHeight - 200) {
+        setShowRoleButtons(true);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const loadData = async () => {
@@ -180,30 +195,8 @@ export default function Home() {
               <span className="text-green-600 text-lg">💚</span>
               <span className="text-green-700 font-medium">2% supports kidney & heart disease patients</span>
             </div>
-            
-            {/* Role Buttons */}
-            <div className="flex flex-wrap justify-center gap-3 mt-6">
-              <button
-                onClick={() => handleRoleSelection('agent')}
-                className="bg-yellow-50 text-yellow-700 px-4 py-2 rounded-full text-sm hover:bg-yellow-100 transition hover:scale-105 transform touch-target"
-              >
-                🤝 Become an Agent
-              </button>
-              <button
-                onClick={() => handleRoleSelection('vendor')}
-                className="bg-purple-50 text-purple-700 px-4 py-2 rounded-full text-sm hover:bg-purple-100 transition hover:scale-105 transform touch-target"
-              >
-                🏪 Become a Vendor
-              </button>
-              <button
-                onClick={() => handleRoleSelection('organization')}
-                className="bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm hover:bg-blue-100 transition hover:scale-105 transform touch-target"
-              >
-                🏢 Become an Organization
-              </button>
-            </div>
 
-            {/* Individual Participant Button */}
+            {/* Individual Participant Button - Only this remains in hero section */}
             <div className="flex justify-center mt-4">
               <button
                 onClick={handleStartWinning}
@@ -391,6 +384,49 @@ export default function Home() {
                 <h3 className="font-bold text-xl mb-2">Win!</h3>
                 <p className="text-gray-600">Win amazing prizes!</p>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* BECOME AGENT/VENDOR/ORG - MOVED TO FOOTER SECTION */}
+        <div className={`bg-gradient-to-r from-gray-900 to-gray-800 text-white py-12 transition-all duration-700 transform ${showRoleButtons ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+          <div className="container mx-auto px-4 text-center">
+            <div className="mb-6">
+              <h2 className="text-2xl md:text-3xl font-bold mb-2">Want to Earn More?</h2>
+              <p className="text-gray-300 text-sm md:text-base">Join our partner program and start earning commissions today!</p>
+            </div>
+            
+            <div className="flex flex-wrap justify-center gap-4">
+              <button
+                onClick={() => handleRoleSelection('agent')}
+                className="group bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-6 py-3 rounded-full font-semibold text-base hover:shadow-xl transition transform hover:scale-105 touch-target flex items-center gap-2"
+              >
+                <span className="text-xl">🤝</span>
+                Become an Agent
+                <span className="text-sm opacity-80">(10% commission)</span>
+              </button>
+              
+              <button
+                onClick={() => handleRoleSelection('vendor')}
+                className="group bg-gradient-to-r from-purple-500 to-pink-600 text-white px-6 py-3 rounded-full font-semibold text-base hover:shadow-xl transition transform hover:scale-105 touch-target flex items-center gap-2"
+              >
+                <span className="text-xl">🏪</span>
+                Become a Vendor
+                <span className="text-sm opacity-80">(10% commission)</span>
+              </button>
+              
+              <button
+                onClick={() => handleRoleSelection('organization')}
+                className="group bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-6 py-3 rounded-full font-semibold text-base hover:shadow-xl transition transform hover:scale-105 touch-target flex items-center gap-2"
+              >
+                <span className="text-xl">🏢</span>
+                Become an Organization
+                <span className="text-sm opacity-80">(10% commission)</span>
+              </button>
+            </div>
+            
+            <div className="mt-6 text-xs text-gray-400">
+              <p>✓ No upfront fees ✓ Earn 10% on every successful pool ✓ 24/7 support</p>
             </div>
           </div>
         </div>
