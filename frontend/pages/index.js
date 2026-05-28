@@ -6,10 +6,9 @@ import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
 import GlobalAnnouncement from '../components/GlobalAnnouncement';
 
-// Dynamic imports with no loading state
+// Dynamic imports with no loading state - REMOVED RoleBanners
 const MovingAd = dynamic(() => import('../components/MovingAd'), { ssr: false, loading: () => null });
 const SimpleFilters = dynamic(() => import('../components/SimpleFilters'), { ssr: false, loading: () => null });
-const RoleBanners = dynamic(() => import('../components/RoleBanners'), { ssr: false, loading: () => null });
 const Testimonials = dynamic(() => import('../components/Testimonials'), { ssr: false, loading: () => null });
 const NewsletterSubscribe = dynamic(() => import('../components/NewsletterSubscribe'), { ssr: false, loading: () => null });
 const AdvertisingBanner = dynamic(() => import('../components/AdvertisingBanner'), { ssr: false, loading: () => null });
@@ -34,7 +33,7 @@ export default function Home() {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [showRoleButtons, setShowRoleButtons] = useState(false); // NEW: Track when to show buttons
+  const [showRoleButtons, setShowRoleButtons] = useState(false);
 
   useEffect(() => {
     const cachedData = sessionStorage.getItem('homepage_data');
@@ -50,12 +49,11 @@ export default function Home() {
       loadData();
     }
 
-    // NEW: Detect when user scrolls to bottom to show role buttons
+    // Detect when user scrolls to bottom to show role buttons
     const handleScroll = () => {
       const scrollPosition = window.scrollY + window.innerHeight;
       const pageHeight = document.documentElement.scrollHeight;
       
-      // Show buttons when user is near the bottom (last 200px)
       if (scrollPosition >= pageHeight - 200) {
         setShowRoleButtons(true);
       }
@@ -196,7 +194,7 @@ export default function Home() {
               <span className="text-green-700 font-medium">2% supports kidney & heart disease patients</span>
             </div>
 
-            {/* Individual Participant Button - Only this remains in hero section */}
+            {/* Individual Participant Button */}
             <div className="flex justify-center mt-4">
               <button
                 onClick={handleStartWinning}
@@ -360,7 +358,8 @@ export default function Home() {
           )}
         </section>
 
-        <RoleBanners />
+        {/* RoleBanners REMOVED - No longer here */}
+
         <Testimonials />
         <NewsletterSubscribe />
 
