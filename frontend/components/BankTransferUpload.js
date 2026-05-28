@@ -225,7 +225,7 @@ export default function BankTransferUpload({
       const imageUrl = await uploadFile(file, user.id);
       toast.success('Screenshot uploaded!', { id: 'upload' });
 
-      // Create bank transfer record for admin verification - REMOVED payment_method column
+      // Create bank transfer record for admin verification
       const { data: transfer, error: transferError } = await supabase
         .from('bank_transfers')
         .insert({
@@ -236,6 +236,7 @@ export default function BankTransferUpload({
           pool_id: poolId,
           amount: amount,
           seat_numbers: seatNumbers,
+          payment_method: selectedPaymentMethod,
           reference: reference || `TRF-${Date.now()}`,
           proof_image: imageUrl,
           status: 'pending',
