@@ -169,7 +169,6 @@ export default function BankTransferUpload({
     const fileName = `${userId}_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
     const filePath = `bank-transfers/${fileName}`;
     
-    // Simulate progress
     const interval = setInterval(() => {
       if (isMounted.current) {
         setUploadProgress(prev => {
@@ -222,12 +221,11 @@ export default function BankTransferUpload({
     if (isMounted.current) setUploadProgress(0);
 
     try {
-      // Upload image
       toast.loading('Uploading screenshot...', { id: 'upload' });
       const imageUrl = await uploadFile(file, user.id);
       toast.success('Screenshot uploaded!', { id: 'upload' });
 
-      // Create bank transfer record for admin verification
+      // Create bank transfer record for admin verification - REMOVED payment_method column
       const { data: transfer, error: transferError } = await supabase
         .from('bank_transfers')
         .insert({
@@ -238,7 +236,6 @@ export default function BankTransferUpload({
           pool_id: poolId,
           amount: amount,
           seat_numbers: seatNumbers,
-          payment_method: selectedPaymentMethod,
           reference: reference || `TRF-${Date.now()}`,
           proof_image: imageUrl,
           status: 'pending',
