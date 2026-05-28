@@ -20,9 +20,15 @@ export default function AuthCallback() {
       if (sessionError) throw sessionError;
       if (!session) throw new Error('No session found');
       
-      console.log('Saving agreement for user:', session.user.id, 'Role:', userRole);
+      // Get stored redirect URL and pending pool ID BEFORE creating profile
+      const storedRedirectUrl = sessionStorage.getItem('redirectAfterLogin');
+      const storedPoolId = sessionStorage.getItem('pendingPoolId');
       
-      // First check if profile exists
+      console.log('Stored redirect URL:', storedRedirectUrl);
+      console.log('Stored pool ID:', storedPoolId);
+      console.log('User role:', userRole);
+      
+      // Check if profile exists
       const { data: existingProfile, error: fetchError } = await supabase
         .from('profiles')
         .select('id')
@@ -31,6 +37,7 @@ export default function AuthCallback() {
       
       if (existingProfile) {
         // Update existing profile
+        console.log('Updating existing profile');
         const { error: updateError } = await supabase
           .from('profiles')
           .update({
@@ -47,6 +54,7 @@ export default function AuthCallback() {
         if (updateError) throw updateError;
       } else {
         // Create new profile
+        console.log('Creating new profile');
         const { error: insertError } = await supabase
           .from('profiles')
           .insert({
@@ -66,8 +74,6 @@ export default function AuthCallback() {
         if (insertError) throw insertError;
       }
       
-      console.log('Agreement saved successfully');
-      
       // Clear pending role from storage
       localStorage.removeItem('pendingRole');
       sessionStorage.removeItem('pendingRole');
@@ -77,13 +83,26 @@ export default function AuthCallback() {
       // Small delay to ensure database commit
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Redirect based on role
+      // IMPORTANT: Redirect based on role AND stored redirect URL
       if (userRole === 'individual') {
-        if (redirectUrl && redirectUrl.startsWith('/pools/')) {
-          router.push(redirectUrl);
-        } else {
-          router.push('/dashboard');
+        // Priority 1: Redirect back to the pool they were trying to join
+        if (storedRedirectUrl && storedRedirectUrl.startsWith('/pools/')) {
+          console.log('Redirecting to stored pool URL:', storedRedirectUrl);
+          sessionStorage.removeItem('redirectAfterLogin');
+          sessionStorage.removeItem('pendingPoolId');
+          router.push(storedRedirectUrl);
+          return;
         }
+        // Priority 2: Redirect using stored pool ID
+        if (storedPoolId) {
+          console.log('Redirecting to pool ID:', storedPoolId);
+          sessionStorage.removeItem('pendingPoolId');
+          router.push(`/pools/${storedPoolId}`);
+          return;
+        }
+        // Priority 3: Go to dashboard
+        console.log('No stored pool, redirecting to dashboard');
+        router.push('/dashboard');
         return;
       }
       
@@ -99,12 +118,14 @@ export default function AuthCallback() {
       console.error('Accept agreement error:', err);
       toast.error('Failed to save agreement: ' + err.message);
     }
-  }, [userRole, redirectUrl, router]);
+  }, [userRole, router]);
 
   const handleClose = useCallback(() => {
     // Clear all storage and sign out
     localStorage.removeItem('pendingRole');
     sessionStorage.removeItem('pendingRole');
+    sessionStorage.removeItem('redirectAfterLogin');
+    sessionStorage.removeItem('pendingPoolId');
     supabase.auth.signOut();
     router.push('/login');
   }, [router]);
@@ -114,15 +135,20 @@ export default function AuthCallback() {
 
     const handleCallback = async () => {
       try {
-        // Get redirect URL from storage (set in login page)
+        // Get redirect URL from storage (set in login page or pool page)
         let redirect = localStorage.getItem('redirectAfterLogin');
         if (!redirect) redirect = sessionStorage.getItem('redirectAfterLogin');
         
-        // Clear immediately to avoid reuse
-        localStorage.removeItem('redirectAfterLogin');
-        sessionStorage.removeItem('redirectAfterLogin');
+        // Also get pending pool ID
+        const pendingPoolId = sessionStorage.getItem('pendingPoolId');
         
-        if (isMounted) setRedirectUrl(redirect);
+        console.log('Callback - redirect from storage:', redirect);
+        console.log('Callback - pending pool ID:', pendingPoolId);
+        
+        // Clear immediately to avoid reuse (but we'll keep pendingPoolId for now)
+        localStorage.removeItem('redirectAfterLogin');
+        
+        if (isMounted) setRedirectUrl(redirect || (pendingPoolId ? `/pools/${pendingPoolId}` : null));
 
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
@@ -134,7 +160,7 @@ export default function AuthCallback() {
           return;
         }
 
-        // Get pending role from sessionStorage
+        // Get pending role from sessionStorage (set in login page or pool page)
         let pendingRole = sessionStorage.getItem('pendingRole');
         if (!pendingRole) pendingRole = localStorage.getItem('pendingRole');
         
@@ -156,13 +182,19 @@ export default function AuthCallback() {
           
           toast.success(`Welcome back, ${session.user.email}!`);
           
-          // Redirect based on role and status
+          // Redirect based on role and stored pool
           if (profile.role === 'individual') {
+            // Check if we have a pending pool to redirect to
+            if (pendingPoolId) {
+              sessionStorage.removeItem('pendingPoolId');
+              router.push(`/pools/${pendingPoolId}`);
+              return;
+            }
             if (redirect && redirect.startsWith('/pools/')) {
               router.push(redirect);
-            } else {
-              router.push('/dashboard');
+              return;
             }
+            router.push('/dashboard');
           } else if (profile.role === 'admin') {
             router.push('/admin/dashboard');
           } else if (profile.status === 'approved') {
