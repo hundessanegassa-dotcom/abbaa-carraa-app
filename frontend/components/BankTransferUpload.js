@@ -22,8 +22,8 @@ export default function BankTransferUpload({
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('telebirr');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [reference, setReference] = useState('');
+  const [generatedTicket, setGeneratedTicket] = useState(null);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       isMounted.current = false;
@@ -84,7 +84,6 @@ export default function BankTransferUpload({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Compress image before upload
   const compressImage = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -200,6 +199,13 @@ export default function BankTransferUpload({
     return publicUrl;
   };
 
+  const generateTicketNumber = () => {
+    const prefix = poolId?.startsWith('merkato_') ? 'MK' : 'REG';
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 10000);
+    return `${prefix}-${timestamp}-${random}`;
+  };
+
   const handleUpload = async () => {
     if (sessionLoading) {
       toast.loading('Checking session...', { duration: 1000 });
@@ -225,7 +231,9 @@ export default function BankTransferUpload({
       const imageUrl = await uploadFile(file, user.id);
       toast.success('Screenshot uploaded!', { id: 'upload' });
 
-      // Create bank transfer record for admin verification
+      const ticketNumber = generateTicketNumber();
+
+      // Create bank transfer record
       const { data: transfer, error: transferError } = await supabase
         .from('bank_transfers')
         .insert({
@@ -240,6 +248,7 @@ export default function BankTransferUpload({
           reference: reference || `TRF-${Date.now()}`,
           proof_image: imageUrl,
           status: 'pending',
+          ticket_number: ticketNumber,
           created_at: new Date().toISOString()
         })
         .select()
@@ -247,38 +256,39 @@ export default function BankTransferUpload({
 
       if (transferError) throw transferError;
 
-      // If this is for Merkato VIP, update participant
-      if (poolId?.startsWith('merkato_')) {
-        const participantId = sessionStorage.getItem('merkatoParticipantId');
-        if (participantId) {
-          await supabase
-            .from('merkato_vip_participants')
-            .update({
-              payment_status: 'pending_verification',
-              payment_proof_url: imageUrl,
-              bank_transfer_id: transfer.id,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', participantId);
-        }
-      } else {
-        // For regular pools, update pool_seats
-        if (seatNumbers && seatNumbers.length > 0) {
-          await supabase
-            .from('pool_seats')
-            .update({
-              status: 'pending_verification',
-              bank_transfer_id: transfer.id
-            })
-            .in('seat_number', seatNumbers)
-            .eq('pool_id', poolId);
-        }
+      // For regular pools, update pool_seats with ticket info
+      if (!poolId?.startsWith('merkato_')) {
+        await supabase
+          .from('pool_seats')
+          .update({
+            status: 'pending_verification',
+            bank_transfer_id: transfer.id,
+            ticket_number: ticketNumber
+          })
+          .in('seat_number', seatNumbers)
+          .eq('pool_id', poolId);
       }
 
-      toast.success('Payment proof submitted! Admin will verify within 24 hours.');
+      // Generate unverified ticket data
+      const ticketData = {
+        ticketNumber: ticketNumber,
+        poolName: poolId?.startsWith('merkato_') ? 'Merkato VIP Pool' : 'Regular Pool',
+        poolId: poolId,
+        seats: seatNumbers,
+        amount: amount,
+        paymentMethod: selectedPaymentMethod,
+        submissionDate: new Date().toISOString(),
+        verificationStatus: 'unverified',
+        userEmail: user.email,
+        userName: userProfile?.full_name || user.email
+      };
+
+      setGeneratedTicket(ticketData);
+      
+      toast.success('Payment proof submitted! Your unverified ticket is ready.');
       
       setTimeout(() => {
-        if (onSuccess && isMounted.current) onSuccess();
+        if (onSuccess && isMounted.current) onSuccess(ticketData);
       }, 2000);
       
     } catch (err) {
@@ -437,7 +447,7 @@ export default function BankTransferUpload({
           </div>
         )}
 
-        {/* Reference Number (Optional) */}
+        {/* Reference Number */}
         <div className="mb-4">
           <label className="block text-sm font-medium mb-1">Reference Number (Optional)</label>
           <input
@@ -487,7 +497,6 @@ export default function BankTransferUpload({
             </div>
           )}
 
-          {/* Upload Progress */}
           {uploading && uploadProgress > 0 && (
             <div className="mt-3">
               <div className="flex justify-between text-xs text-gray-600 mb-1">
@@ -495,10 +504,7 @@ export default function BankTransferUpload({
                 <span>{uploadProgress}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-green-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${uploadProgress}%` }}
-                />
+                <div className="bg-green-600 h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
               </div>
             </div>
           )}
@@ -560,6 +566,19 @@ export default function BankTransferUpload({
         <p className="text-xs text-gray-500 text-center mt-4">
           Your seats will be released if payment is not completed within {formatTime(timeLeft)}
         </p>
+
+        {/* Unverified Ticket Display */}
+        {generatedTicket && (
+          <div className="mt-6 pt-4 border-t border-green-200">
+            <div className="bg-green-50 rounded-lg p-4 text-center">
+              <div className="text-3xl mb-2">🎫</div>
+              <p className="font-semibold text-green-800">Unverified Ticket Generated!</p>
+              <p className="text-xs text-green-600 mt-1">Ticket #: {generatedTicket.ticketNumber}</p>
+              <p className="text-xs text-green-600">Seats: {generatedTicket.seats.join(', ')}</p>
+              <p className="text-xs text-yellow-600 mt-2">⏳ Pending verification. You will receive a verified ticket once admin approves.</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
