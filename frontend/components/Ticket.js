@@ -32,15 +32,20 @@ export default function Ticket({
   const displayUserName = participant?.user_name || participant?.full_name || participant?.userName || 'N/A';
   const displayUserEmail = participant?.user_email || participant?.email || 'N/A';
   const displayUserPhone = participant?.phone || participant?.user_phone || 'N/A';
-  const displayPoolName = pool?.prize_name || pool?.name || 'Prize Pool';
-  const displayPrizeName = pool?.prize_name || pool?.name || 'Prize';
+  
+  // FIXED: Use actual pool name from the pool data
+  const displayPoolName = pool?.prize_name || pool?.name || participant?.pool_name || 'Prize Pool';
+  const displayPrizeName = pool?.prize_name || pool?.name || participant?.prize_name || 'Prize';
   const displayPrizeDescription = pool?.description || '';
   const displayPrizeAmount = pool?.prize || pool?.prize_amount || participant?.prize_amount || 0;
   const displayEntryFee = pool?.entryFee || pool?.contribution_amount || participant?.contribution_amount || 0;
   const displayAmount = propAmount || participant?.amount || participant?.contribution_amount || 0;
-  const displayDate = propCreatedAt || participant?.created_at || new Date().toISOString();
   const displaySeatNumbers = seatNumbers || participant?.seat_numbers || [];
+  
+  // FIXED: Pool creation/listed date
+  const displayPoolListedDate = pool?.created_at || participant?.pool_created_at || new Date().toISOString();
   const displayDrawDate = pool?.drawTime || pool?.draw_time;
+  const displayIssueDate = propCreatedAt || participant?.created_at || new Date().toISOString();
 
   const getTicketStatus = () => {
     return isVerified ? '✓ VERIFIED TICKET' : '⏳ UNVERIFIED - PENDING VERIFICATION';
@@ -68,11 +73,12 @@ export default function Ticket({
       pool: {
         name: displayPoolName,
         prizeName: displayPrizeName,
+        listedDate: displayPoolListedDate,
         seats: displaySeatNumbers
       },
       amount: displayAmount,
       verified: isVerified,
-      issuedAt: displayDate
+      issuedAt: displayIssueDate
     };
     return JSON.stringify(ticketData);
   };
@@ -109,12 +115,13 @@ export default function Ticket({
 
   const getPrizeIcon = () => {
     const name = displayPrizeName.toLowerCase();
-    if (name.includes('car') || name.includes('vehicle')) return '🚗';
-    if (name.includes('house') || name.includes('home')) return '🏠';
-    if (name.includes('phone')) return '📱';
-    if (name.includes('laptop') || name.includes('computer')) return '💻';
-    if (name.includes('furniture')) return '🛋️';
-    if (name.includes('tv')) return '📺';
+    if (name.includes('car') || name.includes('vehicle') || name.includes('toyota') || name.includes('bmw')) return '🚗';
+    if (name.includes('house') || name.includes('home') || name.includes('villa')) return '🏠';
+    if (name.includes('phone') || name.includes('iphone') || name.includes('samsung')) return '📱';
+    if (name.includes('laptop') || name.includes('computer') || name.includes('macbook')) return '💻';
+    if (name.includes('furniture') || name.includes('sofa') || name.includes('bed')) return '🛋️';
+    if (name.includes('tv') || name.includes('television') || name.includes('samsung')) return '📺';
+    if (name.includes('watch') || name.includes('rolex')) return '⌚';
     return '🎁';
   };
 
@@ -178,8 +185,14 @@ export default function Ticket({
             />
           </div>
           
-          {/* Prize Name - Shows actual pool name like "Toyota V8", NOT "Pool e6e48adc" */}
-          <div className={`${getInfoBgClass()} rounded-lg p-3 mb-4 text-center`}>
+          {/* Pool Name - Shows actual pool name like "Toyota V8 Car" */}
+          <div className="bg-blue-50 rounded-lg p-2 mb-3 text-center border border-blue-100">
+            <p className="text-[8px] font-semibold text-blue-600 mb-1">🏊 POOL NAME</p>
+            <p className="text-xs font-bold text-gray-800">{displayPoolName}</p>
+          </div>
+          
+          {/* Prize Name */}
+          <div className={`${getInfoBgClass()} rounded-lg p-3 mb-3 text-center`}>
             <p className="text-[8px] font-semibold mb-1">🏆 PRIZE</p>
             <p className="text-sm font-bold">{getPrizeIcon()} {displayPrizeName}</p>
             {displayPrizeDescription && (
@@ -187,8 +200,14 @@ export default function Ticket({
             )}
           </div>
           
+          {/* Pool Listed Date - NEW */}
+          <div className="text-center mb-3">
+            <p className="text-[8px] text-gray-400">📅 POOL LISTED DATE</p>
+            <p className="text-[10px] font-medium">{new Date(displayPoolListedDate).toLocaleDateString()}</p>
+          </div>
+          
           {/* Participant Info */}
-          <div className="bg-gray-50 rounded-lg p-2 mb-4">
+          <div className="bg-gray-50 rounded-lg p-2 mb-3">
             <div className="grid grid-cols-3 gap-1 text-[9px]">
               <div className="text-gray-500">Name:</div>
               <div className="col-span-2 font-medium truncate">{displayUserName}</div>
@@ -200,7 +219,7 @@ export default function Ticket({
           </div>
           
           {/* Seats and Amount */}
-          <div className="bg-gray-50 rounded-lg p-2 mb-4">
+          <div className="bg-gray-50 rounded-lg p-2 mb-3">
             <div className="flex justify-between text-[9px]">
               <span className="text-gray-500">Seats:</span>
               <span className="font-mono font-bold">{displaySeatNumbers.length > 0 ? displaySeatNumbers.sort((a,b)=>a-b).join(', ') : 'N/A'}</span>
@@ -216,13 +235,13 @@ export default function Ticket({
           </div>
           
           {/* Draw Date */}
-          <div className="text-center text-[9px] text-gray-500 mb-3">
-            Draw Date: {displayDrawDate ? new Date(displayDrawDate).toLocaleString() : 'TBD'}
+          <div className="text-center text-[9px] text-gray-500 mb-2">
+            🎲 Draw Date: {displayDrawDate ? new Date(displayDrawDate).toLocaleString() : 'TBD'}
           </div>
           
-          {/* Issue Date */}
-          <div className="text-center text-[8px] text-gray-400 mb-3">
-            Issued: {new Date(displayDate).toLocaleString()}
+          {/* Ticket Issue Date */}
+          <div className="text-center text-[7px] text-gray-400 mb-3">
+            Ticket Issued: {new Date(displayIssueDate).toLocaleString()}
           </div>
           
           {/* Verification Note */}
