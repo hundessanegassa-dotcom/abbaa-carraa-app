@@ -27,13 +27,15 @@ export default function Ticket({
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
-  // Get values - FIXED: Use actual pool name, not generic
+  // Get values
   const displayTicketNumber = propTicketNumber || participant?.ticket_number || 'PENDING-001';
+  
+  // PARTICIPANT INFO
   const displayUserName = participant?.user_name || participant?.full_name || participant?.userName || 'N/A';
   const displayUserEmail = participant?.user_email || participant?.email || 'N/A';
   const displayUserPhone = participant?.phone || participant?.user_phone || 'N/A';
   
-  // FIXED: Use actual pool name from the pool data
+  // POOL INFO
   const displayPoolName = pool?.prize_name || pool?.name || participant?.pool_name || 'Prize Pool';
   const displayPrizeName = pool?.prize_name || pool?.name || participant?.prize_name || 'Prize';
   const displayPrizeDescription = pool?.description || '';
@@ -42,13 +44,13 @@ export default function Ticket({
   const displayAmount = propAmount || participant?.amount || participant?.contribution_amount || 0;
   const displaySeatNumbers = seatNumbers || participant?.seat_numbers || [];
   
-  // FIXED: Pool creation/listed date
+  // DATES
   const displayPoolListedDate = pool?.created_at || participant?.pool_created_at || new Date().toISOString();
   const displayDrawDate = pool?.drawTime || pool?.draw_time;
   const displayIssueDate = propCreatedAt || participant?.created_at || new Date().toISOString();
 
   const getTicketStatus = () => {
-    return isVerified ? '✓ VERIFIED TICKET' : '⏳ UNVERIFIED - PENDING VERIFICATION';
+    return isVerified ? '✓ VERIFIED' : '⏳ UNVERIFIED';
   };
 
   const getHeaderGradient = () => {
@@ -69,14 +71,19 @@ export default function Ticket({
   const getQRCodeData = () => {
     const ticketData = {
       ticketNumber: displayTicketNumber,
-      participant: { name: displayUserName, email: displayUserEmail, phone: displayUserPhone },
+      participant: {
+        name: displayUserName,
+        email: displayUserEmail,
+        phone: displayUserPhone
+      },
       pool: {
         name: displayPoolName,
         prizeName: displayPrizeName,
         listedDate: displayPoolListedDate,
-        seats: displaySeatNumbers
+        drawDate: displayDrawDate,
+        seats: displaySeatNumbers,
+        amount: displayAmount
       },
-      amount: displayAmount,
       verified: isVerified,
       issuedAt: displayIssueDate
     };
@@ -115,13 +122,12 @@ export default function Ticket({
 
   const getPrizeIcon = () => {
     const name = displayPrizeName.toLowerCase();
-    if (name.includes('car') || name.includes('vehicle') || name.includes('toyota') || name.includes('bmw')) return '🚗';
-    if (name.includes('house') || name.includes('home') || name.includes('villa')) return '🏠';
-    if (name.includes('phone') || name.includes('iphone') || name.includes('samsung')) return '📱';
-    if (name.includes('laptop') || name.includes('computer') || name.includes('macbook')) return '💻';
-    if (name.includes('furniture') || name.includes('sofa') || name.includes('bed')) return '🛋️';
-    if (name.includes('tv') || name.includes('television') || name.includes('samsung')) return '📺';
-    if (name.includes('watch') || name.includes('rolex')) return '⌚';
+    if (name.includes('car') || name.includes('vehicle')) return '🚗';
+    if (name.includes('house') || name.includes('home')) return '🏠';
+    if (name.includes('phone')) return '📱';
+    if (name.includes('laptop') || name.includes('computer')) return '💻';
+    if (name.includes('furniture')) return '🛋️';
+    if (name.includes('tv')) return '📺';
     return '🎁';
   };
 
@@ -134,7 +140,6 @@ export default function Ticket({
       >
         {/* Header */}
         <div className={`bg-gradient-to-r ${getHeaderGradient()} p-4 text-white text-center relative`}>
-          {/* Circular Digital Stamp - Top Left */}
           <div className="absolute -top-3 -left-3 w-16 h-16 rounded-full bg-white/20 backdrop-blur flex items-center justify-center border-2 border-white/50">
             <div className="text-center">
               <div className="text-[8px] font-bold">DIGITAL</div>
@@ -142,7 +147,6 @@ export default function Ticket({
             </div>
           </div>
           
-          {/* Circular Digital Stamp - Center */}
           <div className="absolute inset-0 flex items-center justify-center opacity-15">
             <div className="w-28 h-28 rounded-full border-2 border-white flex items-center justify-center rotate-[-10deg]">
               <div className="text-center">
@@ -160,16 +164,22 @@ export default function Ticket({
         </div>
         
         <div className="p-5">
-          {/* Status Badge */}
+          {/* Status Badge - 3 Languages with CORRECTED OROMO */}
           <div className="text-center mb-4">
             <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold border ${getStatusBadgeClass()}`}>
               {getTicketStatus()}
             </span>
+            <div className="text-[8px] text-gray-400 mt-1 flex justify-center gap-2">
+              <span>{isVerified ? 'የተረጋገጠ' : 'በመጠባበቅ ላይ'}</span>
+              <span>•</span>
+              {/* CORRECTED OROMO: Unverified / Pending */}
+              <span>{isVerified ? 'Mirkanaa\'e' : 'Kan hin mirkanoofnee / Eegi'}</span>
+            </div>
           </div>
           
-          {/* Ticket Number */}
+          {/* Ticket Number - 3 Languages */}
           <div className="text-center mb-4 pb-3 border-b border-gray-200">
-            <p className="text-[9px] text-gray-500">TICKET NUMBER</p>
+            <p className="text-[9px] text-gray-500">TICKET NUMBER | የቲኬት ቁጥር | Lakkoofsa Tiketii</p>
             <p className="text-sm font-mono font-bold tracking-wider">{displayTicketNumber}</p>
           </div>
           
@@ -185,84 +195,103 @@ export default function Ticket({
             />
           </div>
           
-          {/* Pool Name - Shows actual pool name like "Toyota V8 Car" */}
+          {/* Pool Name - 3 Languages */}
           <div className="bg-blue-50 rounded-lg p-2 mb-3 text-center border border-blue-100">
-            <p className="text-[8px] font-semibold text-blue-600 mb-1">🏊 POOL NAME</p>
+            <p className="text-[8px] font-semibold text-blue-600 mb-1">🏊 POOL NAME | የፑል ስም | Maqaa Paawulii</p>
             <p className="text-xs font-bold text-gray-800">{displayPoolName}</p>
           </div>
           
-          {/* Prize Name */}
+          {/* Prize - 3 Languages */}
           <div className={`${getInfoBgClass()} rounded-lg p-3 mb-3 text-center`}>
-            <p className="text-[8px] font-semibold mb-1">🏆 PRIZE</p>
+            <p className="text-[8px] font-semibold mb-1">🏆 PRIZE | ሽልማት | Badhaasa</p>
             <p className="text-sm font-bold">{getPrizeIcon()} {displayPrizeName}</p>
             {displayPrizeDescription && (
               <p className="text-[9px] text-gray-500 mt-1">{displayPrizeDescription.substring(0, 50)}</p>
             )}
+            <p className="text-[9px] font-semibold text-green-600 mt-1">ETB {formatNumber(displayPrizeAmount)}</p>
           </div>
           
-          {/* Pool Listed Date - NEW */}
+          {/* PARTICIPANT INFO - 3 Languages */}
+          <div className="bg-indigo-50 rounded-lg p-3 mb-4 border border-indigo-100">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-sm">👤</span>
+              <p className="text-[9px] font-semibold text-indigo-700">PARTICIPANT | ተሳታፊ | Hirmaataa</p>
+            </div>
+            <div className="space-y-2 text-[10px]">
+              <div className="flex justify-between items-center border-b border-indigo-100 pb-1">
+                <span className="text-gray-600">Name | ስም | Maqaa:</span>
+                <span className="font-semibold text-gray-800">{displayUserName}</span>
+              </div>
+              <div className="flex justify-between items-center border-b border-indigo-100 pb-1">
+                <span className="text-gray-600">Email | ኢሜይል | Imeeli:</span>
+                <span className="font-medium text-gray-700 text-[9px]">{displayUserEmail}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Phone | ስልክ | Bilbilaa:</span>
+                <span className="font-semibold text-gray-800">{displayUserPhone}</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Seats & Amount - 3 Languages */}
+          <div className="bg-gray-50 rounded-lg p-3 mb-3">
+            <p className="text-[8px] font-semibold text-gray-500 mb-2">💺 SEATS | መቀመጫዎች | Iddoowwan</p>
+            <div className="space-y-2 text-[10px]">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Selected | የተመረጡ | Filataman:</span>
+                <span className="font-mono font-bold">{displaySeatNumbers.length > 0 ? displaySeatNumbers.sort((a,b)=>a-b).join(', ') : 'N/A'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Entry Fee | ክፍያ | Kaffaltii:</span>
+                <span className="font-semibold">ETB {formatNumber(displayEntryFee)}</span>
+              </div>
+              <div className="flex justify-between pt-1 border-t border-gray-200">
+                <span className="text-gray-600">Total Paid | የተከፈለ | Kaffaltii Waliigalaa:</span>
+                <span className="font-bold text-green-600">ETB {formatNumber(displayAmount)}</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Pool Listed Date - 3 Languages */}
           <div className="text-center mb-3">
-            <p className="text-[8px] text-gray-400">📅 POOL LISTED DATE</p>
+            <p className="text-[8px] text-gray-400">📅 LISTED DATE | ቀን | Guyyaa</p>
             <p className="text-[10px] font-medium">{new Date(displayPoolListedDate).toLocaleDateString()}</p>
           </div>
           
-          {/* Participant Info */}
-          <div className="bg-gray-50 rounded-lg p-2 mb-3">
-            <div className="grid grid-cols-3 gap-1 text-[9px]">
-              <div className="text-gray-500">Name:</div>
-              <div className="col-span-2 font-medium truncate">{displayUserName}</div>
-              <div className="text-gray-500">Email:</div>
-              <div className="col-span-2 font-medium truncate text-[8px]">{displayUserEmail}</div>
-              <div className="text-gray-500">Phone:</div>
-              <div className="col-span-2 font-medium">{displayUserPhone}</div>
-            </div>
+          {/* Draw Date - 3 Languages with CORRECTED OROMO */}
+          <div className="text-center mb-3">
+            <p className="text-[8px] text-gray-400">🎲 DRAW DATE | የእጣ ቀን | GUYYAA CARRAAN BAHU</p>
+            <p className="text-[10px] font-medium">{displayDrawDate ? new Date(displayDrawDate).toLocaleString() : 'TBD'}</p>
           </div>
           
-          {/* Seats and Amount */}
-          <div className="bg-gray-50 rounded-lg p-2 mb-3">
-            <div className="flex justify-between text-[9px]">
-              <span className="text-gray-500">Seats:</span>
-              <span className="font-mono font-bold">{displaySeatNumbers.length > 0 ? displaySeatNumbers.sort((a,b)=>a-b).join(', ') : 'N/A'}</span>
-            </div>
-            <div className="flex justify-between text-[9px] mt-1">
-              <span className="text-gray-500">Entry Fee:</span>
-              <span className="font-semibold">ETB {formatNumber(displayEntryFee)}</span>
-            </div>
-            <div className="flex justify-between text-[9px] mt-1">
-              <span className="text-gray-500">Total Paid:</span>
-              <span className="font-bold text-green-600">ETB {formatNumber(displayAmount)}</span>
-            </div>
+          {/* Issue Date - 3 Languages */}
+          <div className="text-center text-[8px] text-gray-400 mb-3">
+            ISSUED | ቀን | Guyyaa: {new Date(displayIssueDate).toLocaleString()}
           </div>
           
-          {/* Draw Date */}
-          <div className="text-center text-[9px] text-gray-500 mb-2">
-            🎲 Draw Date: {displayDrawDate ? new Date(displayDrawDate).toLocaleString() : 'TBD'}
-          </div>
-          
-          {/* Ticket Issue Date */}
-          <div className="text-center text-[7px] text-gray-400 mb-3">
-            Ticket Issued: {new Date(displayIssueDate).toLocaleString()}
-          </div>
-          
-          {/* Verification Note */}
+          {/* Pending Verification Note - 3 Languages */}
           {!isVerified && (
             <div className="bg-yellow-50 rounded-lg p-2 mb-3 text-center">
-              <p className="text-[8px] text-yellow-700">⏳ PENDING VERIFICATION</p>
-              <p className="text-[7px] text-yellow-600 mt-0.5">Seats confirmed after payment verification</p>
+              <p className="text-[8px] text-yellow-700 font-semibold">⏳ PENDING VERIFICATION</p>
+              <p className="text-[7px] text-yellow-600">በመጠባበቅ ላይ | Kan hin mirkanoofnee / Eegi</p>
+              <p className="text-[7px] text-yellow-500 mt-0.5">Seats confirmed after payment verification</p>
             </div>
           )}
           
+          {/* Verified Stamp - 3 Languages */}
           {isVerified && (
             <div className="bg-green-50 rounded-lg p-2 mb-3 text-center">
-              <p className="text-[8px] text-green-700 flex items-center justify-center gap-1">
-                <span>✓</span> VERIFIED TICKET
+              <p className="text-[8px] text-green-700 font-semibold flex items-center justify-center gap-1">
+                <span>✓</span> VERIFIED | የተረጋገጠ | Mirkanaa'e
               </p>
             </div>
           )}
           
-          {/* Charity Note */}
+          {/* Charity Note - 3 Languages */}
           <div className="text-center text-[7px] text-gray-400 pt-2 border-t border-gray-200">
             <p>💚 2% supports kidney & heart disease patients</p>
+            <p>2% የልብ እና የኩላሊት ህሙማን ይደገፋል</p>
+            <p>2% dhukkuba onnee fi kalteetti gargaara</p>
           </div>
           
           {/* Circular Stamp at Bottom Right */}
@@ -278,7 +307,7 @@ export default function Ticket({
              style={{ backgroundImage: 'radial-gradient(circle at 2px 1px, gray 1px, transparent 1px)', backgroundSize: '8px 4px' }} />
       </div>
       
-      {/* Download Button */}
+      {/* Download Button - 3 Languages */}
       <div className="text-center">
         <button
           onClick={downloadTicket}
@@ -291,7 +320,7 @@ export default function Ticket({
               Downloading...
             </>
           ) : (
-            <>📥 DOWNLOAD TICKET</>
+            <>📥 DOWNLOAD | አውርድ | Buufadhu</>
           )}
         </button>
       </div>
