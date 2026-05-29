@@ -16,6 +16,22 @@ export default function Ticket({
   const [downloading, setDownloading] = useState(false);
   const isMounted = useRef(true);
 
+  // ========================================
+  // DEBUG LOGS - Check what data is received
+  // ========================================
+  console.log('========== TICKET DEBUG LOGS ==========');
+  console.log('1. Received participant data:', participant);
+  console.log('2. Received pool data:', pool);
+  console.log('3. Pool prize_name:', pool?.prize_name);
+  console.log('4. Pool name:', pool?.name);
+  console.log('5. Pool created_at:', pool?.created_at);
+  console.log('6. Pool end_date:', pool?.end_date);
+  console.log('7. isVerified:', isVerified);
+  console.log('8. seatNumbers:', seatNumbers);
+  console.log('9. ticketNumber prop:', propTicketNumber);
+  console.log('10. amount prop:', propAmount);
+  console.log('=========================================');
+
   useEffect(() => {
     return () => {
       isMounted.current = false;
@@ -27,7 +43,7 @@ export default function Ticket({
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
-  // Get values - FIXED to use actual pool data
+  // Get values with proper fallbacks
   const displayTicketNumber = propTicketNumber || participant?.ticket_number || 'PENDING-001';
   
   // PARTICIPANT INFO
@@ -35,7 +51,7 @@ export default function Ticket({
   const displayUserEmail = participant?.user_email || participant?.email || 'N/A';
   const displayUserPhone = participant?.phone || participant?.user_phone || 'N/A';
   
-  // POOL INFO - FIXED: Use actual prize_name, not ID
+  // POOL INFO - CRITICAL: These determine what shows on the ticket
   const displayPoolName = pool?.prize_name || pool?.name || 'Prize Pool';
   const displayPrizeName = pool?.prize_name || pool?.name || 'Prize';
   const displayPrizeDescription = pool?.description || '';
@@ -44,10 +60,20 @@ export default function Ticket({
   const displayAmount = propAmount || participant?.amount || displayEntryFee * (seatNumbers?.length || 1);
   const displaySeatNumbers = seatNumbers || participant?.seat_numbers || [];
   
-  // DATES - FIXED: Use actual pool creation date and draw date
+  // DATES - Using real pool dates
   const displayPoolListedDate = pool?.created_at || new Date().toISOString();
-  const displayDrawDate = pool?.draw_date || pool?.end_date || pool?.drawTime;
+  const displayDrawDate = pool?.end_date || pool?.draw_date || pool?.drawTime;
   const displayIssueDate = propCreatedAt || participant?.created_at || new Date().toISOString();
+
+  // Debug what will actually be displayed
+  console.log('========== WHAT WILL BE DISPLAYED ==========');
+  console.log('Pool Name on Ticket:', displayPoolName);
+  console.log('Prize Name on Ticket:', displayPrizeName);
+  console.log('Listed Date on Ticket:', new Date(displayPoolListedDate).toLocaleDateString());
+  console.log('Draw Date on Ticket:', displayDrawDate ? new Date(displayDrawDate).toLocaleString() : 'TBD');
+  console.log('Participant Name:', displayUserName);
+  console.log('Seats:', displaySeatNumbers);
+  console.log('============================================');
 
   const getTicketStatus = () => {
     return isVerified ? '✓ VERIFIED' : '⏳ UNVERIFIED';
@@ -195,13 +221,15 @@ export default function Ticket({
             />
           </div>
           
-          {/* POOL NAME - Shows real name like "V8 Car" */}
+          {/* POOL NAME - Shows real name */}
           <div className="bg-blue-50 rounded-lg p-3 mb-3 text-center border border-blue-200">
             <p className="text-[8px] font-semibold text-blue-600 mb-1">🏊 POOL NAME | የፑል ስም | Maqaa Paawulii</p>
             <p className="text-sm font-bold text-gray-800">{displayPoolName}</p>
+            {/* Debug indicator - remove in production */}
+            <p className="text-[6px] text-blue-400 mt-1">Pool ID: {pool?.id?.slice(-8) || 'N/A'}</p>
           </div>
           
-          {/* PRIZE NAME - Shows real prize like "V8 Car" */}
+          {/* PRIZE NAME - Shows real prize */}
           <div className={`${getInfoBgClass()} rounded-lg p-3 mb-3 text-center`}>
             <p className="text-[8px] font-semibold mb-1">🏆 PRIZE | ሽልማት | Badhaasa</p>
             <p className="text-base font-bold">{getPrizeIcon()} {displayPrizeName}</p>
