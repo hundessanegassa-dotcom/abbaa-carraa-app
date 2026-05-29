@@ -32,7 +32,6 @@ export default function Ticket({
   const displayUserName = participant?.user_name || participant?.full_name || participant?.userName || 'N/A';
   const displayUserEmail = participant?.user_email || participant?.email || 'N/A';
   const displayUserPhone = participant?.phone || participant?.user_phone || 'N/A';
-  const displayPoolName = pool?.name || pool?.prize_name || pool?.poolName || 'Abbaa Carraa Pool';
   const displayPrizeName = pool?.prize_name || pool?.name || 'Prize';
   const displayPrizeDescription = pool?.description || '';
   const displayPrizeAmount = pool?.prize || pool?.prize_amount || participant?.prize_amount || 0;
@@ -45,9 +44,12 @@ export default function Ticket({
   const displayAmount = propAmount || participant?.amount || participant?.contribution_amount || 0;
   const displayDate = propCreatedAt || participant?.created_at || new Date().toISOString();
   const displaySeatNumbers = seatNumbers || participant?.seat_numbers || [];
+  
+  // Generate Prize Code (e.g., SIN-2024-001)
+  const prizeCode = `PRIZE-${displayTicketNumber.slice(-6)}`;
 
   const getTicketStatus = () => {
-    return isVerified ? '✓ VERIFIED TICKET' : '⏳ UNVERIFIED - PENDING VERIFICATION';
+    return isVerified ? '✓ VERIFIED' : '⏳ UNVERIFIED - PENDING';
   };
 
   const getHeaderGradient = () => {
@@ -68,15 +70,10 @@ export default function Ticket({
   const getQRCodeData = () => {
     const ticketData = {
       ticketNumber: displayTicketNumber,
+      prizeCode: prizeCode,
+      prizeName: displayPrizeName,
       participant: { name: displayUserName, email: displayUserEmail, phone: displayUserPhone },
-      pool: {
-        name: displayPoolName,
-        prizeName: displayPrizeName,
-        description: displayPrizeDescription,
-        prizeAmount: displayPrizeAmount,
-        entryFee: displayEntryFee,
-        seats: displaySeatNumbers
-      },
+      seats: displaySeatNumbers,
       amount: displayAmount,
       verified: isVerified,
       issuedAt: displayDate
@@ -116,12 +113,12 @@ export default function Ticket({
 
   const getPrizeIcon = () => {
     const name = displayPrizeName.toLowerCase();
-    if (name.includes('car') || name.includes('vehicle') || name.includes('ተሽከርካሪ')) return '🚗';
-    if (name.includes('house') || name.includes('home') || name.includes('ቤት')) return '🏠';
-    if (name.includes('phone') || name.includes('ስልክ')) return '📱';
-    if (name.includes('laptop') || name.includes('computer') || name.includes('ኮምፒውተር')) return '💻';
-    if (name.includes('furniture') || name.includes('የቤት እቃ')) return '🛋️';
-    if (name.includes('tv') || name.includes('television') || name.includes('ቲቪ')) return '📺';
+    if (name.includes('car') || name.includes('vehicle')) return '🚗';
+    if (name.includes('house') || name.includes('home')) return '🏠';
+    if (name.includes('phone')) return '📱';
+    if (name.includes('laptop') || name.includes('computer')) return '💻';
+    if (name.includes('furniture')) return '🛋️';
+    if (name.includes('tv')) return '📺';
     return '🎁';
   };
 
@@ -132,54 +129,63 @@ export default function Ticket({
         className="bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-dashed border-gray-300 max-w-md mx-auto relative"
         style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
       >
-        {/* Header */}
+        {/* Header with Real Stamp Effect */}
         <div className={`bg-gradient-to-r ${getHeaderGradient()} p-4 text-white text-center relative`}>
-          <div className="absolute -top-3 -left-3 w-20 h-20 rounded-full bg-white/20 backdrop-blur flex items-center justify-center border-2 border-white/50">
+          {/* Top Left Corner Stamp */}
+          <div className="absolute -top-2 -left-2 w-16 h-16 rounded-full bg-white/10 backdrop-blur flex items-center justify-center border border-white/30 rotate-[-15deg]">
             <div className="text-center">
-              <div className="text-xs font-bold">አባ ካራ</div>
-              <div className="text-[8px]">Abbaa Carraa</div>
-              <div className="text-[8px] mt-0.5">ዲጂታል እጣ</div>
-              <div className="text-[8px]">Digital Ticket</div>
+              <div className="text-[8px] font-bold">አባ ካራ</div>
+              <div className="text-[6px]">DIGITAL</div>
             </div>
           </div>
           
-          <div className="absolute inset-0 flex items-center justify-center opacity-10">
-            <div className="w-32 h-32 rounded-full border-4 border-white flex items-center justify-center">
+          {/* Bottom Right Corner Stamp */}
+          <div className="absolute -bottom-2 -right-2 w-16 h-16 rounded-full bg-white/10 backdrop-blur flex items-center justify-center border border-white/30 rotate-[15deg]">
+            <div className="text-center">
+              <div className="text-[8px] font-bold">አባ ካራ</div>
+              <div className="text-[6px]">TICKET</div>
+            </div>
+          </div>
+          
+          {/* Center Circular Stamp - Real Stamp Effect */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-28 h-28 rounded-full border-2 border-white/40 flex items-center justify-center bg-white/5 backdrop-blur-sm rotate-[-8deg]">
               <div className="text-center">
-                <div className="text-xs font-bold">አባ ካራ</div>
-                <div className="text-[8px]">Abbaa Carraa</div>
-                <div className="text-[8px]">Ethiopian</div>
-                <div className="text-[8px]">Digital እጣ</div>
+                <div className="text-[10px] font-bold tracking-wider">አባ ካራ</div>
+                <div className="text-[7px]">Abbaa Carraa</div>
+                <div className="w-10 h-px bg-white/40 mx-auto my-1"></div>
+                <div className="text-[6px] font-semibold">DIGITAL TICKET</div>
+                <div className="text-[5px] mt-0.5">ዲጂታል ቲኬት</div>
               </div>
             </div>
           </div>
           
           <div className="text-center relative z-10">
             <div className="text-3xl mb-1">🎫</div>
-            <h3 className="font-bold text-lg">Abbaa Carraa</h3>
-            <p className="text-xs opacity-90">የኢትዮጵያ ዲጂታል ቲኬት | Tiketii Digitaalaa Itoophiyaa</p>
+            <h3 className="font-bold text-xl tracking-wide">ABBA CARRAA</h3>
+            <p className="text-[10px] opacity-80 mt-0.5">DIGITAL TICKET</p>
           </div>
         </div>
         
         <div className="p-5">
           {/* Status Badge */}
           <div className="text-center mb-4">
-            <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold border ${getStatusBadgeClass()}`}>
+            <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold border ${getStatusBadgeClass()}`}>
               {getTicketStatus()}
             </span>
           </div>
           
           {/* Ticket Number */}
           <div className="text-center mb-4 pb-3 border-b border-gray-200">
-            <p className="text-[10px] text-gray-500">የቲኬት ቁጥር | Lakkoofsa Tiketii | Ticket Number</p>
-            <p className="text-base font-mono font-bold tracking-wider">{displayTicketNumber}</p>
+            <p className="text-[9px] text-gray-500">TICKET NUMBER</p>
+            <p className="text-sm font-mono font-bold tracking-wider">{displayTicketNumber}</p>
           </div>
           
           {/* QR Code */}
           <div className="flex justify-center mb-4">
             <QRCodeSVG 
               value={getQRCodeData()} 
-              size={110}
+              size={100}
               bgColor="#ffffff"
               fgColor="#000000"
               level="L"
@@ -187,137 +193,74 @@ export default function Ticket({
             />
           </div>
           
-          {/* Participant Info - Trilingual */}
-          <div className="bg-gray-50 rounded-lg p-3 mb-4">
-            <p className="text-[10px] font-semibold text-gray-500 mb-2">📋 የተሳታፊ መረጃ | Odeeffannoo Hirmaataa | Participant Info</p>
-            <div className="space-y-1.5 text-[11px]">
-              <div className="flex justify-between">
-                <span className="text-gray-500">ስም | Maqaa | Name:</span>
-                <span className="font-medium">{displayUserName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">ኢሜይል | Imeeli | Email:</span>
-                <span className="font-medium">{displayUserEmail}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">ስልክ | Bilbilaa | Phone:</span>
-                <span className="font-medium">{displayUserPhone}</span>
-              </div>
+          {/* Prize Code */}
+          <div className="text-center mb-3">
+            <p className="text-[8px] text-gray-400">PRIZE CODE</p>
+            <p className="text-xs font-mono font-bold text-gray-700">{prizeCode}</p>
+          </div>
+          
+          {/* Prize Name - Shows actual prize like "Sino Car" */}
+          <div className={`${getInfoBgClass()} rounded-lg p-3 mb-4 text-center`}>
+            <p className="text-[8px] font-semibold mb-1">🏆 PRIZE</p>
+            <p className="text-sm font-bold">{getPrizeIcon()} {displayPrizeName}</p>
+            {displayPrizeDescription && (
+              <p className="text-[9px] text-gray-500 mt-1">{displayPrizeDescription.substring(0, 50)}</p>
+            )}
+          </div>
+          
+          {/* Date Listed */}
+          <div className="text-center mb-4">
+            <p className="text-[8px] text-gray-400">LISTED DATE</p>
+            <p className="text-[10px] font-medium">{new Date(displayDate).toLocaleDateString()}</p>
+          </div>
+          
+          {/* Participant Info - Compact */}
+          <div className="bg-gray-50 rounded-lg p-2 mb-4">
+            <div className="grid grid-cols-3 gap-1 text-[9px]">
+              <div className="text-gray-500">Name:</div>
+              <div className="col-span-2 font-medium truncate">{displayUserName}</div>
+              <div className="text-gray-500">Email:</div>
+              <div className="col-span-2 font-medium truncate text-[8px]">{displayUserEmail}</div>
+              <div className="text-gray-500">Phone:</div>
+              <div className="col-span-2 font-medium">{displayUserPhone}</div>
             </div>
           </div>
           
-          {/* Prize Details - Shows actual prize like "V8 Car" */}
-          <div className={`${getInfoBgClass()} rounded-lg p-3 mb-4`}>
-            <p className="text-[10px] font-semibold mb-2">🎁 የሽልማት ዝርዝር | Odeeffannoo Badhaasaa | Prize Details</p>
-            <div className="space-y-1.5 text-[11px]">
-              <div className="flex justify-between">
-                <span className="text-gray-500">ሽልማት | Badhaasa | Prize:</span>
-                <div className="text-right">
-                  <span className="font-semibold">{getPrizeIcon()} {displayPrizeName}</span>
-                </div>
-              </div>
-              {displayPrizeDescription && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500">መግለጫ | Ibsa | Description:</span>
-                  <span className="text-right text-[10px] max-w-[60%]">{displayPrizeDescription.substring(0, 60)}</span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span className="text-gray-500">የሽልማት ዋጋ | Gatii Badhaasaa | Prize Value:</span>
-                <span className="font-bold text-green-600">ETB {formatNumber(displayPrizeAmount)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">የመግቢያ ክፍያ | Kaffaltii Seensaa | Entry Fee:</span>
-                <span className="font-semibold">ETB {formatNumber(displayEntryFee)}</span>
-              </div>
+          {/* Seats */}
+          <div className="bg-gray-50 rounded-lg p-2 mb-4">
+            <div className="flex justify-between text-[9px]">
+              <span className="text-gray-500">Seats:</span>
+              <span className="font-mono font-bold">{displaySeatNumbers.length > 0 ? displaySeatNumbers.sort((a,b)=>a-b).join(', ') : 'N/A'}</span>
+            </div>
+            <div className="flex justify-between text-[9px] mt-1">
+              <span className="text-gray-500">Amount:</span>
+              <span className="font-bold text-green-600">ETB {formatNumber(displayAmount)}</span>
             </div>
           </div>
           
-          {/* Seat Info */}
-          <div className="bg-gray-50 rounded-lg p-3 mb-4">
-            <p className="text-[10px] font-semibold text-gray-500 mb-2">💺 የመቀመጫ መረጃ | Odeeffannoo Iddoo | Seat Information</p>
-            <div className="space-y-1.5 text-[11px]">
-              <div className="flex justify-between">
-                <span className="text-gray-500">የተመረጡ መቀመጫዎች | Iddoowwan Filataman | Selected Seats:</span>
-                <span className="font-mono font-bold">{displaySeatNumbers.length > 0 ? displaySeatNumbers.sort((a,b)=>a-b).join(', ') : 'N/A'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">የመቀመጫዎች ብዛት | Baay’ina Iddoo | Number of Seats:</span>
-                <span className="font-semibold">{displaySeatNumbers.length}</span>
-              </div>
-              <div className="flex justify-between pt-1 border-t border-gray-200">
-                <span className="text-gray-500">የተከፈለ ጠቅላላ | Kaffaltii Waliigalaa | Total Paid:</span>
-                <span className="font-bold text-green-600">ETB {formatNumber(displayAmount)}</span>
-              </div>
-            </div>
-          </div>
-          
-          {/* Pool Stats */}
-          <div className={`${getInfoBgClass()} rounded-lg p-3 mb-4`}>
-            <p className="text-[10px] font-semibold mb-2">📊 የፑል ስታቲስቲክስ | Lakkoofsa Paawulii | Pool Statistics</p>
-            <div className="space-y-1.5 text-[11px]">
-              <div className="flex justify-between">
-                <span className="text-gray-500">ጠቅላላ መቀመጫዎች | Iddoowwan Waliigalaa | Total Seats:</span>
-                <span className="font-semibold">{formatNumber(displayTotalSeats)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">ዒላማ ገንዘብ | Hanga Galma | Target Amount:</span>
-                <span className="font-semibold">ETB {formatNumber(displayTargetAmount)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">የተሰበሰበ | Waliitti Qabame | Current Raised:</span>
-                <span className="font-semibold">ETB {formatNumber(displayCurrentAmount)}</span>
-              </div>
-            </div>
-          </div>
-          
-          {/* Draw Information */}
-          <div className="bg-gray-50 rounded-lg p-3 mb-4">
-            <p className="text-[10px] font-semibold text-gray-500 mb-2">🎲 የእጣ መረጃ | Odeeffannoo Argaa | Draw Information</p>
-            <div className="space-y-1.5 text-[11px]">
-              <div className="flex justify-between">
-                <span className="text-gray-500">የእጣ ቀን | Guyyaa Argaa | Draw Date:</span>
-                <span className="font-semibold">{displayDrawDate ? new Date(displayDrawDate).toLocaleString() : 'TBD'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">ቦታ | Bakka | Location:</span>
-                <span className="font-semibold">{displayPoolCity}</span>
-              </div>
-            </div>
-          </div>
-          
-          {/* Issue Date */}
-          <div className="text-center text-[9px] text-gray-400 mb-3">
-            ቀን | Guyyaa | Issued: {new Date(displayDate).toLocaleString()}
+          {/* Draw Date */}
+          <div className="text-center text-[9px] text-gray-500 mb-3">
+            Draw: {displayDrawDate ? new Date(displayDrawDate).toLocaleString() : 'TBD'}
           </div>
           
           {/* Verification Note */}
           {!isVerified && (
-            <div className="bg-yellow-50 rounded-lg p-2 mb-4 text-center">
-              <p className="text-[10px] text-yellow-700 font-semibold">⏳ በመጠባበቅ ላይ | Eeggachaa | PENDING VERIFICATION</p>
-              <p className="text-[8px] text-yellow-600 mt-0.5">ክፍያዎ ሲረጋገጥ መቀመጫዎችዎ ይረጋገጃሉ</p>
+            <div className="bg-yellow-50 rounded-lg p-2 mb-3 text-center">
+              <p className="text-[8px] text-yellow-700">⏳ PENDING VERIFICATION</p>
             </div>
           )}
           
-          {/* Verified Stamp */}
           {isVerified && (
-            <div className="bg-green-50 rounded-lg p-2 mb-4 text-center">
-              <p className="text-[10px] text-green-700 font-semibold flex items-center justify-center gap-1">
-                <span>✓</span> የተረጋገጠ ቲኬት | Tikettiin Mirkanaa'e | VERIFIED TICKET
+            <div className="bg-green-50 rounded-lg p-2 mb-3 text-center">
+              <p className="text-[8px] text-green-700 flex items-center justify-center gap-1">
+                <span>✓</span> VERIFIED
               </p>
             </div>
           )}
           
           {/* Charity Note */}
-          <div className="text-center text-[8px] text-gray-400 pt-2 border-t border-gray-200">
-            <p>💚 2% የልብ እና የኩላሊት ህሙማን ይደገፋል | 2% dhukkuba onnee fi kalteetti gargaara | 2% supports kidney & heart disease patients</p>
-          </div>
-          
-          {/* Circular Stamp at Bottom Right */}
-          <div className="absolute bottom-2 right-2 w-12 h-12 rounded-full bg-green-100 border-2 border-green-500 flex items-center justify-center opacity-60">
-            <span className="text-[6px] text-green-700 font-bold text-center leading-tight">
-              አባ ካራ<br/>ዲጂታል
-            </span>
+          <div className="text-center text-[7px] text-gray-400 pt-2 border-t border-gray-200">
+            <p>💚 2% supports kidney & heart disease patients</p>
           </div>
         </div>
         
@@ -326,20 +269,20 @@ export default function Ticket({
              style={{ backgroundImage: 'radial-gradient(circle at 2px 1px, gray 1px, transparent 1px)', backgroundSize: '8px 4px' }} />
       </div>
       
-      {/* Download Button - Trilingual */}
+      {/* Download Button */}
       <div className="text-center">
         <button
           onClick={downloadTicket}
           disabled={downloading}
-          className={`${isVerified ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white px-6 py-2.5 rounded-lg font-semibold transition flex items-center gap-2 mx-auto disabled:opacity-50 shadow-md text-sm`}
+          className={`${isVerified ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white px-6 py-2 rounded-lg font-semibold transition flex items-center gap-2 mx-auto disabled:opacity-50 shadow-md text-sm`}
         >
           {downloading ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-              በማውረድ ላይ... | Buufamaa jira... | Downloading...
+              <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></div>
+              Downloading...
             </>
           ) : (
-            <>📥 አውርድ ቲኬት | Buufadhu Tiketii | Download Ticket</>
+            <>📥 DOWNLOAD TICKET</>
           )}
         </button>
       </div>
