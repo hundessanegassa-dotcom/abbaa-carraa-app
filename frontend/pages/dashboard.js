@@ -8,6 +8,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import BackButton from '../components/BackButton';
 import toast from 'react-hot-toast';
 import GlobalAnnouncement from '../components/GlobalAnnouncement';
+import Ticket from '../components/Ticket'; // ADD THIS IMPORT
 
 export async function getServerSideProps() {
   return { props: {} };
@@ -34,6 +35,12 @@ export default function Dashboard() {
   const [myWins, setMyWins] = useState([]);
   const [recentActivities, setRecentActivities] = useState([]);
   const [badges, setBadges] = useState([]);
+  
+  // NEW: Ticket states
+  const [regularTickets, setRegularTickets] = useState([]);
+  const [merkatoTickets, setMerkatoTickets] = useState([]);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [showTicketModal, setShowTicketModal] = useState(false);
   
   // Add mounted ref to prevent state updates after unmount
   const isMounted = useRef(true);
@@ -73,12 +80,43 @@ export default function Dashboard() {
       
       await loadDashboardData(user.id);
       await loadRecentActivities(user.id);
+      await loadUserTickets(user.id); // ADD THIS: Load tickets
       
     } catch (error) {
       console.error('Error:', error);
       if (!isMounted.current) return;
     } finally {
       if (isMounted.current) setLoading(false);
+    }
+  }
+
+  // NEW: Load user tickets from bank_transfers and merkato participants
+  async function loadUserTickets(userId) {
+    try {
+      // Load regular pool tickets from bank_transfers
+      const { data: bankTransfers, error: bankError } = await supabase
+        .from('bank_transfers')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      
+      if (!bankError && bankTransfers) {
+        setRegularTickets(bankTransfers);
+      }
+      
+      // Load Merkato VIP tickets
+      const { data: merkato, error: merkatoError } = await supabase
+        .from('merkato_vip_participants')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      
+      if (!merkatoError && merkato) {
+        setMerkatoTickets(merkato);
+      }
+      
+    } catch (error) {
+      console.error('Error loading tickets:', error);
     }
   }
 
@@ -271,12 +309,28 @@ export default function Dashboard() {
     toast.success('Referral link copied! Share with friends to earn bonuses.');
   }, [user?.id]);
 
+  // Helper function to check if ticket is verified
+  const isTicketVerified = (ticket) => {
+    return ticket.status === 'verified' || ticket.payment_status === 'verified';
+  };
+
+  // Helper function to get pool name for regular ticket
+  const getRegularPoolName = (ticket) => {
+    return ticket.pool_name || `Pool ${ticket.pool_id?.substring(0, 8)}`;
+  };
+
   if (loading) {
     return <LoadingSpinner fullPage message="Loading your dashboard..." />;
   }
   
   const isProfileIncomplete = !profile?.phone || !profile?.location || !profile?.address;
   const firstName = profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'User';
+
+  // Combine all tickets for display
+  const allTickets = [
+    ...regularTickets.map(t => ({ ...t, type: 'regular', verified: isTicketVerified(t) })),
+    ...merkatoTickets.map(t => ({ ...t, type: 'merkato', verified: isTicketVerified(t) }))
+  ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   return (
     <DashboardLayout 
@@ -466,6 +520,87 @@ export default function Dashboard() {
         {/* Right Column: User Activity */}
         <div className="space-y-6">
           
+          {/* NEW: My Tickets Section */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <span>🎫</span> My Tickets
+              {allTickets.length > 0 && (
+                <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">{allTickets.length}</span>
+              )}
+            </h3>
+            
+            {allTickets.length === 0 ? (
+              <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                <div className="text-3xl mb-2">🎫</div>
+                <p className="text-gray-500 text-sm">You don't have any tickets yet.</p>
+                <Link href="/listings" className="mt-3 inline-block text-green-600 font-medium text-sm hover:underline">
+                  Join a pool to get your first ticket →
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {allTickets.map((ticket) => (
+                  <div 
+                    key={ticket.id} 
+                    className={`border rounded-xl p-3 cursor-pointer transition hover:shadow-md ${
+                      ticket.verified 
+                        ? 'border-green-200 bg-green-50/30' 
+                        : 'border-yellow-200 bg-yellow-50/30'
+                    }`}
+                    onClick={() => {
+                      setSelectedTicket(ticket);
+                      setShowTicketModal(true);
+                    }}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-lg">{ticket.type === 'merkato' ? '🏪' : '🏊'}</span>
+                          <span className="font-semibold text-sm">
+                            {ticket.type === 'merkato' 
+                              ? `Merkato VIP - ${ticket.pool_type === 'daily' ? 'Daily' : ticket.pool_type === 'weekly' ? 'Weekly' : 'Monthly'}`
+                              : getRegularPoolName(ticket)
+                            }
+                          </span>
+                          {ticket.verified ? (
+                            <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
+                              ✓ Verified
+                            </span>
+                          ) : (
+                            <span className="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
+                              ⏳ Pending
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Ticket: <span className="font-mono">{ticket.ticket_number || ticket.id?.slice(-8)}</span>
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          Seats: {ticket.seat_numbers?.join(', ') || 'N/A'} | Amount: ETB {ticket.amount?.toLocaleString()}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Date: {new Date(ticket.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedTicket(ticket);
+                            setShowTicketModal(true);
+                          }}
+                          className="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs hover:bg-blue-700"
+                        >
+                          View
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* My Active Entries */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
@@ -613,6 +748,97 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Ticket Modal */}
+      {showTicketModal && selectedTicket && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
+              <h2 className="text-xl font-bold">🎫 Ticket Details</h2>
+              <button onClick={() => setShowTicketModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+            </div>
+            <div className="p-6">
+              {/* Pool Info */}
+              <div className={`rounded-xl p-4 mb-6 ${selectedTicket.verified ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}`}>
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-3xl">{selectedTicket.type === 'merkato' ? '🏪' : '🏊'}</span>
+                  <div>
+                    <p className="font-bold text-lg">
+                      {selectedTicket.type === 'merkato' 
+                        ? `Merkato VIP - ${selectedTicket.pool_type === 'daily' ? 'Daily Millionaire' : selectedTicket.pool_type === 'weekly' ? 'Weekly Mega Winner' : 'Monthly Winner'}`
+                        : getRegularPoolName(selectedTicket)
+                      }
+                    </p>
+                    <p className="text-sm text-gray-500">Ticket #: {selectedTicket.ticket_number || selectedTicket.id?.slice(-8)}</p>
+                  </div>
+                  {selectedTicket.verified ? (
+                    <span className="ml-auto bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">✓ VERIFIED</span>
+                  ) : (
+                    <span className="ml-auto bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-semibold">⏳ PENDING</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Ticket Information */}
+              <div className="space-y-4 mb-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-xs text-gray-500">Seats</p>
+                    <p className="font-mono font-bold">{selectedTicket.seat_numbers?.join(', ') || 'N/A'}</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-xs text-gray-500">Amount Paid</p>
+                    <p className="font-bold text-green-600">ETB {selectedTicket.amount?.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-xs text-gray-500">Payment Method</p>
+                    <p className="font-semibold">{selectedTicket.payment_method === 'telebirr' ? '📱 TeleBirr' : '🏦 CBE Bank'}</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-xs text-gray-500">Submission Date</p>
+                    <p className="text-sm">{new Date(selectedTicket.created_at).toLocaleString()}</p>
+                  </div>
+                </div>
+
+                {!selectedTicket.verified && (
+                  <div className="bg-yellow-50 rounded-lg p-4 text-center">
+                    <p className="text-sm text-yellow-700">
+                      ⏳ This ticket is pending verification. Your seats will be confirmed once admin verifies your payment.
+                    </p>
+                  </div>
+                )}
+
+                {selectedTicket.verified && selectedTicket.verified_at && (
+                  <div className="bg-green-50 rounded-lg p-4 text-center">
+                    <p className="text-sm text-green-700">
+                      ✓ Verified on {new Date(selectedTicket.verified_at).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Download Button */}
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => {
+                    // Generate PDF or download ticket
+                    toast.success('Ticket download feature coming soon!');
+                  }}
+                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700"
+                >
+                  📥 Download Ticket
+                </button>
+                <button 
+                  onClick={() => setShowTicketModal(false)}
+                  className="flex-1 border border-gray-300 py-2 rounded-lg hover:bg-gray-50"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
