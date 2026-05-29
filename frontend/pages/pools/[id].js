@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -14,6 +14,7 @@ export async function getServerSideProps() {
 export default function PoolDetails() {
   const router = useRouter();
   const { id } = router.query;
+  const isMounted = useRef(true);
   const [pool, setPool] = useState(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
@@ -24,6 +25,12 @@ export default function PoolDetails() {
   const [reservedSeats, setReservedSeats] = useState([]);
 
   useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (id) {
       fetchPool();
       getCurrentUser();
@@ -31,29 +38,18 @@ export default function PoolDetails() {
     }
   }, [id]);
 
-  // Cleanup reserved seats on unmount
-  useEffect(() => {
-    return () => {
-      if (reservedSeats.length > 0) {
-        releaseSeats(reservedSeats);
-      }
-    };
-  }, [reservedSeats]);
-
-  // NEW: Clear stored redirect values once user is on the pool page
+  // Clear stored redirect values once user is on the pool page
   useEffect(() => {
     if (user) {
-      // Clear any stored redirect values to prevent accidental reuse
       sessionStorage.removeItem('redirectAfterLogin');
       sessionStorage.removeItem('pendingPoolId');
       sessionStorage.removeItem('pendingRole');
-      console.log('Cleared stored redirect values after successful login');
     }
   }, [user]);
 
   async function getCurrentUser() {
     const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
+    if (isMounted.current) setUser(user);
   }
 
   async function fetchPool() {
@@ -67,7 +63,7 @@ export default function PoolDetails() {
     if (error) {
       router.push('/listings');
     } else {
-      setPool(data);
+      if (isMounted.current) setPool(data);
     }
     setLoading(false);
   }
@@ -78,7 +74,7 @@ export default function PoolDetails() {
       .select('*', { count: 'exact', head: true })
       .eq('pool_id', id)
       .eq('status', 'available');
-    setAvailableSeats(count || 0);
+    if (isMounted.current) setAvailableSeats(count || 0);
   }
 
   async function releaseSeats(seatNumbers) {
@@ -128,10 +124,8 @@ export default function PoolDetails() {
   };
 
   const handleSeatsSelected = async (seatData) => {
-    // Release any previous reservations
     await releaseUserPreviousReservations();
 
-    // Check seat status
     const { data: seats, error: seatCheckError } = await supabase
       .from('pool_seats')
       .select('seat_number, status, reserved_by')
@@ -144,7 +138,6 @@ export default function PoolDetails() {
       return;
     }
 
-    // Seats are unavailable if NOT available AND NOT reserved by current user
     const unavailableSeats = seats.filter(s => s.status !== 'available' && s.reserved_by !== user?.id);
     
     if (unavailableSeats.length > 0) {
@@ -154,7 +147,6 @@ export default function PoolDetails() {
       return;
     }
 
-    // Reserve seats that are available
     const expiryTime = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     const availableSeatNumbers = seats.filter(s => s.status === 'available').map(s => s.seat_number);
     
@@ -218,19 +210,15 @@ export default function PoolDetails() {
     return <div className="min-h-screen flex items-center justify-center"><div className="text-center"><h1 className="text-2xl font-bold">Pool not found</h1><Link href="/listings" className="text-green-600 mt-4 inline-block">Back to listings</Link></div></div>;
   }
 
-  // FIXED: Correct calculations
   const winnerPrize = pool.target_amount || 0;
   const entryFee = pool.entry_fee || pool.ticket_price || 10;
-  const totalCollection = winnerPrize * 1.2; // +20% commission
+  const totalCollection = winnerPrize * 1.2;
   const totalSeats = Math.floor(totalCollection / entryFee);
   const adminCommission = totalCollection * 0.2;
   const currentAmount = pool.current_amount || 0;
   const currentSeatsFilled = Math.floor(currentAmount / entryFee);
   const availableSeatsCount = totalSeats - currentSeatsFilled;
-  
-  // Progress based on TOTAL COLLECTION (not just winner prize)
   const progress = (currentAmount / totalCollection) * 100;
-
   const maxSeatsPerUser = Math.min(10, Math.floor(availableSeatsCount / 2) || 5);
 
   return (
@@ -257,7 +245,6 @@ export default function PoolDetails() {
               <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">{pool.prize_name}</h1>
               <p className="text-gray-600 mb-6">{pool.description || 'Join this amazing pool for a chance to win big!'}</p>
 
-              {/* Stats Grid with correct calculations */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                 <div className="bg-green-50 rounded-xl p-3 text-center border border-green-100">
                   <p className="text-gray-500 text-xs">🏆 Winner Gets</p>
@@ -277,17 +264,13 @@ export default function PoolDetails() {
                 </div>
               </div>
 
-              {/* Progress Bar - based on TOTAL COLLECTION */}
               <div className="mb-6">
                 <div className="flex justify-between text-sm text-gray-600 mb-1">
                   <span>Pool Progress</span>
                   <span>{Math.min(Math.round(progress), 100)}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div 
-                    className="bg-green-600 h-3 rounded-full transition-all duration-300" 
-                    style={{ width: `${Math.min(progress, 100)}%` }}
-                  />
+                  <div className="bg-green-600 h-3 rounded-full transition-all duration-300" style={{ width: `${Math.min(progress, 100)}%` }} />
                 </div>
                 <div className="flex justify-between text-xs text-gray-400 mt-1">
                   <span>ETB {currentAmount.toLocaleString()} raised</span>
@@ -295,7 +278,6 @@ export default function PoolDetails() {
                 </div>
               </div>
 
-              {/* Commission Breakdown */}
               <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 mb-6">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-gray-600 text-sm">💰 Total Collection (Prize + 20% Commission):</span>
@@ -309,17 +291,8 @@ export default function PoolDetails() {
                   <span className="text-gray-600 text-sm">🎯 Winner Receives:</span>
                   <span className="font-bold text-green-600">ETB {winnerPrize.toLocaleString()}</span>
                 </div>
-                <div className="mt-3 pt-2 border-t border-gray-200">
-                  <p className="text-xs text-gray-500 text-center">
-                    💚 2% of total collection supports kidney & heart disease patients
-                  </p>
-                  <p className="text-xs text-gray-400 text-center mt-1">
-                    {totalSeats.toLocaleString()} seats × ETB {entryFee.toLocaleString()} = ETB {totalCollection.toLocaleString()}
-                  </p>
-                </div>
               </div>
 
-              {/* Join Section */}
               {pool.status === 'active' && (
                 <div className="border-t pt-6">
                   {!showSeatSelector && !showBankUpload ? (
@@ -328,9 +301,7 @@ export default function PoolDetails() {
                       disabled={availableSeatsCount === 0} 
                       className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg transition disabled:opacity-50"
                     >
-                      {availableSeatsCount === 0 
-                        ? 'No Seats Available' 
-                        : `🎯 Select Seat & Join Pool (ETB ${entryFee.toLocaleString()} per seat)`}
+                      {availableSeatsCount === 0 ? 'No Seats Available' : `🎯 Select Seat & Join Pool (ETB ${entryFee.toLocaleString()} per seat)`}
                     </button>
                   ) : showSeatSelector && (
                     <SeatSelector
