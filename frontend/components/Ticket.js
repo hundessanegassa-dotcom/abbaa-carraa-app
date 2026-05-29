@@ -27,7 +27,7 @@ export default function Ticket({
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
-  // Get values
+  // Get values - FIXED to use actual pool data
   const displayTicketNumber = propTicketNumber || participant?.ticket_number || 'PENDING-001';
   
   // PARTICIPANT INFO
@@ -35,18 +35,18 @@ export default function Ticket({
   const displayUserEmail = participant?.user_email || participant?.email || 'N/A';
   const displayUserPhone = participant?.phone || participant?.user_phone || 'N/A';
   
-  // POOL INFO
-  const displayPoolName = pool?.prize_name || pool?.name || participant?.pool_name || 'Prize Pool';
-  const displayPrizeName = pool?.prize_name || pool?.name || participant?.prize_name || 'Prize';
+  // POOL INFO - FIXED: Use actual prize_name, not ID
+  const displayPoolName = pool?.prize_name || pool?.name || 'Prize Pool';
+  const displayPrizeName = pool?.prize_name || pool?.name || 'Prize';
   const displayPrizeDescription = pool?.description || '';
-  const displayPrizeAmount = pool?.prize || pool?.prize_amount || participant?.prize_amount || 0;
-  const displayEntryFee = pool?.entryFee || pool?.contribution_amount || participant?.contribution_amount || 0;
-  const displayAmount = propAmount || participant?.amount || participant?.contribution_amount || 0;
+  const displayPrizeAmount = pool?.target_amount || pool?.prize_amount || 0;
+  const displayEntryFee = pool?.entry_fee || pool?.contribution_amount || 10;
+  const displayAmount = propAmount || participant?.amount || displayEntryFee * (seatNumbers?.length || 1);
   const displaySeatNumbers = seatNumbers || participant?.seat_numbers || [];
   
-  // DATES
-  const displayPoolListedDate = pool?.created_at || participant?.pool_created_at || new Date().toISOString();
-  const displayDrawDate = pool?.drawTime || pool?.draw_time;
+  // DATES - FIXED: Use actual pool creation date and draw date
+  const displayPoolListedDate = pool?.created_at || new Date().toISOString();
+  const displayDrawDate = pool?.draw_date || pool?.end_date || pool?.drawTime;
   const displayIssueDate = propCreatedAt || participant?.created_at || new Date().toISOString();
 
   const getTicketStatus = () => {
@@ -122,12 +122,13 @@ export default function Ticket({
 
   const getPrizeIcon = () => {
     const name = displayPrizeName.toLowerCase();
-    if (name.includes('car') || name.includes('vehicle')) return '🚗';
-    if (name.includes('house') || name.includes('home')) return '🏠';
-    if (name.includes('phone')) return '📱';
-    if (name.includes('laptop') || name.includes('computer')) return '💻';
-    if (name.includes('furniture')) return '🛋️';
-    if (name.includes('tv')) return '📺';
+    if (name.includes('car') || name.includes('vehicle') || name.includes('toyota') || name.includes('bmw') || name.includes('v8')) return '🚗';
+    if (name.includes('house') || name.includes('home') || name.includes('villa')) return '🏠';
+    if (name.includes('phone') || name.includes('iphone') || name.includes('samsung')) return '📱';
+    if (name.includes('laptop') || name.includes('computer') || name.includes('macbook')) return '💻';
+    if (name.includes('furniture') || name.includes('sofa') || name.includes('bed')) return '🛋️';
+    if (name.includes('tv') || name.includes('television')) return '📺';
+    if (name.includes('watch') || name.includes('rolex')) return '⌚';
     return '🎁';
   };
 
@@ -138,12 +139,12 @@ export default function Ticket({
         className="bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-dashed border-gray-300 max-w-md mx-auto relative"
         style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
       >
-        {/* Header */}
+        {/* Header with Abbaa Carraa branding */}
         <div className={`bg-gradient-to-r ${getHeaderGradient()} p-4 text-white text-center relative`}>
           <div className="absolute -top-3 -left-3 w-16 h-16 rounded-full bg-white/20 backdrop-blur flex items-center justify-center border-2 border-white/50">
             <div className="text-center">
-              <div className="text-[8px] font-bold">DIGITAL</div>
-              <div className="text-[6px]">TICKET</div>
+              <div className="text-[8px] font-bold">ዕድል</div>
+              <div className="text-[6px]">CHANCE</div>
             </div>
           </div>
           
@@ -151,7 +152,7 @@ export default function Ticket({
             <div className="w-28 h-28 rounded-full border-2 border-white flex items-center justify-center rotate-[-10deg]">
               <div className="text-center">
                 <div className="text-[8px] font-bold">ABBA CARRAA</div>
-                <div className="text-[6px]">DIGITAL</div>
+                <div className="text-[6px]">ዕድል • CHANCE</div>
               </div>
             </div>
           </div>
@@ -159,12 +160,12 @@ export default function Ticket({
           <div className="text-center relative z-10">
             <div className="text-3xl mb-1">🎫</div>
             <h3 className="font-bold text-lg tracking-wide">ABBA CARRAA</h3>
-            <p className="text-[10px] opacity-80">DIGITAL TICKET</p>
+            <p className="text-[10px] opacity-80">የኢትዮጵያ ዲጂታል እጣ | Ethiopian Digital Ticket</p>
           </div>
         </div>
         
         <div className="p-5">
-          {/* Status Badge - 3 Languages with CORRECTED OROMO */}
+          {/* Status Badge */}
           <div className="text-center mb-4">
             <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold border ${getStatusBadgeClass()}`}>
               {getTicketStatus()}
@@ -172,12 +173,11 @@ export default function Ticket({
             <div className="text-[8px] text-gray-400 mt-1 flex justify-center gap-2">
               <span>{isVerified ? 'የተረጋገጠ' : 'በመጠባበቅ ላይ'}</span>
               <span>•</span>
-              {/* CORRECTED OROMO: Unverified / Pending */}
               <span>{isVerified ? 'Mirkanaa\'e' : 'Kan hin mirkanoofnee / Eegi'}</span>
             </div>
           </div>
           
-          {/* Ticket Number - 3 Languages */}
+          {/* Ticket Number */}
           <div className="text-center mb-4 pb-3 border-b border-gray-200">
             <p className="text-[9px] text-gray-500">TICKET NUMBER | የቲኬት ቁጥር | Lakkoofsa Tiketii</p>
             <p className="text-sm font-mono font-bold tracking-wider">{displayTicketNumber}</p>
@@ -195,23 +195,25 @@ export default function Ticket({
             />
           </div>
           
-          {/* Pool Name - 3 Languages */}
-          <div className="bg-blue-50 rounded-lg p-2 mb-3 text-center border border-blue-100">
+          {/* POOL NAME - Shows real name like "V8 Car" */}
+          <div className="bg-blue-50 rounded-lg p-3 mb-3 text-center border border-blue-200">
             <p className="text-[8px] font-semibold text-blue-600 mb-1">🏊 POOL NAME | የፑል ስም | Maqaa Paawulii</p>
-            <p className="text-xs font-bold text-gray-800">{displayPoolName}</p>
+            <p className="text-sm font-bold text-gray-800">{displayPoolName}</p>
           </div>
           
-          {/* Prize - 3 Languages */}
+          {/* PRIZE NAME - Shows real prize like "V8 Car" */}
           <div className={`${getInfoBgClass()} rounded-lg p-3 mb-3 text-center`}>
             <p className="text-[8px] font-semibold mb-1">🏆 PRIZE | ሽልማት | Badhaasa</p>
-            <p className="text-sm font-bold">{getPrizeIcon()} {displayPrizeName}</p>
+            <p className="text-base font-bold">{getPrizeIcon()} {displayPrizeName}</p>
             {displayPrizeDescription && (
-              <p className="text-[9px] text-gray-500 mt-1">{displayPrizeDescription.substring(0, 50)}</p>
+              <p className="text-[9px] text-gray-500 mt-1">{displayPrizeDescription.substring(0, 60)}</p>
             )}
-            <p className="text-[9px] font-semibold text-green-600 mt-1">ETB {formatNumber(displayPrizeAmount)}</p>
+            <div className="mt-2 pt-2 border-t border-gray-200">
+              <p className="text-[9px] text-green-600 font-semibold">ETB {formatNumber(displayPrizeAmount)}</p>
+            </div>
           </div>
           
-          {/* PARTICIPANT INFO - 3 Languages */}
+          {/* PARTICIPANT INFO */}
           <div className="bg-indigo-50 rounded-lg p-3 mb-4 border border-indigo-100">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-sm">👤</span>
@@ -233,7 +235,7 @@ export default function Ticket({
             </div>
           </div>
           
-          {/* Seats & Amount - 3 Languages */}
+          {/* Seats & Amount */}
           <div className="bg-gray-50 rounded-lg p-3 mb-3">
             <p className="text-[8px] font-semibold text-gray-500 mb-2">💺 SEATS | መቀመጫዎች | Iddoowwan</p>
             <div className="space-y-2 text-[10px]">
@@ -252,24 +254,24 @@ export default function Ticket({
             </div>
           </div>
           
-          {/* Pool Listed Date - 3 Languages */}
+          {/* POOL LISTED DATE - Shows real creation date */}
           <div className="text-center mb-3">
-            <p className="text-[8px] text-gray-400">📅 LISTED DATE | ቀን | Guyyaa</p>
+            <p className="text-[8px] text-gray-400">📅 LISTED DATE | የተዘረዘረበት ቀን | Guyyaa Itti Baafame</p>
             <p className="text-[10px] font-medium">{new Date(displayPoolListedDate).toLocaleDateString()}</p>
           </div>
           
-          {/* Draw Date - 3 Languages with CORRECTED OROMO */}
+          {/* DRAW DATE */}
           <div className="text-center mb-3">
             <p className="text-[8px] text-gray-400">🎲 DRAW DATE | የእጣ ቀን | GUYYAA CARRAAN BAHU</p>
             <p className="text-[10px] font-medium">{displayDrawDate ? new Date(displayDrawDate).toLocaleString() : 'TBD'}</p>
           </div>
           
-          {/* Issue Date - 3 Languages */}
+          {/* Issue Date */}
           <div className="text-center text-[8px] text-gray-400 mb-3">
-            ISSUED | ቀን | Guyyaa: {new Date(displayIssueDate).toLocaleString()}
+            ISSUED | የተሰጠበት ቀን | Guyyaa Kennametti: {new Date(displayIssueDate).toLocaleString()}
           </div>
           
-          {/* Pending Verification Note - 3 Languages */}
+          {/* Verification Note */}
           {!isVerified && (
             <div className="bg-yellow-50 rounded-lg p-2 mb-3 text-center">
               <p className="text-[8px] text-yellow-700 font-semibold">⏳ PENDING VERIFICATION</p>
@@ -278,7 +280,7 @@ export default function Ticket({
             </div>
           )}
           
-          {/* Verified Stamp - 3 Languages */}
+          {/* Verified Stamp */}
           {isVerified && (
             <div className="bg-green-50 rounded-lg p-2 mb-3 text-center">
               <p className="text-[8px] text-green-700 font-semibold flex items-center justify-center gap-1">
@@ -287,17 +289,15 @@ export default function Ticket({
             </div>
           )}
           
-          {/* Charity Note - 3 Languages */}
+          {/* Charity Note */}
           <div className="text-center text-[7px] text-gray-400 pt-2 border-t border-gray-200">
-            <p>💚 2% supports kidney & heart disease patients</p>
-            <p>2% የልብ እና የኩላሊት ህሙማን ይደገፋል</p>
-            <p>2% dhukkuba onnee fi kalteetti gargaara</p>
+            <p>💚 2% supports kidney & heart disease patients | 2% የልብ እና የኩላሊት ህሙማን ይደገፋል | 2% dhukkuba onnee fi kalteetti gargaara</p>
           </div>
           
-          {/* Circular Stamp at Bottom Right */}
+          {/* Circular Stamp */}
           <div className="absolute bottom-2 right-2 w-10 h-10 rounded-full bg-green-100 border border-green-400 flex items-center justify-center opacity-50">
             <span className="text-[5px] text-green-700 font-bold text-center leading-tight">
-              DIGITAL
+              አባ ካራ
             </span>
           </div>
         </div>
@@ -307,7 +307,7 @@ export default function Ticket({
              style={{ backgroundImage: 'radial-gradient(circle at 2px 1px, gray 1px, transparent 1px)', backgroundSize: '8px 4px' }} />
       </div>
       
-      {/* Download Button - 3 Languages */}
+      {/* Download Button */}
       <div className="text-center">
         <button
           onClick={downloadTicket}
