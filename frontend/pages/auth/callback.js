@@ -20,16 +20,17 @@ export default function AuthCallback() {
       if (sessionError) throw sessionError;
       if (!session) throw new Error('No session found');
       
-      // Get stored redirect URL and pending pool ID BEFORE creating profile
+      // Get stored redirect URL BEFORE creating profile
       const storedRedirectUrl = sessionStorage.getItem('redirectAfterLogin');
       const storedPoolId = sessionStorage.getItem('pendingPoolId');
+      const pendingRole = sessionStorage.getItem('pendingRole');
       
-      console.log('Stored redirect URL:', storedRedirectUrl);
-      console.log('Stored pool ID:', storedPoolId);
-      console.log('User role:', userRole);
+      console.log('Accepting agreement - Redirect URL:', storedRedirectUrl);
+      console.log('Accepting agreement - Pool ID:', storedPoolId);
+      console.log('Accepting agreement - Role:', pendingRole);
       
       // Check if profile exists
-      const { data: existingProfile, error: fetchError } = await supabase
+      const { data: existingProfile } = await supabase
         .from('profiles')
         .select('id')
         .eq('id', session.user.id)
@@ -37,82 +38,75 @@ export default function AuthCallback() {
       
       if (existingProfile) {
         // Update existing profile
-        console.log('Updating existing profile');
-        const { error: updateError } = await supabase
+        await supabase
           .from('profiles')
           .update({
             agreement_accepted: true,
             agreement_accepted_at: new Date().toISOString(),
             agreement_version: '1.0',
-            role: userRole,
-            user_type: userRole,
-            status: userRole === 'individual' ? 'active' : 'pending_approval',
+            role: pendingRole || userRole,
+            user_type: pendingRole || userRole,
+            status: pendingRole === 'individual' ? 'active' : 'pending_approval',
             updated_at: new Date().toISOString()
           })
           .eq('id', session.user.id);
-        
-        if (updateError) throw updateError;
       } else {
         // Create new profile
-        console.log('Creating new profile');
-        const { error: insertError } = await supabase
+        await supabase
           .from('profiles')
           .insert({
             id: session.user.id,
             email: session.user.email,
             full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
-            role: userRole,
-            user_type: userRole,
+            role: pendingRole || userRole,
+            user_type: pendingRole || userRole,
             agreement_accepted: true,
             agreement_accepted_at: new Date().toISOString(),
             agreement_version: '1.0',
-            status: userRole === 'individual' ? 'active' : 'pending_approval',
+            status: pendingRole === 'individual' ? 'active' : 'pending_approval',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           });
-        
-        if (insertError) throw insertError;
       }
       
-      // Clear pending role from storage
+      // Clear pending role
       localStorage.removeItem('pendingRole');
-      sessionStorage.removeItem('pendingRole');
       
       toast.success('Agreement accepted! Welcome to Abbaa Carraa!');
       
       // Small delay to ensure database commit
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // IMPORTANT: Redirect based on role AND stored redirect URL
-      if (userRole === 'individual') {
-        // Priority 1: Redirect back to the pool they were trying to join
-        if (storedRedirectUrl && storedRedirectUrl.startsWith('/pools/')) {
-          console.log('Redirecting to stored pool URL:', storedRedirectUrl);
-          sessionStorage.removeItem('redirectAfterLogin');
-          sessionStorage.removeItem('pendingPoolId');
-          router.push(storedRedirectUrl);
-          return;
-        }
-        // Priority 2: Redirect using stored pool ID
-        if (storedPoolId) {
-          console.log('Redirecting to pool ID:', storedPoolId);
-          sessionStorage.removeItem('pendingPoolId');
-          router.push(`/pools/${storedPoolId}`);
-          return;
-        }
-        // Priority 3: Go to dashboard
-        console.log('No stored pool, redirecting to dashboard');
-        router.push('/dashboard');
+      // CRITICAL FIX: Redirect back to the original pool or the intended page
+      // Priority 1: Redirect to stored pool URL
+      if (storedRedirectUrl && storedRedirectUrl.startsWith('/pools/')) {
+        console.log('Redirecting to stored pool URL:', storedRedirectUrl);
+        sessionStorage.removeItem('redirectAfterLogin');
+        sessionStorage.removeItem('pendingPoolId');
+        sessionStorage.removeItem('pendingRole');
+        router.push(storedRedirectUrl);
         return;
       }
       
-      if (userRole === 'admin') {
-        router.push('/admin/dashboard');
+      // Priority 2: Redirect using stored pool ID
+      if (storedPoolId) {
+        console.log('Redirecting to pool ID:', storedPoolId);
+        sessionStorage.removeItem('pendingPoolId');
+        sessionStorage.removeItem('pendingRole');
+        router.push(`/pools/${storedPoolId}`);
         return;
       }
       
-      // For agents/vendors/organizations, redirect to application form
-      router.push(`/${userRole}/apply`);
+      // Priority 3: For role-based flows (agent/vendor/org)
+      if (pendingRole && pendingRole !== 'individual') {
+        sessionStorage.removeItem('pendingRole');
+        router.push(`/${pendingRole}/apply`);
+        return;
+      }
+      
+      // Priority 4: Default to listings (not dashboard!)
+      console.log('No stored redirect, going to listings');
+      router.push('/listings');
       
     } catch (err) {
       console.error('Accept agreement error:', err);
@@ -141,11 +135,13 @@ export default function AuthCallback() {
         
         // Also get pending pool ID
         const pendingPoolId = sessionStorage.getItem('pendingPoolId');
+        const pendingRole = sessionStorage.getItem('pendingRole');
         
         console.log('Callback - redirect from storage:', redirect);
         console.log('Callback - pending pool ID:', pendingPoolId);
+        console.log('Callback - pending role:', pendingRole);
         
-        // Clear immediately to avoid reuse (but we'll keep pendingPoolId for now)
+        // Clear immediately to avoid reuse
         localStorage.removeItem('redirectAfterLogin');
         
         if (isMounted) setRedirectUrl(redirect || (pendingPoolId ? `/pools/${pendingPoolId}` : null));
@@ -159,13 +155,6 @@ export default function AuthCallback() {
           router.push('/login');
           return;
         }
-
-        // Get pending role from sessionStorage (set in login page or pool page)
-        let pendingRole = sessionStorage.getItem('pendingRole');
-        if (!pendingRole) pendingRole = localStorage.getItem('pendingRole');
-        
-        console.log('Pending role:', pendingRole);
-        console.log('User email:', session.user.email);
 
         // Check if user already has a profile
         const { data: profile, error: profileError } = await supabase
@@ -182,26 +171,21 @@ export default function AuthCallback() {
           
           toast.success(`Welcome back, ${session.user.email}!`);
           
-          // Redirect based on role and stored pool
-          if (profile.role === 'individual') {
-            // Check if we have a pending pool to redirect to
-            if (pendingPoolId) {
-              sessionStorage.removeItem('pendingPoolId');
-              router.push(`/pools/${pendingPoolId}`);
-              return;
-            }
-            if (redirect && redirect.startsWith('/pools/')) {
-              router.push(redirect);
-              return;
-            }
-            router.push('/dashboard');
-          } else if (profile.role === 'admin') {
-            router.push('/admin/dashboard');
-          } else if (profile.status === 'approved') {
-            router.push(`/${profile.role}/dashboard`);
-          } else {
-            router.push(`/${profile.role}/apply`);
+          // CRITICAL: Redirect back to the pool they were trying to join
+          if (pendingPoolId) {
+            console.log('Existing user - redirecting to pool:', pendingPoolId);
+            sessionStorage.removeItem('pendingPoolId');
+            router.push(`/pools/${pendingPoolId}`);
+            return;
           }
+          if (redirect && redirect.startsWith('/pools/')) {
+            console.log('Existing user - redirecting to stored URL:', redirect);
+            router.push(redirect);
+            return;
+          }
+          // Default to listings (not dashboard!)
+          console.log('Existing user - no pool, going to listings');
+          router.push('/listings');
           return;
         }
 
@@ -226,9 +210,12 @@ export default function AuthCallback() {
           return;
         }
         
-        // No role found - redirect to login
-        toast.error('Please select a role to continue');
-        router.push('/login');
+        // No role found - default to individual (listings flow)
+        if (isMounted) {
+          setUserRole('individual');
+          setShowAgreement(true);
+          setLoading(false);
+        }
         
       } catch (err) {
         console.error('Callback error:', err);
