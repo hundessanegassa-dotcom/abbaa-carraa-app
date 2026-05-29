@@ -41,7 +41,6 @@ export default function Dashboard() {
   const [merkatoTickets, setMerkatoTickets] = useState([]);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [showTicketModal, setShowTicketModal] = useState(false);
-  const [downloadingTicket, setDownloadingTicket] = useState(false);
   
   const isMounted = useRef(true);
 
@@ -90,16 +89,29 @@ export default function Dashboard() {
     }
   }
 
+  // FIXED: Load tickets with proper pool data joining
   async function loadUserTickets(userId) {
     try {
-      // Load regular pool tickets from bank_transfers
+      // Load regular pool tickets with actual pool data
       const { data: bankTransfers, error: bankError } = await supabase
         .from('bank_transfers')
-        .select('*')
+        .select(`
+          *,
+          pools!left (
+            id,
+            prize_name,
+            description,
+            target_amount,
+            entry_fee,
+            created_at,
+            end_date
+          )
+        `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
       
       if (!bankError && bankTransfers) {
+        console.log('Bank transfers with pool data:', bankTransfers);
         setRegularTickets(bankTransfers);
       }
       
@@ -301,41 +313,6 @@ export default function Dashboard() {
     toast.success('Referral link copied! Share with friends to earn bonuses.');
   }, [user?.id]);
 
-  const handleDownloadTicket = async (ticket) => {
-    setDownloadingTicket(true);
-    try {
-      // Create a temporary div to render the ticket for download
-      const ticketData = {
-        participant: {
-          user_name: ticket.user_name || ticket.userName,
-          user_email: ticket.user_email || ticket.userEmail,
-          phone: ticket.user_phone || ticket.phone,
-          ticket_number: ticket.ticket_number
-        },
-        pool: {
-          name: ticket.type === 'merkato' 
-            ? `Merkato VIP - ${ticket.pool_type === 'daily' ? 'Daily Millionaire' : ticket.pool_type === 'weekly' ? 'Weekly Mega Winner' : 'Monthly Winner'}`
-            : `Pool ${ticket.pool_id?.substring(0, 8)}`,
-          prize: ticket.prize_amount || ticket.prize,
-          entryFee: ticket.contribution_amount || ticket.entryFee
-        },
-        isVerified: ticket.status === 'verified' || ticket.payment_status === 'verified',
-        seatNumbers: ticket.seat_numbers || [],
-        ticketNumber: ticket.ticket_number,
-        amount: ticket.amount || ticket.contribution_amount,
-        createdAt: ticket.created_at
-      };
-      
-      // Trigger download through the Ticket component
-      toast.success('Preparing ticket download...');
-    } catch (error) {
-      console.error('Download error:', error);
-      toast.error('Failed to download ticket');
-    } finally {
-      setDownloadingTicket(false);
-    }
-  };
-
   if (loading) {
     return <LoadingSpinner fullPage message="Loading your dashboard..." />;
   }
@@ -343,10 +320,24 @@ export default function Dashboard() {
   const isProfileIncomplete = !profile?.phone || !profile?.location || !profile?.address;
   const firstName = profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'User';
 
-  // Combine all tickets
+  // Combine all tickets with proper pool names
   const allTickets = [
-    ...regularTickets.map(t => ({ ...t, type: 'regular', verified: t.status === 'verified' })),
-    ...merkatoTickets.map(t => ({ ...t, type: 'merkato', verified: t.payment_status === 'verified' }))
+    ...regularTickets.map(t => ({ 
+      ...t, 
+      type: 'regular', 
+      verified: t.status === 'verified',
+      pool_name: t.pools?.prize_name || 'Prize Pool',
+      pool_created_at: t.pools?.created_at,
+      pool_end_date: t.pools?.end_date,
+      pool_target_amount: t.pools?.target_amount,
+      pool_entry_fee: t.pools?.entry_fee
+    })),
+    ...merkatoTickets.map(t => ({ 
+      ...t, 
+      type: 'merkato', 
+      verified: t.payment_status === 'verified',
+      pool_name: t.pool_type === 'daily' ? 'Daily Millionaire' : t.pool_type === 'weekly' ? 'Weekly Mega Winner' : 'Monthly Winner'
+    }))
   ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   return (
@@ -576,7 +567,7 @@ export default function Dashboard() {
                           <span className="font-semibold text-sm">
                             {ticket.type === 'merkato' 
                               ? `Merkato VIP - ${ticket.pool_type === 'daily' ? 'Daily' : ticket.pool_type === 'weekly' ? 'Weekly' : 'Monthly'}`
-                              : `Pool ${ticket.pool_id?.substring(0, 8)}`
+                              : ticket.pool_name || 'Prize Pool'
                             }
                           </span>
                           {ticket.verified ? (
@@ -766,7 +757,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Ticket Modal with Downloadable Ticket */}
+      {/* Ticket Modal */}
       {showTicketModal && selectedTicket && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-2xl w-full my-8">
@@ -784,14 +775,15 @@ export default function Dashboard() {
                   created_at: selectedTicket.created_at
                 }}
                 pool={{
-                  name: selectedTicket.type === 'merkato' 
-                    ? `Merkato VIP - ${selectedTicket.pool_type === 'daily' ? 'Daily Millionaire' : selectedTicket.pool_type === 'weekly' ? 'Weekly Mega Winner' : 'Monthly Winner'}`
-                    : `Pool ${selectedTicket.pool_id?.substring(0, 8)}`,
-                  prize: selectedTicket.prize_amount || selectedTicket.prize,
-                  entryFee: selectedTicket.contribution_amount || selectedTicket.entryFee,
-                  draw_time: selectedTicket.draw_time
+                  prize_name: selectedTicket.pool_name || selectedTicket.prize_name,
+                  name: selectedTicket.pool_name,
+                  description: selectedTicket.description,
+                  target_amount: selectedTicket.pool_target_amount || selectedTicket.prize_amount,
+                  entry_fee: selectedTicket.pool_entry_fee || selectedTicket.entry_fee,
+                  created_at: selectedTicket.pool_created_at || selectedTicket.created_at,
+                  end_date: selectedTicket.pool_end_date || selectedTicket.draw_date
                 }}
-                isVerified={selectedTicket.status === 'verified' || selectedTicket.payment_status === 'verified'}
+                isVerified={selectedTicket.verified}
                 seatNumbers={selectedTicket.seat_numbers || []}
                 ticketNumber={selectedTicket.ticket_number}
                 amount={selectedTicket.amount || selectedTicket.contribution_amount}
