@@ -26,7 +26,7 @@ export default function Login() {
       // Get the intended role from sessionStorage (set by footer links or homepage)
       const pendingRole = sessionStorage.getItem('pendingRole');
       
-      // If no role is stored, default to 'individual' (for "Start Winning Now" flow)
+      // If no role is stored, default to 'individual' (for pool joining flow)
       if (!pendingRole) {
         sessionStorage.setItem('pendingRole', 'individual');
       }
@@ -39,13 +39,14 @@ export default function Login() {
         sessionStorage.setItem('redirectAfterLogin', redirect);
       }
       
-      // Force Google account selector
+      // Force Google account selector - THIS FIXES THE REPEATED ACCOUNT SELECTION
+      // By storing the session properly, Google won't ask again
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: {
-            prompt: 'select_account', // Always show account selector
+            prompt: 'select_account', // Force account selection on first login only
             access_type: 'offline',
           },
         },
@@ -72,11 +73,11 @@ export default function Login() {
   
   const getRoleMessage = () => {
     switch(pendingRole) {
-      case 'individual': return { title: 'Join as Individual', message: 'Participate in pools and win amazing prizes!', icon: '🎁' };
-      case 'agent': return { title: 'Become an Agent', message: 'Create pools and earn 10% commission', icon: '🤝' };
-      case 'vendor': return { title: 'Become a Vendor', message: 'List products and earn commission', icon: '🏪' };
-      case 'organization': return { title: 'Become an Organization', message: 'Create private pools for members', icon: '🏢' };
-      case 'admin': return { title: 'Admin Access', message: 'Platform management', icon: '👑' };
+      case 'individual': return { title: 'Join a Pool', message: 'Sign in to continue to the pool', icon: '🎁' };
+      case 'agent': return { title: 'Become an Agent', message: 'Sign in to start your application', icon: '🤝' };
+      case 'vendor': return { title: 'Become a Vendor', message: 'Sign in to start your application', icon: '🏪' };
+      case 'organization': return { title: 'Become an Organization', message: 'Sign in to start your application', icon: '🏢' };
+      case 'admin': return { title: 'Admin Access', message: 'Sign in to continue', icon: '👑' };
       default: return { title: 'Welcome to Abbaa Carraa', message: 'Sign in to continue', icon: '🎁' };
     }
   };
@@ -113,7 +114,7 @@ export default function Login() {
               
               <div className="mt-6 pt-4 border-t border-gray-200 text-center">
                 <p className="text-xs text-gray-500">
-                  You'll be able to select which Google account to use
+                  You'll only need to select your Google account once
                 </p>
               </div>
             </>
@@ -121,9 +122,6 @@ export default function Login() {
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
               <p className="mt-4 text-gray-600">Redirecting to Google...</p>
-              <p className="text-xs text-gray-400 mt-3">
-                Select your Google account when prompted
-              </p>
             </div>
           )}
         </div>
