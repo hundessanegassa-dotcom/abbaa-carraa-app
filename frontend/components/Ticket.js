@@ -27,29 +27,23 @@ export default function Ticket({
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
-  // Get values
+  // Get values - FIXED: Use actual pool name, not generic
   const displayTicketNumber = propTicketNumber || participant?.ticket_number || 'PENDING-001';
   const displayUserName = participant?.user_name || participant?.full_name || participant?.userName || 'N/A';
   const displayUserEmail = participant?.user_email || participant?.email || 'N/A';
   const displayUserPhone = participant?.phone || participant?.user_phone || 'N/A';
+  const displayPoolName = pool?.prize_name || pool?.name || 'Prize Pool';
   const displayPrizeName = pool?.prize_name || pool?.name || 'Prize';
   const displayPrizeDescription = pool?.description || '';
   const displayPrizeAmount = pool?.prize || pool?.prize_amount || participant?.prize_amount || 0;
   const displayEntryFee = pool?.entryFee || pool?.contribution_amount || participant?.contribution_amount || 0;
-  const displayTargetAmount = pool?.target_amount || 0;
-  const displayCurrentAmount = pool?.current_amount || 0;
-  const displayTotalSeats = pool?.totalSeats || Math.floor((displayTargetAmount * 1.2) / displayEntryFee);
-  const displayDrawDate = pool?.drawTime || pool?.draw_time;
-  const displayPoolCity = pool?.city || 'All Ethiopia';
   const displayAmount = propAmount || participant?.amount || participant?.contribution_amount || 0;
   const displayDate = propCreatedAt || participant?.created_at || new Date().toISOString();
   const displaySeatNumbers = seatNumbers || participant?.seat_numbers || [];
-  
-  // Generate Prize Code (e.g., SIN-2024-001)
-  const prizeCode = `PRIZE-${displayTicketNumber.slice(-6)}`;
+  const displayDrawDate = pool?.drawTime || pool?.draw_time;
 
   const getTicketStatus = () => {
-    return isVerified ? '✓ VERIFIED' : '⏳ UNVERIFIED - PENDING';
+    return isVerified ? '✓ VERIFIED TICKET' : '⏳ UNVERIFIED - PENDING VERIFICATION';
   };
 
   const getHeaderGradient = () => {
@@ -70,10 +64,12 @@ export default function Ticket({
   const getQRCodeData = () => {
     const ticketData = {
       ticketNumber: displayTicketNumber,
-      prizeCode: prizeCode,
-      prizeName: displayPrizeName,
       participant: { name: displayUserName, email: displayUserEmail, phone: displayUserPhone },
-      seats: displaySeatNumbers,
+      pool: {
+        name: displayPoolName,
+        prizeName: displayPrizeName,
+        seats: displaySeatNumbers
+      },
       amount: displayAmount,
       verified: isVerified,
       issuedAt: displayDate
@@ -129,41 +125,30 @@ export default function Ticket({
         className="bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-dashed border-gray-300 max-w-md mx-auto relative"
         style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
       >
-        {/* Header with Real Stamp Effect */}
+        {/* Header */}
         <div className={`bg-gradient-to-r ${getHeaderGradient()} p-4 text-white text-center relative`}>
-          {/* Top Left Corner Stamp */}
-          <div className="absolute -top-2 -left-2 w-16 h-16 rounded-full bg-white/10 backdrop-blur flex items-center justify-center border border-white/30 rotate-[-15deg]">
+          {/* Circular Digital Stamp - Top Left */}
+          <div className="absolute -top-3 -left-3 w-16 h-16 rounded-full bg-white/20 backdrop-blur flex items-center justify-center border-2 border-white/50">
             <div className="text-center">
-              <div className="text-[8px] font-bold">አባ ካራ</div>
-              <div className="text-[6px]">DIGITAL</div>
-            </div>
-          </div>
-          
-          {/* Bottom Right Corner Stamp */}
-          <div className="absolute -bottom-2 -right-2 w-16 h-16 rounded-full bg-white/10 backdrop-blur flex items-center justify-center border border-white/30 rotate-[15deg]">
-            <div className="text-center">
-              <div className="text-[8px] font-bold">አባ ካራ</div>
+              <div className="text-[8px] font-bold">DIGITAL</div>
               <div className="text-[6px]">TICKET</div>
             </div>
           </div>
           
-          {/* Center Circular Stamp - Real Stamp Effect */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-28 h-28 rounded-full border-2 border-white/40 flex items-center justify-center bg-white/5 backdrop-blur-sm rotate-[-8deg]">
+          {/* Circular Digital Stamp - Center */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-15">
+            <div className="w-28 h-28 rounded-full border-2 border-white flex items-center justify-center rotate-[-10deg]">
               <div className="text-center">
-                <div className="text-[10px] font-bold tracking-wider">አባ ካራ</div>
-                <div className="text-[7px]">Abbaa Carraa</div>
-                <div className="w-10 h-px bg-white/40 mx-auto my-1"></div>
-                <div className="text-[6px] font-semibold">DIGITAL TICKET</div>
-                <div className="text-[5px] mt-0.5">ዲጂታል ቲኬት</div>
+                <div className="text-[8px] font-bold">ABBA CARRAA</div>
+                <div className="text-[6px]">DIGITAL</div>
               </div>
             </div>
           </div>
           
           <div className="text-center relative z-10">
             <div className="text-3xl mb-1">🎫</div>
-            <h3 className="font-bold text-xl tracking-wide">ABBA CARRAA</h3>
-            <p className="text-[10px] opacity-80 mt-0.5">DIGITAL TICKET</p>
+            <h3 className="font-bold text-lg tracking-wide">ABBA CARRAA</h3>
+            <p className="text-[10px] opacity-80">DIGITAL TICKET</p>
           </div>
         </div>
         
@@ -193,13 +178,7 @@ export default function Ticket({
             />
           </div>
           
-          {/* Prize Code */}
-          <div className="text-center mb-3">
-            <p className="text-[8px] text-gray-400">PRIZE CODE</p>
-            <p className="text-xs font-mono font-bold text-gray-700">{prizeCode}</p>
-          </div>
-          
-          {/* Prize Name - Shows actual prize like "Sino Car" */}
+          {/* Prize Name - Shows actual pool name like "Toyota V8", NOT "Pool e6e48adc" */}
           <div className={`${getInfoBgClass()} rounded-lg p-3 mb-4 text-center`}>
             <p className="text-[8px] font-semibold mb-1">🏆 PRIZE</p>
             <p className="text-sm font-bold">{getPrizeIcon()} {displayPrizeName}</p>
@@ -208,13 +187,7 @@ export default function Ticket({
             )}
           </div>
           
-          {/* Date Listed */}
-          <div className="text-center mb-4">
-            <p className="text-[8px] text-gray-400">LISTED DATE</p>
-            <p className="text-[10px] font-medium">{new Date(displayDate).toLocaleDateString()}</p>
-          </div>
-          
-          {/* Participant Info - Compact */}
+          {/* Participant Info */}
           <div className="bg-gray-50 rounded-lg p-2 mb-4">
             <div className="grid grid-cols-3 gap-1 text-[9px]">
               <div className="text-gray-500">Name:</div>
@@ -226,34 +199,44 @@ export default function Ticket({
             </div>
           </div>
           
-          {/* Seats */}
+          {/* Seats and Amount */}
           <div className="bg-gray-50 rounded-lg p-2 mb-4">
             <div className="flex justify-between text-[9px]">
               <span className="text-gray-500">Seats:</span>
               <span className="font-mono font-bold">{displaySeatNumbers.length > 0 ? displaySeatNumbers.sort((a,b)=>a-b).join(', ') : 'N/A'}</span>
             </div>
             <div className="flex justify-between text-[9px] mt-1">
-              <span className="text-gray-500">Amount:</span>
+              <span className="text-gray-500">Entry Fee:</span>
+              <span className="font-semibold">ETB {formatNumber(displayEntryFee)}</span>
+            </div>
+            <div className="flex justify-between text-[9px] mt-1">
+              <span className="text-gray-500">Total Paid:</span>
               <span className="font-bold text-green-600">ETB {formatNumber(displayAmount)}</span>
             </div>
           </div>
           
           {/* Draw Date */}
           <div className="text-center text-[9px] text-gray-500 mb-3">
-            Draw: {displayDrawDate ? new Date(displayDrawDate).toLocaleString() : 'TBD'}
+            Draw Date: {displayDrawDate ? new Date(displayDrawDate).toLocaleString() : 'TBD'}
+          </div>
+          
+          {/* Issue Date */}
+          <div className="text-center text-[8px] text-gray-400 mb-3">
+            Issued: {new Date(displayDate).toLocaleString()}
           </div>
           
           {/* Verification Note */}
           {!isVerified && (
             <div className="bg-yellow-50 rounded-lg p-2 mb-3 text-center">
               <p className="text-[8px] text-yellow-700">⏳ PENDING VERIFICATION</p>
+              <p className="text-[7px] text-yellow-600 mt-0.5">Seats confirmed after payment verification</p>
             </div>
           )}
           
           {isVerified && (
             <div className="bg-green-50 rounded-lg p-2 mb-3 text-center">
               <p className="text-[8px] text-green-700 flex items-center justify-center gap-1">
-                <span>✓</span> VERIFIED
+                <span>✓</span> VERIFIED TICKET
               </p>
             </div>
           )}
@@ -261,6 +244,13 @@ export default function Ticket({
           {/* Charity Note */}
           <div className="text-center text-[7px] text-gray-400 pt-2 border-t border-gray-200">
             <p>💚 2% supports kidney & heart disease patients</p>
+          </div>
+          
+          {/* Circular Stamp at Bottom Right */}
+          <div className="absolute bottom-2 right-2 w-10 h-10 rounded-full bg-green-100 border border-green-400 flex items-center justify-center opacity-50">
+            <span className="text-[5px] text-green-700 font-bold text-center leading-tight">
+              DIGITAL
+            </span>
           </div>
         </div>
         
