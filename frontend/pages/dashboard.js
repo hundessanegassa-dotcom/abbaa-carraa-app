@@ -89,29 +89,20 @@ export default function Dashboard() {
     }
   }
 
-  // FIXED: Load tickets with proper pool data joining
   async function loadUserTickets(userId) {
     try {
-      // Load regular pool tickets with actual pool data
+      console.log('Loading tickets for user:', userId);
+      
+      // Load regular pool tickets from bank_transfers
       const { data: bankTransfers, error: bankError } = await supabase
         .from('bank_transfers')
-        .select(`
-          *,
-          pools!left (
-            id,
-            prize_name,
-            description,
-            target_amount,
-            entry_fee,
-            created_at,
-            end_date
-          )
-        `)
+        .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
       
+      console.log('Bank transfers found:', bankTransfers?.length || 0);
+      
       if (!bankError && bankTransfers) {
-        console.log('Bank transfers with pool data:', bankTransfers);
         setRegularTickets(bankTransfers);
       }
       
@@ -121,6 +112,8 @@ export default function Dashboard() {
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
+      
+      console.log('Merkato tickets found:', merkato?.length || 0);
       
       if (!merkatoError && merkato) {
         setMerkatoTickets(merkato);
@@ -320,23 +313,19 @@ export default function Dashboard() {
   const isProfileIncomplete = !profile?.phone || !profile?.location || !profile?.address;
   const firstName = profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'User';
 
-  // Combine all tickets with proper pool names
+  // Combine all tickets
   const allTickets = [
     ...regularTickets.map(t => ({ 
       ...t, 
       type: 'regular', 
       verified: t.status === 'verified',
-      pool_name: t.pools?.prize_name || 'Prize Pool',
-      pool_created_at: t.pools?.created_at,
-      pool_end_date: t.pools?.end_date,
-      pool_target_amount: t.pools?.target_amount,
-      pool_entry_fee: t.pools?.entry_fee
+      displayName: `Payment Ticket - ${new Date(t.created_at).toLocaleDateString()}`
     })),
     ...merkatoTickets.map(t => ({ 
       ...t, 
       type: 'merkato', 
       verified: t.payment_status === 'verified',
-      pool_name: t.pool_type === 'daily' ? 'Daily Millionaire' : t.pool_type === 'weekly' ? 'Weekly Mega Winner' : 'Monthly Winner'
+      displayName: `Merkato VIP - ${t.pool_type === 'daily' ? 'Daily' : t.pool_type === 'weekly' ? 'Weekly' : 'Monthly'}`
     }))
   ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
@@ -528,21 +517,22 @@ export default function Dashboard() {
         {/* Right Column: User Activity */}
         <div className="space-y-6">
           
-          {/* My Tickets Section */}
+          {/* MY TICKETS SECTION - COMPLETE */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
               <span>🎫</span> My Tickets
               {allTickets.length > 0 && (
-                <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">{allTickets.length}</span>
+                <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">{allTickets.length}</span>
               )}
             </h3>
             
             {allTickets.length === 0 ? (
               <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                 <div className="text-3xl mb-2">🎫</div>
-                <p className="text-gray-500 text-sm">You don't have any tickets yet.</p>
+                <p className="text-gray-500 text-sm">No tickets found.</p>
+                <p className="text-xs text-gray-400 mt-1">After you upload a payment screenshot, your ticket will appear here.</p>
                 <Link href="/listings" className="mt-3 inline-block text-green-600 font-medium text-sm hover:underline">
-                  Join a pool to get your first ticket →
+                  Join a pool →
                 </Link>
               </div>
             ) : (
@@ -551,7 +541,7 @@ export default function Dashboard() {
                   <div 
                     key={ticket.id} 
                     className={`border rounded-xl p-3 cursor-pointer transition hover:shadow-md ${
-                      ticket.verified 
+                      ticket.verified
                         ? 'border-green-200 bg-green-50/30' 
                         : 'border-yellow-200 bg-yellow-50/30'
                     }`}
@@ -563,11 +553,11 @@ export default function Dashboard() {
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-lg">{ticket.type === 'merkato' ? '🏪' : '🏊'}</span>
+                          <span className="text-lg">{ticket.type === 'merkato' ? '🏪' : '🎫'}</span>
                           <span className="font-semibold text-sm">
                             {ticket.type === 'merkato' 
                               ? `Merkato VIP - ${ticket.pool_type === 'daily' ? 'Daily' : ticket.pool_type === 'weekly' ? 'Weekly' : 'Monthly'}`
-                              : ticket.pool_name || 'Prize Pool'
+                              : `Payment Ticket`
                             }
                           </span>
                           {ticket.verified ? (
@@ -584,24 +574,22 @@ export default function Dashboard() {
                           Ticket: <span className="font-mono">{ticket.ticket_number || ticket.id?.slice(-8)}</span>
                         </p>
                         <p className="text-xs text-gray-400 mt-1">
-                          Seats: {ticket.seat_numbers?.join(', ') || 'N/A'} | Amount: ETB {ticket.amount?.toLocaleString()}
+                          Amount: ETB {ticket.amount?.toLocaleString()}
                         </p>
                         <p className="text-xs text-gray-400">
                           Date: {new Date(ticket.created_at).toLocaleDateString()}
                         </p>
                       </div>
-                      <div className="flex gap-2">
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedTicket(ticket);
-                            setShowTicketModal(true);
-                          }}
-                          className="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs hover:bg-blue-700"
-                        >
-                          View
-                        </button>
-                      </div>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedTicket(ticket);
+                          setShowTicketModal(true);
+                        }}
+                        className="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs hover:bg-blue-700"
+                      >
+                        View
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -768,25 +756,26 @@ export default function Dashboard() {
             <div className="p-6">
               <Ticket
                 participant={{
-                  user_name: selectedTicket.user_name || selectedTicket.userName,
-                  user_email: selectedTicket.user_email || selectedTicket.userEmail,
-                  phone: selectedTicket.user_phone || selectedTicket.phone,
+                  user_name: selectedTicket.user_name,
+                  user_email: selectedTicket.user_email,
+                  phone: selectedTicket.user_phone,
                   ticket_number: selectedTicket.ticket_number,
                   created_at: selectedTicket.created_at
                 }}
                 pool={{
-                  prize_name: selectedTicket.pool_name || selectedTicket.prize_name,
-                  name: selectedTicket.pool_name,
-                  description: selectedTicket.description,
-                  target_amount: selectedTicket.pool_target_amount || selectedTicket.prize_amount,
-                  entry_fee: selectedTicket.pool_entry_fee || selectedTicket.entry_fee,
-                  created_at: selectedTicket.pool_created_at || selectedTicket.created_at,
-                  end_date: selectedTicket.pool_end_date || selectedTicket.draw_date
+                  prize_name: selectedTicket.type === 'merkato' 
+                    ? `Merkato VIP - ${selectedTicket.pool_type === 'daily' ? 'Daily Millionaire' : selectedTicket.pool_type === 'weekly' ? 'Weekly Mega Winner' : 'Monthly Winner'}`
+                    : 'Pool Ticket',
+                  name: selectedTicket.type === 'merkato' ? 'Merkato VIP' : 'Regular Pool',
+                  target_amount: selectedTicket.amount,
+                  entry_fee: selectedTicket.amount,
+                  created_at: selectedTicket.created_at,
+                  end_date: selectedTicket.draw_date
                 }}
                 isVerified={selectedTicket.verified}
                 seatNumbers={selectedTicket.seat_numbers || []}
                 ticketNumber={selectedTicket.ticket_number}
-                amount={selectedTicket.amount || selectedTicket.contribution_amount}
+                amount={selectedTicket.amount}
                 createdAt={selectedTicket.created_at}
               />
               <div className="text-center mt-4">
