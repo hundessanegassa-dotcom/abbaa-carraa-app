@@ -1,3 +1,4 @@
+// pages/payment/merkato.js
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
@@ -15,15 +16,13 @@ export default function MerkatoPayment() {
   const [poolInfo, setPoolInfo] = useState(null);
   const [showPayment, setShowPayment] = useState(true);
   const [ticketGenerated, setTicketGenerated] = useState(false);
-  const [paymentSubmitted, setPaymentSubmitted] = useState(false);
 
   const vipPools = {
-    daily: { name: "Daily Millionaire", entryFee: 500, prize: 1000000, totalSeats: 2400 },
-    weekly: { name: "Weekly Mega Winner", entryFee: 2500, prize: 10000000, totalSeats: 4800 },
-    monthly: { name: "Monthly Winner", entryFee: 5000, prize: 40000000, totalSeats: 9600 }
+    daily: { name: "Daily Millionaire", entryFee: 500, prize: 1000000, totalSeats: 2400, drawDate: "Every Day at 8:00 PM" },
+    weekly: { name: "Weekly Mega Winner", entryFee: 2500, prize: 10000000, totalSeats: 4800, drawDate: "Every Sunday at 6:00 PM" },
+    monthly: { name: "Monthly Winner", entryFee: 5000, prize: 40000000, totalSeats: 9600, drawDate: "Last Day of Month at 8:00 PM" }
   };
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       isMounted.current = false;
@@ -70,26 +69,32 @@ export default function MerkatoPayment() {
     }
   };
 
-  const handlePaymentSuccess = async () => {
+  const handlePaymentSuccess = async (paymentProofUrl, reference) => {
     if (isMounted.current) {
-      setPaymentSubmitted(true);
       setShowPayment(false);
       setTicketGenerated(true);
     }
     
-    // Parse seat numbers into array
     const seatNumbersArray = seats ? (typeof seats === 'string' ? seats.split(',') : seats) : [];
     
     try {
-      // Update participant status with seat numbers
+      // Update participant status with payment info
       await supabase
         .from('merkato_vip_participants')
         .update({ 
           payment_status: 'pending_verification',
           payment_submitted_at: new Date().toISOString(),
-          seat_numbers: seatNumbersArray
+          seat_numbers: seatNumbersArray,
+          payment_proof_url: paymentProofUrl,
+          reference: reference
         })
         .eq('id', participant);
+      
+      // Clear seat reservations
+      await supabase
+        .from('vip_seat_reservations')
+        .delete()
+        .eq('user_id', user?.id);
       
       toast.success('Payment submitted! Your unverified ticket is ready.');
     } catch (error) {
@@ -98,10 +103,9 @@ export default function MerkatoPayment() {
     }
   };
 
-  // Parse seat numbers for Ticket component
   const getSeatNumbersArray = () => {
     if (!seats) return [];
-    return typeof seats === 'string' ? seats.split(',') : seats;
+    return typeof seats === 'string' ? seats.split(',').map(Number) : seats;
   };
 
   if (!poolInfo) return null;
@@ -121,10 +125,10 @@ export default function MerkatoPayment() {
             ← Back
           </button>
 
-          {showPayment && (
+          {showPayment && participantData && (
             <BankTransferUpload
               poolId={`merkato_${type}`}
-              amount={parseInt(amount) || poolInfo.entryFee}
+              amount={parseInt(amount) || poolInfo.entryFee * (getSeatNumbersArray().length || 1)}
               seatNumbers={getSeatNumbersArray()}
               onSuccess={handlePaymentSuccess}
               onClose={() => router.push('/merkato-vip')}
@@ -136,7 +140,7 @@ export default function MerkatoPayment() {
               <h2 className="text-2xl font-bold text-center mb-6">🎫 Your Merkato VIP Ticket</h2>
               <Ticket
                 participant={participantData}
-                pool={poolInfo}
+                pool={{...poolInfo, drawDate: poolInfo.drawDate}}
                 isVerified={false}
                 seatNumbers={getSeatNumbersArray()}
               />
