@@ -1,4 +1,4 @@
-// lib/adminCheck.js
+// lib/adminCheck.js - FINAL FIXED VERSION
 import { supabase } from './supabase';
 
 /**
@@ -13,19 +13,19 @@ export async function checkAdminStatus() {
       return { isAdmin: false, user: null, profile: null };
     }
 
-    // Check profile role
+    // Check profile role first (most reliable)
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role, user_type, full_name, email')
       .eq('id', user.id)
       .maybeSingle();
 
-    // Check admins table - FIXED: removed 'role as admin_role' if column doesn't exist
+    // Check admins table - FIXED: only select existing columns
     let adminRecord = null;
     try {
       const { data, error: adminError } = await supabase
         .from('admins')
-        .select('is_active')
+        .select('is_active')  // Remove 'role as admin_role' - column doesn't exist
         .eq('user_id', user.id)
         .maybeSingle();
       
@@ -33,8 +33,8 @@ export async function checkAdminStatus() {
         adminRecord = data;
       }
     } catch (err) {
-      // If admins table doesn't exist or has no role column, ignore
-      console.warn('Admin table check skipped:', err.message);
+      // Table might not exist - ignore
+      console.warn('Admin table check failed:', err.message);
     }
 
     const isAdmin = profile?.role === 'admin' || 
@@ -55,7 +55,6 @@ export async function checkAdminStatus() {
 
 /**
  * Require admin access - redirects to dashboard if not admin
- * Use this in pages that require admin access
  */
 export async function requireAdmin(router) {
   const { isAdmin } = await checkAdminStatus();
@@ -68,7 +67,7 @@ export async function requireAdmin(router) {
 }
 
 /**
- * Simple check if user is admin (no error handling)
+ * Simple check if user is admin
  */
 export async function isAdmin() {
   const { isAdmin: adminStatus } = await checkAdminStatus();
