@@ -36,6 +36,15 @@ export default function AdminDashboard() {
     pending_draws: 0
   });
   
+  // City VIP Stats
+  const [cityVipPools, setCityVipPools] = useState([]);
+  const [cityVipParticipants, setCityVipParticipants] = useState([]);
+  const [selectedCityFilter, setSelectedCityFilter] = useState('all');
+  const [cityVipWinners, setCityVipWinners] = useState([]);
+  const [drawingCityWinner, setDrawingCityWinner] = useState(false);
+  const [showCityDrawModal, setShowCityDrawModal] = useState(false);
+  const [selectedCityPool, setSelectedCityPool] = useState(null);
+  
   // Admin's personal pools (20% commission)
   const [myPools, setMyPools] = useState([]);
   const [myStats, setMyStats] = useState({
@@ -111,6 +120,20 @@ export default function AdminDashboard() {
     monthly: { name: 'Monthly Legend', contribution: 5000, prize: 40000000, frequency: 'monthly', winnerCount: 1, slogan: 'Make ONE participant a MILLIONAIRE This Month!' }
   };
 
+  // Helper function for date calculations
+  const getNextSunday = () => {
+    const today = new Date();
+    const nextSunday = new Date(today);
+    nextSunday.setDate(today.getDate() + (7 - today.getDay()) % 7);
+    return nextSunday.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  };
+
+  const getNextMonthEnd = () => {
+    const today = new Date();
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    return lastDay.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  };
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -154,11 +177,189 @@ export default function AdminDashboard() {
       await loadAllData();
       await loadRecentActivity();
       await loadMerkatoData();
+      await loadCityVipData();
+      await loadCityVipWinners();
     } catch (error) {
       console.error('Admin check error:', error);
       router.push('/login');
     } finally {
       if (isMounted.current) setLoading(false);
+    }
+  }
+
+  async function loadCityVipData() {
+    try {
+      // Load City VIP participants (using merkato_vip_participants table with city field)
+      const { data: participants, error: participantsError } = await supabase
+        .from('merkato_vip_participants')
+        .select('*')
+        .not('city', 'is', null)
+        .order('created_at', { ascending: false });
+      
+      if (!participantsError && participants) {
+        setCityVipParticipants(participants);
+      }
+      
+      // Get unique cities from participants
+      const uniqueCities = [...new Set(participants?.map(p => p.city).filter(Boolean))];
+      
+      // Create city pools summary
+      const cityPools = uniqueCities.map(city => ({
+        id: `city-${city}`,
+        city: city,
+        name: `${city} VIP`,
+        total_participants: participants?.filter(p => p.city === city).length || 0,
+        total_collected: participants?.filter(p => p.city === city).reduce((sum, p) => sum + (p.contribution_amount || 0), 0) || 0,
+        pending_verification: participants?.filter(p => p.city === city && p.payment_status === 'pending_verification').length || 0,
+        active: true
+      }));
+      
+      setCityVipPools(cityPools);
+      
+    } catch (error) {
+      console.error('Error loading City VIP data:', error);
+    }
+  }
+
+  async function loadCityVipWinners() {
+    try {
+      const { data: winners, error } = await supabase
+        .from('merkato_vip_draws')
+        .select('*')
+        .eq('pool_type', 'city')
+        .order('drawn_at', { ascending: false })
+        .limit(20);
+      
+      if (!error && winners) {
+        setCityVipWinners(winners);
+      }
+    } catch (error) {
+      console.error('Error loading city winners:', error);
+    }
+  }
+
+  async function drawCityVipWinner(cityName) {
+    if (!confirm(`Draw winner for ${cityName} VIP pool? This action cannot be undone.`)) return;
+    
+    setDrawingCityWinner(true);
+    
+    try {
+      // Get all verified participants for this city
+      const { data: participants, error: participantError } = await supabase
+        .from('merkato_vip_participants')
+        .select('*')
+        .eq('city', cityName)
+        .eq('payment_status', 'verified')
+        .neq('is_winner', true);
+      
+      if (participantError) throw participantError;
+      
+      if (!participants || participants.length === 0) {
+        toast.error(`No verified participants in ${cityName} VIP pool`);
+        setDrawingCityWinner(false);
+        return;
+      }
+      
+      // Random selection
+      const randomIndex = Math.floor(Math.random() * participants.length);
+      const winner = participants[randomIndex];
+      
+      // Determine pool tier info
+      const poolInfo = {
+        daily: { name: 'Daily Millionaire', prize: 1000000 },
+        weekly: { name: 'Weekly Mega Winner', prize: 10000000 },
+        monthly: { name: 'Monthly Winner', prize: 40000000 }
+      }[winner.pool_type];
+      
+      // Update participant as winner
+      const { error: updateError } = await supabase
+        .from('merkato_vip_participants')
+        .update({
+          is_winner: true,
+          winner_drawn_at: new Date().toISOString(),
+          status: 'winner'
+        })
+        .eq('id', winner.id);
+      
+      if (updateError) throw updateError;
+      
+      // Record draw history
+      const { error: historyError } = await supabase
+        .from('merkato_vip_draws')
+        .insert({
+          pool_id: `city-${cityName}`,
+          pool_type: 'city',
+          city: cityName,
+          drawn_at: new Date().toISOString(),
+          winner_id: winner.user_id,
+          winner_email: winner.user_email,
+          winner_name: winner.user_name,
+          prize_amount: winner.prize_amount,
+          ticket_number: winner.ticket_number,
+          random_seed: Math.random().toString(),
+          verification_hash: btoa(`${cityName}-${winner.user_id}-${Date.now()}`),
+          drawn_by: user?.id
+        });
+      
+      if (historyError) throw historyError;
+      
+      // Send notification to winner
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: winner.user_id,
+          title: '🎉 Congratulations! You Won!',
+          message: `You have won ${winner.prize_amount.toLocaleString()} ETB in the ${cityName} VIP ${winner.pool_type} pool!`,
+          type: 'winner',
+          link_url: `/dashboard`,
+          created_at: new Date().toISOString()
+        });
+      
+      toast.success(`🎉 Winner drawn for ${cityName}! ${winner.user_name || winner.user_email} wins ${winner.prize_amount.toLocaleString()} ETB!`);
+      
+      // Refresh data
+      await loadCityVipData();
+      await loadCityVipWinners();
+      
+      // Show winner details
+      setSelectedCityPool({
+        city: cityName,
+        winner: winner,
+        prize: winner.prize_amount
+      });
+      setShowCityDrawModal(true);
+      
+    } catch (error) {
+      console.error('Draw error:', error);
+      toast.error('Failed to draw winner');
+    } finally {
+      setDrawingCityWinner(false);
+    }
+  }
+
+  async function verifyCityVipPayment(participantId, approved) {
+    if (!confirm(approved ? 'Approve this payment?' : 'Reject this payment?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('merkato_vip_participants')
+        .update({
+          payment_status: approved ? 'verified' : 'rejected',
+          verified_at: approved ? new Date().toISOString() : null,
+          verified_by: user?.id,
+          status: approved ? 'active' : 'cancelled'
+        })
+        .eq('id', participantId);
+      
+      if (error) throw error;
+      
+      toast.success(`Payment ${approved ? 'approved' : 'rejected'} successfully`);
+      await loadCityVipData();
+      await loadMerkatoData();
+      
+    } catch (error) {
+      console.error('Verification error:', error);
+      toast.error('Failed to verify payment');
     }
   }
 
@@ -187,10 +388,10 @@ export default function AdminDashboard() {
     if (!isMounted.current) return;
     setMerkatoWinners(winners || []);
     
-    const dailyParticipants = participants?.filter(p => p.pool_type === 'daily' && p.payment_status === 'confirmed')?.length || 0;
-    const weeklyParticipants = participants?.filter(p => p.pool_type === 'weekly' && p.payment_status === 'confirmed')?.length || 0;
-    const monthlyParticipants = participants?.filter(p => p.pool_type === 'monthly' && p.payment_status === 'confirmed')?.length || 0;
-    const totalCollected = (participants?.filter(p => p.payment_status === 'confirmed').reduce((sum, p) => sum + (p.contribution_amount || 0), 0)) || 0;
+    const dailyParticipants = participants?.filter(p => p.pool_type === 'daily' && p.payment_status === 'verified')?.length || 0;
+    const weeklyParticipants = participants?.filter(p => p.pool_type === 'weekly' && p.payment_status === 'verified')?.length || 0;
+    const monthlyParticipants = participants?.filter(p => p.pool_type === 'monthly' && p.payment_status === 'verified')?.length || 0;
+    const totalCollected = (participants?.filter(p => p.payment_status === 'verified').reduce((sum, p) => sum + (p.contribution_amount || 0), 0)) || 0;
     const totalPaidOut = winners?.reduce((sum, w) => sum + (w.prize_amount || 0), 0) || 0;
     const pendingDraws = pools?.filter(p => p.status === 'active' && new Date(p.draw_time) <= new Date())?.length || 0;
     
@@ -562,11 +763,11 @@ export default function AdminDashboard() {
         .from('merkato_vip_participants')
         .select('*')
         .eq('pool_id', poolId)
-        .eq('payment_status', 'confirmed');
+        .eq('payment_status', 'verified');
       
       if (participantError) throw participantError;
       if (!participants || participants.length === 0) {
-        toast.error('No confirmed participants in this pool');
+        toast.error('No verified participants in this pool');
         return;
       }
       
@@ -828,12 +1029,15 @@ export default function AdminDashboard() {
 
       {/* Quick Actions */}
       <div className="container mx-auto px-4 mt-6">
-        <div className="grid grid-cols-2 md:grid-cols-8 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-9 gap-3">
           <button onClick={() => setShowPoolModal(true)} className="bg-gradient-to-r from-red-600 to-rose-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
             <div className="text-2xl mb-1">➕</div><p className="font-semibold text-xs">Create Pool</p><p className="text-xs opacity-80">20%</p>
           </button>
           <button onClick={() => setShowMerkatoModal(true)} className="bg-gradient-to-r from-yellow-600 to-orange-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
             <div className="text-2xl mb-1">🏪</div><p className="font-semibold text-xs">Merkato VIP</p><p className="text-xs opacity-80">1M/10M/40M</p>
+          </button>
+          <button onClick={() => setActiveTab('city-vip')} className="bg-gradient-to-r from-gray-600 to-gray-800 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
+            <div className="text-2xl mb-1">🏙️</div><p className="font-semibold text-xs">City VIP</p><p className="text-xs opacity-80">Manage</p>
           </button>
           <button onClick={() => setActiveTab('approvals')} className="bg-yellow-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
             <div className="text-2xl mb-1">📝</div><p className="font-semibold text-xs">Approvals</p><p className="text-xs opacity-80">{pendingAgents.length + pendingVendors.length + pendingOrganizations.length}</p>
@@ -843,9 +1047,6 @@ export default function AdminDashboard() {
           </button>
           <button onClick={() => setActiveTab('bank-transfers')} className="bg-blue-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
             <div className="text-2xl mb-1">🏦</div><p className="font-semibold text-xs">Bank Transfers</p><p className="text-xs opacity-80">{pendingBankTransfers}</p>
-          </button>
-          <button onClick={() => setActiveTab('merkato')} className="bg-purple-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
-            <div className="text-2xl mb-1">🏆</div><p className="font-semibold text-xs">Merkato VIP</p><p className="text-xs opacity-80">Manage</p>
           </button>
           <button onClick={() => setActiveTab('disputes')} className="bg-orange-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
             <div className="text-2xl mb-1">⚖️</div><p className="font-semibold text-xs">Disputes</p><p className="text-xs opacity-80">{disputes.length}</p>
@@ -863,6 +1064,7 @@ export default function AdminDashboard() {
             <button onClick={() => setActiveTab('overview')} className={`px-4 py-3 font-semibold ${activeTab === 'overview' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>📊 Overview</button>
             <button onClick={() => setActiveTab('my-pools')} className={`px-4 py-3 font-semibold ${activeTab === 'my-pools' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🎯 My Pools (20%)</button>
             <button onClick={() => setActiveTab('merkato')} className={`px-4 py-3 font-semibold ${activeTab === 'merkato' ? 'border-b-2 border-yellow-600 text-yellow-600' : 'text-gray-500'}`}>🏪 Merkato VIP</button>
+            <button onClick={() => setActiveTab('city-vip')} className={`px-4 py-3 font-semibold ${activeTab === 'city-vip' ? 'border-b-2 border-gray-600 text-gray-600' : 'text-gray-500'}`}>🏙️ City VIP</button>
             <button onClick={() => setActiveTab('users')} className={`px-4 py-3 font-semibold ${activeTab === 'users' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>👥 Users</button>
             <button onClick={() => setActiveTab('pools')} className={`px-4 py-3 font-semibold ${activeTab === 'pools' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🌊 All Pools</button>
             <button onClick={() => setActiveTab('approvals')} className={`px-4 py-3 font-semibold ${activeTab === 'approvals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>📝 Approvals ({pendingAgents.length + pendingVendors.length + pendingOrganizations.length})</button>
@@ -954,14 +1156,7 @@ export default function AdminDashboard() {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left">Prize</th>
-                        <th className="px-4 py-3 text-left">Target</th>
-                        <th className="px-4 py-3 text-left">Raised</th>
-                        <th className="px-4 py-3 text-left">Your 20%</th>
-                        <th className="px-4 py-3 text-left">Status</th>
-                        <th className="px-4 py-3 text-left">Action</th>
-                      </tr>
+                      <tr><th className="px-4 py-3 text-left">Prize</th><th className="px-4 py-3 text-left">Target</th><th className="px-4 py-3 text-left">Raised</th><th className="px-4 py-3 text-left">Your 20%</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Action</th></tr>
                     </thead>
                     <tbody>
                       {myPools.map(pool => (
@@ -1024,36 +1219,16 @@ export default function AdminDashboard() {
                               </div>
                             </div>
                             <div className="grid grid-cols-3 gap-4 text-center text-sm">
-                              <div>
-                                <p className="text-xs opacity-75">Entry Fee</p>
-                                <p className="font-bold">ETB {pool.contribution_amount?.toLocaleString()}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs opacity-75">Prize</p>
-                                <p className="font-bold">ETB {pool.prize_amount?.toLocaleString()}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs opacity-75">Total Seats</p>
-                                <p className="font-bold">{Math.floor((pool.prize_amount * 1.2) / pool.contribution_amount).toLocaleString()}</p>
-                              </div>
+                              <div><p className="text-xs opacity-75">Entry Fee</p><p className="font-bold">ETB {pool.contribution_amount?.toLocaleString()}</p></div>
+                              <div><p className="text-xs opacity-75">Prize</p><p className="font-bold">ETB {pool.prize_amount?.toLocaleString()}</p></div>
+                              <div><p className="text-xs opacity-75">Total Seats</p><p className="font-bold">{Math.floor((pool.prize_amount * 1.2) / pool.contribution_amount).toLocaleString()}</p></div>
                             </div>
                             <div className="flex gap-2">
-                              <button 
-                                onClick={() => openEditMerkatoModal(pool)}
-                                className="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-lg text-sm transition flex items-center gap-1"
-                              >
-                                ✏️ Edit
-                              </button>
-                              {pool.status === 'active' && (
-                                <Link href={`/admin/merkato-draw?pool=${pool.id}`} className="bg-purple-600 text-white px-3 py-1 rounded text-sm">
-                                  Draw Winner
-                                </Link>
-                              )}
+                              <button onClick={() => openEditMerkatoModal(pool)} className="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-lg text-sm transition flex items-center gap-1">✏️ Edit</button>
+                              {pool.status === 'active' && (<Link href={`/admin/merkato-draw?pool=${pool.id}`} className="bg-purple-600 text-white px-3 py-1 rounded text-sm">Draw Winner</Link>)}
                             </div>
                           </div>
-                          <div className="mt-2 text-xs opacity-75">
-                            Draw Time: {pool.draw_time ? new Date(pool.draw_time).toLocaleString() : 'Not set'}
-                          </div>
+                          <div className="mt-2 text-xs opacity-75">Draw Time: {pool.draw_time ? new Date(pool.draw_time).toLocaleString() : 'Not set'}</div>
                         </div>
                       );
                     })}
@@ -1082,6 +1257,128 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* City VIP Tab */}
+        {activeTab === 'city-vip' && (
+          <div className="space-y-6">
+            {/* City VIP Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-gradient-to-r from-gray-700 to-gray-900 rounded-xl p-4 text-white text-center">
+                <p className="text-2xl font-bold">{cityVipPools.length}</p><p className="text-sm opacity-90">Active Cities</p>
+              </div>
+              <div className="bg-gradient-to-r from-gray-700 to-gray-900 rounded-xl p-4 text-white text-center">
+                <p className="text-2xl font-bold">{cityVipParticipants.length}</p><p className="text-sm opacity-90">Total Participants</p>
+              </div>
+              <div className="bg-gradient-to-r from-gray-700 to-gray-900 rounded-xl p-4 text-white text-center">
+                <p className="text-2xl font-bold">ETB {cityVipParticipants.reduce((sum, p) => sum + (p.contribution_amount || 0), 0).toLocaleString()}</p>
+                <p className="text-sm opacity-90">Total Collected</p>
+              </div>
+              <div className="bg-gradient-to-r from-gray-700 to-gray-900 rounded-xl p-4 text-white text-center">
+                <p className="text-2xl font-bold">{cityVipParticipants.filter(p => p.payment_status === 'pending_verification').length}</p>
+                <p className="text-sm opacity-90">Pending Verification</p>
+              </div>
+            </div>
+
+            {/* City Filter */}
+            <div className="bg-white rounded-xl shadow-md p-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Filter by City</label>
+              <select
+                value={selectedCityFilter}
+                onChange={(e) => setSelectedCityFilter(e.target.value)}
+                className="w-full md:w-64 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-500"
+              >
+                <option value="all">All Cities</option>
+                {cityVipPools.map(pool => (<option key={pool.city} value={pool.city}>{pool.city}</option>))}
+              </select>
+            </div>
+
+            {/* City VIP Participants List */}
+            <div className="bg-white rounded-xl shadow-md overflow-hidden">
+              <div className="px-6 py-4 bg-gray-50 border-b">
+                <h2 className="font-bold text-lg">🏙️ City VIP Participants</h2>
+                <p className="text-sm text-gray-500">Manage city-specific participant payments and verification</p>
+              </div>
+              <div className="p-4">
+                {cityVipParticipants.length === 0 ? (
+                  <div className="text-center py-12"><div className="text-5xl mb-3">🏙️</div><p className="text-gray-400">No City VIP participants yet</p></div>
+                ) : (
+                  <div className="space-y-4">
+                    {cityVipParticipants
+                      .filter(p => selectedCityFilter === 'all' || p.city === selectedCityFilter)
+                      .map((participant) => {
+                        const isVerified = participant.payment_status === 'verified';
+                        const isPending = participant.payment_status === 'pending_verification';
+                        
+                        return (
+                          <div key={participant.id} className={`border rounded-lg p-4 ${isVerified ? 'border-green-200 bg-green-50/30' : isPending ? 'border-yellow-200 bg-yellow-50/30' : 'border-gray-200'}`}>
+                            <div className="flex justify-between items-start flex-wrap gap-4">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-2xl">🏙️</span>
+                                  <span className="font-semibold">{participant.city || 'Unknown City'}</span>
+                                  <span className="text-sm text-gray-500">{participant.pool_type} Pool</span>
+                                  {isVerified ? (<span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">✓ Verified</span>) : isPending ? (<span className="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">⏳ Pending</span>) : (<span className="bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded-full">Pending Payment</span>)}
+                                </div>
+                                <p className="text-sm font-medium">{participant.user_name}</p>
+                                <p className="text-sm text-gray-500">{participant.user_email}</p>
+                                <p className="text-sm">Seats: <span className="font-mono">{participant.seat_numbers?.join(', ')}</span></p>
+                                <p className="text-sm font-semibold text-green-600">Amount: ETB {participant.contribution_amount?.toLocaleString()}</p>
+                                <p className="text-xs text-gray-400">Ticket: {participant.ticket_number}</p>
+                                <p className="text-xs text-gray-400">Submitted: {new Date(participant.created_at).toLocaleString()}</p>
+                              </div>
+                              <div className="flex gap-2">
+                                {participant.payment_proof_url && (<button onClick={() => window.open(participant.payment_proof_url, '_blank')} className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">📸 View Proof</button>)}
+                                {isPending && (<><button onClick={() => verifyCityVipPayment(participant.id, true)} className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">✅ Approve</button><button onClick={() => verifyCityVipPayment(participant.id, false)} className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">❌ Reject</button></>)}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* City Summary with Draw Buttons */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {cityVipPools.map(pool => (
+                <div key={pool.city} className="bg-white rounded-xl shadow-md p-4 border-l-4 border-gray-500">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">🏙️</span>
+                      <div><h3 className="font-bold text-lg">{pool.city}</h3><p className="text-xs text-gray-500">City VIP Program</p></div>
+                    </div>
+                    <button onClick={() => drawCityVipWinner(pool.city)} disabled={drawingCityWinner || pool.total_participants === 0} className="bg-purple-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-purple-700 disabled:opacity-50">{drawingCityWinner ? 'Drawing...' : '🎲 Draw Winner'}</button>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between"><span className="text-gray-500">Participants:</span><span className="font-semibold">{pool.total_participants}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">Pending Verification:</span><span className="font-semibold text-yellow-600">{pool.pending_verification}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">Total Collected:</span><span className="font-semibold text-green-600">ETB {pool.total_collected.toLocaleString()}</span></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* City VIP Winners History */}
+            <div className="bg-white rounded-xl shadow-md overflow-hidden">
+              <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">🏆 City VIP Winners History</h2></div>
+              <div className="p-4">
+                {cityVipWinners.length === 0 ? (
+                  <div className="text-center py-8 text-gray-400">No winners yet. Draw the first winner!</div>
+                ) : (
+                  <div className="space-y-3">
+                    {cityVipWinners.map(winner => (
+                      <div key={winner.id} className="border-b pb-3 flex justify-between items-center">
+                        <div><p className="font-semibold">{winner.winner_name || winner.winner_email}</p><p className="text-sm text-gray-500">{winner.city} - {winner.pool_type} pool</p><p className="text-xs text-gray-400">{new Date(winner.drawn_at).toLocaleString()}</p></div>
+                        <div className="text-right"><p className="font-bold text-green-600">ETB {winner.prize_amount?.toLocaleString()}</p><p className="text-xs text-gray-400">Ticket: {winner.ticket_number?.slice(-8)}</p></div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Users Tab */}
         {activeTab === 'users' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
@@ -1089,32 +1386,16 @@ export default function AdminDashboard() {
             <div className="overflow-x-auto p-4">
               <table className="w-full">
                 <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left">Name</th>
-                    <th className="px-4 py-3 text-left">Email</th>
-                    <th className="px-4 py-3 text-left">Role</th>
-                    <th className="px-4 py-3 text-left">Status</th>
-                    <th className="px-4 py-3 text-left">Actions</th>
-                  </tr>
+                  <tr><th className="px-4 py-3 text-left">Name</th><th className="px-4 py-3 text-left">Email</th><th className="px-4 py-3 text-left">Role</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Actions</th></tr>
                 </thead>
                 <tbody>
                   {users.map(u => (
                     <tr key={u.id} className="border-b hover:bg-gray-50">
                       <td className="px-4 py-3">{u.full_name || 'N/A'}</td>
                       <td className="px-4 py-3">{u.email}</td>
-                      <td className="px-4 py-3">
-                        <select onChange={(e) => updateUserRole(u.id, e.target.value)} defaultValue={u.role || 'individual'} className="border rounded px-2 py-1 text-sm">
-                          <option value="individual">Individual</option>
-                          <option value="agent">Agent</option>
-                          <option value="vendor">Vendor</option>
-                          <option value="organization">Organization</option>
-                          <option value="admin">Admin</option>
-                        </select>
-                      </td>
+                      <td className="px-4 py-3"><select onChange={(e) => updateUserRole(u.id, e.target.value)} defaultValue={u.role || 'individual'} className="border rounded px-2 py-1 text-sm"><option value="individual">Individual</option><option value="agent">Agent</option><option value="vendor">Vendor</option><option value="organization">Organization</option><option value="admin">Admin</option></select></td>
                       <td className="px-4 py-3">{u.is_banned ? <span className="text-red-600 font-medium">Banned</span> : <span className="text-green-600">Active</span>}</td>
-                      <td className="px-4 py-3">
-                        <button onClick={() => toggleUserBan(u.id, u.is_banned)} className={`px-3 py-1 rounded text-xs ${u.is_banned ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>{u.is_banned ? 'Unban' : 'Ban'}</button>
-                      </td>
+                      <td className="px-4 py-3"><button onClick={() => toggleUserBan(u.id, u.is_banned)} className={`px-3 py-1 rounded text-xs ${u.is_banned ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>{u.is_banned ? 'Unban' : 'Ban'}</button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -1130,14 +1411,7 @@ export default function AdminDashboard() {
             <div className="overflow-x-auto p-4">
               <table className="w-full">
                 <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left">Prize</th>
-                    <th className="px-4 py-3 text-left">Creator</th>
-                    <th className="px-4 py-3 text-left">Target</th>
-                    <th className="px-4 py-3 text-left">Status</th>
-                    <th className="px-4 py-3 text-left">Featured</th>
-                    <th className="px-4 py-3 text-left">Actions</th>
-                  </tr>
+                  <tr><th className="px-4 py-3 text-left">Prize</th><th className="px-4 py-3 text-left">Creator</th><th className="px-4 py-3 text-left">Target</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Featured</th><th className="px-4 py-3 text-left">Actions</th></tr>
                 </thead>
                 <tbody>
                   {allPools.map(p => (
@@ -1147,12 +1421,7 @@ export default function AdminDashboard() {
                       <td className="px-4 py-3">ETB {p.target_amount?.toLocaleString()}</td>
                       <td className="px-4 py-3"><span className={`px-2 py-1 rounded-full text-xs ${p.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{p.status}</span></td>
                       <td className="px-4 py-3">{p.is_featured ? '⭐ Featured' : ''}</td>
-                      <td className="px-4 py-3 flex gap-1 flex-wrap">
-                        <button onClick={() => togglePoolStatus(p.id, p.status)} className="bg-yellow-600 text-white px-2 py-1 rounded text-xs">{p.status === 'active' ? 'Pause' : 'Activate'}</button>
-                        <button onClick={() => toggleFeaturedPool(p.id, p.is_featured)} className="bg-blue-600 text-white px-2 py-1 rounded text-xs">{p.is_featured ? 'Unfeature' : 'Feature'}</button>
-                        <button onClick={() => deletePool(p.id)} className="bg-red-600 text-white px-2 py-1 rounded text-xs">Delete</button>
-                        <Link href={`/pools/${p.id}`} className="bg-gray-600 text-white px-2 py-1 rounded text-xs">View</Link>
-                      </td>
+                      <td className="px-4 py-3 flex gap-1 flex-wrap"><button onClick={() => togglePoolStatus(p.id, p.status)} className="bg-yellow-600 text-white px-2 py-1 rounded text-xs">{p.status === 'active' ? 'Pause' : 'Activate'}</button><button onClick={() => toggleFeaturedPool(p.id, p.is_featured)} className="bg-blue-600 text-white px-2 py-1 rounded text-xs">{p.is_featured ? 'Unfeature' : 'Feature'}</button><button onClick={() => deletePool(p.id)} className="bg-red-600 text-white px-2 py-1 rounded text-xs">Delete</button><Link href={`/pools/${p.id}`} className="bg-gray-600 text-white px-2 py-1 rounded text-xs">View</Link></td>
                     </tr>
                   ))}
                 </tbody>
@@ -1247,6 +1516,31 @@ export default function AdminDashboard() {
         )}
       </div>
 
+      {/* City Winner Draw Modal */}
+      {showCityDrawModal && selectedCityPool && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="text-6xl mb-3">🏆</div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Winner Announced!</h2>
+              <p className="text-gray-500 mb-4">{selectedCityPool.city} VIP Pool</p>
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-4 mb-4">
+                <p className="text-sm text-gray-500">Winner</p>
+                <p className="text-xl font-bold text-gray-800">{selectedCityPool.winner?.user_name || selectedCityPool.winner?.user_email}</p>
+                <p className="text-2xl font-bold text-green-600 mt-2">ETB {selectedCityPool.prize?.toLocaleString()}</p>
+              </div>
+              <div className="text-left text-sm space-y-2 mb-4">
+                <p><span className="text-gray-500">Email:</span> {selectedCityPool.winner?.user_email}</p>
+                <p><span className="text-gray-500">Ticket:</span> <span className="font-mono">{selectedCityPool.winner?.ticket_number}</span></p>
+                <p><span className="text-gray-500">Seats:</span> {selectedCityPool.winner?.seat_numbers?.join(', ')}</p>
+                <p><span className="text-gray-500">Pool Type:</span> {selectedCityPool.winner?.pool_type}</p>
+              </div>
+              <button onClick={() => setShowCityDrawModal(false)} className="w-full bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Create Pool Modal */}
       {showPoolModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
@@ -1289,106 +1583,23 @@ export default function AdminDashboard() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-md w-full">
             <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
-              <h2 className="text-xl font-bold">✏️ Edit Merkato VIP Pool</h2>
-              <button onClick={() => setShowEditMerkatoModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+              <h2 className="text-xl font-bold">✏️ Edit Merkato VIP Pool</h2><button onClick={() => setShowEditMerkatoModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
             </div>
             <div className="p-6 space-y-5">
-              {/* Pool Preview with Color */}
               <div className={`bg-gradient-to-r ${editingMerkatoPool.tier === 'daily' ? 'from-yellow-500 to-orange-600' : editingMerkatoPool.tier === 'weekly' ? 'from-purple-500 to-pink-600' : 'from-green-600 to-teal-700'} rounded-xl p-4 text-white text-center`}>
                 <div className="text-3xl mb-1">{editingMerkatoPool.tier === 'daily' ? '⭐' : editingMerkatoPool.tier === 'weekly' ? '🏆' : '👑'}</div>
                 <p className="font-bold">{editingMerkatoPool.name}</p>
                 <p className="text-xs opacity-80">{editingMerkatoPool.tier === 'daily' ? 'Daily Millionaire' : editingMerkatoPool.tier === 'weekly' ? 'Weekly Mega Winner' : 'Monthly Winner'}</p>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Pool Name</label>
-                <input
-                  type="text"
-                  value={editMerkatoData.name}
-                  onChange={(e) => setEditMerkatoData({...editMerkatoData, name: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500"
-                />
-              </div>
-
+              <div><label className="block text-sm font-medium text-gray-700 mb-1">Pool Name</label><input type="text" value={editMerkatoData.name} onChange={(e) => setEditMerkatoData({...editMerkatoData, name: e.target.value})} className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500" /></div>
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Entry Fee (ETB)</label>
-                  <input
-                    type="number"
-                    value={editMerkatoData.contribution_amount}
-                    onChange={(e) => {
-                      const newEntryFee = parseInt(e.target.value);
-                      setEditMerkatoData({...editMerkatoData, contribution_amount: newEntryFee});
-                    }}
-                    className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">
-                    Current: ETB {editMerkatoData.contribution_amount?.toLocaleString()}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Prize Amount (ETB)</label>
-                  <input
-                    type="number"
-                    value={editMerkatoData.prize_amount}
-                    onChange={(e) => {
-                      const newPrize = parseInt(e.target.value);
-                      setEditMerkatoData({...editMerkatoData, prize_amount: newPrize});
-                    }}
-                    className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">
-                    Current: ETB {editMerkatoData.prize_amount?.toLocaleString()}
-                  </p>
-                </div>
+                <div><label className="block text-sm font-medium text-gray-700 mb-1">Entry Fee (ETB)</label><input type="number" value={editMerkatoData.contribution_amount} onChange={(e) => { const newEntryFee = parseInt(e.target.value); setEditMerkatoData({...editMerkatoData, contribution_amount: newEntryFee}); }} className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500" /><p className="text-xs text-gray-400 mt-1">Current: ETB {editMerkatoData.contribution_amount?.toLocaleString()}</p></div>
+                <div><label className="block text-sm font-medium text-gray-700 mb-1">Prize Amount (ETB)</label><input type="number" value={editMerkatoData.prize_amount} onChange={(e) => { const newPrize = parseInt(e.target.value); setEditMerkatoData({...editMerkatoData, prize_amount: newPrize}); }} className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500" /><p className="text-xs text-gray-400 mt-1">Current: ETB {editMerkatoData.prize_amount?.toLocaleString()}</p></div>
               </div>
-
-              {/* Live Calculation Display */}
-              <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-sm font-semibold text-gray-700 mb-2">📊 Updated Calculations:</p>
-                <div className="space-y-1 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Total Collection (+20%):</span>
-                    <span className="font-bold text-green-600">ETB {(editMerkatoData.prize_amount * 1.2).toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Total Seats:</span>
-                    <span className="font-bold text-blue-600">{Math.floor((editMerkatoData.prize_amount * 1.2) / editMerkatoData.contribution_amount).toLocaleString()} seats</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Admin Commission (20%):</span>
-                    <span className="font-bold text-orange-600">ETB {(editMerkatoData.prize_amount * 0.2).toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Draw Time</label>
-                <input
-                  type="datetime-local"
-                  value={editMerkatoData.draw_time}
-                  onChange={(e) => setEditMerkatoData({...editMerkatoData, draw_time: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500"
-                />
-              </div>
-
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
-                <p className="font-semibold text-yellow-800">📝 Note:</p>
-                <p className="text-xs text-yellow-700 mt-1">
-                  • Changing entry fee or prize amount will automatically recalculate total seats<br/>
-                  • Colors will remain the same (Yellow for Daily, Purple for Weekly, Green for Monthly)<br/>
-                  • Changes take effect immediately for new participants
-                </p>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button onClick={updateMerkatoPool} disabled={loading} className="flex-1 bg-gradient-to-r from-yellow-600 to-orange-600 text-white py-2 rounded-lg font-semibold hover:shadow-lg transition">
-                  {loading ? 'Saving...' : '💾 Save Changes'}
-                </button>
-                <button onClick={() => setShowEditMerkatoModal(false)} className="flex-1 border border-gray-300 py-2 rounded-lg hover:bg-gray-50 transition">
-                  Cancel
-                </button>
-              </div>
+              <div className="bg-gray-50 rounded-lg p-3"><p className="text-sm font-semibold text-gray-700 mb-2">📊 Updated Calculations:</p><div className="space-y-1 text-sm"><div className="flex justify-between"><span className="text-gray-600">Total Collection (+20%):</span><span className="font-bold text-green-600">ETB {(editMerkatoData.prize_amount * 1.2).toLocaleString()}</span></div><div className="flex justify-between"><span className="text-gray-600">Total Seats:</span><span className="font-bold text-blue-600">{Math.floor((editMerkatoData.prize_amount * 1.2) / editMerkatoData.contribution_amount).toLocaleString()} seats</span></div><div className="flex justify-between"><span className="text-gray-600">Admin Commission (20%):</span><span className="font-bold text-orange-600">ETB {(editMerkatoData.prize_amount * 0.2).toLocaleString()}</span></div></div></div>
+              <div><label className="block text-sm font-medium text-gray-700 mb-1">Draw Time</label><input type="datetime-local" value={editMerkatoData.draw_time} onChange={(e) => setEditMerkatoData({...editMerkatoData, draw_time: e.target.value})} className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500" /></div>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm"><p className="font-semibold text-yellow-800">📝 Note:</p><p className="text-xs text-yellow-700 mt-1">• Changing entry fee or prize amount will automatically recalculate total seats<br/>• Colors will remain the same (Yellow for Daily, Purple for Weekly, Green for Monthly)<br/>• Changes take effect immediately for new participants</p></div>
+              <div className="flex gap-3 pt-4"><button onClick={updateMerkatoPool} disabled={loading} className="flex-1 bg-gradient-to-r from-yellow-600 to-orange-600 text-white py-2 rounded-lg font-semibold hover:shadow-lg transition">{loading ? 'Saving...' : '💾 Save Changes'}</button><button onClick={() => setShowEditMerkatoModal(false)} className="flex-1 border border-gray-300 py-2 rounded-lg hover:bg-gray-50 transition">Cancel</button></div>
             </div>
           </div>
         </div>
@@ -1401,16 +1612,8 @@ export default function AdminDashboard() {
             <h3 className="text-xl font-bold mb-4">Create Announcement</h3>
             <input type="text" placeholder="Title" className="w-full border rounded-lg p-2 mb-3" value={newAnnouncement.title} onChange={(e) => setNewAnnouncement({...newAnnouncement, title: e.target.value})} />
             <textarea placeholder="Content" rows="4" className="w-full border rounded-lg p-2 mb-3" value={newAnnouncement.content} onChange={(e) => setNewAnnouncement({...newAnnouncement, content: e.target.value})}></textarea>
-            <select className="w-full border rounded-lg p-2 mb-4" value={newAnnouncement.target_audience} onChange={(e) => setNewAnnouncement({...newAnnouncement, target_audience: e.target.value})}>
-              <option value="all">All Users</option>
-              <option value="agents">Agents</option>
-              <option value="vendors">Vendors</option>
-              <option value="individuals">Individuals</option>
-            </select>
-            <div className="flex gap-3">
-              <button onClick={createAnnouncement} className="flex-1 bg-blue-600 text-white py-2 rounded-lg">Publish</button>
-              <button onClick={() => setShowAnnouncementModal(false)} className="flex-1 bg-gray-200 py-2 rounded-lg">Cancel</button>
-            </div>
+            <select className="w-full border rounded-lg p-2 mb-4" value={newAnnouncement.target_audience} onChange={(e) => setNewAnnouncement({...newAnnouncement, target_audience: e.target.value})}><option value="all">All Users</option><option value="agents">Agents</option><option value="vendors">Vendors</option><option value="individuals">Individuals</option></select>
+            <div className="flex gap-3"><button onClick={createAnnouncement} className="flex-1 bg-blue-600 text-white py-2 rounded-lg">Publish</button><button onClick={() => setShowAnnouncementModal(false)} className="flex-1 bg-gray-200 py-2 rounded-lg">Cancel</button></div>
           </div>
         </div>
       )}
