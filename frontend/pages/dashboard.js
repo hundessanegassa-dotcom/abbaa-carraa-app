@@ -1,3 +1,4 @@
+// pages/dashboard.js
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
@@ -36,9 +37,10 @@ export default function Dashboard() {
   const [recentActivities, setRecentActivities] = useState([]);
   const [badges, setBadges] = useState([]);
   
-  // Ticket states
+  // Ticket states for ALL THREE types
   const [regularTickets, setRegularTickets] = useState([]);
   const [merkatoTickets, setMerkatoTickets] = useState([]);
+  const [cityTickets, setCityTickets] = useState([]);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [showTicketModal, setShowTicketModal] = useState(false);
   
@@ -91,32 +93,43 @@ export default function Dashboard() {
 
   async function loadUserTickets(userId) {
     try {
-      console.log('Loading tickets for user:', userId);
-      
-      // Load regular pool tickets from bank_transfers
-      const { data: bankTransfers, error: bankError } = await supabase
-        .from('bank_transfers')
-        .select('*')
+      // 1. Load Regular Pool tickets from regular_pool_participants table
+      const { data: regularData, error: regularError } = await supabase
+        .from('regular_pool_participants')
+        .select('*, pools:pool_id(prize_name, target_amount, end_date)')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
       
-      console.log('Bank transfers found:', bankTransfers?.length || 0);
+      console.log('Regular tickets found:', regularData?.length || 0);
       
-      if (!bankError && bankTransfers) {
-        setRegularTickets(bankTransfers);
+      if (!regularError && regularData) {
+        setRegularTickets(regularData);
       }
       
-      // Load Merkato VIP tickets
-      const { data: merkato, error: merkatoError } = await supabase
+      // 2. Load Merkato VIP tickets
+      const { data: merkatoData, error: merkatoError } = await supabase
         .from('merkato_vip_participants')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
       
-      console.log('Merkato tickets found:', merkato?.length || 0);
+      console.log('Merkato tickets found:', merkatoData?.length || 0);
       
-      if (!merkatoError && merkato) {
-        setMerkatoTickets(merkato);
+      if (!merkatoError && merkatoData) {
+        setMerkatoTickets(merkatoData);
+      }
+      
+      // 3. Load City VIP tickets
+      const { data: cityData, error: cityError } = await supabase
+        .from('city_vip_participants')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      
+      console.log('City tickets found:', cityData?.length || 0);
+      
+      if (!cityError && cityData) {
+        setCityTickets(cityData);
       }
       
     } catch (error) {
@@ -313,19 +326,28 @@ export default function Dashboard() {
   const isProfileIncomplete = !profile?.phone || !profile?.location || !profile?.address;
   const firstName = profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'User';
 
-  // Combine all tickets
+  // Combine ALL THREE ticket types
   const allTickets = [
     ...regularTickets.map(t => ({ 
       ...t, 
       type: 'regular', 
-      verified: t.status === 'verified',
-      displayName: `Payment Ticket - ${new Date(t.created_at).toLocaleDateString()}`
+      verified: t.payment_status === 'verified',
+      displayName: `${t.pools?.prize_name || 'Regular Pool'} - ${t.seat_numbers?.join(', ') || 'N/A'}`,
+      poolInfo: t.pools
     })),
     ...merkatoTickets.map(t => ({ 
       ...t, 
       type: 'merkato', 
       verified: t.payment_status === 'verified',
-      displayName: `Merkato VIP - ${t.pool_type === 'daily' ? 'Daily' : t.pool_type === 'weekly' ? 'Weekly' : 'Monthly'}`
+      displayName: `Merkato VIP - ${t.pool_type === 'daily' ? 'Daily' : t.pool_type === 'weekly' ? 'Weekly' : 'Monthly'}`,
+      city: 'Merkato'
+    })),
+    ...cityTickets.map(t => ({ 
+      ...t, 
+      type: 'city', 
+      verified: t.payment_status === 'verified',
+      displayName: `${t.city} VIP - ${t.pool_type === 'daily' ? 'Daily' : t.pool_type === 'weekly' ? 'Weekly' : 'Monthly'}`,
+      city: t.city
     }))
   ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
@@ -517,7 +539,7 @@ export default function Dashboard() {
         {/* Right Column: User Activity */}
         <div className="space-y-6">
           
-          {/* MY TICKETS SECTION - COMPLETE */}
+          {/* MY TICKETS SECTION - UPDATED FOR ALL THREE TYPES */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
               <span>🎫</span> My Tickets
@@ -531,9 +553,17 @@ export default function Dashboard() {
                 <div className="text-3xl mb-2">🎫</div>
                 <p className="text-gray-500 text-sm">No tickets found.</p>
                 <p className="text-xs text-gray-400 mt-1">After you upload a payment screenshot, your ticket will appear here.</p>
-                <Link href="/listings" className="mt-3 inline-block text-green-600 font-medium text-sm hover:underline">
-                  Join a pool →
-                </Link>
+                <div className="mt-3 flex flex-col gap-2">
+                  <Link href="/merkato-vip" className="inline-block text-green-600 font-medium text-sm hover:underline">
+                    Join Merkato VIP →
+                  </Link>
+                  <Link href="/cities" className="inline-block text-blue-600 font-medium text-sm hover:underline">
+                    Join City VIP →
+                  </Link>
+                  <Link href="/listings" className="inline-block text-purple-600 font-medium text-sm hover:underline">
+                    Join Regular Pool →
+                  </Link>
+                </div>
               </div>
             ) : (
               <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -553,11 +583,15 @@ export default function Dashboard() {
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-lg">{ticket.type === 'merkato' ? '🏪' : '🎫'}</span>
+                          <span className="text-lg">
+                            {ticket.type === 'merkato' ? '🏪' : ticket.type === 'city' ? '🏙️' : '🎁'}
+                          </span>
                           <span className="font-semibold text-sm">
                             {ticket.type === 'merkato' 
                               ? `Merkato VIP - ${ticket.pool_type === 'daily' ? 'Daily' : ticket.pool_type === 'weekly' ? 'Weekly' : 'Monthly'}`
-                              : `Payment Ticket`
+                              : ticket.type === 'city'
+                              ? `${ticket.city} VIP - ${ticket.pool_type === 'daily' ? 'Daily' : ticket.pool_type === 'weekly' ? 'Weekly' : 'Monthly'}`
+                              : `Regular Pool - ${ticket.seat_numbers?.join(', ') || 'N/A'}`
                             }
                           </span>
                           {ticket.verified ? (
@@ -573,8 +607,11 @@ export default function Dashboard() {
                         <p className="text-xs text-gray-500 mt-1">
                           Ticket: <span className="font-mono">{ticket.ticket_number || ticket.id?.slice(-8)}</span>
                         </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          Amount: ETB {ticket.amount?.toLocaleString()}
+                        <p className="text-xs text-gray-500">
+                          Seats: {ticket.seat_numbers?.join(', ') || 'N/A'}
+                        </p>
+                        <p className="text-xs font-semibold text-green-600 mt-1">
+                          Amount: ETB {ticket.contribution_amount?.toLocaleString() || ticket.amount?.toLocaleString()}
                         </p>
                         <p className="text-xs text-gray-400">
                           Date: {new Date(ticket.created_at).toLocaleDateString()}
@@ -597,7 +634,7 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* My Active Entries */}
+          {/* My Active Entries - Keep as is */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
               <span>🎟️</span> My Active Entries
@@ -648,7 +685,7 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* My Wins */}
+          {/* My Wins - Keep as is */}
           <div className="bg-gradient-to-br from-yellow-50 to-orange-50 p-6 rounded-2xl shadow-sm border border-yellow-100">
             <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
               <span>🏆</span> My Wins
@@ -677,7 +714,7 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Badges & Achievements */}
+          {/* Badges & Achievements - Keep as is */}
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
             <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
               <span>🎖️</span> Badges & Achievements
@@ -692,7 +729,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Referral Program */}
+          {/* Referral Program - Keep as is */}
           <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-5 rounded-2xl border border-indigo-100">
             <h3 className="font-semibold text-indigo-800 mb-2 flex items-center gap-2">
               <span>🤝</span> Referral Program
@@ -714,7 +751,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Charity Section */}
+          {/* Charity Section - Keep as is */}
           <div className="bg-gradient-to-r from-pink-50 to-rose-50 p-5 rounded-2xl border border-pink-100">
             <h3 className="font-semibold text-pink-800 mb-2 flex items-center gap-2">
               <span>💚</span> 2% for Health
@@ -729,7 +766,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Quick Tips */}
+          {/* Quick Tips - Keep as is */}
           <div className="bg-blue-50 p-5 rounded-2xl border border-blue-100">
             <h3 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
               <span>💡</span> Pro Tips
@@ -745,7 +782,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Ticket Modal */}
+      {/* Ticket Modal - Updated to handle all three types */}
       {showTicketModal && selectedTicket && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-2xl w-full my-8">
@@ -760,22 +797,27 @@ export default function Dashboard() {
                   user_email: selectedTicket.user_email,
                   phone: selectedTicket.user_phone,
                   ticket_number: selectedTicket.ticket_number,
-                  created_at: selectedTicket.created_at
+                  created_at: selectedTicket.created_at,
+                  seat_numbers: selectedTicket.seat_numbers,
+                  contribution_amount: selectedTicket.contribution_amount,
+                  pool_type: selectedTicket.pool_type,
+                  city: selectedTicket.city,
+                  verified_at: selectedTicket.verified_at
                 }}
                 pool={{
                   prize_name: selectedTicket.type === 'merkato' 
                     ? `Merkato VIP - ${selectedTicket.pool_type === 'daily' ? 'Daily Millionaire' : selectedTicket.pool_type === 'weekly' ? 'Weekly Mega Winner' : 'Monthly Winner'}`
-                    : 'Pool Ticket',
-                  name: selectedTicket.type === 'merkato' ? 'Merkato VIP' : 'Regular Pool',
-                  target_amount: selectedTicket.amount,
-                  entry_fee: selectedTicket.amount,
-                  created_at: selectedTicket.created_at,
-                  end_date: selectedTicket.draw_date
+                    : selectedTicket.type === 'city'
+                    ? `${selectedTicket.city} VIP - ${selectedTicket.pool_type === 'daily' ? 'Daily Millionaire' : selectedTicket.pool_type === 'weekly' ? 'Weekly Mega Winner' : 'Monthly Winner'}`
+                    : selectedTicket.pools?.prize_name || 'Regular Pool',
+                  name: selectedTicket.type === 'merkato' ? 'Merkato VIP' : selectedTicket.type === 'city' ? 'City VIP' : 'Regular Pool',
+                  target_amount: selectedTicket.prize_amount || selectedTicket.prize_amount,
+                  drawDate: selectedTicket.type === 'daily' ? 'Every Day at 8:00 PM' : selectedTicket.type === 'weekly' ? 'Every Sunday at 6:00 PM' : 'Last Day of Month at 8:00 PM'
                 }}
                 isVerified={selectedTicket.verified}
                 seatNumbers={selectedTicket.seat_numbers || []}
                 ticketNumber={selectedTicket.ticket_number}
-                amount={selectedTicket.amount}
+                amount={selectedTicket.contribution_amount}
                 createdAt={selectedTicket.created_at}
               />
               <div className="text-center mt-4">
