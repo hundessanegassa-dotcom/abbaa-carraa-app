@@ -297,7 +297,20 @@ export default function MerkatoVip() {
 
   useEffect(() => {
     checkUser();
+    // Check for stored VIP data on page load (for debugging)
+    checkStoredVipData();
   }, []);
+
+  const checkStoredVipData = () => {
+    try {
+      const vipData = localStorage.getItem('abbaa_vip_pending');
+      if (vipData) {
+        console.log('Found stored VIP data:', JSON.parse(vipData));
+      }
+    } catch (e) {
+      console.error('Error checking VIP data:', e);
+    }
+  };
 
   const checkUser = async () => {
     try {
@@ -375,17 +388,27 @@ export default function MerkatoVip() {
     }
   };
 
+  // FIXED: Correct handleJoinPool function with localStorage
   const handleJoinPool = async (poolType) => {
     if (!user) {
-      sessionStorage.setItem('pendingRole', 'individual');
-      sessionStorage.setItem('pendingPoolType', poolType);
-      sessionStorage.setItem('pendingPoolSource', 'merkato-vip');
-      sessionStorage.setItem('redirectAfterLogin', `/merkato-vip?join=${poolType}`);
-      toast.loading('እባክዎ ይግቡ | Please login to join...');
+      // Store VIP data in localStorage (persists through OAuth redirects)
+      const vipData = {
+        role: 'individual',
+        poolType: poolType,
+        poolSource: 'merkato-vip',
+        redirectUrl: `/merkato-seat?type=${poolType}`,
+        timestamp: Date.now()
+      };
+      
+      localStorage.setItem('abbaa_vip_pending', JSON.stringify(vipData));
+      console.log('Merkato VIP - Stored in localStorage:', vipData);
+      
+      toast.loading('Please login to join Merkato VIP...');
       router.push('/login');
       return;
     }
     
+    // User is already logged in, go directly to seat selection
     setSelectedPoolType(poolType);
     setSelectedSeats([]);
     setShowSeatSelector(true);
