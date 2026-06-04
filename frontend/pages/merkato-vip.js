@@ -459,14 +459,15 @@ export default function MerkatoVip() {
     }
   };
 
-  // Render seat selection UI
+  // Render seat selection UI - FIXED: NO SEAT LIMIT
   const renderSeatSelector = () => {
     if (!selectedPoolType) return null;
     
     const pool = vipPools[selectedPoolType];
     const entryFeeAmount = parseInt(pool.contribution);
     const totalSeatsCount = pool.totalSeats;
-    const seatNumbers = Array.from({ length: Math.min(totalSeatsCount, 500) }, (_, i) => i + 1);
+    // FIXED: Removed the 500 limit - now shows ALL seats from pool card
+    const seatNumbers = Array.from({ length: totalSeatsCount }, (_, i) => i + 1);
     
     const toggleSeat = (seatNum) => {
       if (selectedSeats.includes(seatNum)) {
@@ -526,11 +527,11 @@ export default function MerkatoVip() {
     
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
           <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
             <div>
               <h2 className="text-xl font-bold">Select Your Seats</h2>
-              <p className="text-sm text-gray-500">{pool.name} • Max {maxSeats} seats</p>
+              <p className="text-sm text-gray-500">{pool.name} • Max {maxSeats} seats • Total {totalSeatsCount.toLocaleString()} seats available</p>
             </div>
             <button 
               onClick={() => {
@@ -550,7 +551,8 @@ export default function MerkatoVip() {
               <p className="text-xs text-gray-400">Total Seats Available: {totalSeatsCount.toLocaleString()}</p>
             </div>
             
-            <div className="grid grid-cols-8 md:grid-cols-10 gap-2 mb-6 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-xl">
+            {/* Dynamic grid - adjusts to screen size */}
+            <div className="grid grid-cols-10 md:grid-cols-15 lg:grid-cols-20 gap-2 mb-6 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-xl">
               {seatNumbers.map(seatNum => (
                 <button
                   key={seatNum}
@@ -565,6 +567,12 @@ export default function MerkatoVip() {
                 </button>
               ))}
             </div>
+            
+            {totalSeatsCount > 500 && (
+              <p className="text-xs text-gray-400 text-center mb-4">
+                Showing all {totalSeatsCount.toLocaleString()} seats (scroll to see more)
+              </p>
+            )}
             
             {selectedSeats.length > 0 && (
               <div className="border-t pt-4">
@@ -1019,7 +1027,7 @@ export default function MerkatoVip() {
                   <th className="px-6 py-4 text-left">ክፍያ | Entry</th>
                   <th className="px-6 py-4 text-left">ሽልማት | Prize</th>
                   <th className="px-6 py-4 text-left">ጊዜ | When</th>
-                </tr>
+                </table>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 <tr className="hover:bg-gray-50 transition">
