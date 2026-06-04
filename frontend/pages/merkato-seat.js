@@ -1,3 +1,4 @@
+// pages/merkato-seat.js
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
@@ -20,6 +21,7 @@ export default function MerkatoSeat() {
       prize: 1000000,
       totalSeats: 2400,
       frequency: "Daily",
+      drawDate: "Every Day at 8:00 PM",
       color: "from-gray-600 to-gray-800"
     },
     weekly: {
@@ -28,6 +30,7 @@ export default function MerkatoSeat() {
       prize: 10000000,
       totalSeats: 4800,
       frequency: "Weekly",
+      drawDate: "Every Sunday at 6:00 PM",
       color: "from-gray-600 to-gray-800"
     },
     monthly: {
@@ -36,6 +39,7 @@ export default function MerkatoSeat() {
       prize: 40000000,
       totalSeats: 9600,
       frequency: "Monthly",
+      drawDate: "Last Day of Month at 8:00 PM",
       color: "from-gray-600 to-gray-800"
     }
   };
@@ -147,7 +151,7 @@ export default function MerkatoSeat() {
       </Head>
 
       <div className="min-h-screen bg-gray-50 py-8">
-        <div className="container mx-auto px-4 max-w-5xl">
+        <div className="container mx-auto px-4 max-w-7xl">
           {/* Back Button */}
           <button 
             onClick={() => router.back()} 
@@ -196,12 +200,13 @@ export default function MerkatoSeat() {
             </div>
           </div>
 
-          {/* Seat Selector Component */}
+          {/* Seat Selector Component - Now passing poolInfo */}
           <SeatSelector
             poolId={`merkato_${type}`}
             entryFee={poolInfo.entryFee}
             maxSeats={5}
             totalSeats={poolInfo.totalSeats}
+            poolInfo={poolInfo}  // Pass full pool info to seat selector
             onSeatsSelected={handleSeatsSelected}
             onCancel={handleCancel}
           />
@@ -219,7 +224,7 @@ export default function MerkatoSeat() {
                   <li>• Complete payment via TeleBirr or CBE Bank</li>
                   <li>• Get your UNVERIFIED ticket immediately after payment submission</li>
                   <li>• Admin verifies payment → Your ticket becomes VERIFIED</li>
-                  <li>• Winner is drawn randomly on the scheduled date</li>
+                  <li>• Winner is drawn randomly on {poolInfo.drawDate}</li>
                 </ul>
               </div>
             </div>
