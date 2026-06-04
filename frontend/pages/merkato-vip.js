@@ -94,7 +94,7 @@ const compressImage = async (file) => {
 };
 
 // Ticket Component
-const Ticket = ({ participant, pool, type = 'unverified', onClose }) => {
+const Ticket = ({ participant, pool, type = 'unverified' }) => {
   const ticketRef = useRef();
 
   const downloadTicket = async () => {
@@ -207,7 +207,7 @@ const Ticket = ({ participant, pool, type = 'unverified', onClose }) => {
           </div>
         </div>
 
-        {/* QR Code Section - Using QRCodeSVG from qrcode.react */}
+        {/* QR Code Section */}
         <div className="flex justify-center py-4 border-t border-b border-dashed">
           <div className="bg-white p-3 rounded-xl shadow-md">
             <QRCodeSVG 
@@ -282,7 +282,7 @@ export default function MerkatoVip() {
   const [selectedPoolType, setSelectedPoolType] = useState(null);
   const [showPayment, setShowPayment] = useState(false);
   const [participantId, setParticipantId] = useState(null);
-  const [maxSeats, setMaxSeats] = useState(5); // Max 5 seats
+  const [maxSeats, setMaxSeats] = useState(5);
   
   // Ticket states
   const [showTicket, setShowTicket] = useState(false);
@@ -311,7 +311,7 @@ export default function MerkatoVip() {
     }
   };
 
-  // VIP Pool Data with GREY THEME
+  // VIP Pool Data
   const vipPools = {
     daily: {
       name: "ዕለታዊ ሚሊየነር | Daily Millionaire",
@@ -328,7 +328,7 @@ export default function MerkatoVip() {
       icon: "⭐",
       slogan: "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው",
       sloganEn: "Let's make one participant a millionaire today, this week and this month",
-      description: "Start your day with a chance to become an instant millionaire! Perfect for daily savers who want immediate results.",
+      description: "Start your day with a chance to become an instant millionaire!",
       listedDate: "January 1, 2024",
       drawDate: "Every Day at 8:00 PM",
       nextDraw: "Today at 8:00 PM"
@@ -348,7 +348,7 @@ export default function MerkatoVip() {
       icon: "🏆",
       slogan: "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው",
       sloganEn: "Let's make one participant a millionaire today, this week and this month",
-      description: "Ten MILLION Birr changes everything. This is the pool that creates market LEGENDS!",
+      description: "Ten MILLION Birr changes everything!",
       listedDate: "January 1, 2024",
       drawDate: "Every Sunday at 6:00 PM",
       nextDraw: getNextSunday()
@@ -368,7 +368,7 @@ export default function MerkatoVip() {
       icon: "👑",
       slogan: "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው",
       sloganEn: "Let's make one participant a millionaire today, this week and this month",
-      description: "The ULTIMATE Merkato prize pool. FORTY MILLION Birr. Become a legend that the market will talk about for generations!",
+      description: "The ULTIMATE Merkato prize pool!",
       listedDate: "January 1, 2024",
       drawDate: "Last Day of Month at 8:00 PM",
       nextDraw: getNextMonthEnd()
@@ -459,14 +459,14 @@ export default function MerkatoVip() {
     }
   };
 
-  // Render seat selection UI - FIXED: NO SEAT LIMIT
+  // Render seat selection UI
   const renderSeatSelector = () => {
     if (!selectedPoolType) return null;
     
     const pool = vipPools[selectedPoolType];
     const entryFeeAmount = parseInt(pool.contribution);
     const totalSeatsCount = pool.totalSeats;
-    // FIXED: Removed the 500 limit - now shows ALL seats from pool card
+    // NO LIMIT - shows all seats
     const seatNumbers = Array.from({ length: totalSeatsCount }, (_, i) => i + 1);
     
     const toggleSeat = (seatNum) => {
@@ -531,7 +531,7 @@ export default function MerkatoVip() {
           <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
             <div>
               <h2 className="text-xl font-bold">Select Your Seats</h2>
-              <p className="text-sm text-gray-500">{pool.name} • Max {maxSeats} seats • Total {totalSeatsCount.toLocaleString()} seats available</p>
+              <p className="text-sm text-gray-500">{pool.name} • Max {maxSeats} seats</p>
             </div>
             <button 
               onClick={() => {
@@ -551,7 +551,6 @@ export default function MerkatoVip() {
               <p className="text-xs text-gray-400">Total Seats Available: {totalSeatsCount.toLocaleString()}</p>
             </div>
             
-            {/* Dynamic grid - adjusts to screen size */}
             <div className="grid grid-cols-10 md:grid-cols-15 lg:grid-cols-20 gap-2 mb-6 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-xl">
               {seatNumbers.map(seatNum => (
                 <button
@@ -611,6 +610,30 @@ export default function MerkatoVip() {
     const [reference, setReference] = useState('');
     const [selectedFile, setSelectedFile] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState(null);
+    
+    const handleFileSelect = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      try {
+        validateFile(file);
+        
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreviewUrl(reader.result);
+        };
+        reader.readAsDataURL(file);
+        
+        setSelectedFile(file);
+        toast.success('File selected successfully');
+      } catch (error) {
+        toast.error(error.message);
+        e.target.value = '';
+        setSelectedFile(null);
+        setPreviewUrl(null);
+      }
+    };
     
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -667,26 +690,15 @@ export default function MerkatoVip() {
                     accept="image/*"
                     className="hidden"
                     id="paymentScreenshot"
-                    onChange={async (e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        try {
-                          validateFile(file);
-                          setSelectedFile(file);
-                          toast.success('File selected successfully');
-                        } catch (error) {
-                          toast.error(error.message);
-                          e.target.value = '';
-                        }
-                      }
-                    }}
+                    onChange={handleFileSelect}
                   />
                   <label htmlFor="paymentScreenshot" className="cursor-pointer">
-                    {selectedFile ? (
+                    {previewUrl ? (
                       <div>
-                        <p className="text-green-600">✓ {selectedFile.name}</p>
+                        <img src={previewUrl} alt="Preview" className="max-h-32 mx-auto mb-2 rounded" />
+                        <p className="text-green-600">✓ {selectedFile?.name}</p>
                         <p className="text-xs text-gray-500 mt-1">
-                          {(selectedFile.size / 1024).toFixed(1)} KB
+                          {(selectedFile?.size / 1024).toFixed(1)} KB
                         </p>
                       </div>
                     ) : (
@@ -817,21 +829,15 @@ export default function MerkatoVip() {
       <div className="p-6">
         <div className="space-y-3 mb-6">
           <div className="flex items-center gap-3 text-gray-600">
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             <span>{pool.time}</span>
           </div>
           <div className="flex items-center gap-3 text-gray-600">
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
             <span>📅 Listed: {pool.listedDate}</span>
           </div>
           <div className="flex items-center gap-3 text-gray-600">
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             <span>🎲 Draw: {pool.drawDate}</span>
           </div>
           <div className="flex items-center gap-3 text-gray-600">
@@ -839,16 +845,11 @@ export default function MerkatoVip() {
             <span>Next Draw: {pool.nextDraw}</span>
           </div>
           <div className="flex items-center gap-3 text-gray-600">
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
             <span>{pool.winnerCount} አሸናፊ | Winner Every {pool.frequency}</span>
           </div>
           <div className="flex items-center gap-3 text-gray-600">
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
             <span>💺 Total Seats: {pool.totalSeats.toLocaleString()}</span>
           </div>
         </div>
@@ -896,10 +897,10 @@ export default function MerkatoVip() {
             <div className="max-w-4xl mx-auto space-y-4 my-8">
               <div className="bg-white/10 backdrop-blur rounded-xl p-4 animate-slide-up">
                 <p className="text-xl md:text-2xl font-bold text-gray-200">
-                  "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው"
+                  &quot;ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው&quot;
                 </p>
                 <p className="text-lg text-gray-300">
-                  "Let's make one participant a millionaire today, this week and this month"
+                  &quot;Let&apos;s make one participant a millionaire today, this week and this month&quot;
                 </p>
               </div>
             </div>
@@ -946,8 +947,8 @@ export default function MerkatoVip() {
                   መርካቶ የአፍሪካ ትልቁ ክፍት ገበያ ሲሆን በየቀኑ በሚሊዮን የሚቆጠር ብር የሚዘዋወርበት የንግድ ልብ ነው። እዚህ ገበያ ውስጥ 7,100 ንግዶች እና 13,000 ሰራተኞች ይገኛሉ።
                 </p>
                 <p className="text-gray-600 leading-relaxed">
-                  <strong>Merkato</strong> is Africa's largest open-air market, handling millions of Birr in daily transactions. 
-                  It's home to over 7,100 businesses and 13,000 workers coming together for commerce and community.
+                  <strong>Merkato</strong> is Africa&apos;s largest open-air market, handling millions of Birr in daily transactions. 
+                  It&apos;s home to over 7,100 businesses and 13,000 workers coming together for commerce and community.
                 </p>
                 
                 <div className="mt-6 grid grid-cols-2 gap-4">
@@ -969,18 +970,9 @@ export default function MerkatoVip() {
                   This program is OPEN to ALL Merkato traders and participants!
                 </p>
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-green-600">✓</span>
-                    <span>በየቀኑ አንድ ሚሊየነር | One Millionaire Every Day</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-green-600">✓</span>
-                    <span>በየሳምንቱ አንድ ሚሊየነር | One Millionaire Every Week</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-green-600">✓</span>
-                    <span>በየወሩ አንድ ሚሊየነር | One Millionaire Every Month</span>
-                  </div>
+                  <div className="flex items-center gap-2 text-sm"><span className="text-green-600">✓</span> በየቀኑ አንድ ሚሊየነር | One Millionaire Every Day</div>
+                  <div className="flex items-center gap-2 text-sm"><span className="text-green-600">✓</span> በየሳምንቱ አንድ ሚሊየነር | One Millionaire Every Week</div>
+                  <div className="flex items-center gap-2 text-sm"><span className="text-green-600">✓</span> በየወሩ አንድ ሚሊየነር | One Millionaire Every Month</div>
                 </div>
               </div>
             </div>
@@ -990,29 +982,11 @@ export default function MerkatoVip() {
         {/* VIP Tabs */}
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-wrap justify-center gap-3 mb-8">
-            <button
-              onClick={() => setActiveTab('daily')}
-              className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'daily' ? 'bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-lg' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
-            >
-              ⭐ ዕለታዊ | Daily (1M)
-            </button>
-            <button
-              onClick={() => setActiveTab('weekly')}
-              className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'weekly' ? 'bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-lg' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
-            >
-              🏆 ሳምንታዊ | Weekly (10M)
-            </button>
-            <button
-              onClick={() => setActiveTab('monthly')}
-              className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'monthly' ? 'bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-lg' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
-            >
-              👑 ወርሃዊ | Monthly (40M)
-            </button>
+            <button onClick={() => setActiveTab('daily')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'daily' ? 'bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-lg' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>⭐ ዕለታዊ | Daily (1M)</button>
+            <button onClick={() => setActiveTab('weekly')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'weekly' ? 'bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-lg' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>🏆 ሳምንታዊ | Weekly (10M)</button>
+            <button onClick={() => setActiveTab('monthly')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'monthly' ? 'bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-lg' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>👑 ወርሃዊ | Monthly (40M)</button>
           </div>
-
-          <div className="max-w-4xl mx-auto">
-            <PoolCard type={activeTab} pool={vipPools[activeTab]} />
-          </div>
+          <div className="max-w-4xl mx-auto"><PoolCard type={activeTab} pool={vipPools[activeTab]} /></div>
         </div>
 
         {/* Comparison Table */}
@@ -1027,7 +1001,7 @@ export default function MerkatoVip() {
                   <th className="px-6 py-4 text-left">ክፍያ | Entry</th>
                   <th className="px-6 py-4 text-left">ሽልማት | Prize</th>
                   <th className="px-6 py-4 text-left">ጊዜ | When</th>
-                </table>
+                </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 <tr className="hover:bg-gray-50 transition">
@@ -1061,7 +1035,6 @@ export default function MerkatoVip() {
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-4">እንዴት እንሳተፋለን? | How It Works</h2>
             <p className="text-center text-gray-600 mb-12">Like traditional Equb, but BIGGER and BETTER!</p>
-            
             <div className="grid md:grid-cols-3 gap-8">
               <div className="text-center">
                 <div className="w-20 h-20 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg text-white animate-bounce">1️⃣</div>
@@ -1069,14 +1042,12 @@ export default function MerkatoVip() {
                 <p className="text-gray-600">በየቀኑ፣ በየሳምንቱ ወይም በየወሩ የሚካሄደውን ፑል ምረጥ</p>
                 <p className="text-green-600 font-semibold text-sm mt-1">Choose Daily, Weekly, or Monthly Millionaire pool</p>
               </div>
-              
               <div className="text-center">
                 <div className="w-20 h-20 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg text-white animate-bounce">2️⃣</div>
                 <h3 className="font-bold text-xl mb-2">ክፈል | Pay</h3>
                 <p className="text-gray-600">በቴሌብር ወይም በንግድ ባንክ መጠነኛ ክፍያ ክፈል</p>
                 <p className="text-green-600 font-semibold text-sm mt-1">Pay via TeleBirr or CBE Bank Transfer</p>
               </div>
-              
               <div className="text-center">
                 <div className="w-20 h-20 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg text-white animate-bounce">3️⃣</div>
                 <h3 className="font-bold text-xl mb-2">ሽለም | WIN!</h3>
@@ -1084,7 +1055,6 @@ export default function MerkatoVip() {
                 <p className="text-green-600 font-semibold text-sm mt-1">When the lottery is drawn - YOU become a MILLIONAIRE!</p>
               </div>
             </div>
-            
             <div className="mt-12 text-center">
               <div className="inline-flex items-center gap-2 bg-green-100 px-6 py-3 rounded-full">
                 <span className="text-green-600">💚</span>
@@ -1098,13 +1068,8 @@ export default function MerkatoVip() {
         <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-16 animate-pulse-slow">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold mb-4 animate-bounce">ዛሬውኑ ይቀላቀሉ!</h2>
-            <p className="text-xl mb-6">Join Today and Become Merkato's Next Millionaire!</p>
-            <button
-              onClick={() => handleJoinPool('daily')}
-              className="bg-white text-gray-900 px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-100 transition transform hover:scale-105 shadow-xl"
-            >
-              🎯 Start Winning Now →
-            </button>
+            <p className="text-xl mb-6">Join Today and Become Merkato&apos;s Next Millionaire!</p>
+            <button onClick={() => handleJoinPool('daily')} className="bg-white text-gray-900 px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-100 transition transform hover:scale-105 shadow-xl">🎯 Start Winning Now →</button>
             <p className="text-sm opacity-80 mt-4">በቴሌብር እና በንግድ ባንክ መክፈል ይቻላል | Pay via TeleBirr or CBE</p>
           </div>
         </div>
