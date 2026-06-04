@@ -13,6 +13,7 @@ export default function MerkatoSeat() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [poolInfo, setPoolInfo] = useState(null);
+  const [reservedSeats, setReservedSeats] = useState([]);
 
   const vipPools = {
     daily: {
@@ -44,12 +45,15 @@ export default function MerkatoSeat() {
     }
   };
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       isMounted.current = false;
+      // Release any reserved seats on unmount
+      if (reservedSeats.length > 0 && user) {
+        releaseSeats(reservedSeats);
+      }
     };
-  }, []);
+  }, [reservedSeats, user]);
 
   useEffect(() => {
     checkUser();
@@ -65,7 +69,6 @@ export default function MerkatoSeat() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        // Store the intended pool type and redirect to login
         sessionStorage.setItem('pendingRole', 'individual');
         sessionStorage.setItem('pendingPoolType', type);
         sessionStorage.setItem('redirectAfterLogin', `/merkato-seat?type=${type}`);
@@ -83,6 +86,16 @@ export default function MerkatoSeat() {
     }
   };
 
+  async function releaseSeats(seatNumbers) {
+    if (!seatNumbers || seatNumbers.length === 0 || !user) return;
+    
+    await supabase
+      .from('vip_seat_reservations')
+      .delete()
+      .eq('user_id', user.id)
+      .in('seat_number', seatNumbers);
+  }
+
   const handleSeatsSelected = async (seatData) => {
     if (!user) {
       toast.error('Please login to continue');
@@ -93,8 +106,22 @@ export default function MerkatoSeat() {
     setLoading(true);
     
     try {
+      // Check if seats are still available
+      const { data: existingReservations } = await supabase
+        .from('vip_seat_reservations')
+        .select('seat_number')
+        .in('seat_number', seatData.seats)
+        .neq('user_id', user.id);
+      
+      if (existingReservations && existingReservations.length > 0) {
+        const takenSeats = existingReservations.map(r => r.seat_number);
+        toast.error(`Seats ${takenSeats.join(', ')} are no longer available`);
+        setLoading(false);
+        return;
+      }
+      
       // Generate unique ticket number
-      const ticketNumber = `MC-${type?.toUpperCase()}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+      const ticketNumber = `MK-${type?.toUpperCase()}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
       
       // Create participant record with seat numbers
       const { data: participant, error } = await supabase
@@ -117,9 +144,12 @@ export default function MerkatoSeat() {
 
       if (error) throw error;
       
+      // Clear reservations after successful creation
+      await releaseSeats(seatData.seats);
+      
       toast.success(`Seats ${seatData.seats.join(', ')} reserved! Proceed to payment.`);
       
-      // Redirect to payment page with seats as comma-separated string
+      // Redirect to payment page
       router.push(`/payment/merkato?type=${type}&participant=${participant.id}&seats=${seatData.seats.join(',')}&amount=${seatData.totalAmount}`);
       
     } catch (error) {
@@ -129,7 +159,10 @@ export default function MerkatoSeat() {
     }
   };
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
+    if (reservedSeats.length > 0) {
+      await releaseSeats(reservedSeats);
+    }
     router.push('/merkato-vip');
   };
 
@@ -152,7 +185,6 @@ export default function MerkatoSeat() {
 
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="container mx-auto px-4 max-w-7xl">
-          {/* Back Button */}
           <button 
             onClick={() => router.back()} 
             className="text-gray-600 hover:text-gray-800 mb-4 inline-flex items-center gap-1 transition"
@@ -200,13 +232,13 @@ export default function MerkatoSeat() {
             </div>
           </div>
 
-          {/* Seat Selector Component - Now passing poolInfo */}
+          {/* Seat Selector Component */}
           <SeatSelector
             poolId={`merkato_${type}`}
             entryFee={poolInfo.entryFee}
             maxSeats={5}
             totalSeats={poolInfo.totalSeats}
-            poolInfo={poolInfo}  // Pass full pool info to seat selector
+            poolInfo={poolInfo}
             onSeatsSelected={handleSeatsSelected}
             onCancel={handleCancel}
           />
@@ -230,11 +262,8 @@ export default function MerkatoSeat() {
             </div>
           </div>
 
-          {/* Charity Note */}
           <div className="mt-4 text-center">
-            <p className="text-xs text-gray-400">
-              💚 2% of every contribution supports kidney & heart disease patients in Ethiopia
-            </p>
+            <p className="text-xs text-gray-400">💚 2% of every contribution supports kidney & heart disease patients in Ethiopia</p>
           </div>
         </div>
       </div>
