@@ -24,9 +24,9 @@ export default function CitySeat() {
   const [maxSeats] = useState(5);
 
   const vipPools = {
-    daily: { name: "Daily Millionaire", entryFee: 500, prize: 1000000, totalSeats: 2400, frequency: "Daily", drawDate: "Every Day at 8:00 PM", color: "from-gray-700 to-gray-900" },
-    weekly: { name: "Weekly Mega Winner", entryFee: 2500, prize: 10000000, totalSeats: 4800, frequency: "Weekly", drawDate: "Every Sunday at 6:00 PM", color: "from-gray-700 to-gray-900" },
-    monthly: { name: "Monthly Winner", entryFee: 5000, prize: 40000000, totalSeats: 9600, frequency: "Monthly", drawDate: "Last Day of Month at 8:00 PM", color: "from-gray-700 to-gray-900" }
+    daily: { name: "Daily Millionaire", entryFee: 500, prize: 1000000, totalSeats: 2400, drawDate: "Every Day at 8:00 PM", color: "from-gray-700 to-gray-900" },
+    weekly: { name: "Weekly Mega Winner", entryFee: 2500, prize: 10000000, totalSeats: 4800, drawDate: "Every Sunday at 6:00 PM", color: "from-gray-700 to-gray-900" },
+    monthly: { name: "Monthly Winner", entryFee: 5000, prize: 40000000, totalSeats: 9600, drawDate: "Last Day of Month at 8:00 PM", color: "from-gray-700 to-gray-900" }
   };
 
   useEffect(() => {
