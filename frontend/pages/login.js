@@ -10,51 +10,43 @@ export default function Login() {
   const { redirect } = router.query;
   const [loading, setLoading] = useState(false);
 
-  // Clear any existing session when login page loads
+  // Check for existing VIP data on login page load
   useEffect(() => {
-    const clearExistingSession = async () => {
-      await supabase.auth.signOut();
-      // Don't clear sessionStorage here - it contains the role and redirect info
+    const checkVipData = () => {
+      try {
+        const vipData = localStorage.getItem('abbaa_vip_pending');
+        if (vipData) {
+          const data = JSON.parse(vipData);
+          console.log('Login page - Found VIP data:', data);
+        }
+      } catch (e) {
+        console.error('Error checking VIP data:', e);
+      }
     };
-    clearExistingSession();
+    checkVipData();
   }, []);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
     
     try {
-      // Get the intended role from sessionStorage (set by footer links or homepage)
-      const pendingRole = sessionStorage.getItem('pendingRole');
-      const pendingPoolType = sessionStorage.getItem('pendingPoolType');
-      const pendingCity = sessionStorage.getItem('pendingCity');
-      const pendingPoolSource = sessionStorage.getItem('pendingPoolSource');
+      // Check if there's VIP data in localStorage
+      let vipData = null;
+      try {
+        const vipDataRaw = localStorage.getItem('abbaa_vip_pending');
+        if (vipDataRaw) {
+          vipData = JSON.parse(vipDataRaw);
+          console.log('Login - Found VIP data:', vipData);
+        }
+      } catch (e) {
+        console.error('Error parsing VIP data:', e);
+      }
       
-      // If no role is stored, default to 'individual' (for pool joining flow)
+      // Store the intended role
+      const pendingRole = vipData?.role || sessionStorage.getItem('pendingRole');
+      
       if (!pendingRole) {
-        sessionStorage.setItem('pendingRole', 'individual');
-      }
-      
-      // Store redirect URL if coming from a specific page
-      if (redirect) {
-        sessionStorage.setItem('redirectAfterLogin', redirect);
-      }
-      
-      // For VIP flows, ensure we have the correct redirect URL
-      if (pendingPoolSource === 'merkato-vip' && pendingPoolType) {
-        const redirectUrl = `/merkato-seat?type=${pendingPoolType}`;
-        sessionStorage.setItem('redirectAfterLogin', redirectUrl);
-        console.log('Merkato VIP redirect set:', redirectUrl);
-      }
-      
-      if (pendingPoolSource === 'city-vip' && pendingCity && pendingPoolType) {
-        const redirectUrl = `/cities/seat?city=${pendingCity}&type=${pendingPoolType}`;
-        sessionStorage.setItem('redirectAfterLogin', redirectUrl);
-        console.log('City VIP redirect set:', redirectUrl);
-      }
-      
-      // For pool joining flow
-      if (pendingPoolType === 'regular' && redirect) {
-        sessionStorage.setItem('redirectAfterLogin', redirect);
+        localStorage.setItem('pendingRole', 'individual');
       }
       
       // Force Google account selector
@@ -78,46 +70,25 @@ export default function Login() {
     }
   };
 
-  // Get the role that was selected (for display message)
-  const getPendingRole = () => {
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('pendingRole');
+  const getPendingSource = () => {
+    try {
+      const vipData = localStorage.getItem('abbaa_vip_pending');
+      if (vipData) {
+        const data = JSON.parse(vipData);
+        if (data.poolSource === 'merkato-vip') {
+          return { title: 'Join Merkato VIP', message: 'Sign in to select your seats and become a millionaire!', icon: '🏪' };
+        }
+        if (data.poolSource === 'city-vip') {
+          return { title: `Join ${data.city || 'City'} VIP`, message: 'Sign in to select your seats and become a millionaire!', icon: '🏙️' };
+        }
+      }
+    } catch (e) {
+      console.error('Error getting pending source:', e);
     }
-    return null;
+    return { title: 'Welcome to Abbaa Carraa', message: 'Sign in to continue', icon: '🎁' };
   };
 
-  const getPendingPoolSource = () => {
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('pendingPoolSource');
-    }
-    return null;
-  };
-
-  const pendingRole = getPendingRole();
-  const pendingSource = getPendingPoolSource();
-  
-  const getRoleMessage = () => {
-    // VIP specific messages
-    if (pendingSource === 'merkato-vip') {
-      return { title: 'Join Merkato VIP', message: 'Sign in to select your seats and become a millionaire!', icon: '🏪' };
-    }
-    if (pendingSource === 'city-vip') {
-      const city = sessionStorage.getItem('pendingCity');
-      return { title: `Join ${city || 'City'} VIP`, message: 'Sign in to select your seats and become a millionaire!', icon: '🏙️' };
-    }
-    
-    // Regular role messages
-    switch(pendingRole) {
-      case 'individual': return { title: 'Join a Pool', message: 'Sign in to continue to the pool', icon: '🎁' };
-      case 'agent': return { title: 'Become an Agent', message: 'Sign in to start your application', icon: '🤝' };
-      case 'vendor': return { title: 'Become a Vendor', message: 'Sign in to start your application', icon: '🏪' };
-      case 'organization': return { title: 'Become an Organization', message: 'Sign in to start your application', icon: '🏢' };
-      case 'admin': return { title: 'Admin Access', message: 'Sign in to continue', icon: '👑' };
-      default: return { title: 'Welcome to Abbaa Carraa', message: 'Sign in to continue', icon: '🎁' };
-    }
-  };
-
-  const roleInfo = getRoleMessage();
+  const roleInfo = getPendingSource();
 
   return (
     <>
