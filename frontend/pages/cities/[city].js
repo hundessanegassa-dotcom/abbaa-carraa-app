@@ -4,8 +4,20 @@ import { supabase } from '../../lib/supabase';
 import Head from 'next/head';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import SeatSelector from '../../components/SeatSelector';
-import BankTransferUpload from '../../components/BankTransferUpload';
+
+// Helper function for next draw dates
+const getNextSunday = () => {
+  const today = new Date();
+  const nextSunday = new Date(today);
+  nextSunday.setDate(today.getDate() + (7 - today.getDay()) % 7);
+  return nextSunday.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+};
+
+const getNextMonthEnd = () => {
+  const today = new Date();
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  return lastDay.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+};
 
 // City-specific data - Complete with all Ethiopian cities
 const cityData = {
@@ -15,27 +27,17 @@ const cityData = {
     slogan: 'የኢትዮጵያ የንግድ እና የዲፕሎማሲ ልብ | Heart of Ethiopian Commerce & Diplomacy',
     businesses: '50,000+',
     workers: '200,000+',
-    color: 'from-green-700 to-teal-700',
+    color: 'from-gray-700 to-gray-900',
     icon: '🏙️',
     product: 'ዘመናዊ አገልግሎቶች, ቴክኖሎጂ | Modern Services, Technology',
     description: 'የኢትዮጵያ ዋና ከተማ እና የንግድ ማዕከል | Capital & Business Hub'
-  },
-  'shaggar': {
-    name: 'ሸገር ከተማ | Shaggar City',
-    slogan: 'ብልህ ከተማ እና የወደፊት ኢንቨስትመንት | Smart City & Future Investment Hub',
-    businesses: '15,000+',
-    workers: '60,000+',
-    color: 'from-cyan-700 to-blue-700',
-    icon: '🏗️',
-    product: 'ሪል እስቴት, መሠረተ ልማት | Real Estate, Infrastructure',
-    description: 'አዲስ የከተማ ልማት ፕሮጀክት | New Urban Development Project'
   },
   'dire-dawa': {
     name: 'ድሬ ዳዋ | Dire Dawa',
     slogan: 'የሎጂስቲክስ እና የማኑፋክቸሪንግ በር | Logistics & Manufacturing Gateway',
     businesses: '15,000+',
     workers: '60,000+',
-    color: 'from-orange-600 to-red-700',
+    color: 'from-gray-700 to-gray-900',
     icon: '🚂',
     product: 'ጨርቃጨርቅ, ሎጂስቲክስ | Textiles, Logistics',
     description: 'ሁለተኛዋ ትልቋ ከተማ | Second Largest City'
@@ -45,7 +47,7 @@ const cityData = {
     slogan: 'የሰሜኑ የኢንዱስትሪ እና የትምህርት ማዕከል | Industrial & Educational Hub of the North',
     businesses: '18,000+',
     workers: '70,000+',
-    color: 'from-red-700 to-rose-700',
+    color: 'from-gray-700 to-gray-900',
     icon: '🏭',
     product: 'ሲሚንቶ, ፋርማሲዩቲካልስ | Cement, Pharmaceuticals',
     description: 'የሰሜን ኢትዮጵያ የንግድ ማዕከል | Northern Trade Hub'
@@ -55,7 +57,7 @@ const cityData = {
     slogan: 'የመኪና እና የኢንዱስትሪ ከተማ | Automotive & Industrial City',
     businesses: '20,000+',
     workers: '80,000+',
-    color: 'from-blue-700 to-cyan-700',
+    color: 'from-gray-700 to-gray-900',
     icon: '🏭',
     product: 'የመኪና መሰብሰቢያ, ጨርቃጨርቅ | Vehicle Assembly, Textiles',
     description: 'የኢንዱስትሪ ከተማ | Industrial City'
@@ -65,7 +67,7 @@ const cityData = {
     slogan: 'የኢንዱስትሪ ፓርክ እና የሀይቅ ከተማ | Industrial Park & Lake City',
     businesses: '12,000+',
     workers: '50,000+',
-    color: 'from-teal-600 to-green-700',
+    color: 'from-gray-700 to-gray-900',
     icon: '🏞️',
     product: 'ጨርቃጨርቅ, አሳ | Textiles, Fish',
     description: 'የኢንዱስትሪ ፓርክ ከተማ | Industrial Park City'
@@ -75,7 +77,7 @@ const cityData = {
     slogan: 'የባህል ቅርስ እና የቱሪዝም ከተማ | Heritage & Tourism City',
     businesses: '10,000+',
     workers: '40,000+',
-    color: 'from-purple-600 to-pink-700',
+    color: 'from-gray-700 to-gray-900',
     icon: '🏰',
     product: 'ቱሪዝም, ጨርቃጨርቅ | Tourism, Textiles',
     description: 'የባህል ቅርስ ከተማ | Heritage City'
@@ -85,7 +87,7 @@ const cityData = {
     slogan: 'የሀይቆች እና የጨርቃጨርቅ ከተማ | Lakes & Textile City',
     businesses: '12,000+',
     workers: '50,000+',
-    color: 'from-blue-600 to-indigo-700',
+    color: 'from-gray-700 to-gray-900',
     icon: '🏞️',
     product: 'ጨርቃጨርቅ, ቱሪዝም | Textiles, Tourism',
     description: 'የታና ሀይቅ ዳርቻ | Shores of Lake Tana'
@@ -95,280 +97,46 @@ const cityData = {
     slogan: 'የቡና እና የንግድ ከተማ | Coffee & Trade City',
     businesses: '8,000+',
     workers: '30,000+',
-    color: 'from-amber-600 to-orange-700',
+    color: 'from-gray-700 to-gray-900',
     icon: '☕',
     product: 'ቡና, ማር | Coffee, Honey',
     description: 'የቡና ከተማ | Coffee City'
   },
-  'nekemte': {
-    name: 'ነቀምቴ | Nekemte',
-    slogan: 'የምእራብ ኢትዮጵያ የንግድ ማዕከል | Trade Hub of Western Ethiopia',
-    businesses: '15,000+',
-    workers: '60,000+',
-    color: 'from-amber-500 to-yellow-600',
-    icon: '☕',
-    product: 'ቡና, እንስሳት | Coffee, Livestock',
-    description: 'የምእራብ ኢትዮጵያ የንግድ ማዕከል | Western Trade Hub'
-  },
-  'dessie': {
-    name: 'ደሴ | Dessie',
-    slogan: 'የንግድ እና የግብርና ማዕከል | Trade & Agriculture Center',
-    businesses: '8,000+',
-    workers: '30,000+',
-    color: 'from-yellow-600 to-orange-600',
-    icon: '🛍️',
-    product: 'እህል, እንስሳት | Grains, Livestock',
-    description: 'የንግድ እና የግብርና ማዕከል | Trade & Agriculture Center'
-  },
-  'jijiga': {
-    name: 'ጅጅጋ | Jijiga',
-    slogan: 'የምስራቅ ኢትዮጵያ የንግድ ማዕከል | Trade Hub of Eastern Ethiopia',
-    businesses: '10,000+',
-    workers: '40,000+',
-    color: 'from-emerald-600 to-teal-600',
-    icon: '🐪',
-    product: 'እንስሳት, ቆዳ | Livestock, Hides',
-    description: 'የምስራቅ ኢትዮጵያ የንግድ ማዕከል | Eastern Trade Hub'
-  },
-  'harar': {
-    name: 'ሀረር | Harar',
-    slogan: 'የኢስላማዊ ቅርስ እና የባህል ከተማ | Islamic Heritage & Culture City',
-    businesses: '6,000+',
-    workers: '25,000+',
-    color: 'from-rose-500 to-pink-600',
-    icon: '🏛️',
-    product: 'ቡና, ፍራፍሬ | Coffee, Fruits',
-    description: 'የዩኔስኮ ቅርስ | UNESCO Heritage'
-  },
-  'kombolcha': {
-    name: 'ኮምቦልቻ | Kombolcha',
-    slogan: 'የኢንዱስትሪ እና የደረቅ ወደብ ከተማ | Industrial & Dry Port City',
-    businesses: '10,000+',
-    workers: '40,000+',
-    color: 'from-slate-600 to-gray-700',
-    icon: '🏭',
-    product: 'ጨርቃጨርቅ, ማምረቻ | Textiles, Manufacturing',
-    description: 'የኢንዱስትሪ ዞን | Industrial Zone'
-  },
-
-  // ================= OROMIA REGION CITIES =================
   'bishoftu': {
     name: 'ቢሾፍቱ | Bishoftu (Debre Zeyit)',
     slogan: 'የሀይቆች እና የአየር ሃይል ከተማ | City of Lakes & Air Force Base',
     businesses: '12,000+',
     workers: '45,000+',
-    color: 'from-sky-500 to-blue-600',
+    color: 'from-gray-700 to-gray-900',
     icon: '✈️',
     product: 'ቱሪዝም, አቪዬሽን | Tourism, Aviation',
     description: 'የሀይቆች ከተማ | City of Lakes'
-  },
-  'gelan': {
-    name: 'ገላን | Gelan',
-    slogan: 'ፈጣን የከተማ ልማት እና የመኖሪያ አካባቢ | Rapid Urban Development & Residential Area',
-    businesses: '15,000+',
-    workers: '60,000+',
-    color: 'from-gray-500 to-slate-600',
-    icon: '🏘️',
-    product: 'ሪል እስቴት, ንግድ | Real Estate, Trade',
-    description: 'ፈጣን የከተማ ልማት | Rapid Urban Growth'
-  },
-  'modjo': {
-    name: 'ሞጆ | Modjo',
-    slogan: 'የሎጂስቲክስ እና የደረቅ ወደብ ከተማ | Logistics & Dry Port City',
-    businesses: '8,000+',
-    workers: '35,000+',
-    color: 'from-amber-600 to-orange-600',
-    icon: '🚛',
-    product: 'ሎጂስቲክስ, መጋዘን | Logistics, Warehousing',
-    description: 'የሎጂስቲክስ ማዕከል | Logistics Hub'
-  },
-  'metu': {
-    name: 'መቱ | Metu',
-    slogan: 'የቡና እና የግብርና ከተማ | Coffee & Agriculture City',
-    businesses: '6,000+',
-    workers: '25,000+',
-    color: 'from-emerald-600 to-green-700',
-    icon: '🌿',
-    product: 'ቡና, አቮካዶ | Coffee, Avocado',
-    description: 'የቡና እርሻ አካባቢ | Coffee Growing Area'
-  },
-  'meki': {
-    name: 'መቂ | Meki',
-    slogan: 'የእህል እርሻ እና የንግድ ማዕከል | Grain Farming & Trade Center',
-    businesses: '4,000+',
-    workers: '18,000+',
-    color: 'from-green-500 to-emerald-600',
-    icon: '🌾',
-    product: 'በቆሎ, ስንዴ | Maize, Wheat',
-    description: 'የእህል ማብቀያ | Grain Farming Area'
-  },
-  'ziway': {
-    name: 'ዚዋይ | Ziway',
-    slogan: 'የአሳ ማጥመድ እና የቱሪዝም ከተማ | Fishing & Tourism City',
-    businesses: '5,000+',
-    workers: '20,000+',
-    color: 'from-teal-500 to-cyan-600',
-    icon: '🐟',
-    product: 'አሳ, አትክልት | Fish, Vegetables',
-    description: 'የአሳ ማጥመድ ከተማ | Fishing City'
-  },
-  'shashemene': {
-    name: 'ሻሸመኔ | Shashemene',
-    slogan: 'የንግድ እና የኢንዱስትሪ ከተማ | Trade & Industrial City',
-    businesses: '12,000+',
-    workers: '50,000+',
-    color: 'from-yellow-600 to-amber-600',
-    icon: '🛍️',
-    product: 'ንግድ, ኢንዱስትሪ | Trade, Industry',
-    description: 'የንግድ እና ኢንዱስትሪ ከተማ | Trade & Industrial City'
-  },
-  'robe': {
-    name: 'ሮቤ | Robe',
-    slogan: 'የከፍተኛ ሀይላንድ ቱሪዝም በር | Highland Tourism Gateway',
-    businesses: '5,000+',
-    workers: '20,000+',
-    color: 'from-green-600 to-teal-600',
-    icon: '🌄',
-    product: 'ቱሪዝም, ገብስ | Tourism, Barley',
-    description: 'የከፍተኛ ሀይላንድ ከተማ | Highland City'
-  },
-  'ambo': {
-    name: 'አምቦ | Ambo',
-    slogan: 'የማዕድን ውሃ እና የግብርና ከተማ | Mineral Water & Agriculture City',
-    businesses: '8,000+',
-    workers: '30,000+',
-    color: 'from-green-500 to-teal-500',
-    icon: '💧',
-    product: 'ማዕድን ውሃ, ቡና | Mineral Water, Coffee',
-    description: 'የማዕድን ውሃ ከተማ | Mineral Water City'
-  },
-  'holeta': {
-    name: 'ሆሌታ | Holeta',
-    slogan: 'የግብርና እና የሰልጠኛ ከተማ | Agriculture & Training Center',
-    businesses: '5,000+',
-    workers: '20,000+',
-    color: 'from-lime-500 to-green-500',
-    icon: '🌾',
-    product: 'ስንዴ, ወተት | Wheat, Dairy',
-    description: 'የግብርና ምርምር ማዕከል | Agricultural Research Center'
-  },
-  'weliso': {
-    name: 'ወሊሶ | Weliso',
-    slogan: 'የሙቀት ምንጭ እና የቱሪዝም ከተማ | Hot Springs & Tourism City',
-    businesses: '5,000+',
-    workers: '20,000+',
-    color: 'from-teal-500 to-cyan-600',
-    icon: '🏞️',
-    product: 'ሙቀት ምንጭ, ቱሪዝም | Hot Springs, Tourism',
-    description: 'የሙቀት ምንጭ ስፍራ | Hot Springs Resort'
-  },
-  'butajira': {
-    name: 'ቡታጅራ | Butajira',
-    slogan: 'የግብርና እና የንግድ ከተማ | Agriculture & Trade City',
-    businesses: '7,000+',
-    workers: '28,000+',
-    color: 'from-green-600 to-emerald-700',
-    icon: '🌽',
-    product: 'በቆሎ, ስንዴ | Maize, Wheat',
-    description: 'የግብርና ማዕከል | Agricultural Center'
-  },
-  'welkite': {
-    name: 'ወልቂጤ | Welkite',
-    slogan: 'የግብርና እና የእርሻ ከተማ | Agriculture & Farming City',
-    businesses: '5,000+',
-    workers: '22,000+',
-    color: 'from-lime-600 to-green-700',
-    icon: '🌾',
-    product: 'ጤፍ, ስንዴ | Teff, Wheat',
-    description: 'የእህል ማብቀያ | Grain Production Area'
-  },
-  'hosana': {
-    name: 'ሆሳና | Hosana',
-    slogan: 'የግብርና እና የንግድ ከተማ | Agriculture & Trade City',
-    businesses: '8,000+',
-    workers: '30,000+',
-    color: 'from-yellow-600 to-amber-700',
-    icon: '🌻',
-    product: 'ቡና, ማር | Coffee, Honey',
-    description: 'የንግድ ማዕከል | Trade Center'
-  },
-
-  // ================= SOUTHERN REGION CITIES =================
-  'arba-minch': {
-    name: 'አርባ ምንጭ | Arba Minch',
-    slogan: 'የቱሪዝም እና የግብርና ከተማ | Tourism & Agriculture City',
-    businesses: '10,000+',
-    workers: '40,000+',
-    color: 'from-blue-500 to-cyan-600',
-    icon: '🏞️',
-    product: 'ቱሪዝም, ሙዝ | Tourism, Banana',
-    description: 'የአርባ ምንጭ ፓርክ | Arba Minch Park'
-  },
-  'sodo': {
-    name: 'ሶዶ | Sodo',
-    slogan: 'የንግድ እና የግብርና ማዕከል | Trade & Agriculture Center',
-    businesses: '10,000+',
-    workers: '40,000+',
-    color: 'from-orange-500 to-red-600',
-    icon: '🛍️',
-    product: 'እህል, እንስሳት | Grains, Livestock',
-    description: 'የንግድ ማዕከል | Trade Center'
-  },
-
-  // ================= OTHER REGIONS =================
-  'shindi': {
-    name: 'ሺንዲ | Shindi',
-    slogan: 'የንግድ እና የግብርና ከተማ | Trade & Agriculture City',
-    businesses: '6,000+',
-    workers: '25,000+',
-    color: 'from-emerald-500 to-teal-600',
-    icon: '🌾',
-    product: 'እህል, ዘይት | Grains, Oil Seeds',
-    description: 'የንግድ ማዕከል | Trade Center'
-  },
-  'assosa': {
-    name: 'አሶሳ | Assosa',
-    slogan: 'የቤኒሻንጉል ጉሙዝ የንግድ ማዕከል | Trade Hub of Benishangul-Gumuz',
-    businesses: '6,000+',
-    workers: '25,000+',
-    color: 'from-green-500 to-emerald-600',
-    icon: '🌿',
-    product: 'ወርቅ, እህል | Gold, Grains',
-    description: 'የክልል ዋና ከተማ | Regional Capital'
-  },
-  'semera': {
-    name: 'ሰሜና ሸዋ | Semera',
-    slogan: 'የአፋር ክልል የንግድ ማዕከል | Trade Hub of the Afar Region',
-    businesses: '3,000+',
-    workers: '15,000+',
-    color: 'from-yellow-500 to-orange-600',
-    icon: '🐪',
-    product: 'ጨው, እንስሳት | Salt, Livestock',
-    description: 'የክልል ዋና ከተማ | Regional Capital'
   }
+  // ... add more cities as needed
 };
 
 export default function CityVip() {
   const router = useRouter();
   const { city, name } = router.query;
   const [activeTab, setActiveTab] = useState('daily');
-  const [selectedPool, setSelectedPool] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [showSeatSelector, setShowSeatSelector] = useState(false);
-  const [showBankUpload, setShowBankUpload] = useState(false);
-  const [selectedSeatsData, setSelectedSeatsData] = useState(null);
-  const [reservedSeats, setReservedSeats] = useState([]);
   const [cityInfo, setCityInfo] = useState(null);
+  
+  // Seat selection states
+  const [showSeatSelector, setShowSeatSelector] = useState(false);
+  const [selectedSeats, setSelectedSeats] = useState([]);
+  const [selectedPoolType, setSelectedPoolType] = useState(null);
+  const [showPayment, setShowPayment] = useState(false);
+  const [participantId, setParticipantId] = useState(null);
+  const [maxSeats, setMaxSeats] = useState(5);
 
   useEffect(() => {
     if (city) {
-      // Get city data from the mapping or use custom city name from query
       const data = cityData[city];
       if (data) {
         setCityInfo(data);
       } else {
-        // Custom city from "Other" option
         setCityInfo({
           name: name ? decodeURIComponent(name) : city.replace(/-/g, ' '),
           slogan: 'አንድ ብሔር አንድ እድል | One Nation One Chance',
@@ -400,10 +168,13 @@ export default function CityVip() {
       winnerCount: 1,
       totalSeats: 2400,
       time: "Every Day at 8:00 PM",
-      color: "from-yellow-500 to-orange-600",
+      color: "from-gray-600 to-gray-800",
       icon: "⭐",
       slogan: "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው",
-      description: "Start your day with a chance to become an instant millionaire!"
+      description: "Start your day with a chance to become an instant millionaire!",
+      listedDate: "January 1, 2024",
+      drawDate: "Every Day at 8:00 PM",
+      nextDraw: "Today at 8:00 PM"
     },
     weekly: {
       name: "ሳምንታዊ ግዙፍ አሸናፊ | Weekly Mega Winner",
@@ -415,10 +186,13 @@ export default function CityVip() {
       winnerCount: 1,
       totalSeats: 4800,
       time: "Every Sunday at 6:00 PM",
-      color: "from-purple-500 to-pink-600",
+      color: "from-gray-600 to-gray-800",
       icon: "🏆",
       slogan: "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው",
-      description: "Ten MILLION Birr changes everything!"
+      description: "Ten MILLION Birr changes everything!",
+      listedDate: "January 1, 2024",
+      drawDate: "Every Sunday at 6:00 PM",
+      nextDraw: getNextSunday()
     },
     monthly: {
       name: "ወርሃዊ አሸናፊ | Monthly Winner",
@@ -430,10 +204,13 @@ export default function CityVip() {
       winnerCount: 1,
       totalSeats: 9600,
       time: "Last Day of Month at 8:00 PM",
-      color: "from-green-600 to-teal-700",
+      color: "from-gray-600 to-gray-800",
       icon: "👑",
       slogan: "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው",
-      description: "The ULTIMATE nationwide prize pool!"
+      description: "The ULTIMATE nationwide prize pool!",
+      listedDate: "January 1, 2024",
+      drawDate: "Last Day of Month at 8:00 PM",
+      nextDraw: getNextMonthEnd()
     }
   };
 
@@ -447,36 +224,263 @@ export default function CityVip() {
       router.push('/login');
       return;
     }
-    setSelectedPool(poolType);
+    setSelectedPoolType(poolType);
+    setSelectedSeats([]);
     setShowSeatSelector(true);
   };
 
-  const handleSeatsSelected = async (seatData) => {
-    setSelectedSeatsData(seatData);
-    setShowSeatSelector(false);
-    setShowBankUpload(true);
-    setReservedSeats(seatData.seats);
-    toast.success(`✅ Seats ${seatData.seats.join(', ')} reserved!`);
+  // Render seat selection modal
+  const renderSeatSelector = () => {
+    if (!selectedPoolType) return null;
+    
+    const pool = vipPools[selectedPoolType];
+    const entryFeeAmount = parseInt(pool.contribution);
+    const totalSeatsCount = pool.totalSeats;
+    const seatNumbers = Array.from({ length: Math.min(totalSeatsCount, 100) }, (_, i) => i + 1);
+    
+    const toggleSeat = (seatNum) => {
+      if (selectedSeats.includes(seatNum)) {
+        setSelectedSeats(selectedSeats.filter(s => s !== seatNum));
+      } else if (selectedSeats.length < maxSeats) {
+        setSelectedSeats([...selectedSeats, seatNum]);
+      } else {
+        toast.error(`You can only select up to ${maxSeats} seats`);
+      }
+    };
+    
+    const totalAmount = selectedSeats.length * entryFeeAmount;
+    
+    const confirmSeats = async () => {
+      if (selectedSeats.length === 0) {
+        toast.error('Please select at least one seat');
+        return;
+      }
+      
+      setLoading(true);
+      
+      try {
+        const ticketNumber = `CITY-${selectedPoolType.toUpperCase()}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+        
+        const { data: participant, error } = await supabase
+          .from('merkato_vip_participants')
+          .insert({
+            user_id: user.id,
+            user_email: user.email,
+            user_name: user.user_metadata?.full_name || user.email.split('@')[0],
+            pool_type: selectedPoolType,
+            seat_numbers: selectedSeats,
+            contribution_amount: totalAmount,
+            prize_amount: parseInt(pool.prize),
+            payment_status: 'pending',
+            ticket_number: ticketNumber,
+            city: city,
+            created_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        setParticipantId(participant.id);
+        setShowSeatSelector(false);
+        setShowPayment(true);
+        
+      } catch (error) {
+        console.error('Error creating participant:', error);
+        toast.error('Failed to create participant record');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-bold">Select Your Seats</h2>
+              <p className="text-sm text-gray-500">{pool.name} • Max {maxSeats} seats</p>
+            </div>
+            <button 
+              onClick={() => {
+                setShowSeatSelector(false);
+                setSelectedPoolType(null);
+                setSelectedSeats([]);
+              }}
+              className="text-gray-500 hover:text-gray-700 text-2xl"
+            >
+              ×
+            </button>
+          </div>
+          
+          <div className="p-6">
+            <div className="bg-gray-50 rounded-lg p-4 mb-4 text-center">
+              <p className="text-sm text-gray-600">Entry Fee: {pool.contribution} per seat</p>
+              <p className="text-xs text-gray-400">Total Seats Available: {totalSeatsCount.toLocaleString()}</p>
+            </div>
+            
+            <div className="grid grid-cols-8 md:grid-cols-10 gap-2 mb-6 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-xl">
+              {seatNumbers.map(seatNum => (
+                <button
+                  key={seatNum}
+                  onClick={() => toggleSeat(seatNum)}
+                  className={`w-10 h-10 rounded-lg font-semibold transition ${
+                    selectedSeats.includes(seatNum)
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                  }`}
+                >
+                  {seatNum}
+                </button>
+              ))}
+            </div>
+            
+            {selectedSeats.length > 0 && (
+              <div className="border-t pt-4">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <p className="text-sm text-gray-500">Selected Seats</p>
+                    <p className="font-bold text-lg">{selectedSeats.sort((a,b)=>a-b).join(', ')}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-gray-500">Total Amount</p>
+                    <p className="font-bold text-2xl text-green-600">ETB {totalAmount.toLocaleString()}</p>
+                    <p className="text-xs text-gray-400">({selectedSeats.length} seats × {pool.contribution})</p>
+                  </div>
+                </div>
+                <button
+                  onClick={confirmSeats}
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition disabled:opacity-50"
+                >
+                  {loading ? 'Processing...' : 'Confirm & Proceed to Payment'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   };
 
-  const handlePaymentSuccess = async () => {
-    setShowBankUpload(false);
-    router.push('/dashboard');
-  };
-
-  const handleCancelReservation = async () => {
-    setReservedSeats([]);
-    setShowBankUpload(false);
-    setShowSeatSelector(true);
-  };
-
-  const handleCancelSeatSelection = () => {
-    setShowSeatSelector(false);
+  // Render payment modal
+  const renderPayment = () => {
+    if (!showPayment || !participantId || !selectedPoolType) return null;
+    
+    const pool = vipPools[selectedPoolType];
+    const totalAmount = selectedSeats.length * parseInt(pool.contribution);
+    
+    const handlePaymentSubmit = async () => {
+      const reference = document.getElementById('referenceNumber')?.value;
+      const file = document.getElementById('paymentScreenshot')?.files[0];
+      
+      if (!file) {
+        toast.error('Please upload payment screenshot');
+        return;
+      }
+      
+      toast.loading('Uploading...');
+      
+      try {
+        const fileName = `${user.id}_${Date.now()}.jpg`;
+        const { error: uploadError } = await supabase.storage
+          .from('payment-proofs')
+          .upload(`bank-transfers/${fileName}`, file);
+        
+        if (uploadError) throw uploadError;
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('payment-proofs')
+          .getPublicUrl(`bank-transfers/${fileName}`);
+        
+        await supabase
+          .from('merkato_vip_participants')
+          .update({
+            payment_status: 'pending_verification',
+            payment_proof_url: publicUrl,
+            reference: reference,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', participantId);
+        
+        toast.success('Payment submitted! You will receive a ticket shortly.');
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 2000);
+        
+      } catch (error) {
+        console.error('Payment error:', error);
+        toast.error('Failed to submit payment');
+      }
+    };
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl shadow-xl max-w-md w-full">
+          <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
+            <h2 className="text-xl font-bold">Complete Payment</h2>
+            <button 
+              onClick={() => {
+                setShowPayment(false);
+                setSelectedPoolType(null);
+                setParticipantId(null);
+              }}
+              className="text-gray-500 hover:text-gray-700 text-2xl"
+            >
+              ×
+            </button>
+          </div>
+          
+          <div className="p-6">
+            <div className="bg-gray-50 rounded-lg p-4 mb-4 text-center">
+              <p className="text-sm text-gray-600">Pool: {pool.name}</p>
+              <p className="text-sm text-gray-600">Seats: {selectedSeats.join(', ')}</p>
+              <p className="text-xl font-bold text-green-600 mt-2">ETB {totalAmount.toLocaleString()}</p>
+            </div>
+            
+            <p className="text-sm text-gray-600 mb-4">Please send payment to:</p>
+            <div className="bg-blue-50 rounded-lg p-3 mb-4">
+              <p className="font-semibold">📱 TeleBirr: 0913277922</p>
+              <p className="font-semibold mt-2">🏦 CBE Bank: 1000601091686</p>
+              <p className="text-sm text-gray-600 mt-2">Account Name: Negassa Hundessa</p>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Reference Number</label>
+                <input
+                  type="text"
+                  id="referenceNumber"
+                  placeholder="Enter transaction ID"
+                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Upload Screenshot</label>
+                <input
+                  type="file"
+                  id="paymentScreenshot"
+                  accept="image/*"
+                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+            </div>
+            
+            <button
+              onClick={handlePaymentSubmit}
+              className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition mt-4"
+            >
+              Submit Payment
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const PoolCard = ({ type, pool }) => (
     <div className="group relative bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl">
-      <div className="absolute top-4 right-4 z-10 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-2 rounded-full font-bold text-sm shadow-lg">
+      <div className="absolute top-4 right-4 z-10 bg-gradient-to-r from-gray-700 to-gray-900 text-white px-4 py-2 rounded-full font-bold text-sm shadow-lg">
         🏆 {pool.prize}
       </div>
       <div className={`bg-gradient-to-r ${pool.color} p-6 text-white relative`}>
@@ -498,6 +502,9 @@ export default function CityVip() {
       <div className="p-6">
         <div className="space-y-3 mb-6">
           <div className="flex items-center gap-3 text-gray-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>{pool.time}</span></div>
+          <div className="flex items-center gap-3 text-gray-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg><span>📅 Listed: {pool.listedDate}</span></div>
+          <div className="flex items-center gap-3 text-gray-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>🎲 Draw: {pool.drawDate}</span></div>
+          <div className="flex items-center gap-3 text-gray-600"><span className="text-yellow-500">⏰</span><span>Next Draw: {pool.nextDraw}</span></div>
           <div className="flex items-center gap-3 text-gray-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg><span>{pool.winnerCount} አሸናፊ | Winner Every {pool.frequency}</span></div>
           <div className="flex items-center gap-3 text-gray-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg><span>💺 Total Seats: {pool.totalSeats.toLocaleString()}</span></div>
         </div>
@@ -536,9 +543,9 @@ export default function CityVip() {
             </div>
             <h1 className="text-5xl md:text-7xl font-bold mb-4">
               <span className="block">{cityInfo.name.split('|')[0]}</span>
-              <span className="bg-gradient-to-r from-yellow-300 to-green-300 bg-clip-text text-transparent">VIP</span>
+              <span className="bg-gradient-to-r from-gray-300 to-gray-400 bg-clip-text text-transparent">VIP</span>
             </h1>
-            <p className="text-xl text-yellow-200 max-w-2xl mx-auto">{cityInfo.slogan}</p>
+            <p className="text-xl text-gray-200 max-w-2xl mx-auto">{cityInfo.slogan}</p>
             <div className="flex flex-wrap justify-center gap-4 mt-8">
               <div className="bg-white/10 backdrop-blur rounded-lg px-6 py-3"><div className="text-3xl font-bold">{cityInfo.businesses}</div><div className="text-sm">ንግዶች | Businesses</div></div>
               <div className="bg-white/10 backdrop-blur rounded-lg px-6 py-3"><div className="text-3xl font-bold">{cityInfo.workers}</div><div className="text-sm">ሠራተኞች | Workers</div></div>
@@ -556,15 +563,13 @@ export default function CityVip() {
                 <p className="text-gray-600 leading-relaxed mb-4">
                   በ{cityInfo.name.split('|')[0]} ውስጥ የሚገኙ ነጋዴዎች እና ተሳታፊዎች በዚህ ልዩ ፕሮግራም አማካኝነት በየቀኑ፣ በየሳምንቱ እና በየወሩ ሚሊየነር የመሆን እድል አላቸው!
                 </p>
-                <p className="text-gray-600 leading-relaxed mb-4">
-                  {cityInfo.description}
-                </p>
+                <p className="text-gray-600 leading-relaxed mb-4">{cityInfo.description}</p>
                 <div className="mt-6 grid grid-cols-2 gap-4">
-                  <div className="border-l-4 border-green-500 pl-3"><p className="font-semibold">የእምነት ንግድ | Trust-Based Commerce</p></div>
-                  <div className="border-l-4 border-green-500 pl-3"><p className="font-semibold">ዘመናዊ እኩብ | Modern Equb</p></div>
+                  <div className="border-l-4 border-gray-500 pl-3"><p className="font-semibold">የእምነት ንግድ | Trust-Based Commerce</p></div>
+                  <div className="border-l-4 border-gray-500 pl-3"><p className="font-semibold">ዘመናዊ እኩብ | Modern Equb</p></div>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl p-6">
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6">
                 <h3 className="text-xl font-bold text-gray-800 mb-3">💎 ዋና ምርቶች | Main Products</h3>
                 <p className="text-gray-700 text-sm mb-4">{cityInfo.product}</p>
                 <div className="space-y-3">
@@ -572,8 +577,8 @@ export default function CityVip() {
                   <div className="flex items-center gap-2 text-sm"><span className="text-green-600">✓</span> በየሳምንቱ አንድ ሚሊየነር | One Millionaire Every Week</div>
                   <div className="flex items-center gap-2 text-sm"><span className="text-green-600">✓</span> በየወሩ አንድ ሚሊየነር | One Millionaire Every Month</div>
                 </div>
-                <div className="mt-4 p-3 bg-yellow-100 rounded-lg">
-                  <p className="text-xs font-semibold text-yellow-800 text-center">✨ ሁሉም በአንድ ላይ | All Together Now!</p>
+                <div className="mt-4 p-3 bg-gray-200 rounded-lg">
+                  <p className="text-xs font-semibold text-gray-800 text-center">✨ ሁሉም በአንድ ላይ | All Together Now!</p>
                   <p className="text-xs text-center mt-1">በመላው ኢትዮጵያ ያሉ ነጋዴዎች እንኳን ደህና መጡ!</p>
                 </div>
               </div>
@@ -584,43 +589,25 @@ export default function CityVip() {
         {/* VIP Tabs */}
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-wrap justify-center gap-3 mb-8">
-            <button onClick={() => setActiveTab('daily')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'daily' ? 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white shadow-lg' : 'bg-gray-200 text-gray-600'}`}>⭐ ዕለታዊ | Daily (1M)</button>
-            <button onClick={() => setActiveTab('weekly')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'weekly' ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg' : 'bg-gray-200 text-gray-600'}`}>🏆 ሳምንታዊ | Weekly (10M)</button>
-            <button onClick={() => setActiveTab('monthly')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'monthly' ? 'bg-gradient-to-r from-green-600 to-teal-700 text-white shadow-lg' : 'bg-gray-200 text-gray-600'}`}>👑 ወርሃዊ | Monthly (40M)</button>
+            <button onClick={() => setActiveTab('daily')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'daily' ? 'bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-lg' : 'bg-gray-200 text-gray-600'}`}>⭐ ዕለታዊ | Daily (1M)</button>
+            <button onClick={() => setActiveTab('weekly')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'weekly' ? 'bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-lg' : 'bg-gray-200 text-gray-600'}`}>🏆 ሳምንታዊ | Weekly (10M)</button>
+            <button onClick={() => setActiveTab('monthly')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'monthly' ? 'bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-lg' : 'bg-gray-200 text-gray-600'}`}>👑 ወርሃዊ | Monthly (40M)</button>
           </div>
           <div className="max-w-4xl mx-auto"><PoolCard type={activeTab} pool={vipPools[activeTab]} /></div>
         </div>
 
-        {/* Seat Selection & Payment */}
-        {showSeatSelector && selectedPool && (
-          <div className="container mx-auto px-4 py-8 max-w-4xl">
-            <SeatSelector
-              poolId={`${city}_${selectedPool}`}
-              entryFee={parseInt(vipPools[selectedPool].contribution)}
-              maxSeats={5}
-              totalSeats={vipPools[selectedPool].totalSeats}
-              onSeatsSelected={handleSeatsSelected}
-              onCancel={handleCancelSeatSelection}
-            />
-          </div>
-        )}
-
-        {showBankUpload && selectedSeatsData && (
-          <BankTransferUpload
-            poolId={`${city}_${selectedPool}`}
-            amount={selectedSeatsData.totalAmount}
-            seatNumbers={selectedSeatsData.seats}
-            onSuccess={handlePaymentSuccess}
-            onClose={handleCancelReservation}
-          />
-        )}
+        {/* Seat Selection Modal */}
+        {renderSeatSelector()}
+        
+        {/* Payment Modal */}
+        {renderPayment()}
 
         {/* CTA Banner */}
-        <div className="bg-gradient-to-r from-green-700 to-teal-700 text-white py-16">
+        <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-16">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold mb-4">ዛሬውኑ ይቀላቀሉ!</h2>
             <p className="text-xl mb-6">Join Today and Become {cityInfo.name.split('|')[0]}'s Next Millionaire!</p>
-            <Link href="/" className="inline-block bg-white text-green-700 px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-100 transition transform hover:scale-105 shadow-xl">🎯 Back to Cities →</Link>
+            <Link href="/" className="inline-block bg-white text-gray-900 px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-100 transition transform hover:scale-105 shadow-xl">🎯 Back to Cities →</Link>
           </div>
         </div>
       </div>
