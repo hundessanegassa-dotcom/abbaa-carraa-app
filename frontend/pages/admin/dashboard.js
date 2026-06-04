@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import BackButton from '../../components/BackButton';
+import CreateCityVipModal from '../../components/admin/CreateCityVipModal';
+import EditCityVipModal from '../../components/admin/EditCityVipModal';
+import CreateRegularPoolModal from '../../components/admin/CreateRegularPoolModal';
 
 export async function getServerSideProps() {
   return { props: {} };
@@ -33,7 +36,8 @@ export default function AdminDashboard() {
     monthly_participants: 0,
     total_collected: 0,
     total_paid_out: 0,
-    pending_draws: 0
+    pending_draws: 0,
+    pending_verification: 0
   });
   
   // City VIP Stats
@@ -44,6 +48,12 @@ export default function AdminDashboard() {
   const [drawingCityWinner, setDrawingCityWinner] = useState(false);
   const [showCityDrawModal, setShowCityDrawModal] = useState(false);
   const [selectedCityPool, setSelectedCityPool] = useState(null);
+  const [cityVipConfigs, setCityVipConfigs] = useState([]);
+  
+  // City VIP Modal States
+  const [showCreateCityModal, setShowCreateCityModal] = useState(false);
+  const [showEditCityModal, setShowEditCityModal] = useState(false);
+  const [selectedCityForEdit, setSelectedCityForEdit] = useState(null);
   
   // Admin's personal pools (20% commission)
   const [myPools, setMyPools] = useState([]);
@@ -115,9 +125,9 @@ export default function AdminDashboard() {
   });
 
   const tierConfig = {
-    daily: { name: 'Daily Millionaire', contribution: 500, prize: 1000000, frequency: 'daily', winnerCount: 1, slogan: 'Make ONE participant a MILLIONAIRE Today!' },
-    weekly: { name: 'Weekly Mega Winner', contribution: 2500, prize: 10000000, frequency: 'weekly', winnerCount: 1, slogan: 'Make ONE participant a MILLIONAIRE This Week!' },
-    monthly: { name: 'Monthly Legend', contribution: 5000, prize: 40000000, frequency: 'monthly', winnerCount: 1, slogan: 'Make ONE participant a MILLIONAIRE This Month!' }
+    daily: { name: 'Daily Millionaire', contribution: 500, prize: 1000000, frequency: 'daily', winnerCount: 1, icon: '⭐', slogan: 'Make ONE participant a MILLIONAIRE Today!' },
+    weekly: { name: 'Weekly Mega Winner', contribution: 2500, prize: 10000000, frequency: 'weekly', winnerCount: 1, icon: '🏆', slogan: 'Make ONE participant a MILLIONAIRE This Week!' },
+    monthly: { name: 'Monthly Legend', contribution: 5000, prize: 40000000, frequency: 'monthly', winnerCount: 1, icon: '👑', slogan: 'Make ONE participant a MILLIONAIRE This Month!' }
   };
 
   // Helper function for date calculations
@@ -179,6 +189,7 @@ export default function AdminDashboard() {
       await loadMerkatoData();
       await loadCityVipData();
       await loadCityVipWinners();
+      await loadCityVipConfigs();
     } catch (error) {
       console.error('Admin check error:', error);
       router.push('/login');
@@ -187,13 +198,27 @@ export default function AdminDashboard() {
     }
   }
 
+  async function loadCityVipConfigs() {
+    try {
+      const { data: configs, error } = await supabase
+        .from('city_vip_config')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (!error && configs) {
+        setCityVipConfigs(configs);
+      }
+    } catch (error) {
+      console.error('Error loading city VIP configs:', error);
+    }
+  }
+
   async function loadCityVipData() {
     try {
-      // Load City VIP participants (using merkato_vip_participants table with city field)
+      // Load City VIP participants from city_vip_participants table
       const { data: participants, error: participantsError } = await supabase
-        .from('merkato_vip_participants')
+        .from('city_vip_participants')
         .select('*')
-        .not('city', 'is', null)
         .order('created_at', { ascending: false });
       
       if (!participantsError && participants) {
@@ -211,6 +236,7 @@ export default function AdminDashboard() {
         total_participants: participants?.filter(p => p.city === city).length || 0,
         total_collected: participants?.filter(p => p.city === city).reduce((sum, p) => sum + (p.contribution_amount || 0), 0) || 0,
         pending_verification: participants?.filter(p => p.city === city && p.payment_status === 'pending_verification').length || 0,
+        verified_participants: participants?.filter(p => p.city === city && p.payment_status === 'verified').length || 0,
         active: true
       }));
       
@@ -238,24 +264,25 @@ export default function AdminDashboard() {
     }
   }
 
-  async function drawCityVipWinner(cityName) {
-    if (!confirm(`Draw winner for ${cityName} VIP pool? This action cannot be undone.`)) return;
+  async function drawCityVipWinner(cityName, poolType) {
+    if (!confirm(`Draw winner for ${cityName} VIP ${poolType} pool? This action cannot be undone.`)) return;
     
     setDrawingCityWinner(true);
     
     try {
-      // Get all verified participants for this city
+      // Get all verified participants for this city and pool type
       const { data: participants, error: participantError } = await supabase
-        .from('merkato_vip_participants')
+        .from('city_vip_participants')
         .select('*')
         .eq('city', cityName)
+        .eq('pool_type', poolType)
         .eq('payment_status', 'verified')
         .neq('is_winner', true);
       
       if (participantError) throw participantError;
       
       if (!participants || participants.length === 0) {
-        toast.error(`No verified participants in ${cityName} VIP pool`);
+        toast.error(`No verified participants in ${cityName} VIP ${poolType} pool`);
         setDrawingCityWinner(false);
         return;
       }
@@ -264,16 +291,12 @@ export default function AdminDashboard() {
       const randomIndex = Math.floor(Math.random() * participants.length);
       const winner = participants[randomIndex];
       
-      // Determine pool tier info
-      const poolInfo = {
-        daily: { name: 'Daily Millionaire', prize: 1000000 },
-        weekly: { name: 'Weekly Mega Winner', prize: 10000000 },
-        monthly: { name: 'Monthly Winner', prize: 40000000 }
-      }[winner.pool_type];
+      // Determine prize amount based on pool type
+      const prizeAmount = poolType === 'daily' ? 1000000 : poolType === 'weekly' ? 10000000 : 40000000;
       
       // Update participant as winner
       const { error: updateError } = await supabase
-        .from('merkato_vip_participants')
+        .from('city_vip_participants')
         .update({
           is_winner: true,
           winner_drawn_at: new Date().toISOString(),
@@ -287,14 +310,14 @@ export default function AdminDashboard() {
       const { error: historyError } = await supabase
         .from('merkato_vip_draws')
         .insert({
-          pool_id: `city-${cityName}`,
+          pool_id: `city-${cityName}-${poolType}`,
           pool_type: 'city',
           city: cityName,
           drawn_at: new Date().toISOString(),
           winner_id: winner.user_id,
           winner_email: winner.user_email,
           winner_name: winner.user_name,
-          prize_amount: winner.prize_amount,
+          prize_amount: prizeAmount,
           ticket_number: winner.ticket_number,
           random_seed: Math.random().toString(),
           verification_hash: btoa(`${cityName}-${winner.user_id}-${Date.now()}`),
@@ -309,13 +332,13 @@ export default function AdminDashboard() {
         .insert({
           user_id: winner.user_id,
           title: '🎉 Congratulations! You Won!',
-          message: `You have won ${winner.prize_amount.toLocaleString()} ETB in the ${cityName} VIP ${winner.pool_type} pool!`,
+          message: `You have won ${prizeAmount.toLocaleString()} ETB in the ${cityName} City VIP ${poolType} pool!`,
           type: 'winner',
           link_url: `/dashboard`,
           created_at: new Date().toISOString()
         });
       
-      toast.success(`🎉 Winner drawn for ${cityName}! ${winner.user_name || winner.user_email} wins ${winner.prize_amount.toLocaleString()} ETB!`);
+      toast.success(`🎉 Winner drawn for ${cityName} ${poolType}! ${winner.user_name || winner.user_email} wins ${prizeAmount.toLocaleString()} ETB!`);
       
       // Refresh data
       await loadCityVipData();
@@ -324,8 +347,9 @@ export default function AdminDashboard() {
       // Show winner details
       setSelectedCityPool({
         city: cityName,
+        poolType: poolType,
         winner: winner,
-        prize: winner.prize_amount
+        prize: prizeAmount
       });
       setShowCityDrawModal(true);
       
@@ -342,7 +366,7 @@ export default function AdminDashboard() {
     
     try {
       const { error } = await supabase
-        .from('merkato_vip_participants')
+        .from('city_vip_participants')
         .update({
           payment_status: approved ? 'verified' : 'rejected',
           verified_at: approved ? new Date().toISOString() : null,
@@ -394,6 +418,7 @@ export default function AdminDashboard() {
     const totalCollected = (participants?.filter(p => p.payment_status === 'verified').reduce((sum, p) => sum + (p.contribution_amount || 0), 0)) || 0;
     const totalPaidOut = winners?.reduce((sum, w) => sum + (w.prize_amount || 0), 0) || 0;
     const pendingDraws = pools?.filter(p => p.status === 'active' && new Date(p.draw_time) <= new Date())?.length || 0;
+    const pendingVerification = participants?.filter(p => p.payment_status === 'pending_verification')?.length || 0;
     
     if (!isMounted.current) return;
     setMerkatoStats({
@@ -403,7 +428,8 @@ export default function AdminDashboard() {
       monthly_participants: monthlyParticipants,
       total_collected: totalCollected,
       total_paid_out: totalPaidOut,
-      pending_draws: pendingDraws
+      pending_draws: pendingDraws,
+      pending_verification: pendingVerification
     });
   }
 
@@ -755,73 +781,6 @@ export default function AdminDashboard() {
     setShowEditMerkatoModal(true);
   }
 
-  async function drawMerkatoWinner(poolId) {
-    if (!confirm('Draw winner for this pool? This action cannot be undone.')) return;
-    
-    try {
-      const { data: participants, error: participantError } = await supabase
-        .from('merkato_vip_participants')
-        .select('*')
-        .eq('pool_id', poolId)
-        .eq('payment_status', 'verified');
-      
-      if (participantError) throw participantError;
-      if (!participants || participants.length === 0) {
-        toast.error('No verified participants in this pool');
-        return;
-      }
-      
-      const randomIndex = Math.floor(Math.random() * participants.length);
-      const winner = participants[randomIndex];
-      
-      const { data: pool, error: poolError } = await supabase
-        .from('merkato_vip_pools')
-        .select('*')
-        .eq('id', poolId)
-        .single();
-      
-      if (poolError) throw poolError;
-      
-      await supabase
-        .from('merkato_vip_pools')
-        .update({
-          status: 'completed',
-          winner_id: winner.user_id,
-          winner_email: winner.user_email,
-          winner_name: winner.user_name,
-          drawn_at: new Date().toISOString(),
-          total_participants: participants.length,
-          total_collected: participants.length * pool.contribution_amount
-        })
-        .eq('id', poolId);
-      
-      await supabase
-        .from('merkato_vip_participants')
-        .update({ is_winner: true })
-        .eq('id', winner.id);
-      
-      await supabase
-        .from('merkato_vip_draws')
-        .insert({
-          pool_id: poolId,
-          drawn_at: new Date().toISOString(),
-          winner_id: winner.user_id,
-          winner_email: winner.user_email,
-          winner_name: winner.user_name,
-          prize_amount: pool.prize_amount,
-          ticket_number: `${pool.tier.toUpperCase()}-${Date.now()}-${randomIndex + 1}`,
-          random_seed: Math.random().toString(),
-          verification_hash: btoa(`${poolId}-${winner.user_id}-${Date.now()}`)
-        });
-      
-      toast.success(`Winner drawn! ${winner.user_name || winner.user_email} wins ${pool.prize_amount.toLocaleString()} ETB!`);
-      await loadMerkatoData();
-    } catch (error) {
-      console.error('Draw error:', error);
-      toast.error('Failed to draw winner');
-    }
-  }
-
   // Bank Transfer verification
   async function verifyBankTransfer(transferId, userId, poolId, amount, seatNumbers, approved) {
     if (!confirm(approved ? 'Approve this payment and confirm seats?' : 'Reject this payment?')) return;
@@ -1117,7 +1076,7 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-2 gap-3 text-center">
                   <div><p className="text-2xl font-bold">{merkatoStats.total_participants}</p><p className="text-xs opacity-90">Participants</p></div>
                   <div><p className="text-2xl font-bold">ETB {(merkatoStats.total_collected / 1000000).toFixed(1)}M</p><p className="text-xs opacity-90">Collected</p></div>
-                  <div><p className="text-2xl font-bold">{merkatoStats.daily_participants}</p><p className="text-xs opacity-90">Daily</p></div>
+                  <div><p className="text-2xl font-bold">{merkatoStats.pending_verification}</p><p className="text-xs opacity-90">Pending Verify</p></div>
                   <div><p className="text-2xl font-bold">{merkatoStats.pending_draws}</p><p className="text-xs opacity-90">Pending Draws</p></div>
                 </div>
                 <button onClick={() => setActiveTab('merkato')} className="mt-3 w-full bg-white text-orange-600 py-1 rounded-lg text-sm font-semibold">Manage →</button>
@@ -1142,7 +1101,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* My Pools Tab */}
+        {/* My Pools Tab - Keep your existing implementation */}
         {activeTab === 'my-pools' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
@@ -1177,14 +1136,15 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Merkato VIP Tab */}
+        {/* Merkato VIP Tab - Keep your existing implementation */}
         {activeTab === 'merkato' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div className="bg-gradient-to-r from-yellow-500 to-orange-600 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">{merkatoStats.total_participants}</p><p className="text-sm opacity-90">Total Participants</p></div>
               <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">ETB {(merkatoStats.total_collected / 1000000).toFixed(1)}M</p><p className="text-sm opacity-90">Total Collected</p></div>
               <div className="bg-gradient-to-r from-green-500 to-teal-600 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">ETB {(merkatoStats.total_paid_out / 1000000).toFixed(1)}M</p><p className="text-sm opacity-90">Paid Out</p></div>
               <div className="bg-gradient-to-r from-red-500 to-rose-600 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">{merkatoStats.pending_draws}</p><p className="text-sm opacity-90">Pending Draws</p></div>
+              <div className="bg-gradient-to-r from-blue-500 to-cyan-600 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">{merkatoStats.pending_verification}</p><p className="text-sm opacity-90">Pending Verify</p></div>
             </div>
 
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
@@ -1225,7 +1185,7 @@ export default function AdminDashboard() {
                             </div>
                             <div className="flex gap-2">
                               <button onClick={() => openEditMerkatoModal(pool)} className="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-lg text-sm transition flex items-center gap-1">✏️ Edit</button>
-                              {pool.status === 'active' && (<Link href={`/admin/merkato-draw?pool=${pool.id}`} className="bg-purple-600 text-white px-3 py-1 rounded text-sm">Draw Winner</Link>)}
+                              <Link href={`/admin/draw-winner?pool=${pool.id}`} className="bg-purple-600 text-white px-3 py-1 rounded text-sm">Draw Winner</Link>
                             </div>
                           </div>
                           <div className="mt-2 text-xs opacity-75">Draw Time: {pool.draw_time ? new Date(pool.draw_time).toLocaleString() : 'Not set'}</div>
@@ -1238,16 +1198,16 @@ export default function AdminDashboard() {
             </div>
 
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
-              <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">🏆 Recent Merkato Winners</h2></div>
+              <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">🏆 Merkato Participants</h2></div>
               <div className="p-4">
-                {merkatoWinners.length === 0 ? (
-                  <p className="text-gray-400 text-center py-8">No winners yet</p>
+                {merkatoParticipants.length === 0 ? (
+                  <p className="text-gray-400 text-center py-8">No participants yet</p>
                 ) : (
                   <div className="space-y-3">
-                    {merkatoWinners.slice(0, 5).map(winner => (
-                      <div key={winner.id} className="border-b pb-3 flex justify-between items-center">
-                        <div><p className="font-semibold">{winner.winner_name || winner.winner_email}</p><p className="text-sm text-gray-500">{winner.name}</p></div>
-                        <div className="text-right"><p className="font-bold text-green-600">ETB {winner.prize_amount?.toLocaleString()}</p><p className="text-xs text-gray-400">{new Date(winner.drawn_at).toLocaleDateString()}</p></div>
+                    {merkatoParticipants.slice(0, 10).map(participant => (
+                      <div key={participant.id} className="border-b pb-3 flex justify-between items-center">
+                        <div><p className="font-semibold">{participant.user_name}</p><p className="text-sm text-gray-500">{participant.user_email}</p><p className="text-xs text-gray-400">Seats: {participant.seat_numbers?.join(', ')}</p></div>
+                        <div className="text-right"><p className="font-bold text-green-600">ETB {participant.contribution_amount?.toLocaleString()}</p><p className="text-xs text-gray-400">{participant.pool_type} • {participant.payment_status}</p></div>
                       </div>
                     ))}
                   </div>
@@ -1257,38 +1217,60 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* City VIP Tab */}
+        {/* City VIP Tab - Updated with Create/Edit buttons */}
         {activeTab === 'city-vip' && (
           <div className="space-y-6">
             {/* City VIP Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-gradient-to-r from-gray-700 to-gray-900 rounded-xl p-4 text-white text-center">
-                <p className="text-2xl font-bold">{cityVipPools.length}</p><p className="text-sm opacity-90">Active Cities</p>
-              </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               <div className="bg-gradient-to-r from-gray-700 to-gray-900 rounded-xl p-4 text-white text-center">
                 <p className="text-2xl font-bold">{cityVipParticipants.length}</p><p className="text-sm opacity-90">Total Participants</p>
+              </div>
+              <div className="bg-gradient-to-r from-gray-700 to-gray-900 rounded-xl p-4 text-white text-center">
+                <p className="text-2xl font-bold">{cityVipPools.length}</p><p className="text-sm opacity-90">Active Cities</p>
               </div>
               <div className="bg-gradient-to-r from-gray-700 to-gray-900 rounded-xl p-4 text-white text-center">
                 <p className="text-2xl font-bold">ETB {cityVipParticipants.reduce((sum, p) => sum + (p.contribution_amount || 0), 0).toLocaleString()}</p>
                 <p className="text-sm opacity-90">Total Collected</p>
               </div>
-              <div className="bg-gradient-to-r from-gray-700 to-gray-900 rounded-xl p-4 text-white text-center">
+              <div className="bg-gradient-to-r from-yellow-600 to-orange-600 rounded-xl p-4 text-white text-center">
                 <p className="text-2xl font-bold">{cityVipParticipants.filter(p => p.payment_status === 'pending_verification').length}</p>
-                <p className="text-sm opacity-90">Pending Verification</p>
+                <p className="text-sm opacity-90">Pending Verify</p>
+              </div>
+              <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl p-4 text-white text-center">
+                <p className="text-2xl font-bold">{cityVipParticipants.filter(p => p.pool_type === 'daily' && p.payment_status === 'verified').length}</p>
+                <p className="text-sm opacity-90">Daily</p>
+              </div>
+              <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-4 text-white text-center">
+                <p className="text-2xl font-bold">{cityVipParticipants.filter(p => p.pool_type === 'monthly' && p.payment_status === 'verified').length}</p>
+                <p className="text-sm opacity-90">Monthly</p>
               </div>
             </div>
 
-            {/* City Filter */}
-            <div className="bg-white rounded-xl shadow-md p-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Filter by City</label>
-              <select
-                value={selectedCityFilter}
-                onChange={(e) => setSelectedCityFilter(e.target.value)}
-                className="w-full md:w-64 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-500"
-              >
-                <option value="all">All Cities</option>
-                {cityVipPools.map(pool => (<option key={pool.city} value={pool.city}>{pool.city}</option>))}
-              </select>
+            {/* City VIP Management Actions */}
+            <div className="bg-white rounded-xl shadow-md p-4 flex justify-between items-center flex-wrap gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Filter by City</label>
+                <select
+                  value={selectedCityFilter}
+                  onChange={(e) => setSelectedCityFilter(e.target.value)}
+                  className="w-full md:w-64 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-500"
+                >
+                  <option value="all">All Cities ({cityVipParticipants.length})</option>
+                  {cityVipPools.map(pool => (
+                    <option key={pool.city} value={pool.city}>
+                      {pool.city} ({pool.total_participants} participants)
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setShowCreateCityModal(true)} 
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition flex items-center gap-2"
+                >
+                  ➕ Create New City VIP
+                </button>
+              </div>
             </div>
 
             {/* City VIP Participants List */}
@@ -1345,14 +1327,64 @@ export default function AdminDashboard() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
                       <span className="text-3xl">🏙️</span>
-                      <div><h3 className="font-bold text-lg">{pool.city}</h3><p className="text-xs text-gray-500">City VIP Program</p></div>
+                      <div>
+                        <h3 className="font-bold text-lg">{pool.city}</h3>
+                        <p className="text-xs text-gray-500">City VIP Program</p>
+                      </div>
                     </div>
-                    <button onClick={() => drawCityVipWinner(pool.city)} disabled={drawingCityWinner || pool.total_participants === 0} className="bg-purple-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-purple-700 disabled:opacity-50">{drawingCityWinner ? 'Drawing...' : '🎲 Draw Winner'}</button>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => {
+                          const cityConfig = cityVipConfigs.find(c => c.city_id === pool.city.toLowerCase().replace(/\s/g, '-'));
+                          setSelectedCityForEdit(cityConfig || pool);
+                          setShowEditCityModal(true);
+                        }} 
+                        className="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700"
+                      >
+                        ✏️ Edit
+                      </button>
+                    </div>
                   </div>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex justify-between"><span className="text-gray-500">Participants:</span><span className="font-semibold">{pool.total_participants}</span></div>
-                    <div className="flex justify-between"><span className="text-gray-500">Pending Verification:</span><span className="font-semibold text-yellow-600">{pool.pending_verification}</span></div>
-                    <div className="flex justify-between"><span className="text-gray-500">Total Collected:</span><span className="font-semibold text-green-600">ETB {pool.total_collected.toLocaleString()}</span></div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Participants:</span>
+                      <span className="font-semibold">{pool.total_participants}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Verified:</span>
+                      <span className="font-semibold text-green-600">{pool.verified_participants || 0}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Pending Verify:</span>
+                      <span className="font-semibold text-yellow-600">{pool.pending_verification}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Total Collected:</span>
+                      <span className="font-semibold text-green-600">ETB {pool.total_collected.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t flex gap-2">
+                    <button 
+                      onClick={() => drawCityVipWinner(pool.city, 'daily')} 
+                      disabled={drawingCityWinner || (pool.verified_participants || 0) === 0} 
+                      className="flex-1 bg-yellow-600 text-white px-2 py-1 rounded text-xs hover:bg-yellow-700 disabled:opacity-50"
+                    >
+                      ⭐ Daily Draw
+                    </button>
+                    <button 
+                      onClick={() => drawCityVipWinner(pool.city, 'weekly')} 
+                      disabled={drawingCityWinner || (pool.verified_participants || 0) === 0} 
+                      className="flex-1 bg-purple-600 text-white px-2 py-1 rounded text-xs hover:bg-purple-700 disabled:opacity-50"
+                    >
+                      🏆 Weekly Draw
+                    </button>
+                    <button 
+                      onClick={() => drawCityVipWinner(pool.city, 'monthly')} 
+                      disabled={drawingCityWinner || (pool.verified_participants || 0) === 0} 
+                      className="flex-1 bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700 disabled:opacity-50"
+                    >
+                      👑 Monthly Draw
+                    </button>
                   </div>
                 </div>
               ))}
@@ -1368,7 +1400,7 @@ export default function AdminDashboard() {
                   <div className="space-y-3">
                     {cityVipWinners.map(winner => (
                       <div key={winner.id} className="border-b pb-3 flex justify-between items-center">
-                        <div><p className="font-semibold">{winner.winner_name || winner.winner_email}</p><p className="text-sm text-gray-500">{winner.city} - {winner.pool_type} pool</p><p className="text-xs text-gray-400">{new Date(winner.drawn_at).toLocaleString()}</p></div>
+                        <div><p className="font-semibold">{winner.winner_name || winner.winner_email}</p><p className="text-sm text-gray-500">{winner.city} - {winner.pool_type || 'city'} pool</p><p className="text-xs text-gray-400">{new Date(winner.drawn_at).toLocaleString()}</p></div>
                         <div className="text-right"><p className="font-bold text-green-600">ETB {winner.prize_amount?.toLocaleString()}</p><p className="text-xs text-gray-400">Ticket: {winner.ticket_number?.slice(-8)}</p></div>
                       </div>
                     ))}
@@ -1379,7 +1411,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Users Tab */}
+        {/* Users Tab - Keep your existing implementation */}
         {activeTab === 'users' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">👥 User Management</h2></div>
@@ -1404,7 +1436,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Pools Tab */}
+        {/* Pools Tab - Keep your existing implementation */}
         {activeTab === 'pools' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">🌊 All Platform Pools</h2></div>
@@ -1430,7 +1462,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Approvals Tab */}
+        {/* Approvals Tab - Keep your existing implementation */}
         {activeTab === 'approvals' && (
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-md p-6"><h3 className="font-bold text-lg mb-4">🤝 Pending Agents ({pendingAgents.length})</h3>
@@ -1445,7 +1477,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Withdrawals Tab */}
+        {/* Withdrawals Tab - Keep your existing implementation */}
         {activeTab === 'withdrawals' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden p-6">
             <h3 className="font-bold text-lg mb-4">💰 Withdrawal Requests ({withdrawalRequests.length})</h3>
@@ -1455,7 +1487,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Bank Transfers Tab */}
+        {/* Bank Transfers Tab - Keep your existing implementation */}
         {activeTab === 'bank-transfers' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">🏦 Bank Transfer Verification</h2><p className="text-sm text-gray-500">Verify user payment proofs to confirm their seats</p></div>
@@ -1486,7 +1518,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Finance Tab */}
+        {/* Finance Tab - Keep your existing implementation */}
         {activeTab === 'finance' && (
           <div className="space-y-6">
             <div className="grid md:grid-cols-3 gap-4">
@@ -1498,14 +1530,14 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Disputes Tab */}
+        {/* Disputes Tab - Keep your existing implementation */}
         {activeTab === 'disputes' && (
           <div className="space-y-4">
             {disputes.length === 0 ? <div className="bg-white rounded-xl p-8 text-center"><p className="text-gray-400">✅ No pending disputes</p></div> : disputes.map(d => (<div key={d.id} className="bg-white rounded-xl shadow-md p-6"><p className="font-bold text-lg">Pool: {d.pool?.prize_name}</p><p className="text-gray-600">Filed by: {d.user?.full_name}</p><p className="mt-2">{d.description}</p><textarea id={`res-${d.id}`} placeholder="Enter resolution notes..." className="w-full border rounded-lg p-2 mt-3"></textarea><button onClick={() => resolveDispute(d.id, document.getElementById(`res-${d.id}`).value)} className="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg">Resolve Dispute</button></div>))}
           </div>
         )}
 
-        {/* Settings Tab */}
+        {/* Settings Tab - Keep your existing implementation */}
         {activeTab === 'settings' && (
           <div className="bg-white rounded-xl shadow-md p-6">
             <h2 className="font-bold text-xl mb-4">⚙️ Platform Settings</h2>
@@ -1523,7 +1555,7 @@ export default function AdminDashboard() {
             <div className="text-center">
               <div className="text-6xl mb-3">🏆</div>
               <h2 className="text-2xl font-bold text-gray-800 mb-2">Winner Announced!</h2>
-              <p className="text-gray-500 mb-4">{selectedCityPool.city} VIP Pool</p>
+              <p className="text-gray-500 mb-4">{selectedCityPool.city} VIP {selectedCityPool.poolType} Pool</p>
               <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-4 mb-4">
                 <p className="text-sm text-gray-500">Winner</p>
                 <p className="text-xl font-bold text-gray-800">{selectedCityPool.winner?.user_name || selectedCityPool.winner?.user_email}</p>
@@ -1533,7 +1565,6 @@ export default function AdminDashboard() {
                 <p><span className="text-gray-500">Email:</span> {selectedCityPool.winner?.user_email}</p>
                 <p><span className="text-gray-500">Ticket:</span> <span className="font-mono">{selectedCityPool.winner?.ticket_number}</span></p>
                 <p><span className="text-gray-500">Seats:</span> {selectedCityPool.winner?.seat_numbers?.join(', ')}</p>
-                <p><span className="text-gray-500">Pool Type:</span> {selectedCityPool.winner?.pool_type}</p>
               </div>
               <button onClick={() => setShowCityDrawModal(false)} className="w-full bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700">Close</button>
             </div>
@@ -1567,7 +1598,7 @@ export default function AdminDashboard() {
             <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center"><h2 className="text-xl font-bold">🏪 Create Merkato VIP Pool</h2><button onClick={() => setShowMerkatoModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button></div>
             <div className="p-6 space-y-5">
               <div><label className="block text-sm font-medium mb-2">Select Tier</label>
-                <div className="grid grid-cols-3 gap-3">{Object.entries(tierConfig).map(([key, config]) => (<button key={key} onClick={() => setNewMerkatoPool({...newMerkatoPool, tier: key, contribution_amount: config.contribution, prize_amount: config.prize})} className={`p-3 rounded-xl text-center transition ${newMerkatoPool.tier === key ? 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700'}`}><div className="text-2xl">{key === 'daily' ? '⭐' : key === 'weekly' ? '🏆' : '👑'}</div><div className="font-bold text-xs">{config.name}</div><div className="text-xs">{config.prize.toLocaleString()} ETB</div></button>))}</div>
+                <div className="grid grid-cols-3 gap-3">{Object.entries(tierConfig).map(([key, config]) => (<button key={key} onClick={() => setNewMerkatoPool({...newMerkatoPool, tier: key, contribution_amount: config.contribution, prize_amount: config.prize})} className={`p-3 rounded-xl text-center transition ${newMerkatoPool.tier === key ? 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700'}`}><div className="text-2xl">{config.icon}</div><div className="font-bold text-xs">{config.name}</div><div className="text-xs">{config.prize.toLocaleString()} ETB</div></button>))}</div>
               </div>
               <div className="bg-gray-50 rounded-lg p-4"><div className="flex justify-between mb-2"><span>Entry Fee:</span><span className="font-bold">{newMerkatoPool.contribution_amount.toLocaleString()} ETB</span></div><div className="flex justify-between mb-2"><span>Prize:</span><span className="font-bold text-green-600">{newMerkatoPool.prize_amount.toLocaleString()} ETB</span></div><div className="flex justify-between"><span>Winner:</span><span>1 Lucky Winner</span></div></div>
               <div><label className="block text-sm font-medium mb-2">Draw Time (Ethiopia Time)</label><input type="time" className="w-full border rounded-lg p-3" value={newMerkatoPool.draw_time} onChange={(e) => setNewMerkatoPool({...newMerkatoPool, draw_time: e.target.value})} /></div>
@@ -1617,6 +1648,30 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* Create City VIP Modal */}
+      <CreateCityVipModal 
+        isOpen={showCreateCityModal} 
+        onClose={() => setShowCreateCityModal(false)} 
+        onSuccess={() => {
+          loadCityVipData();
+          loadCityVipConfigs();
+        }} 
+      />
+
+      {/* Edit City VIP Modal */}
+      <EditCityVipModal 
+        isOpen={showEditCityModal} 
+        onClose={() => {
+          setShowEditCityModal(false);
+          setSelectedCityForEdit(null);
+        }} 
+        onSuccess={() => {
+          loadCityVipData();
+          loadCityVipConfigs();
+        }} 
+        cityData={selectedCityForEdit} 
+      />
     </div>
   );
 }
