@@ -1,3 +1,4 @@
+
 import '../styles/globals.css';
 import { useState, useEffect, useTransition } from 'react';
 import dynamic from 'next/dynamic';
@@ -9,13 +10,13 @@ import i18n from '../lib/i18n';
 import Head from 'next/head';
 import useMediaQuery from '../hooks/useMediaQuery';
 import LoadingSpinner from '../components/LoadingSpinner';
-import LoadingScreen from '../components/LoadingScreen'; // ADD THIS
 
-// Dynamic imports with error boundaries
+// Dynamic imports with error boundaries and no SSR to prevent hydration issues
 const Navbar = dynamic(() => import('../components/Navbar').catch(() => () => <div className="h-16 bg-gray-100 animate-pulse" />), { 
-  ssr: false, 
+  ssr: false,
   loading: () => <div className="h-16 bg-gray-100 animate-pulse" /> 
 });
+
 const Footer = dynamic(() => import('../components/Footer').catch(() => () => null), { ssr: false });
 const ChatBot = dynamic(() => import('../components/ChatBot').catch(() => () => null), { ssr: false });
 const LanguageToggle = dynamic(() => import('../components/LanguageToggle').catch(() => () => null), { ssr: false });
@@ -33,20 +34,70 @@ const queryClient = new QueryClient({
   },
 });
 
+// Simple loading screen component without complex animations to avoid hydration issues
+function SimpleLoadingScreen() {
+  return (
+    <div className="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
+      <div className="relative">
+        {/* Main rotating object */}
+        <div className="w-24 h-24 relative animate-spin-slow">
+          <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-teal-500 rounded-full opacity-20 animate-pulse"></div>
+          <div className="absolute inset-2 bg-gradient-to-r from-green-500 to-teal-500 rounded-full opacity-40 animate-ping"></div>
+          <div className="absolute inset-4 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center">
+            <span className="text-3xl">🎁</span>
+          </div>
+        </div>
+        
+        {/* Rotating ring */}
+        <div className="absolute -inset-4 border-4 border-green-200 rounded-full animate-spin-slow"></div>
+        <div className="absolute -inset-8 border-4 border-teal-200 rounded-full animate-spin-slow" style={{ animationDirection: 'reverse' }}></div>
+      </div>
+      
+      <div className="mt-8 text-center">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
+          Abbaa Carraa
+        </h1>
+        <p className="text-gray-500 text-sm mt-2">ዕድል ለሁሉም | Chance for All</p>
+      </div>
+      
+      <div className="mt-6 flex gap-1">
+        <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+        <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+        <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+      </div>
+      
+      <p className="text-xs text-gray-400 mt-6">Loading amazing experiences...</p>
+
+      <style jsx>{`
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-6px); }
+        }
+        .animate-spin-slow { animation: spin-slow 3s linear infinite; }
+        .animate-bounce { animation: bounce 0.6s ease-in-out infinite; }
+      `}</style>
+    </div>
+  );
+}
+
 function MyApp({ Component, pageProps }) {
   const [mounted, setMounted] = useState(false);
   const [routerLoading, setRouterLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [showInitialLoading, setShowInitialLoading] = useState(true); // ADD THIS
+  const [showInitialLoading, setShowInitialLoading] = useState(true);
   const router = useRouter();
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  // Handle initial loading screen
+  // Handle initial loading screen - wait for component to mount first
   useEffect(() => {
-    // Show loading screen for at least 2.5 seconds for better UX
+    // Only start loading timer after component is mounted
     const timer = setTimeout(() => {
       setShowInitialLoading(false);
-    }, 2800);
+    }, 2000);
     
     return () => clearTimeout(timer);
   }, []);
@@ -80,23 +131,10 @@ function MyApp({ Component, pageProps }) {
     };
   }, [router, startTransition]);
 
-  // Set mounted with a safety timeout
+  // Set mounted after component mounts (prevents hydration mismatch)
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (!mounted) {
-        console.warn('Forcing mounted state due to timeout');
-        startTransition(() => {
-          setMounted(true);
-        });
-      }
-    }, 3000);
-
-    startTransition(() => {
-      setMounted(true);
-    });
-    
-    return () => clearTimeout(timeoutId);
-  }, [mounted, startTransition]);
+    setMounted(true);
+  }, []);
 
   const getPageTitle = () => {
     const path = router.pathname;
@@ -120,29 +158,23 @@ function MyApp({ Component, pageProps }) {
       '/login': 'Login',
       '/auth/callback': 'Authenticating',
       '/merkato-vip': 'Merkato VIP',
-      '/merkato-seat': 'Select Seats',
-      '/payment/merkato': 'Merkato Payment',
+      '/merkato-seat': 'Select Seats - Merkato VIP',
+      '/cities': 'City VIP Programs',
+      '/cities/seat': 'Select Seats - City VIP',
+      '/payment/merkato': 'Payment - Merkato VIP',
     };
     return titles[path] || 'Abbaa Carraa';
   };
 
-  // Show initial loading screen first (beautiful rotating object)
+  // Show initial loading screen first
   if (showInitialLoading) {
-    return <LoadingScreen onLoadingComplete={() => setShowInitialLoading(false)} />;
+    return <SimpleLoadingScreen />;
   }
 
-  // Show loading during router navigation or before mount
-  if (!mounted || routerLoading || isPending) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-green-200 border-t-green-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-500 text-sm">
-            {routerLoading ? 'Loading page...' : isPending ? 'Processing...' : 'Loading...'}
-          </p>
-        </div>
-      </div>
-    );
+  // Don't show loading during router navigation for better UX (use skeleton instead)
+  // Only show loader for actual page transitions
+  if (!mounted) {
+    return null;
   }
 
   const title = getPageTitle();
@@ -153,9 +185,11 @@ function MyApp({ Component, pageProps }) {
       <I18nextProvider i18n={i18n}>
         <>
           <Head>
+            <title>{title ? `${title} | Abbaa Carraa` : 'Abbaa Carraa - Ethiopian Digital Lottery'}</title>
             <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎁</text></svg>" />
             <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes" />
             <meta name="theme-color" content="#059669" />
+            <meta name="description" content="Abbaa Carraa - Ethiopian Digital Lottery Platform. Win amazing prizes, support charity, and get your chance to become a millionaire!" />
           </Head>
           <div className="min-h-screen flex flex-col bg-gray-50">
             {!isAuthPage && (
@@ -181,6 +215,16 @@ function MyApp({ Component, pageProps }) {
                 style: {
                   background: '#363636',
                   color: '#fff',
+                },
+                success: {
+                  style: {
+                    background: '#10b981',
+                  },
+                },
+                error: {
+                  style: {
+                    background: '#ef4444',
+                  },
                 },
               }} 
             />
