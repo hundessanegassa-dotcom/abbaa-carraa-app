@@ -1,3 +1,4 @@
+// pages/login.js
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
@@ -13,8 +14,7 @@ export default function Login() {
   useEffect(() => {
     const clearExistingSession = async () => {
       await supabase.auth.signOut();
-      localStorage.removeItem('pendingRole');
-      // Don't clear sessionStorage here - it contains the role from footer clicks
+      // Don't clear sessionStorage here - it contains the role and redirect info
     };
     clearExistingSession();
   }, []);
@@ -25,28 +25,45 @@ export default function Login() {
     try {
       // Get the intended role from sessionStorage (set by footer links or homepage)
       const pendingRole = sessionStorage.getItem('pendingRole');
+      const pendingPoolType = sessionStorage.getItem('pendingPoolType');
+      const pendingCity = sessionStorage.getItem('pendingCity');
+      const pendingPoolSource = sessionStorage.getItem('pendingPoolSource');
       
       // If no role is stored, default to 'individual' (for pool joining flow)
       if (!pendingRole) {
         sessionStorage.setItem('pendingRole', 'individual');
       }
       
-      // Clear any existing session
-      await supabase.auth.signOut();
-      
       // Store redirect URL if coming from a specific page
       if (redirect) {
         sessionStorage.setItem('redirectAfterLogin', redirect);
       }
       
-      // Force Google account selector - THIS FIXES THE REPEATED ACCOUNT SELECTION
-      // By storing the session properly, Google won't ask again
+      // For VIP flows, ensure we have the correct redirect URL
+      if (pendingPoolSource === 'merkato-vip' && pendingPoolType) {
+        const redirectUrl = `/merkato-seat?type=${pendingPoolType}`;
+        sessionStorage.setItem('redirectAfterLogin', redirectUrl);
+        console.log('Merkato VIP redirect set:', redirectUrl);
+      }
+      
+      if (pendingPoolSource === 'city-vip' && pendingCity && pendingPoolType) {
+        const redirectUrl = `/cities/seat?city=${pendingCity}&type=${pendingPoolType}`;
+        sessionStorage.setItem('redirectAfterLogin', redirectUrl);
+        console.log('City VIP redirect set:', redirectUrl);
+      }
+      
+      // For pool joining flow
+      if (pendingPoolType === 'regular' && redirect) {
+        sessionStorage.setItem('redirectAfterLogin', redirect);
+      }
+      
+      // Force Google account selector
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: {
-            prompt: 'select_account', // Force account selection on first login only
+            prompt: 'select_account',
             access_type: 'offline',
           },
         },
@@ -69,9 +86,27 @@ export default function Login() {
     return null;
   };
 
+  const getPendingPoolSource = () => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('pendingPoolSource');
+    }
+    return null;
+  };
+
   const pendingRole = getPendingRole();
+  const pendingSource = getPendingPoolSource();
   
   const getRoleMessage = () => {
+    // VIP specific messages
+    if (pendingSource === 'merkato-vip') {
+      return { title: 'Join Merkato VIP', message: 'Sign in to select your seats and become a millionaire!', icon: '🏪' };
+    }
+    if (pendingSource === 'city-vip') {
+      const city = sessionStorage.getItem('pendingCity');
+      return { title: `Join ${city || 'City'} VIP`, message: 'Sign in to select your seats and become a millionaire!', icon: '🏙️' };
+    }
+    
+    // Regular role messages
     switch(pendingRole) {
       case 'individual': return { title: 'Join a Pool', message: 'Sign in to continue to the pool', icon: '🎁' };
       case 'agent': return { title: 'Become an Agent', message: 'Sign in to start your application', icon: '🤝' };
