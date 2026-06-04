@@ -1,9 +1,11 @@
+// components/LoadingScreen.js
 import { useState, useEffect } from 'react';
 
 export default function LoadingScreen({ onLoadingComplete }) {
   const [progress, setProgress] = useState(0);
   const [loadingText, setLoadingText] = useState('መጫን ጀምሯል...');
   const [currentFact, setCurrentFact] = useState(0);
+  const [isClient, setIsClient] = useState(false);
 
   // Fascinating facts about Abbaa Carraa - Regular Pools + Merkato VIP
   const facts = [
@@ -20,7 +22,14 @@ export default function LoadingScreen({ onLoadingComplete }) {
     { am: '🎟️ እያንዳንዱ ተሳታፊ ዲጂታል እጣ ያገኛል!', en: 'Every participant gets a Digital Ticket!' },
   ];
 
+  // Mark when component is on client side to avoid hydration mismatch
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+
     // Simulate loading progress
     const interval = setInterval(() => {
       setProgress(prev => {
@@ -35,22 +44,25 @@ export default function LoadingScreen({ onLoadingComplete }) {
       });
     }, 300);
 
-    // Rotate facts every 2 seconds
+    // Rotate facts every 2.5 seconds
     const factInterval = setInterval(() => {
       setCurrentFact(prev => (prev + 1) % facts.length);
     }, 2500);
 
     // Update loading text based on progress
     const textInterval = setInterval(() => {
-      if (progress < 30) {
-        setLoadingText('🚀 እየተዘጋጀ ነው...');
-      } else if (progress < 60) {
-        setLoadingText('⚡ ፑሎችን እና ሽልማቶችን እያዘጋጀን ነው...');
-      } else if (progress < 90) {
-        setLoadingText('🎯 አሸናፊዎችን እያዘጋጀን ነው...');
-      } else {
-        setLoadingText('🎉 እንኳን ደህና መጡ!');
-      }
+      setProgress(currentProgress => {
+        if (currentProgress < 30) {
+          setLoadingText('🚀 እየተዘጋጀ ነው...');
+        } else if (currentProgress < 60) {
+          setLoadingText('⚡ ፑሎችን እና ሽልማቶችን እያዘጋጀን ነው...');
+        } else if (currentProgress < 90) {
+          setLoadingText('🎯 አሸናፊዎችን እያዘጋጀን ነው...');
+        } else {
+          setLoadingText('🎉 እንኳን ደህና መጡ!');
+        }
+        return currentProgress;
+      });
     }, 500);
 
     return () => {
@@ -58,23 +70,39 @@ export default function LoadingScreen({ onLoadingComplete }) {
       clearInterval(factInterval);
       clearInterval(textInterval);
     };
-  }, [progress]);
+  }, [isClient, onLoadingComplete]);
+
+  // Generate particles only on client side to avoid hydration mismatch
+  const particles = isClient ? [...Array(20)].map((_, i) => ({
+    id: i,
+    width: Math.random() * 100 + 50,
+    height: Math.random() * 100 + 50,
+    left: Math.random() * 100,
+    top: Math.random() * 100,
+    delay: Math.random() * 5,
+    duration: Math.random() * 10 + 10,
+  })) : [];
+
+  // Don't render during SSR, just return null or a simple placeholder
+  if (!isClient) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 z-[9999] bg-gradient-to-br from-green-900 via-teal-800 to-emerald-900 flex flex-col items-center justify-center p-4">
       {/* Animated background particles */}
       <div className="absolute inset-0 overflow-hidden">
-        {[...Array(20)].map((_, i) => (
+        {particles.map((particle) => (
           <div
-            key={i}
+            key={particle.id}
             className="absolute bg-white/10 rounded-full animate-float"
             style={{
-              width: Math.random() * 100 + 50 + 'px',
-              height: Math.random() * 100 + 50 + 'px',
-              left: Math.random() * 100 + '%',
-              top: Math.random() * 100 + '%',
-              animationDelay: Math.random() * 5 + 's',
-              animationDuration: Math.random() * 10 + 10 + 's',
+              width: particle.width + 'px',
+              height: particle.height + 'px',
+              left: particle.left + '%',
+              top: particle.top + '%',
+              animationDelay: particle.delay + 's',
+              animationDuration: particle.duration + 's',
             }}
           />
         ))}
@@ -99,7 +127,7 @@ export default function LoadingScreen({ onLoadingComplete }) {
             <div className="w-full h-full rounded-full border-4 border-orange-400/20 border-r-orange-400 border-t-orange-400/50"></div>
           </div>
           
-          {/* Center rotating objects - Switching between Gift, Market, Trophy */}
+          {/* Center rotating objects */}
           <div className="absolute inset-0 flex items-center justify-center animate-pulse-slow">
             <div className="text-7xl animate-rotate-center">🎁</div>
           </div>
@@ -123,10 +151,10 @@ export default function LoadingScreen({ onLoadingComplete }) {
         {/* Tagline */}
         <div className="mb-6">
           <p className="text-green-200 text-sm md:text-base animate-slide-up">
-            "አንድን ተሳታፊ ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር ሚሊየነር እናድርገው"
+            &quot;አንድን ተሳታፊ ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር ሚሊየነር እናድርገው&quot;
           </p>
           <p className="text-green-300 text-xs mt-1">
-            "Let's make one participant a millionaire today, this week and this month"
+            &quot;Let&apos;s make one participant a millionaire today, this week and this month&quot;
           </p>
         </div>
 
@@ -148,7 +176,7 @@ export default function LoadingScreen({ onLoadingComplete }) {
           {Math.floor(Math.min(progress, 100))}%
         </p>
 
-        {/* Rotating Facts - Shows both Regular and Merkato features */}
+        {/* Rotating Facts */}
         <div className="mt-8 p-4 bg-white/10 backdrop-blur rounded-xl border border-white/20 animate-fade-in">
           <div className="flex items-center justify-center gap-2 mb-2">
             <span className="text-yellow-300 text-sm">✨</span>
@@ -159,7 +187,7 @@ export default function LoadingScreen({ onLoadingComplete }) {
           <p className="text-green-300 text-xs mt-1">{facts[currentFact].en}</p>
         </div>
 
-        {/* What We Offer - Regular Pools + Merkato VIP */}
+        {/* What We Offer */}
         <div className="mt-6 grid grid-cols-2 gap-2 text-center">
           <div className="bg-white/5 rounded-lg p-2">
             <div className="text-lg">🏊</div>
