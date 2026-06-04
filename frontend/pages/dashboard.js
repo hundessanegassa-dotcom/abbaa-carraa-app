@@ -43,6 +43,7 @@ export default function Dashboard() {
   const [cityTickets, setCityTickets] = useState([]);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [showTicketModal, setShowTicketModal] = useState(false);
+  const [showAllTickets, setShowAllTickets] = useState(false);
   
   const isMounted = useRef(true);
 
@@ -100,8 +101,6 @@ export default function Dashboard() {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
       
-      console.log('Regular tickets found:', regularData?.length || 0);
-      
       if (!regularError && regularData) {
         setRegularTickets(regularData);
       }
@@ -113,8 +112,6 @@ export default function Dashboard() {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
       
-      console.log('Merkato tickets found:', merkatoData?.length || 0);
-      
       if (!merkatoError && merkatoData) {
         setMerkatoTickets(merkatoData);
       }
@@ -125,8 +122,6 @@ export default function Dashboard() {
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
-      
-      console.log('City tickets found:', cityData?.length || 0);
       
       if (!cityError && cityData) {
         setCityTickets(cityData);
@@ -332,24 +327,33 @@ export default function Dashboard() {
       ...t, 
       type: 'regular', 
       verified: t.payment_status === 'verified',
-      displayName: `${t.pools?.prize_name || 'Regular Pool'} - ${t.seat_numbers?.join(', ') || 'N/A'}`,
-      poolInfo: t.pools
+      displayName: `${t.pools?.prize_name || 'Regular Pool'} - Seats ${t.seat_numbers?.join(', ') || 'N/A'}`,
+      poolInfo: t.pools,
+      icon: '🎁',
+      bgColor: 'bg-purple-50'
     })),
     ...merkatoTickets.map(t => ({ 
       ...t, 
       type: 'merkato', 
       verified: t.payment_status === 'verified',
       displayName: `Merkato VIP - ${t.pool_type === 'daily' ? 'Daily' : t.pool_type === 'weekly' ? 'Weekly' : 'Monthly'}`,
-      city: 'Merkato'
+      city: 'Merkato',
+      icon: '🏪',
+      bgColor: 'bg-yellow-50'
     })),
     ...cityTickets.map(t => ({ 
       ...t, 
       type: 'city', 
       verified: t.payment_status === 'verified',
       displayName: `${t.city} VIP - ${t.pool_type === 'daily' ? 'Daily' : t.pool_type === 'weekly' ? 'Weekly' : 'Monthly'}`,
-      city: t.city
+      city: t.city,
+      icon: '🏙️',
+      bgColor: 'bg-blue-50'
     }))
   ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  // Tickets to display (show 3 or all if showAllTickets is true)
+  const displayedTickets = showAllTickets ? allTickets : allTickets.slice(0, 3);
 
   return (
     <DashboardLayout 
@@ -539,14 +543,32 @@ export default function Dashboard() {
         {/* Right Column: User Activity */}
         <div className="space-y-6">
           
-          {/* MY TICKETS SECTION - UPDATED FOR ALL THREE TYPES */}
+          {/* MY TICKETS SECTION */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <span>🎫</span> My Tickets
-              {allTickets.length > 0 && (
-                <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">{allTickets.length}</span>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <span>🎫</span> My Tickets
+                {allTickets.length > 0 && (
+                  <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">{allTickets.length}</span>
+                )}
+              </h3>
+              {allTickets.length > 3 && !showAllTickets && (
+                <button 
+                  onClick={() => setShowAllTickets(true)}
+                  className="text-blue-600 text-xs hover:underline"
+                >
+                  View All ({allTickets.length})
+                </button>
               )}
-            </h3>
+              {showAllTickets && (
+                <button 
+                  onClick={() => setShowAllTickets(false)}
+                  className="text-gray-500 text-xs hover:underline"
+                >
+                  Show Less
+                </button>
+              )}
+            </div>
             
             {allTickets.length === 0 ? (
               <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
@@ -554,20 +576,20 @@ export default function Dashboard() {
                 <p className="text-gray-500 text-sm">No tickets found.</p>
                 <p className="text-xs text-gray-400 mt-1">After you upload a payment screenshot, your ticket will appear here.</p>
                 <div className="mt-3 flex flex-col gap-2">
-                  <Link href="/merkato-vip" className="inline-block text-green-600 font-medium text-sm hover:underline">
-                    Join Merkato VIP →
+                  <Link href="/merkato-vip" className="inline-block text-yellow-600 font-medium text-sm hover:underline">
+                    🏪 Join Merkato VIP →
                   </Link>
                   <Link href="/cities" className="inline-block text-blue-600 font-medium text-sm hover:underline">
-                    Join City VIP →
+                    🏙️ Join City VIP →
                   </Link>
                   <Link href="/listings" className="inline-block text-purple-600 font-medium text-sm hover:underline">
-                    Join Regular Pool →
+                    🎁 Join Regular Pool →
                   </Link>
                 </div>
               </div>
             ) : (
               <div className="space-y-3 max-h-96 overflow-y-auto">
-                {allTickets.map((ticket) => (
+                {displayedTickets.map((ticket) => (
                   <div 
                     key={ticket.id} 
                     className={`border rounded-xl p-3 cursor-pointer transition hover:shadow-md ${
@@ -583,17 +605,8 @@ export default function Dashboard() {
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-lg">
-                            {ticket.type === 'merkato' ? '🏪' : ticket.type === 'city' ? '🏙️' : '🎁'}
-                          </span>
-                          <span className="font-semibold text-sm">
-                            {ticket.type === 'merkato' 
-                              ? `Merkato VIP - ${ticket.pool_type === 'daily' ? 'Daily' : ticket.pool_type === 'weekly' ? 'Weekly' : 'Monthly'}`
-                              : ticket.type === 'city'
-                              ? `${ticket.city} VIP - ${ticket.pool_type === 'daily' ? 'Daily' : ticket.pool_type === 'weekly' ? 'Weekly' : 'Monthly'}`
-                              : `Regular Pool - ${ticket.seat_numbers?.join(', ') || 'N/A'}`
-                            }
-                          </span>
+                          <span className="text-lg">{ticket.icon}</span>
+                          <span className="font-semibold text-sm">{ticket.displayName}</span>
                           {ticket.verified ? (
                             <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
                               ✓ Verified
@@ -634,7 +647,7 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* My Active Entries - Keep as is */}
+          {/* My Active Entries */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
               <span>🎟️</span> My Active Entries
@@ -685,7 +698,7 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* My Wins - Keep as is */}
+          {/* My Wins */}
           <div className="bg-gradient-to-br from-yellow-50 to-orange-50 p-6 rounded-2xl shadow-sm border border-yellow-100">
             <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
               <span>🏆</span> My Wins
@@ -714,7 +727,7 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Badges & Achievements - Keep as is */}
+          {/* Badges & Achievements */}
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
             <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
               <span>🎖️</span> Badges & Achievements
@@ -729,7 +742,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Referral Program - Keep as is */}
+          {/* Referral Program */}
           <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-5 rounded-2xl border border-indigo-100">
             <h3 className="font-semibold text-indigo-800 mb-2 flex items-center gap-2">
               <span>🤝</span> Referral Program
@@ -751,7 +764,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Charity Section - Keep as is */}
+          {/* Charity Section */}
           <div className="bg-gradient-to-r from-pink-50 to-rose-50 p-5 rounded-2xl border border-pink-100">
             <h3 className="font-semibold text-pink-800 mb-2 flex items-center gap-2">
               <span>💚</span> 2% for Health
@@ -766,7 +779,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Quick Tips - Keep as is */}
+          {/* Quick Tips */}
           <div className="bg-blue-50 p-5 rounded-2xl border border-blue-100">
             <h3 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
               <span>💡</span> Pro Tips
@@ -782,7 +795,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Ticket Modal - Updated to handle all three types */}
+      {/* Ticket Modal */}
       {showTicketModal && selectedTicket && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-2xl w-full my-8">
@@ -812,7 +825,7 @@ export default function Dashboard() {
                     : selectedTicket.pools?.prize_name || 'Regular Pool',
                   name: selectedTicket.type === 'merkato' ? 'Merkato VIP' : selectedTicket.type === 'city' ? 'City VIP' : 'Regular Pool',
                   target_amount: selectedTicket.prize_amount || selectedTicket.prize_amount,
-                  drawDate: selectedTicket.type === 'daily' ? 'Every Day at 8:00 PM' : selectedTicket.type === 'weekly' ? 'Every Sunday at 6:00 PM' : 'Last Day of Month at 8:00 PM'
+                  drawDate: selectedTicket.pool_type === 'daily' ? 'Every Day at 8:00 PM' : selectedTicket.pool_type === 'weekly' ? 'Every Sunday at 6:00 PM' : 'Last Day of Month at 8:00 PM'
                 }}
                 isVerified={selectedTicket.verified}
                 seatNumbers={selectedTicket.seat_numbers || []}
