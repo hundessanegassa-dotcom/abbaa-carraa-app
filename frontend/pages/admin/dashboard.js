@@ -1015,6 +1015,11 @@ export default function AdminDashboard() {
           </button>
         </div>
       </div>
+<Link href="/admin/verify-payments" className="bg-purple-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
+  <div className="text-2xl mb-1">🔍</div>
+  <p className="font-semibold text-xs">Verify Payments</p>
+  <p className="text-xs opacity-80">Approve/Reject</p>
+</Link>
 
       {/* Tabs */}
       <div className="border-b bg-white sticky top-0 z-10 overflow-x-auto mt-6">
