@@ -20,14 +20,18 @@ export default function AuthCallback() {
       if (sessionError) throw sessionError;
       if (!session) throw new Error('No session found');
       
-      // Get stored redirect URL BEFORE creating profile
+      // Get stored redirect URL and other data
       const storedRedirectUrl = sessionStorage.getItem('redirectAfterLogin');
       const storedPoolId = sessionStorage.getItem('pendingPoolId');
       const pendingRole = sessionStorage.getItem('pendingRole');
+      const pendingPoolType = sessionStorage.getItem('pendingPoolType');
+      const pendingPoolSource = sessionStorage.getItem('pendingPoolSource');
+      const pendingCity = sessionStorage.getItem('pendingCity');
       
       console.log('Accepting agreement - Redirect URL:', storedRedirectUrl);
-      console.log('Accepting agreement - Pool ID:', storedPoolId);
-      console.log('Accepting agreement - Role:', pendingRole);
+      console.log('Accepting agreement - Pool Source:', pendingPoolSource);
+      console.log('Accepting agreement - Pool Type:', pendingPoolType);
+      console.log('Accepting agreement - City:', pendingCity);
       
       // Check if profile exists
       const { data: existingProfile } = await supabase
@@ -69,7 +73,7 @@ export default function AuthCallback() {
           });
       }
       
-      // Clear pending role
+      // Clear pending role from localStorage
       localStorage.removeItem('pendingRole');
       
       toast.success('Agreement accepted! Welcome to Abbaa Carraa!');
@@ -77,8 +81,36 @@ export default function AuthCallback() {
       // Small delay to ensure database commit
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // CRITICAL FIX: Redirect back to the original pool or the intended page
-      // Priority 1: Redirect to stored pool URL
+      // ========== CRITICAL FIX: Handle ALL redirect types ==========
+      
+      // Priority 1: Merkato VIP redirect
+      if (pendingPoolSource === 'merkato-vip' && pendingPoolType) {
+        const merkatoRedirectUrl = `/merkato-seat?type=${pendingPoolType}`;
+        console.log('Redirecting to Merkato VIP:', merkatoRedirectUrl);
+        sessionStorage.removeItem('redirectAfterLogin');
+        sessionStorage.removeItem('pendingPoolId');
+        sessionStorage.removeItem('pendingRole');
+        sessionStorage.removeItem('pendingPoolType');
+        sessionStorage.removeItem('pendingPoolSource');
+        router.push(merkatoRedirectUrl);
+        return;
+      }
+      
+      // Priority 2: City VIP redirect
+      if (pendingPoolSource === 'city-vip' && pendingCity && pendingPoolType) {
+        const cityRedirectUrl = `/cities/seat?city=${pendingCity}&type=${pendingPoolType}`;
+        console.log('Redirecting to City VIP:', cityRedirectUrl);
+        sessionStorage.removeItem('redirectAfterLogin');
+        sessionStorage.removeItem('pendingPoolId');
+        sessionStorage.removeItem('pendingRole');
+        sessionStorage.removeItem('pendingPoolType');
+        sessionStorage.removeItem('pendingPoolSource');
+        sessionStorage.removeItem('pendingCity');
+        router.push(cityRedirectUrl);
+        return;
+      }
+      
+      // Priority 3: Regular pool redirect (stored URL)
       if (storedRedirectUrl && storedRedirectUrl.startsWith('/pools/')) {
         console.log('Redirecting to stored pool URL:', storedRedirectUrl);
         sessionStorage.removeItem('redirectAfterLogin');
@@ -88,7 +120,7 @@ export default function AuthCallback() {
         return;
       }
       
-      // Priority 2: Redirect using stored pool ID
+      // Priority 4: Regular pool redirect (by pool ID)
       if (storedPoolId) {
         console.log('Redirecting to pool ID:', storedPoolId);
         sessionStorage.removeItem('pendingPoolId');
@@ -97,15 +129,21 @@ export default function AuthCallback() {
         return;
       }
       
-      // Priority 3: For role-based flows (agent/vendor/org)
+      // Priority 5: For role-based flows (agent/vendor/org)
       if (pendingRole && pendingRole !== 'individual') {
         sessionStorage.removeItem('pendingRole');
         router.push(`/${pendingRole}/apply`);
         return;
       }
       
-      // Priority 4: Default to listings (not dashboard!)
+      // Priority 6: Default to listings (not dashboard!)
       console.log('No stored redirect, going to listings');
+      sessionStorage.removeItem('redirectAfterLogin');
+      sessionStorage.removeItem('pendingPoolId');
+      sessionStorage.removeItem('pendingRole');
+      sessionStorage.removeItem('pendingPoolType');
+      sessionStorage.removeItem('pendingPoolSource');
+      sessionStorage.removeItem('pendingCity');
       router.push('/listings');
       
     } catch (err) {
@@ -120,6 +158,9 @@ export default function AuthCallback() {
     sessionStorage.removeItem('pendingRole');
     sessionStorage.removeItem('redirectAfterLogin');
     sessionStorage.removeItem('pendingPoolId');
+    sessionStorage.removeItem('pendingPoolType');
+    sessionStorage.removeItem('pendingPoolSource');
+    sessionStorage.removeItem('pendingCity');
     supabase.auth.signOut();
     router.push('/login');
   }, [router]);
@@ -129,20 +170,31 @@ export default function AuthCallback() {
 
     const handleCallback = async () => {
       try {
-        // Get redirect URL from storage (set in login page or pool page)
-        let redirect = localStorage.getItem('redirectAfterLogin');
-        if (!redirect) redirect = sessionStorage.getItem('redirectAfterLogin');
-        
-        // Also get pending pool ID
+        // Get all stored data
+        let redirect = sessionStorage.getItem('redirectAfterLogin');
         const pendingPoolId = sessionStorage.getItem('pendingPoolId');
         const pendingRole = sessionStorage.getItem('pendingRole');
+        const pendingPoolType = sessionStorage.getItem('pendingPoolType');
+        const pendingPoolSource = sessionStorage.getItem('pendingPoolSource');
+        const pendingCity = sessionStorage.getItem('pendingCity');
         
         console.log('Callback - redirect from storage:', redirect);
         console.log('Callback - pending pool ID:', pendingPoolId);
         console.log('Callback - pending role:', pendingRole);
+        console.log('Callback - pending pool source:', pendingPoolSource);
+        console.log('Callback - pending pool type:', pendingPoolType);
+        console.log('Callback - pending city:', pendingCity);
         
-        // Clear immediately to avoid reuse
-        localStorage.removeItem('redirectAfterLogin');
+        // Build redirect URL for VIP flows
+        if (pendingPoolSource === 'merkato-vip' && pendingPoolType) {
+          redirect = `/merkato-seat?type=${pendingPoolType}`;
+          console.log('Callback - Built Merkato VIP redirect:', redirect);
+        }
+        
+        if (pendingPoolSource === 'city-vip' && pendingCity && pendingPoolType) {
+          redirect = `/cities/seat?city=${pendingCity}&type=${pendingPoolType}`;
+          console.log('Callback - Built City VIP redirect:', redirect);
+        }
         
         if (isMounted) setRedirectUrl(redirect || (pendingPoolId ? `/pools/${pendingPoolId}` : null));
 
@@ -165,13 +217,33 @@ export default function AuthCallback() {
 
         // If user has a profile with agreement accepted
         if (profile?.agreement_accepted === true && profile?.role) {
-          // Clear pending role
+          // Clear pending data
           sessionStorage.removeItem('pendingRole');
+          sessionStorage.removeItem('pendingPoolId');
+          sessionStorage.removeItem('pendingPoolType');
+          sessionStorage.removeItem('pendingPoolSource');
+          sessionStorage.removeItem('pendingCity');
           localStorage.removeItem('pendingRole');
           
           toast.success(`Welcome back, ${session.user.email}!`);
           
-          // CRITICAL: Redirect back to the pool they were trying to join
+          // ========== CRITICAL: Redirect based on pending source ==========
+          
+          // Merkato VIP redirect for existing user
+          if (pendingPoolSource === 'merkato-vip' && pendingPoolType) {
+            console.log('Existing user - redirecting to Merkato VIP');
+            router.push(`/merkato-seat?type=${pendingPoolType}`);
+            return;
+          }
+          
+          // City VIP redirect for existing user
+          if (pendingPoolSource === 'city-vip' && pendingCity && pendingPoolType) {
+            console.log('Existing user - redirecting to City VIP');
+            router.push(`/cities/seat?city=${pendingCity}&type=${pendingPoolType}`);
+            return;
+          }
+          
+          // Regular pool redirect
           if (pendingPoolId) {
             console.log('Existing user - redirecting to pool:', pendingPoolId);
             sessionStorage.removeItem('pendingPoolId');
@@ -183,7 +255,8 @@ export default function AuthCallback() {
             router.push(redirect);
             return;
           }
-          // Default to listings (not dashboard!)
+          
+          // Default to listings
           console.log('Existing user - no pool, going to listings');
           router.push('/listings');
           return;
