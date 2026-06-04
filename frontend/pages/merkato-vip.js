@@ -1,9 +1,12 @@
+// pages/merkato-vip.js
 import Head from 'next/head';
-import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
+import QRCode from 'react-qr-code';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 // Helper function for next draw dates
 const getNextSunday = () => {
@@ -19,14 +22,261 @@ const getNextMonthEnd = () => {
   return lastDay.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 };
 
+// Optimized file upload utilities
+const validateFile = (file) => {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+  const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+  
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error('Please upload a valid image file (JPEG, PNG, WEBP)');
+  }
+  
+  if (file.size > MAX_SIZE) {
+    throw new Error('File size must be less than 5MB');
+  }
+  
+  return true;
+};
+
+const optimizeImage = async (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        const MAX_WIDTH = 1024;
+        const MAX_HEIGHT = 1024;
+        
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob((blob) => {
+          const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), { 
+            type: 'image/jpeg' 
+          });
+          resolve(optimizedFile);
+        }, 'image/jpeg', 0.7);
+      };
+      img.onerror = reject;
+    };
+    reader.onerror = reject;
+  });
+};
+
+const compressImage = async (file) => {
+  const MAX_SIZE_MB = 2;
+  
+  if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+    return await optimizeImage(file);
+  }
+  
+  return file;
+};
+
+// Ticket Component
+const Ticket = ({ participant, pool, type = 'unverified', onClose }) => {
+  const ticketRef = useRef();
+
+  const downloadTicket = async () => {
+    if (!ticketRef.current) return;
+    
+    try {
+      toast.loading('Generating PDF...', { id: 'pdf-gen' });
+      const canvas = await html2canvas(ticketRef.current, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        logging: false,
+        useCORS: true
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const imgWidth = 277;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      pdf.save(`ticket-${participant.ticket_number}.pdf`);
+      toast.success('Ticket downloaded!', { id: 'pdf-gen' });
+      
+    } catch (error) {
+      console.error('Error downloading ticket:', error);
+      toast.error('Failed to download ticket');
+    }
+  };
+
+  const statusConfig = {
+    unverified: {
+      bg: 'bg-yellow-50',
+      border: 'border-yellow-400',
+      badge: 'bg-yellow-500',
+      badgeText: 'UNVERIFIED',
+      text: 'Awaiting Admin Approval'
+    },
+    verified: {
+      bg: 'bg-green-50',
+      border: 'border-green-500',
+      badge: 'bg-green-600',
+      badgeText: 'VERIFIED',
+      text: 'Approved Entry'
+    }
+  };
+
+  const config = statusConfig[type];
+
+  return (
+    <div className="space-y-4">
+      <div 
+        ref={ticketRef}
+        className={`${config.bg} border-2 ${config.border} rounded-2xl p-6 max-w-2xl mx-auto shadow-xl`}
+      >
+        {/* Ticket Header */}
+        <div className="text-center border-b pb-4 mb-4">
+          <div className="flex justify-between items-center">
+            <div className="text-left">
+              <div className="text-xs text-gray-500 font-mono">Ticket #{participant.ticket_number}</div>
+              <div className="text-sm font-semibold text-gray-700">
+                {participant.created_at ? new Date(participant.created_at).toLocaleDateString() : 'N/A'}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className={`${config.badge} text-white px-3 py-1 rounded-full text-xs font-bold`}>
+                {config.badgeText}
+              </div>
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mt-2">🏆 MERKATO VIP</h2>
+          <p className="text-sm text-gray-600">የሚሊየነር ቲኬት | Millionaire Ticket</p>
+        </div>
+
+        {/* Ticket Body */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <p className="text-xs text-gray-500">Participant Name</p>
+            <p className="font-semibold text-sm">{participant.user_name || 'N/A'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">Email</p>
+            <p className="font-semibold text-sm">{participant.user_email || 'N/A'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">Pool Type</p>
+            <p className="font-semibold text-sm capitalize">{participant.pool_type}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">City/Section</p>
+            <p className="font-semibold text-sm">{participant.city || 'Merkato'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">Seat Numbers</p>
+            <p className="font-semibold text-sm">{participant.seat_numbers?.join(', ') || 'N/A'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">Contribution</p>
+            <p className="font-semibold text-sm text-green-600">ETB {participant.contribution_amount?.toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">Prize Amount</p>
+            <p className="font-semibold text-sm text-purple-600">ETB {participant.prize_amount?.toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">Draw Date</p>
+            <p className="font-semibold text-sm">{pool?.drawDate || 'TBA'}</p>
+          </div>
+        </div>
+
+        {/* QR Code Section */}
+        <div className="flex justify-center py-4 border-t border-b border-dashed">
+          <div className="bg-white p-3 rounded-xl shadow-md">
+            <QRCode 
+              value={JSON.stringify({
+                ticket: participant.ticket_number,
+                name: participant.user_name,
+                email: participant.user_email,
+                seats: participant.seat_numbers,
+                pool: participant.pool_type,
+                amount: participant.contribution_amount,
+                verified: type === 'verified',
+                timestamp: new Date().toISOString()
+              })}
+              size={120}
+              level="H"
+            />
+          </div>
+        </div>
+
+        {/* Verification Status */}
+        {type === 'verified' && participant.verified_at && (
+          <div className="bg-green-100 rounded-lg p-3 mt-4 text-center">
+            <p className="text-green-800 text-sm font-semibold">
+              ✓ Verified on {new Date(participant.verified_at).toLocaleString()}
+            </p>
+            <p className="text-green-600 text-xs">This ticket is VALID for the upcoming draw</p>
+          </div>
+        )}
+
+        {type === 'unverified' && (
+          <div className="bg-yellow-100 rounded-lg p-3 mt-4 text-center">
+            <p className="text-yellow-800 text-sm font-semibold">
+              ⏳ Awaiting Admin Verification
+            </p>
+            <p className="text-yellow-600 text-xs">Your ticket will be activated once payment is confirmed</p>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="text-center text-xs text-gray-400 mt-4 pt-4 border-t">
+          <p>Abbaa Carraa • Merkato VIP Program</p>
+          <p>Terms & Conditions Apply • Keep this ticket safe for prize claims</p>
+        </div>
+      </div>
+
+      {/* Download Button */}
+      <div className="text-center">
+        <button
+          onClick={downloadTicket}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition flex items-center gap-2 mx-auto"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Download Ticket (PDF)
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export default function MerkatoVip() {
   const router = useRouter();
   const isMounted = useRef(true);
   const [activeTab, setActiveTab] = useState('daily');
-  const [selectedPool, setSelectedPool] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [pools, setPools] = useState([]);
   
   // Seat selection states
   const [showSeatSelector, setShowSeatSelector] = useState(false);
@@ -34,7 +284,12 @@ export default function MerkatoVip() {
   const [selectedPoolType, setSelectedPoolType] = useState(null);
   const [showPayment, setShowPayment] = useState(false);
   const [participantId, setParticipantId] = useState(null);
-  const [maxSeats, setMaxSeats] = useState(5);
+  const [maxSeats, setMaxSeats] = useState(10);
+  
+  // Ticket states
+  const [showTicket, setShowTicket] = useState(false);
+  const [participantData, setParticipantData] = useState(null);
+  const [ticketType, setTicketType] = useState('unverified');
 
   useEffect(() => {
     return () => {
@@ -44,31 +299,17 @@ export default function MerkatoVip() {
 
   useEffect(() => {
     checkUser();
-    fetchActivePools();
   }, []);
 
   const checkUser = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (isMounted.current) setUser(user);
-    } catch (error) {
-      console.error('Error checking user:', error);
-    }
-  };
-
-  const fetchActivePools = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('merkato_vip_pools')
-        .select('*')
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
-      
-      if (!error && data && isMounted.current) {
-        setPools(data);
+      else if (!user) {
+        router.push('/login');
       }
     } catch (error) {
-      console.error('Error fetching pools:', error);
+      console.error('Error checking user:', error);
     }
   };
 
@@ -78,7 +319,8 @@ export default function MerkatoVip() {
       name: "ዕለታዊ ሚሊየነር | Daily Millionaire",
       tier: "መርካቶ ለሁሉም | Merkato for All",
       frequency: "Daily",
-      contribution: "500 ETB",
+      contribution: "500",
+      contributionFormatted: "500 ETB",
       prize: "1,000,000 ETB",
       prizeNumber: 1000000,
       winnerCount: 1,
@@ -97,7 +339,8 @@ export default function MerkatoVip() {
       name: "ሳምንታዊ ግዙፍ አሸናፊ | Weekly Mega Winner",
       tier: "VIP 2",
       frequency: "Weekly",
-      contribution: "2,500 ETB",
+      contribution: "2500",
+      contributionFormatted: "2,500 ETB",
       prize: "10,000,000 ETB",
       prizeNumber: 10000000,
       winnerCount: 1,
@@ -116,7 +359,8 @@ export default function MerkatoVip() {
       name: "ወርሃዊ አሸናፊ | Monthly Winner",
       tier: "VIP 1",
       frequency: "Monthly",
-      contribution: "5,000 ETB",
+      contribution: "5000",
+      contributionFormatted: "5,000 ETB",
       prize: "40,000,000 ETB",
       prizeNumber: 40000000,
       winnerCount: 1,
@@ -144,10 +388,77 @@ export default function MerkatoVip() {
       return;
     }
     
-    // Show seat selection directly - no redirect
     setSelectedPoolType(poolType);
     setSelectedSeats([]);
     setShowSeatSelector(true);
+  };
+
+  const handleFileUpload = async (file) => {
+    try {
+      validateFile(file);
+      toast.loading('Optimizing image for upload...', { id: 'compress' });
+      const optimizedFile = await compressImage(file);
+      toast.success('Image optimized!', { id: 'compress' });
+      return optimizedFile;
+    } catch (error) {
+      toast.error(error.message);
+      throw error;
+    }
+  };
+
+  const submitPayment = async (participantId, reference, file) => {
+    let loadingToast = toast.loading('Processing payment...');
+    
+    try {
+      const optimizedFile = await handleFileUpload(file);
+      
+      const fileName = `bank-transfers/${participantId}/${Date.now()}.jpg`;
+      const { error: uploadError } = await supabase.storage
+        .from('payment-proofs')
+        .upload(fileName, optimizedFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('payment-proofs')
+        .getPublicUrl(fileName);
+      
+      const { error: updateError } = await supabase
+        .from('merkato_vip_participants')
+        .update({
+          payment_status: 'pending_verification',
+          payment_proof_url: publicUrl,
+          reference: reference,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', participantId);
+      
+      if (updateError) throw updateError;
+      
+      const { data: updatedParticipant, error: fetchError } = await supabase
+        .from('merkato_vip_participants')
+        .select('*')
+        .eq('id', participantId)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      
+      setParticipantData(updatedParticipant);
+      setTicketType('unverified');
+      setShowTicket(true);
+      setShowPayment(false);
+      setShowSeatSelector(false);
+      
+      toast.success('Payment submitted! Your unverified ticket is ready', { id: loadingToast });
+      
+    } catch (error) {
+      console.error('Payment submission error:', error);
+      toast.error('Failed to submit payment. Please try again.', { id: loadingToast });
+      throw error;
+    }
   };
 
   // Render seat selection UI
@@ -180,7 +491,6 @@ export default function MerkatoVip() {
       setLoading(true);
       
       try {
-        // Create participant record directly
         const ticketNumber = `MK-${selectedPoolType.toUpperCase()}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
         
         const { data: participant, error } = await supabase
@@ -188,13 +498,15 @@ export default function MerkatoVip() {
           .insert({
             user_id: user.id,
             user_email: user.email,
-            user_name: user.user_metadata?.full_name || user.email.split('@')[0],
+            user_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
             pool_type: selectedPoolType,
+            city: 'Merkato',
             seat_numbers: selectedSeats,
             contribution_amount: totalAmount,
-            prize_amount: parseInt(pool.prize),
+            prize_amount: parseInt(pool.prize.replace(/[^0-9]/g, '')),
             payment_status: 'pending',
             ticket_number: ticketNumber,
+            status: 'active',
             created_at: new Date().toISOString()
           })
           .select()
@@ -208,7 +520,7 @@ export default function MerkatoVip() {
         
       } catch (error) {
         console.error('Error creating participant:', error);
-        toast.error('Failed to create participant record');
+        toast.error('Failed to create participant record: ' + error.message);
       } finally {
         setLoading(false);
       }
@@ -236,7 +548,7 @@ export default function MerkatoVip() {
           
           <div className="p-6">
             <div className="bg-gray-50 rounded-lg p-4 mb-4 text-center">
-              <p className="text-sm text-gray-600">Entry Fee: {pool.contribution} per seat</p>
+              <p className="text-sm text-gray-600">Entry Fee: {pool.contributionFormatted} per seat</p>
               <p className="text-xs text-gray-400">Total Seats Available: {totalSeatsCount.toLocaleString()}</p>
             </div>
             
@@ -266,7 +578,7 @@ export default function MerkatoVip() {
                   <div className="text-right">
                     <p className="text-sm text-gray-500">Total Amount</p>
                     <p className="font-bold text-2xl text-green-600">ETB {totalAmount.toLocaleString()}</p>
-                    <p className="text-xs text-gray-400">({selectedSeats.length} seats × {pool.contribution})</p>
+                    <p className="text-xs text-gray-400">({selectedSeats.length} seats × {pool.contributionFormatted})</p>
                   </div>
                 </div>
                 <button
@@ -290,10 +602,13 @@ export default function MerkatoVip() {
     
     const pool = vipPools[selectedPoolType];
     const totalAmount = selectedSeats.length * parseInt(pool.contribution);
+    const [reference, setReference] = useState('');
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl shadow-xl max-w-md w-full">
+        <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
           <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
             <h2 className="text-xl font-bold">Complete Payment</h2>
             <button 
@@ -324,72 +639,137 @@ export default function MerkatoVip() {
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Reference Number</label>
+                <label className="block text-sm font-medium mb-1">
+                  Reference Number <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
-                  placeholder="Enter transaction ID"
-                  className="w-full border rounded-lg px-3 py-2"
-                  id="referenceNumber"
+                  placeholder="Enter transaction ID or reference number"
+                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={reference}
+                  onChange={(e) => setReference(e.target.value)}
                 />
               </div>
+              
               <div>
-                <label className="block text-sm font-medium mb-1">Upload Screenshot</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="w-full border rounded-lg px-3 py-2"
-                  id="paymentScreenshot"
-                />
+                <label className="block text-sm font-medium mb-1">
+                  Upload Bank Transfer Screenshot <span className="text-red-500">*</span>
+                </label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-500 transition">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    id="paymentScreenshot"
+                    onChange={async (e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        try {
+                          validateFile(file);
+                          setSelectedFile(file);
+                          toast.success('File selected successfully');
+                        } catch (error) {
+                          toast.error(error.message);
+                          e.target.value = '';
+                        }
+                      }
+                    }}
+                  />
+                  <label htmlFor="paymentScreenshot" className="cursor-pointer">
+                    {selectedFile ? (
+                      <div>
+                        <p className="text-green-600">✓ {selectedFile.name}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {(selectedFile.size / 1024).toFixed(1)} KB
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <svg className="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p className="text-gray-500 mt-2">Click to upload screenshot</p>
+                        <p className="text-xs text-gray-400 mt-1">JPEG, PNG (Max 5MB)</p>
+                      </div>
+                    )}
+                  </label>
+                </div>
               </div>
             </div>
             
             <button
               onClick={async () => {
-                const reference = document.getElementById('referenceNumber')?.value;
-                const file = document.getElementById('paymentScreenshot')?.files[0];
-                
-                if (!file) {
+                if (!reference.trim()) {
+                  toast.error('Please enter reference number');
+                  return;
+                }
+                if (!selectedFile) {
                   toast.error('Please upload payment screenshot');
                   return;
                 }
                 
-                toast.loading('Uploading...');
-                
-                // Upload file
-                const fileName = `${user.id}_${Date.now()}.jpg`;
-                const { error: uploadError } = await supabase.storage
-                  .from('payment-proofs')
-                  .upload(`bank-transfers/${fileName}`, file);
-                
-                if (uploadError) {
-                  toast.error('Upload failed');
-                  return;
-                }
-                
-                const { data: { publicUrl } } = supabase.storage
-                  .from('payment-proofs')
-                  .getPublicUrl(`bank-transfers/${fileName}`);
-                
-                // Update participant
-                await supabase
-                  .from('merkato_vip_participants')
-                  .update({
-                    payment_status: 'pending_verification',
-                    payment_proof_url: publicUrl,
-                    reference: reference,
-                    updated_at: new Date().toISOString()
-                  })
-                  .eq('id', participantId);
-                
-                toast.success('Payment submitted! You will receive a ticket shortly.');
-                setTimeout(() => {
-                  router.push('/dashboard');
-                }, 2000);
+                setIsSubmitting(true);
+                await submitPayment(participantId, reference, selectedFile);
+                setIsSubmitting(false);
               }}
-              className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition mt-4"
+              disabled={isSubmitting}
+              className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition mt-4 disabled:opacity-50"
             >
-              Submit Payment
+              {isSubmitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Processing...
+                </span>
+              ) : (
+                'Submit Payment & Get Ticket'
+              )}
             </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Render ticket modal
+  const renderTicketModal = () => {
+    if (!showTicket || !participantData) return null;
+    
+    const pool = vipPools[participantData.pool_type];
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div className="max-w-2xl w-full">
+          <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <div className="bg-gradient-to-r from-gray-800 to-gray-900 p-4 flex justify-between items-center">
+              <h3 className="text-white font-bold text-lg">Your Ticket</h3>
+              <button
+                onClick={() => {
+                  setShowTicket(false);
+                  router.push('/dashboard');
+                }}
+                className="text-white hover:text-gray-300 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-6">
+              <Ticket 
+                participant={participantData} 
+                pool={pool} 
+                type={ticketType}
+              />
+              <div className="mt-6 text-center">
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition"
+                >
+                  Go to Dashboard
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -419,7 +799,7 @@ export default function MerkatoVip() {
         <div className="mt-4 flex justify-between items-center">
           <div>
             <p className="text-sm opacity-80">የመግቢያ ክፍያ | Entry Fee</p>
-            <p className="text-3xl font-bold">{pool.contribution}</p>
+            <p className="text-3xl font-bold">{pool.contributionFormatted}</p>
           </div>
           <div className="text-right">
             <p className="text-sm opacity-80">የተረጋገጠ ሽልማት | Prize</p>
@@ -480,11 +860,6 @@ export default function MerkatoVip() {
     </div>
   );
 
-  const formatNumber = (num) => {
-    if (!num) return '0';
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  };
-
   return (
     <>
       <Head>
@@ -493,7 +868,7 @@ export default function MerkatoVip() {
       </Head>
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-        {/* Hero Section - LIGHT GREY THEME */}
+        {/* Hero Section */}
         <div className="relative bg-gradient-to-r from-gray-700 via-gray-800 to-gray-900 text-white overflow-hidden">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-10 left-10 text-9xl animate-bounce">🏪</div>
@@ -713,7 +1088,7 @@ export default function MerkatoVip() {
           </div>
         </div>
 
-        {/* CTA Banner - Light Grey */}
+        {/* CTA Banner */}
         <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-16 animate-pulse-slow">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold mb-4 animate-bounce">ዛሬውኑ ይቀላቀሉ!</h2>
@@ -729,11 +1104,10 @@ export default function MerkatoVip() {
         </div>
       </div>
 
-      {/* Seat Selection Modal */}
+      {/* Modals */}
       {renderSeatSelector()}
-      
-      {/* Payment Modal */}
       {renderPayment()}
+      {renderTicketModal()}
 
       <style jsx>{`
         @keyframes fade-in {
