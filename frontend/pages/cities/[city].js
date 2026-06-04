@@ -1,9 +1,12 @@
 import { useRouter } from 'next/router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import Head from 'next/head';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { QRCodeSVG } from 'qrcode.react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 // Helper function for next draw dates
 const getNextSunday = () => {
@@ -19,9 +22,79 @@ const getNextMonthEnd = () => {
   return lastDay.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 };
 
+// Optimized file upload utilities
+const validateFile = (file) => {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+  const MAX_SIZE = 5 * 1024 * 1024;
+  
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error('Please upload a valid image file (JPEG, PNG, WEBP)');
+  }
+  
+  if (file.size > MAX_SIZE) {
+    throw new Error('File size must be less than 5MB');
+  }
+  
+  return true;
+};
+
+const optimizeImage = async (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        const MAX_WIDTH = 1024;
+        const MAX_HEIGHT = 1024;
+        
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob((blob) => {
+          const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), { 
+            type: 'image/jpeg' 
+          });
+          resolve(optimizedFile);
+        }, 'image/jpeg', 0.7);
+      };
+      img.onerror = reject;
+    };
+    reader.onerror = reject;
+  });
+};
+
+const compressImage = async (file) => {
+  const MAX_SIZE_MB = 2;
+  
+  if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+    return await optimizeImage(file);
+  }
+  
+  return file;
+};
+
 // City-specific data - Complete with all Ethiopian cities
 const cityData = {
-  // ================= MAJOR & METROPOLITAN CITIES =================
   'addis-ababa': {
     name: 'አዲስ አበባ | Addis Ababa',
     slogan: 'የኢትዮጵያ የንግድ እና የዲፕሎማሲ ልብ | Heart of Ethiopian Commerce & Diplomacy',
@@ -112,7 +185,177 @@ const cityData = {
     product: 'ቱሪዝም, አቪዬሽን | Tourism, Aviation',
     description: 'የሀይቆች ከተማ | City of Lakes'
   }
-  // ... add more cities as needed
+};
+
+// Ticket Component for Cities
+const CityTicket = ({ participant, pool, cityInfo, type = 'unverified' }) => {
+  const ticketRef = useRef();
+
+  const downloadTicket = async () => {
+    if (!ticketRef.current) return;
+    
+    try {
+      toast.loading('Generating PDF...', { id: 'pdf-gen' });
+      const canvas = await html2canvas(ticketRef.current, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        logging: false,
+        useCORS: true
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const imgWidth = 277;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      pdf.save(`city-ticket-${participant.ticket_number}.pdf`);
+      toast.success('Ticket downloaded!', { id: 'pdf-gen' });
+      
+    } catch (error) {
+      console.error('Error downloading ticket:', error);
+      toast.error('Failed to download ticket');
+    }
+  };
+
+  const statusConfig = {
+    unverified: {
+      bg: 'bg-gray-50',
+      border: 'border-gray-400',
+      badge: 'bg-gray-500',
+      badgeText: 'UNVERIFIED',
+      text: 'Awaiting Admin Approval'
+    },
+    verified: {
+      bg: 'bg-gray-50',
+      border: 'border-gray-600',
+      badge: 'bg-gray-700',
+      badgeText: 'VERIFIED',
+      text: 'Approved Entry'
+    }
+  };
+
+  const config = statusConfig[type];
+
+  return (
+    <div className="space-y-4">
+      <div 
+        ref={ticketRef}
+        className={`${config.bg} border-2 ${config.border} rounded-2xl p-6 max-w-2xl mx-auto shadow-xl`}
+      >
+        <div className="text-center border-b pb-4 mb-4">
+          <div className="flex justify-between items-center">
+            <div className="text-left">
+              <div className="text-xs text-gray-500 font-mono">Ticket #{participant.ticket_number}</div>
+              <div className="text-sm font-semibold text-gray-700">
+                {participant.created_at ? new Date(participant.created_at).toLocaleDateString() : 'N/A'}
+              </div>
+            </div>
+            <div className={`${config.badge} text-white px-3 py-1 rounded-full text-xs font-bold`}>
+              {config.badgeText}
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mt-2">🏙️ {cityInfo?.name?.split('|')[0] || 'CITY'} VIP</h2>
+          <p className="text-sm text-gray-600">የሚሊየነር ቲኬት | Millionaire Ticket</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <p className="text-xs text-gray-500">Participant Name</p>
+            <p className="font-semibold text-sm">{participant.user_name || 'N/A'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">Email</p>
+            <p className="font-semibold text-sm">{participant.user_email || 'N/A'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">Pool Type</p>
+            <p className="font-semibold text-sm capitalize">{participant.pool_type}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">City</p>
+            <p className="font-semibold text-sm">{participant.city || 'N/A'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">Seat Numbers</p>
+            <p className="font-semibold text-sm">{participant.seat_numbers?.join(', ') || 'N/A'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">Contribution</p>
+            <p className="font-semibold text-sm text-green-600">ETB {participant.contribution_amount?.toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">Prize Amount</p>
+            <p className="font-semibold text-sm text-purple-600">ETB {participant.prize_amount?.toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">Draw Date</p>
+            <p className="font-semibold text-sm">{pool?.drawDate || 'TBA'}</p>
+          </div>
+        </div>
+
+        <div className="flex justify-center py-4 border-t border-b border-dashed">
+          <div className="bg-white p-3 rounded-xl shadow-md">
+            <QRCodeSVG 
+              value={JSON.stringify({
+                ticket: participant.ticket_number,
+                name: participant.user_name,
+                email: participant.user_email,
+                seats: participant.seat_numbers,
+                city: participant.city,
+                pool: participant.pool_type,
+                amount: participant.contribution_amount,
+                verified: type === 'verified',
+                timestamp: new Date().toISOString()
+              })}
+              size={120}
+              level="H"
+            />
+          </div>
+        </div>
+
+        {type === 'verified' && participant.verified_at && (
+          <div className="bg-green-100 rounded-lg p-3 mt-4 text-center">
+            <p className="text-green-800 text-sm font-semibold">
+              ✓ Verified on {new Date(participant.verified_at).toLocaleString()}
+            </p>
+            <p className="text-green-600 text-xs">This ticket is VALID for the upcoming draw</p>
+          </div>
+        )}
+
+        {type === 'unverified' && (
+          <div className="bg-gray-100 rounded-lg p-3 mt-4 text-center">
+            <p className="text-gray-800 text-sm font-semibold">
+              ⏳ Awaiting Admin Verification
+            </p>
+            <p className="text-gray-600 text-xs">Your ticket will be activated once payment is confirmed</p>
+          </div>
+        )}
+
+        <div className="text-center text-xs text-gray-400 mt-4 pt-4 border-t">
+          <p>Abbaa Carraa • City VIP Program</p>
+          <p>Terms & Conditions Apply • Keep this ticket safe for prize claims</p>
+        </div>
+      </div>
+
+      <div className="text-center">
+        <button
+          onClick={downloadTicket}
+          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold transition flex items-center gap-2 mx-auto"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Download Ticket (PDF)
+        </button>
+      </div>
+    </div>
+  );
 };
 
 export default function CityVip() {
@@ -130,6 +373,11 @@ export default function CityVip() {
   const [showPayment, setShowPayment] = useState(false);
   const [participantId, setParticipantId] = useState(null);
   const [maxSeats, setMaxSeats] = useState(5);
+  
+  // Ticket states
+  const [showTicket, setShowTicket] = useState(false);
+  const [participantData, setParticipantData] = useState(null);
+  const [ticketType, setTicketType] = useState('unverified');
 
   useEffect(() => {
     if (city) {
@@ -162,13 +410,14 @@ export default function CityVip() {
       name: "ዕለታዊ ሚሊየነር | Daily Millionaire",
       tier: "ለሁሉም ኢትዮጵያዊ | For Every Ethiopian",
       frequency: "Daily",
-      contribution: "500 ETB",
+      contribution: "500",
+      contributionFormatted: "500 ETB",
       prize: "1,000,000 ETB",
       prizeNumber: 1000000,
       winnerCount: 1,
       totalSeats: 2400,
       time: "Every Day at 8:00 PM",
-      color: "from-gray-600 to-gray-800",
+      color: "from-gray-700 to-gray-900",
       icon: "⭐",
       slogan: "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው",
       description: "Start your day with a chance to become an instant millionaire!",
@@ -180,13 +429,14 @@ export default function CityVip() {
       name: "ሳምንታዊ ግዙፍ አሸናፊ | Weekly Mega Winner",
       tier: "VIP 2",
       frequency: "Weekly",
-      contribution: "2,500 ETB",
+      contribution: "2500",
+      contributionFormatted: "2,500 ETB",
       prize: "10,000,000 ETB",
       prizeNumber: 10000000,
       winnerCount: 1,
       totalSeats: 4800,
       time: "Every Sunday at 6:00 PM",
-      color: "from-gray-600 to-gray-800",
+      color: "from-gray-700 to-gray-900",
       icon: "🏆",
       slogan: "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው",
       description: "Ten MILLION Birr changes everything!",
@@ -198,13 +448,14 @@ export default function CityVip() {
       name: "ወርሃዊ አሸናፊ | Monthly Winner",
       tier: "VIP 1",
       frequency: "Monthly",
-      contribution: "5,000 ETB",
+      contribution: "5000",
+      contributionFormatted: "5,000 ETB",
       prize: "40,000,000 ETB",
       prizeNumber: 40000000,
       winnerCount: 1,
       totalSeats: 9600,
       time: "Last Day of Month at 8:00 PM",
-      color: "from-gray-600 to-gray-800",
+      color: "from-gray-700 to-gray-900",
       icon: "👑",
       slogan: "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው",
       description: "The ULTIMATE nationwide prize pool!",
@@ -229,14 +480,84 @@ export default function CityVip() {
     setShowSeatSelector(true);
   };
 
-  // Render seat selection modal
+  const handleFileUpload = async (file) => {
+    try {
+      validateFile(file);
+      toast.loading('Optimizing image for upload...', { id: 'compress' });
+      const optimizedFile = await compressImage(file);
+      toast.success('Image optimized!', { id: 'compress' });
+      return optimizedFile;
+    } catch (error) {
+      toast.error(error.message);
+      throw error;
+    }
+  };
+
+  const submitPayment = async (participantId, reference, file) => {
+    let loadingToast = toast.loading('Processing payment...');
+    
+    try {
+      const optimizedFile = await handleFileUpload(file);
+      
+      const fileName = `city-bank-transfers/${participantId}/${Date.now()}.jpg`;
+      const { error: uploadError } = await supabase.storage
+        .from('payment-proofs')
+        .upload(fileName, optimizedFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('payment-proofs')
+        .getPublicUrl(fileName);
+      
+      const { error: updateError } = await supabase
+        .from('city_vip_participants')
+        .update({
+          payment_status: 'pending_verification',
+          payment_proof_url: publicUrl,
+          reference: reference,
+          updated_at: new Date().toISOString(),
+          payment_submitted_at: new Date().toISOString()
+        })
+        .eq('id', participantId);
+      
+      if (updateError) throw updateError;
+      
+      const { data: updatedParticipant, error: fetchError } = await supabase
+        .from('city_vip_participants')
+        .select('*')
+        .eq('id', participantId)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      
+      setParticipantData(updatedParticipant);
+      setTicketType('unverified');
+      setShowTicket(true);
+      setShowPayment(false);
+      setShowSeatSelector(false);
+      
+      toast.success('Payment submitted! Your unverified ticket is ready', { id: loadingToast });
+      
+    } catch (error) {
+      console.error('Payment submission error:', error);
+      toast.error('Failed to submit payment. Please try again.', { id: loadingToast });
+      throw error;
+    }
+  };
+
+  // Render seat selection modal - NO SEAT LIMIT (reads from pool card)
   const renderSeatSelector = () => {
     if (!selectedPoolType) return null;
     
     const pool = vipPools[selectedPoolType];
     const entryFeeAmount = parseInt(pool.contribution);
     const totalSeatsCount = pool.totalSeats;
-    const seatNumbers = Array.from({ length: Math.min(totalSeatsCount, 100) }, (_, i) => i + 1);
+    // Show up to 500 seats for performance, but no hard limit
+    const seatNumbers = Array.from({ length: Math.min(totalSeatsCount, 500) }, (_, i) => i + 1);
     
     const toggleSeat = (seatNum) => {
       if (selectedSeats.includes(seatNum)) {
@@ -262,18 +583,19 @@ export default function CityVip() {
         const ticketNumber = `CITY-${selectedPoolType.toUpperCase()}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
         
         const { data: participant, error } = await supabase
-          .from('merkato_vip_participants')
+          .from('city_vip_participants')
           .insert({
             user_id: user.id,
             user_email: user.email,
-            user_name: user.user_metadata?.full_name || user.email.split('@')[0],
+            user_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
             pool_type: selectedPoolType,
+            city: city,
             seat_numbers: selectedSeats,
             contribution_amount: totalAmount,
-            prize_amount: parseInt(pool.prize),
+            prize_amount: parseInt(pool.prize.replace(/[^0-9]/g, '')),
             payment_status: 'pending',
             ticket_number: ticketNumber,
-            city: city,
+            status: 'active',
             created_at: new Date().toISOString()
           })
           .select()
@@ -287,7 +609,7 @@ export default function CityVip() {
         
       } catch (error) {
         console.error('Error creating participant:', error);
-        toast.error('Failed to create participant record');
+        toast.error('Failed to create participant record: ' + error.message);
       } finally {
         setLoading(false);
       }
@@ -315,7 +637,7 @@ export default function CityVip() {
           
           <div className="p-6">
             <div className="bg-gray-50 rounded-lg p-4 mb-4 text-center">
-              <p className="text-sm text-gray-600">Entry Fee: {pool.contribution} per seat</p>
+              <p className="text-sm text-gray-600">Entry Fee: {pool.contributionFormatted} per seat</p>
               <p className="text-xs text-gray-400">Total Seats Available: {totalSeatsCount.toLocaleString()}</p>
             </div>
             
@@ -335,6 +657,12 @@ export default function CityVip() {
               ))}
             </div>
             
+            {totalSeatsCount > 500 && (
+              <p className="text-xs text-gray-400 text-center mb-4">
+                Showing first 500 of {totalSeatsCount.toLocaleString()} total seats
+              </p>
+            )}
+            
             {selectedSeats.length > 0 && (
               <div className="border-t pt-4">
                 <div className="flex justify-between items-center mb-4">
@@ -345,7 +673,7 @@ export default function CityVip() {
                   <div className="text-right">
                     <p className="text-sm text-gray-500">Total Amount</p>
                     <p className="font-bold text-2xl text-green-600">ETB {totalAmount.toLocaleString()}</p>
-                    <p className="text-xs text-gray-400">({selectedSeats.length} seats × {pool.contribution})</p>
+                    <p className="text-xs text-gray-400">({selectedSeats.length} seats × {pool.contributionFormatted})</p>
                   </div>
                 </div>
                 <button
@@ -363,60 +691,43 @@ export default function CityVip() {
     );
   };
 
-  // Render payment modal
+  // Render payment modal with optimized upload
   const renderPayment = () => {
     if (!showPayment || !participantId || !selectedPoolType) return null;
     
     const pool = vipPools[selectedPoolType];
     const totalAmount = selectedSeats.length * parseInt(pool.contribution);
+    const [reference, setReference] = useState('');
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState(null);
     
-    const handlePaymentSubmit = async () => {
-      const reference = document.getElementById('referenceNumber')?.value;
-      const file = document.getElementById('paymentScreenshot')?.files[0];
-      
-      if (!file) {
-        toast.error('Please upload payment screenshot');
-        return;
-      }
-      
-      toast.loading('Uploading...');
+    const handleFileSelect = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
       
       try {
-        const fileName = `${user.id}_${Date.now()}.jpg`;
-        const { error: uploadError } = await supabase.storage
-          .from('payment-proofs')
-          .upload(`bank-transfers/${fileName}`, file);
+        validateFile(file);
         
-        if (uploadError) throw uploadError;
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreviewUrl(reader.result);
+        };
+        reader.readAsDataURL(file);
         
-        const { data: { publicUrl } } = supabase.storage
-          .from('payment-proofs')
-          .getPublicUrl(`bank-transfers/${fileName}`);
-        
-        await supabase
-          .from('merkato_vip_participants')
-          .update({
-            payment_status: 'pending_verification',
-            payment_proof_url: publicUrl,
-            reference: reference,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', participantId);
-        
-        toast.success('Payment submitted! You will receive a ticket shortly.');
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 2000);
-        
+        setSelectedFile(file);
+        toast.success('File selected successfully');
       } catch (error) {
-        console.error('Payment error:', error);
-        toast.error('Failed to submit payment');
+        toast.error(error.message);
+        e.target.value = '';
+        setSelectedFile(null);
+        setPreviewUrl(null);
       }
     };
     
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl shadow-xl max-w-md w-full">
+        <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
           <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
             <h2 className="text-xl font-bold">Complete Payment</h2>
             <button 
@@ -434,6 +745,7 @@ export default function CityVip() {
           <div className="p-6">
             <div className="bg-gray-50 rounded-lg p-4 mb-4 text-center">
               <p className="text-sm text-gray-600">Pool: {pool.name}</p>
+              <p className="text-sm text-gray-600">City: {cityInfo?.name?.split('|')[0] || city}</p>
               <p className="text-sm text-gray-600">Seats: {selectedSeats.join(', ')}</p>
               <p className="text-xl font-bold text-green-600 mt-2">ETB {totalAmount.toLocaleString()}</p>
             </div>
@@ -447,31 +759,127 @@ export default function CityVip() {
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Reference Number</label>
+                <label className="block text-sm font-medium mb-1">
+                  Reference Number <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
-                  id="referenceNumber"
-                  placeholder="Enter transaction ID"
-                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+                  placeholder="Enter transaction ID or reference number"
+                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={reference}
+                  onChange={(e) => setReference(e.target.value)}
                 />
               </div>
+              
               <div>
-                <label className="block text-sm font-medium mb-1">Upload Screenshot</label>
-                <input
-                  type="file"
-                  id="paymentScreenshot"
-                  accept="image/*"
-                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
-                />
+                <label className="block text-sm font-medium mb-1">
+                  Upload Bank Transfer Screenshot <span className="text-red-500">*</span>
+                </label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-500 transition">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    id="paymentScreenshot"
+                    onChange={handleFileSelect}
+                  />
+                  <label htmlFor="paymentScreenshot" className="cursor-pointer">
+                    {previewUrl ? (
+                      <div>
+                        <img src={previewUrl} alt="Preview" className="max-h-32 mx-auto mb-2 rounded" />
+                        <p className="text-green-600">✓ {selectedFile?.name}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {(selectedFile?.size / 1024).toFixed(1)} KB
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <svg className="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p className="text-gray-500 mt-2">Click to upload screenshot</p>
+                        <p className="text-xs text-gray-400 mt-1">JPEG, PNG (Max 5MB) - Auto-compressed</p>
+                      </div>
+                    )}
+                  </label>
+                </div>
               </div>
             </div>
             
             <button
-              onClick={handlePaymentSubmit}
-              className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition mt-4"
+              onClick={async () => {
+                if (!reference.trim()) {
+                  toast.error('Please enter reference number');
+                  return;
+                }
+                if (!selectedFile) {
+                  toast.error('Please upload payment screenshot');
+                  return;
+                }
+                
+                setIsSubmitting(true);
+                await submitPayment(participantId, reference, selectedFile);
+                setIsSubmitting(false);
+              }}
+              disabled={isSubmitting}
+              className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition mt-4 disabled:opacity-50"
             >
-              Submit Payment
+              {isSubmitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Processing...
+                </span>
+              ) : (
+                'Submit Payment & Get Ticket'
+              )}
             </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Render ticket modal
+  const renderTicketModal = () => {
+    if (!showTicket || !participantData) return null;
+    
+    const pool = vipPools[participantData.pool_type];
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div className="max-w-2xl w-full">
+          <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <div className="bg-gradient-to-r from-gray-800 to-gray-900 p-4 flex justify-between items-center">
+              <h3 className="text-white font-bold text-lg">Your Ticket</h3>
+              <button
+                onClick={() => {
+                  setShowTicket(false);
+                  router.push('/dashboard');
+                }}
+                className="text-white hover:text-gray-300 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-6">
+              <CityTicket 
+                participant={participantData} 
+                pool={pool} 
+                cityInfo={cityInfo}
+                type={ticketType}
+              />
+              <div className="mt-6 text-center">
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition"
+                >
+                  Go to Dashboard
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -495,7 +903,7 @@ export default function CityVip() {
           <p className="text-sm font-bold">{pool.slogan}</p>
         </div>
         <div className="mt-4 flex justify-between items-center">
-          <div><p className="text-sm opacity-80">የመግቢያ ክፍያ | Entry Fee</p><p className="text-3xl font-bold">{pool.contribution}</p></div>
+          <div><p className="text-sm opacity-80">የመግቢያ ክፍያ | Entry Fee</p><p className="text-3xl font-bold">{pool.contributionFormatted}</p></div>
           <div className="text-right"><p className="text-sm opacity-80">የተረጋገጠ ሽልማት | Prize</p><p className="text-3xl font-bold">{pool.prize}</p></div>
         </div>
       </div>
@@ -517,7 +925,7 @@ export default function CityVip() {
   if (!cityInfo) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600"></div>
       </div>
     );
   }
@@ -529,7 +937,7 @@ export default function CityVip() {
         <meta name="description" content={`Join ${cityInfo.name} VIP program. Win 1 Million Birr daily, 10 Million weekly, or 40 Million monthly. Open to all ${cityInfo.name} traders and participants.`} />
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
         {/* Hero Section - City Specific */}
         <div className={`relative bg-gradient-to-r ${cityInfo.color} text-white overflow-hidden`}>
           <div className="absolute inset-0 opacity-10">
@@ -539,7 +947,7 @@ export default function CityVip() {
           </div>
           <div className="relative container mx-auto px-4 py-20 text-center">
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur text-white px-4 py-2 rounded-full text-sm font-bold mb-6 animate-pulse">
-              <span>🏆</span> {cityInfo.name} Special Program
+              <span>🏆</span> {cityInfo.name.split('|')[0]} Special Program
             </div>
             <h1 className="text-5xl md:text-7xl font-bold mb-4">
               <span className="block">{cityInfo.name.split('|')[0]}</span>
@@ -596,21 +1004,103 @@ export default function CityVip() {
           <div className="max-w-4xl mx-auto"><PoolCard type={activeTab} pool={vipPools[activeTab]} /></div>
         </div>
 
-        {/* Seat Selection Modal */}
-        {renderSeatSelector()}
-        
-        {/* Payment Modal */}
-        {renderPayment()}
+        {/* Comparison Table */}
+        <div className="container mx-auto px-4 py-12">
+          <h2 className="text-3xl font-bold text-center mb-8">🎯 የሽልማት ንጽጽር | Prize Comparison</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full bg-white rounded-2xl shadow-lg overflow-hidden">
+              <thead className="bg-gradient-to-r from-gray-800 to-gray-900 text-white">
+                <tr>
+                  <th className="px-6 py-4 text-left">ፕሮግራም | Program</th>
+                  <th className="px-6 py-4 text-left">ደረጃ | Tier</th>
+                  <th className="px-6 py-4 text-left">ክፍያ | Entry</th>
+                  <th className="px-6 py-4 text-left">ሽልማት | Prize</th>
+                  <th className="px-6 py-4 text-left">ጊዜ | When</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                <tr className="hover:bg-gray-50 transition">
+                  <td className="px-6 py-4 font-semibold">⭐ Daily Millionaire</td>
+                  <td className="px-6 py-4"><span className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-sm">ለሁሉም ኢትዮጵያዊ</span></td>
+                  <td className="px-6 py-4 font-bold">500 ብር</td>
+                  <td className="px-6 py-4 font-bold text-green-600">1,000,000 ብር</td>
+                  <td className="px-6 py-4">Every Day at 8 PM</td>
+                </tr>
+                <tr className="hover:bg-gray-50 transition">
+                  <td className="px-6 py-4 font-semibold">🏆 Weekly Mega Winner</td>
+                  <td className="px-6 py-4"><span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">VIP 2</span></td>
+                  <td className="px-6 py-4 font-bold">2,500 ብር</td>
+                  <td className="px-6 py-4 font-bold text-purple-600">10,000,000 ብር</td>
+                  <td className="px-6 py-4">Every Sunday at 6 PM</td>
+                </tr>
+                <tr className="hover:bg-gray-50 transition">
+                  <td className="px-6 py-4 font-semibold">👑 Monthly Winner</td>
+                  <td className="px-6 py-4"><span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">VIP 1</span></td>
+                  <td className="px-6 py-4 font-bold">5,000 ብር</td>
+                  <td className="px-6 py-4 font-bold text-green-600">40,000,000 ብር</td>
+                  <td className="px-6 py-4">Last Day of Month at 8 PM</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* How It Works */}
+        <div className="bg-gray-100 py-16">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-4">እንዴት እንሳተፋለን? | How It Works</h2>
+            <p className="text-center text-gray-600 mb-12">Like traditional Equb, but BIGGER and BETTER!</p>
+            
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="text-center">
+                <div className="w-20 h-20 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg text-white animate-bounce">1️⃣</div>
+                <h3 className="font-bold text-xl mb-2">ምረጥ | Choose</h3>
+                <p className="text-gray-600">በየቀኑ፣ በየሳምንቱ ወይም በየወሩ የሚካሄደውን ፑል ምረጥ</p>
+                <p className="text-green-600 font-semibold text-sm mt-1">Choose Daily, Weekly, or Monthly Millionaire pool</p>
+              </div>
+              
+              <div className="text-center">
+                <div className="w-20 h-20 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg text-white animate-bounce">2️⃣</div>
+                <h3 className="font-bold text-xl mb-2">ክፈል | Pay</h3>
+                <p className="text-gray-600">በቴሌብር ወይም በንግድ ባንክ መጠነኛ ክፍያ ክፈል</p>
+                <p className="text-green-600 font-semibold text-sm mt-1">Pay via TeleBirr or CBE Bank Transfer</p>
+              </div>
+              
+              <div className="text-center">
+                <div className="w-20 h-20 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg text-white animate-bounce">3️⃣</div>
+                <h3 className="font-bold text-xl mb-2">ሽለም | WIN!</h3>
+                <p className="text-gray-600">እጣው ሲነሳ ሚሊየነር ትሆናለህ!</p>
+                <p className="text-green-600 font-semibold text-sm mt-1">When the lottery is drawn - YOU become a MILLIONAIRE!</p>
+              </div>
+            </div>
+            
+            <div className="mt-12 text-center">
+              <div className="inline-flex items-center gap-2 bg-green-100 px-6 py-3 rounded-full">
+                <span className="text-green-600">💚</span>
+                <span className="text-green-800">2% of every contribution supports kidney & heart disease patients</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* CTA Banner */}
         <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-16">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold mb-4">ዛሬውኑ ይቀላቀሉ!</h2>
             <p className="text-xl mb-6">Join Today and Become {cityInfo.name.split('|')[0]}'s Next Millionaire!</p>
-            <Link href="/" className="inline-block bg-white text-gray-900 px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-100 transition transform hover:scale-105 shadow-xl">🎯 Back to Cities →</Link>
+            <Link href="/cities" className="inline-block bg-white text-gray-900 px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-100 transition transform hover:scale-105 shadow-xl">🎯 Back to All Cities →</Link>
           </div>
         </div>
       </div>
+
+      {/* Seat Selection Modal */}
+      {renderSeatSelector()}
+      
+      {/* Payment Modal */}
+      {renderPayment()}
+      
+      {/* Ticket Modal */}
+      {renderTicketModal()}
     </>
   );
 }
