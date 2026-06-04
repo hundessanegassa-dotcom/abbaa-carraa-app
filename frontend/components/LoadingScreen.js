@@ -83,7 +83,7 @@ export default function LoadingScreen({ onLoadingComplete }) {
     duration: Math.random() * 10 + 10,
   })) : [];
 
-  // Don't render during SSR, just return null or a simple placeholder
+  // Don't render during SSR, just return null
   if (!isClient) {
     return null;
   }
@@ -110,29 +110,20 @@ export default function LoadingScreen({ onLoadingComplete }) {
 
       {/* Main Content */}
       <div className="relative z-10 text-center max-w-md w-full">
-        {/* Rotating Object - Gift Box + Market Symbol */}
+        {/* Rotating Object */}
         <div className="relative w-44 h-44 mx-auto mb-8">
-          {/* Outer rotating ring - Gold/Yellow */}
           <div className="absolute inset-0 animate-spin-slow">
             <div className="w-full h-full rounded-full border-4 border-yellow-400/30 border-t-yellow-400 border-r-yellow-400/50"></div>
           </div>
-          
-          {/* Middle rotating ring - Green (reverse direction) */}
           <div className="absolute inset-2 animate-spin-slow-reverse">
             <div className="w-full h-full rounded-full border-4 border-green-400/30 border-b-green-400 border-l-green-400/50"></div>
           </div>
-          
-          {/* Inner rotating ring - Orange */}
           <div className="absolute inset-4 animate-spin-slow">
             <div className="w-full h-full rounded-full border-4 border-orange-400/20 border-r-orange-400 border-t-orange-400/50"></div>
           </div>
-          
-          {/* Center rotating objects */}
           <div className="absolute inset-0 flex items-center justify-center animate-pulse-slow">
             <div className="text-7xl animate-rotate-center">🎁</div>
           </div>
-          
-          {/* Inner pulsing circle */}
           <div className="absolute inset-6 rounded-full bg-yellow-500/20 animate-ping"></div>
         </div>
 
@@ -219,10 +210,6 @@ export default function LoadingScreen({ onLoadingComplete }) {
           from { transform: rotate(360deg); }
           to { transform: rotate(0deg); }
         }
-        @keyframes bounce-gentle {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
-        }
         @keyframes rotate-center {
           0% { transform: rotate(0deg) scale(1); }
           50% { transform: rotate(180deg) scale(1.1); }
@@ -247,7 +234,6 @@ export default function LoadingScreen({ onLoadingComplete }) {
         }
         .animate-spin-slow { animation: spin-slow 4s linear infinite; }
         .animate-spin-slow-reverse { animation: spin-slow-reverse 3s linear infinite; }
-        .animate-bounce-gentle { animation: bounce-gentle 1s ease-in-out infinite; }
         .animate-rotate-center { animation: rotate-center 3s ease-in-out infinite; }
         .animate-float { animation: float 8s ease-in-out infinite; }
         .animate-fade-in { animation: fade-in 0.5s ease-out; }
