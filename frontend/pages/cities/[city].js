@@ -425,16 +425,28 @@ export default function CityVip() {
     }
   };
 
+  // FIXED: Correct handleJoinPool function with localStorage
   const handleJoinPool = async (poolType) => {
     if (!user) {
-      sessionStorage.setItem('pendingRole', 'individual');
-      sessionStorage.setItem('pendingPoolType', poolType);
-      sessionStorage.setItem('pendingCity', city);
-      sessionStorage.setItem('redirectAfterLogin', `/cities/${city}?type=${poolType}`);
-      toast.loading('እባክዎ ይግቡ | Please login to join...');
+      // Store VIP data in localStorage (persists through OAuth redirects)
+      const vipData = {
+        role: 'individual',
+        poolType: poolType,
+        poolSource: 'city-vip',
+        city: city,
+        redirectUrl: `/cities/seat?city=${city}&type=${poolType}`,
+        timestamp: Date.now()
+      };
+      
+      localStorage.setItem('abbaa_vip_pending', JSON.stringify(vipData));
+      console.log('City VIP - Stored in localStorage:', vipData);
+      
+      toast.loading('Please login to join City VIP...');
       router.push('/login');
       return;
     }
+    
+    // User is already logged in, go directly to seat selection
     setSelectedPoolType(poolType);
     setSelectedSeats([]);
     setShowSeatSelector(true);
