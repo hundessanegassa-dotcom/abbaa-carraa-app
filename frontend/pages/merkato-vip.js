@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
-import QRCode from 'react-qr-code';
+import { QRCodeSVG } from 'qrcode.react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -25,7 +25,7 @@ const getNextMonthEnd = () => {
 // Optimized file upload utilities
 const validateFile = (file) => {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-  const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+  const MAX_SIZE = 5 * 1024 * 1024;
   
   if (!allowedTypes.includes(file.type)) {
     throw new Error('Please upload a valid image file (JPEG, PNG, WEBP)');
@@ -163,10 +163,8 @@ const Ticket = ({ participant, pool, type = 'unverified', onClose }) => {
                 {participant.created_at ? new Date(participant.created_at).toLocaleDateString() : 'N/A'}
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className={`${config.badge} text-white px-3 py-1 rounded-full text-xs font-bold`}>
-                {config.badgeText}
-              </div>
+            <div className={`${config.badge} text-white px-3 py-1 rounded-full text-xs font-bold`}>
+              {config.badgeText}
             </div>
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mt-2">🏆 MERKATO VIP</h2>
@@ -209,10 +207,10 @@ const Ticket = ({ participant, pool, type = 'unverified', onClose }) => {
           </div>
         </div>
 
-        {/* QR Code Section */}
+        {/* QR Code Section - Using QRCodeSVG from qrcode.react */}
         <div className="flex justify-center py-4 border-t border-b border-dashed">
           <div className="bg-white p-3 rounded-xl shadow-md">
-            <QRCode 
+            <QRCodeSVG 
               value={JSON.stringify({
                 ticket: participant.ticket_number,
                 name: participant.user_name,
@@ -284,7 +282,7 @@ export default function MerkatoVip() {
   const [selectedPoolType, setSelectedPoolType] = useState(null);
   const [showPayment, setShowPayment] = useState(false);
   const [participantId, setParticipantId] = useState(null);
-  const [maxSeats, setMaxSeats] = useState(5); // Changed from 10 to 5
+  const [maxSeats, setMaxSeats] = useState(5); // Max 5 seats
   
   // Ticket states
   const [showTicket, setShowTicket] = useState(false);
@@ -468,7 +466,7 @@ export default function MerkatoVip() {
     const pool = vipPools[selectedPoolType];
     const entryFeeAmount = parseInt(pool.contribution);
     const totalSeatsCount = pool.totalSeats;
-    const seatNumbers = Array.from({ length: Math.min(totalSeatsCount, 100) }, (_, i) => i + 1);
+    const seatNumbers = Array.from({ length: Math.min(totalSeatsCount, 500) }, (_, i) => i + 1);
     
     const toggleSeat = (seatNum) => {
       if (selectedSeats.includes(seatNum)) {
@@ -868,7 +866,7 @@ export default function MerkatoVip() {
       </Head>
 
       <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
-        {/* Hero Section - Grey Theme */}
+        {/* Hero Section */}
         <div className="relative bg-gradient-to-r from-gray-800 via-gray-900 to-gray-800 text-white overflow-hidden">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-10 left-10 text-9xl animate-bounce">🏪</div>
