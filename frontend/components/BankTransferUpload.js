@@ -153,7 +153,7 @@ export default function BankTransferUpload({
       if (isMounted.current) setFile(compressedFile);
       const previewUrl = URL.createObjectURL(compressedFile);
       if (isMounted.current) setUploadedImageUrl(previewUrl);
-      toast.success('Image ready!', { id: 'compress' });
+      toast.success('Image optimized!', { id: 'compress' });
     } catch (error) {
       console.error('Compression error:', error);
       toast.error('Using original image', { id: 'compress' });
@@ -280,7 +280,15 @@ export default function BankTransferUpload({
         submissionDate: new Date().toISOString(),
         verificationStatus: 'unverified',
         userEmail: user.email,
-        userName: userProfile?.full_name || user.email
+        userName: userProfile?.full_name || user.email,
+        participant: {
+          user_name: userProfile?.full_name || user.email,
+          user_email: user.email,
+          phone: userProfile?.phone || '',
+          seat_numbers: seatNumbers,
+          ticket_number: ticketNumber,
+          contribution_amount: amount
+        }
       };
 
       setGeneratedTicket(ticketData);
@@ -307,7 +315,7 @@ export default function BankTransferUpload({
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white rounded-xl p-6 max-w-md w-full">
           <div className="flex justify-center items-center p-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-700"></div>
             <span className="ml-2 text-gray-600">Loading...</span>
           </div>
         </div>
@@ -323,7 +331,7 @@ export default function BankTransferUpload({
             <p className="text-red-600 mb-4">Session expired. Please login again.</p>
             <button
               onClick={() => router.push('/login')}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg"
+              className="bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800"
             >
               Go to Login
             </button>
@@ -337,48 +345,48 @@ export default function BankTransferUpload({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Complete Your Payment</h2>
+          <h2 className="text-xl font-bold text-gray-800">Complete Your Payment</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl">
             ✕
           </button>
         </div>
 
         {/* Countdown Timer */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4 text-center">
-          <p className="text-sm text-yellow-800">
-            ⏰ Complete payment within: <span className="font-bold text-lg">{formatTime(timeLeft)}</span>
+        <div className="bg-gray-100 border border-gray-300 rounded-lg p-3 mb-4 text-center">
+          <p className="text-sm text-gray-800">
+            ⏰ Complete payment within: <span className="font-bold text-lg text-gray-900">{formatTime(timeLeft)}</span>
           </p>
-          <p className="text-xs text-yellow-600 mt-1">Your seats are reserved until then</p>
+          <p className="text-xs text-gray-600 mt-1">Your seats are reserved until then</p>
         </div>
 
         {/* Payment Method Selection */}
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-2">Select Payment Method</label>
+          <label className="block text-sm font-medium mb-2 text-gray-700">Select Payment Method</label>
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => setSelectedPaymentMethod('telebirr')}
               className={`p-3 rounded-lg border-2 transition ${
                 selectedPaymentMethod === 'telebirr' 
-                  ? 'border-green-600 bg-green-50' 
-                  : 'border-gray-200 hover:border-green-300'
+                  ? 'border-gray-700 bg-gray-50' 
+                  : 'border-gray-200 hover:border-gray-400'
               }`}
             >
               <div className="text-center">
                 <span className="text-2xl block mb-1">📱</span>
-                <span className="font-semibold text-sm">TeleBirr</span>
+                <span className="font-semibold text-sm text-gray-800">TeleBirr</span>
               </div>
             </button>
             <button
               onClick={() => setSelectedPaymentMethod('cbe')}
               className={`p-3 rounded-lg border-2 transition ${
                 selectedPaymentMethod === 'cbe' 
-                  ? 'border-green-600 bg-green-50' 
-                  : 'border-gray-200 hover:border-green-300'
+                  ? 'border-gray-700 bg-gray-50' 
+                  : 'border-gray-200 hover:border-gray-400'
               }`}
             >
               <div className="text-center">
                 <span className="text-2xl block mb-1">🏦</span>
-                <span className="font-semibold text-sm">CBE Bank</span>
+                <span className="font-semibold text-sm text-gray-800">CBE Bank</span>
               </div>
             </button>
           </div>
@@ -386,27 +394,27 @@ export default function BankTransferUpload({
 
         {/* Payment Details */}
         {selectedPaymentMethod === 'telebirr' ? (
-          <div className="bg-blue-50 rounded-lg p-4 mb-4">
-            <h3 className="font-semibold mb-2 flex items-center gap-2">📱 TeleBirr Payment Details</h3>
+          <div className="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200">
+            <h3 className="font-semibold mb-2 flex items-center gap-2 text-gray-800">📱 TeleBirr Payment Details</h3>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between items-center pb-2 border-b border-blue-200">
+              <div className="flex justify-between items-center pb-2 border-b border-gray-200">
                 <span className="text-gray-600">Account Name:</span>
-                <span className="font-semibold">Negassa Hundessa</span>
+                <span className="font-semibold text-gray-800">Negassa Hundessa</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">TeleBirr Number:</span>
-                <span className="font-semibold text-lg text-blue-700">0913277922</span>
+                <span className="font-semibold text-lg text-gray-800">0913277922</span>
               </div>
-              <div className="mt-2 pt-2 border-t border-blue-200">
+              <div className="mt-2 pt-2 border-t border-gray-200">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Amount to Pay:</span>
                   <span className="font-bold text-xl text-green-600">ETB {amount?.toLocaleString()}</span>
                 </div>
               </div>
             </div>
-            <div className="mt-3 p-2 bg-blue-100 rounded text-xs">
-              <p className="font-semibold">📝 Instructions:</p>
-              <ol className="list-decimal list-inside mt-1 space-y-1">
+            <div className="mt-3 p-2 bg-gray-100 rounded text-xs">
+              <p className="font-semibold text-gray-800">📝 Instructions:</p>
+              <ol className="list-decimal list-inside mt-1 space-y-1 text-gray-700">
                 <li>Open TeleBirr app</li>
                 <li>Select "Send Money"</li>
                 <li>Enter number: <span className="font-bold">0913277922</span></li>
@@ -416,27 +424,27 @@ export default function BankTransferUpload({
             </div>
           </div>
         ) : (
-          <div className="bg-blue-50 rounded-lg p-4 mb-4">
-            <h3 className="font-semibold mb-2 flex items-center gap-2">🏦 CBE Bank Payment Details</h3>
+          <div className="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200">
+            <h3 className="font-semibold mb-2 flex items-center gap-2 text-gray-800">🏦 CBE Bank Payment Details</h3>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between items-center pb-2 border-b border-blue-200">
+              <div className="flex justify-between items-center pb-2 border-b border-gray-200">
                 <span className="text-gray-600">Account Name:</span>
-                <span className="font-semibold">Negassa Hundessa</span>
+                <span className="font-semibold text-gray-800">Negassa Hundessa</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Account Number:</span>
-                <span className="font-semibold text-lg text-blue-700">1000601091686</span>
+                <span className="font-semibold text-lg text-gray-800">1000601091686</span>
               </div>
-              <div className="mt-2 pt-2 border-t border-blue-200">
+              <div className="mt-2 pt-2 border-t border-gray-200">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Amount to Pay:</span>
                   <span className="font-bold text-xl text-green-600">ETB {amount?.toLocaleString()}</span>
                 </div>
               </div>
             </div>
-            <div className="mt-3 p-2 bg-blue-100 rounded text-xs">
-              <p className="font-semibold">📝 Instructions:</p>
-              <ol className="list-decimal list-inside mt-1 space-y-1">
+            <div className="mt-3 p-2 bg-gray-100 rounded text-xs">
+              <p className="font-semibold text-gray-800">📝 Instructions:</p>
+              <ol className="list-decimal list-inside mt-1 space-y-1 text-gray-700">
                 <li>Use CBE Birr app or visit any CBE branch</li>
                 <li>Transfer to: <span className="font-bold">1000601091686</span></li>
                 <li>Account name: <span className="font-bold">Negassa Hundessa</span></li>
@@ -449,22 +457,22 @@ export default function BankTransferUpload({
 
         {/* Reference Number */}
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Reference Number (Optional)</label>
+          <label className="block text-sm font-medium mb-1 text-gray-700">Reference Number (Optional)</label>
           <input
             type="text"
             value={reference}
             onChange={(e) => setReference(e.target.value)}
             placeholder="e.g., Transaction ID from bank"
-            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-500 focus:border-transparent"
           />
-          <p className="text-xs text-gray-400 mt-1">Helps us verify your payment faster</p>
+          <p className="text-xs text-gray-500 mt-1">Helps us verify your payment faster</p>
         </div>
 
         {/* Upload Section */}
         <div className="space-y-4 mb-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Upload Payment Screenshot/Photo *</label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-green-500 transition">
+            <label className="block text-sm font-medium mb-2 text-gray-700">Upload Payment Screenshot/Photo *</label>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-500 transition">
               <input
                 type="file"
                 accept="image/*"
@@ -484,7 +492,7 @@ export default function BankTransferUpload({
                   {file ? file.name : 'Click to upload screenshot'}
                 </span>
                 <span className="text-xs text-gray-400 mt-1">
-                  JPG, PNG (Max 10MB) - Auto-compressed
+                  JPG, PNG (Max 10MB) - Auto-compressed to 1024x1024
                 </span>
               </label>
             </div>
@@ -492,7 +500,7 @@ export default function BankTransferUpload({
 
           {uploadedImageUrl && (
             <div className="mt-2">
-              <p className="text-sm font-medium mb-1">Preview:</p>
+              <p className="text-sm font-medium mb-1 text-gray-700">Preview:</p>
               <img src={uploadedImageUrl} alt="Payment Screenshot" className="max-h-32 rounded border mx-auto" />
             </div>
           )}
@@ -504,23 +512,23 @@ export default function BankTransferUpload({
                 <span>{uploadProgress}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-green-600 h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                <div className="bg-gray-700 h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
               </div>
             </div>
           )}
         </div>
 
         {/* Seat Summary */}
-        <div className="bg-gray-50 rounded-lg p-3 mb-4">
-          <p className="text-sm font-medium mb-1">Selected Seats:</p>
-          <p className="text-lg font-semibold">{seatNumbers?.sort((a, b) => a - b).join(', ')}</p>
+        <div className="bg-gray-50 rounded-lg p-3 mb-4 border border-gray-200">
+          <p className="text-sm font-medium mb-1 text-gray-700">Selected Seats:</p>
+          <p className="text-lg font-semibold text-gray-800">{seatNumbers?.sort((a, b) => a - b).join(', ')}</p>
           <div className="border-t border-gray-200 mt-2 pt-2">
             <div className="flex justify-between">
-              <span className="text-sm">Number of Seats:</span>
-              <span className="text-sm font-semibold">{seatNumbers?.length}</span>
+              <span className="text-sm text-gray-600">Number of Seats:</span>
+              <span className="text-sm font-semibold text-gray-800">{seatNumbers?.length}</span>
             </div>
             <div className="flex justify-between mt-1">
-              <span className="text-sm">Total Amount:</span>
+              <span className="text-sm text-gray-600">Total Amount:</span>
               <span className="text-sm font-bold text-green-600">ETB {amount?.toLocaleString()}</span>
             </div>
           </div>
@@ -534,7 +542,7 @@ export default function BankTransferUpload({
             <li>• Use your registered phone number as reference</li>
             <li>• Upload a CLEAR screenshot showing transaction details</li>
             <li>• Seats will be confirmed after payment verification (24 hours)</li>
-            <li>• Screenshot will be automatically compressed</li>
+            <li>• Screenshot will be automatically compressed to 1024x1024</li>
           </ul>
         </div>
 
@@ -543,7 +551,7 @@ export default function BankTransferUpload({
           <button
             onClick={handleUpload}
             disabled={uploading || !file}
-            className="flex-1 bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+            className="flex-1 bg-gray-700 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
           >
             {uploading ? (
               <span className="flex items-center justify-center gap-2">
@@ -557,7 +565,7 @@ export default function BankTransferUpload({
           <button
             onClick={onClose}
             disabled={uploading}
-            className="flex-1 border border-gray-300 py-3 rounded-lg hover:bg-gray-50 transition"
+            className="flex-1 border border-gray-300 py-3 rounded-lg hover:bg-gray-50 transition text-gray-700"
           >
             Cancel
           </button>
@@ -569,12 +577,12 @@ export default function BankTransferUpload({
 
         {/* Unverified Ticket Display */}
         {generatedTicket && (
-          <div className="mt-6 pt-4 border-t border-green-200">
-            <div className="bg-green-50 rounded-lg p-4 text-center">
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <div className="bg-gray-50 rounded-lg p-4 text-center border border-gray-200">
               <div className="text-3xl mb-2">🎫</div>
-              <p className="font-semibold text-green-800">Unverified Ticket Generated!</p>
-              <p className="text-xs text-green-600 mt-1">Ticket #: {generatedTicket.ticketNumber}</p>
-              <p className="text-xs text-green-600">Seats: {generatedTicket.seats.join(', ')}</p>
+              <p className="font-semibold text-gray-800">Unverified Ticket Generated!</p>
+              <p className="text-xs text-gray-600 mt-1">Ticket #: {generatedTicket.ticketNumber}</p>
+              <p className="text-xs text-gray-600">Seats: {generatedTicket.seats.join(', ')}</p>
               <p className="text-xs text-yellow-600 mt-2">⏳ Pending verification. You will receive a verified ticket once admin approves.</p>
             </div>
           </div>
