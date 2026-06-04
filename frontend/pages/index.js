@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
 import GlobalAnnouncement from '../components/GlobalAnnouncement';
+import CitySelector from '../components/CitySelector';
 import CountUp from 'react-countup';
 import { useInView } from 'react-intersection-observer';
 
@@ -36,7 +37,8 @@ export default function Home() {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [showRoleButtons, setShowRoleButtons] = useState(false);
-  
+  const [showCitySelector, setShowCitySelector] = useState(false);
+
   // Counter animation trigger
   const { ref: counterRef, inView: counterInView } = useInView({
     triggerOnce: true,
@@ -219,9 +221,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* DEEPLY ATTRACTIVE COUNTER SECTION - NEW */}
+        {/* Counter Section */}
         <div ref={counterRef} className="relative bg-gradient-to-r from-green-900 via-teal-900 to-emerald-900 py-20 overflow-hidden">
-          {/* Animated background particles */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-10 left-10 text-8xl animate-bounce">💰</div>
             <div className="absolute bottom-10 right-10 text-8xl animate-pulse">🏆</div>
@@ -229,7 +230,6 @@ export default function Home() {
             <div className="absolute bottom-1/3 right-1/4 text-7xl animate-ping">🎯</div>
           </div>
           
-          {/* Glowing overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
           
           <div className="relative container mx-auto px-4 z-10">
@@ -248,7 +248,6 @@ export default function Home() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {/* Total Raised Counter */}
               <div className="bg-white/10 backdrop-blur rounded-2xl p-6 text-center border border-white/20 hover:scale-105 transition transform duration-300 group">
                 <div className="text-5xl mb-3 group-hover:animate-bounce">💰</div>
                 <div className="text-3xl md:text-4xl font-bold text-yellow-300">
@@ -262,7 +261,6 @@ export default function Home() {
                 <div className="w-0 group-hover:w-full h-0.5 bg-yellow-400 mx-auto mt-3 transition-all duration-300"></div>
               </div>
               
-              {/* Winners Counter */}
               <div className="bg-white/10 backdrop-blur rounded-2xl p-6 text-center border border-white/20 hover:scale-105 transition transform duration-300 group">
                 <div className="text-5xl mb-3 group-hover:animate-bounce">🏆</div>
                 <div className="text-3xl md:text-4xl font-bold text-yellow-300">
@@ -275,7 +273,6 @@ export default function Home() {
                 <div className="w-0 group-hover:w-full h-0.5 bg-yellow-400 mx-auto mt-3 transition-all duration-300"></div>
               </div>
               
-              {/* Active Pools Counter */}
               <div className="bg-white/10 backdrop-blur rounded-2xl p-6 text-center border border-white/20 hover:scale-105 transition transform duration-300 group">
                 <div className="text-5xl mb-3 group-hover:animate-bounce">🏊</div>
                 <div className="text-3xl md:text-4xl font-bold text-yellow-300">
@@ -288,7 +285,6 @@ export default function Home() {
                 <div className="w-0 group-hover:w-full h-0.5 bg-yellow-400 mx-auto mt-3 transition-all duration-300"></div>
               </div>
               
-              {/* Agents Counter */}
               <div className="bg-white/10 backdrop-blur rounded-2xl p-6 text-center border border-white/20 hover:scale-105 transition transform duration-300 group">
                 <div className="text-5xl mb-3 group-hover:animate-bounce">🤝</div>
                 <div className="text-3xl md:text-4xl font-bold text-yellow-300">
@@ -302,7 +298,6 @@ export default function Home() {
               </div>
             </div>
             
-            {/* Charity Impact Bar */}
             <div className="mt-12 bg-white/5 backdrop-blur rounded-2xl p-6 border border-white/10">
               <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                 <div className="flex items-center gap-3">
@@ -314,10 +309,7 @@ export default function Home() {
                 </div>
                 <div className="flex-1 w-full">
                   <div className="h-3 bg-white/20 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-green-400 to-teal-400 rounded-full animate-progress"
-                      style={{ width: '100%' }}
-                    ></div>
+                    <div className="h-full bg-gradient-to-r from-green-400 to-teal-400 rounded-full animate-progress" style={{ width: '100%' }}></div>
                   </div>
                   <div className="flex justify-between text-xs text-white/60 mt-1">
                     <span>0 ETB</span>
@@ -337,7 +329,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Stats Section - Original (keep for consistency) */}
+        {/* Stats Section */}
         <div className="bg-white border-t border-gray-200 py-8 w-full">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
@@ -416,6 +408,36 @@ export default function Home() {
             </div>
           </Link>
         </div>
+
+        {/* CITY SELECTOR SECTION - NEW */}
+        <div className="container mx-auto px-4 py-8">
+          <div className="bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 rounded-2xl p-8 text-center shadow-xl">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-teal-600 text-white px-4 py-1.5 rounded-full text-sm font-semibold mb-4">
+              <span>🇪🇹</span> NEW! City VIP Program
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-3">
+              የከተማህ VIP ፕሮግራም
+            </h2>
+            <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+              Join your city's exclusive VIP pool. Win 1 Million Daily, 10 Million Weekly, or 40 Million Monthly!
+            </p>
+            <button 
+              onClick={() => setShowCitySelector(true)}
+              className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-8 py-3 rounded-full font-bold text-lg hover:shadow-xl transition transform hover:scale-105 inline-flex items-center gap-2"
+            >
+              <span>🏙️</span> Select Your City
+              <span>→</span>
+            </button>
+            <p className="text-xs text-gray-400 mt-4">
+              ከከተማህ ጋር ተቀላቀል እና በአካባቢህ ካሉ ነጋዴዎች ጋር ተወዳደር
+            </p>
+          </div>
+        </div>
+
+        {/* City Selector Modal */}
+        {showCitySelector && (
+          <CitySelector onClose={() => setShowCitySelector(false)} />
+        )}
 
         <MovingAd />
         <AdvertisingBanner />
