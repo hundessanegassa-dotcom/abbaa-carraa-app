@@ -1,3 +1,4 @@
+// components/SeatSelector.js
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -6,8 +7,8 @@ export default function SeatSelector({
   poolId, 
   entryFee, 
   maxSeats = 5, 
-  totalSeats,      // Total seats from parent
-  availableSeats,  // Available seats from parent
+  totalSeats,      // Total seats from pool card
+  poolInfo,        // Full pool info from parent
   onSeatsSelected, 
   onCancel 
 }) {
@@ -18,6 +19,7 @@ export default function SeatSelector({
   const [totalPrice, setTotalPrice] = useState(0);
   const [currentUser, setCurrentUser] = useState(null);
   const [sessionLoading, setSessionLoading] = useState(true);
+  const [bookedSeats, setBookedSeats] = useState([]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -53,14 +55,14 @@ export default function SeatSelector({
     getUser();
   }, [onCancel]);
 
-  // Fetch seats
+  // Fetch booked seats from database
   useEffect(() => {
-    if (!sessionLoading && currentUser) {
-      fetchSeats();
+    if (!sessionLoading && currentUser && poolId) {
+      fetchBookedSeats();
       
       // Refresh every 30 seconds
       const interval = setInterval(() => {
-        fetchSeats();
+        fetchBookedSeats();
       }, 30000);
       
       return () => clearInterval(interval);
@@ -72,54 +74,37 @@ export default function SeatSelector({
     if (isMounted.current) setTotalPrice(selectedSeats.length * entryFee);
   }, [selectedSeats, entryFee]);
 
-  async function fetchSeats() {
+  async function fetchBookedSeats() {
     try {
+      // Extract pool type from poolId (format: merkato_daily, merkato_weekly, merkato_monthly)
+      const poolType = poolId?.replace('merkato_', '');
+      
+      // Fetch all participants with verified or pending verification payments for this pool
       const { data, error } = await supabase
-        .from('pool_seats')
-        .select('*')
-        .eq('pool_id', poolId)
-        .order('seat_number', { ascending: true });
-
+        .from('merkato_vip_participants')
+        .select('seat_numbers, payment_status')
+        .eq('pool_type', poolType)
+        .in('payment_status', ['verified', 'pending_verification', 'pending']);
+      
       if (error) throw error;
       
-      if (data && isMounted.current) {
-        // Clean up expired reservations
-        const now = new Date().toISOString();
-        const expiredSeats = data.filter(seat => 
-          seat.status === 'reserved' && 
-          seat.reserved_until && 
-          seat.reserved_until < now &&
-          seat.reserved_by !== currentUser?.id
-        );
-        
-        if (expiredSeats.length > 0) {
-          await supabase
-            .from('pool_seats')
-            .update({
-              status: 'available',
-              reserved_by: null,
-              reserved_at: null,
-              reserved_until: null
-            })
-            .in('seat_number', expiredSeats.map(s => s.seat_number))
-            .eq('pool_id', poolId);
-          
-          // Refetch to get updated data
-          const { data: refreshedData } = await supabase
-            .from('pool_seats')
-            .select('*')
-            .eq('pool_id', poolId)
-            .order('seat_number', { ascending: true });
-          
-          if (isMounted.current) setSeats(refreshedData || []);
-        } else {
-          setSeats(data);
-        }
+      // Extract all seat numbers that are taken
+      const allBookedSeats = [];
+      if (data) {
+        data.forEach(participant => {
+          if (participant.seat_numbers && Array.isArray(participant.seat_numbers)) {
+            allBookedSeats.push(...participant.seat_numbers);
+          }
+        });
+      }
+      
+      if (isMounted.current) {
+        setBookedSeats([...new Set(allBookedSeats)]); // Remove duplicates
+        setLoading(false);
       }
     } catch (err) {
-      console.error('Fetch seats error:', err);
-      toast.error('Failed to load seats');
-    } finally {
+      console.error('Fetch booked seats error:', err);
+      toast.error('Failed to load seat availability');
       if (isMounted.current) setLoading(false);
     }
   }
@@ -148,31 +133,25 @@ export default function SeatSelector({
     if (error) {
       console.error('Reserve error:', error);
       toast.error('Some seats were just taken. Please reselect.');
-      await fetchSeats();
+      await fetchBookedSeats();
       return false;
     }
 
     return true;
   }
 
-  const handleSeatClick = async (seat) => {
-    // Cannot select taken seats
-    if (seat.status === 'taken') {
-      toast.error(`Seat ${seat.seat_number} is already taken`);
+  const handleSeatClick = async (seatNum) => {
+    // Check if seat is already booked/taken
+    if (bookedSeats.includes(seatNum)) {
+      toast.error(`Seat ${seatNum} is already taken. Please select another seat.`);
       return;
     }
 
-    // Cannot select seats reserved by others
-    if (seat.status === 'reserved' && seat.reserved_by !== currentUser?.id) {
-      toast.error(`Seat ${seat.seat_number} is being selected by another user`);
-      return;
-    }
-
-    const isSelected = selectedSeats.includes(seat.seat_number);
+    const isSelected = selectedSeats.includes(seatNum);
 
     if (isSelected) {
       // Deselect seat
-      setSelectedSeats(selectedSeats.filter(s => s !== seat.seat_number));
+      setSelectedSeats(selectedSeats.filter(s => s !== seatNum));
     } else {
       // Check max seats limit
       if (selectedSeats.length >= maxSeats) {
@@ -180,12 +159,8 @@ export default function SeatSelector({
         return;
       }
       
-      // Reserve the seat
-      const success = await reserveSeats([seat.seat_number]);
-      if (success) {
-        setSelectedSeats([...selectedSeats, seat.seat_number]);
-        await fetchSeats(); // Refresh seat status
-      }
+      // Add seat to selection
+      setSelectedSeats([...selectedSeats, seatNum]);
     }
   };
 
@@ -229,69 +204,80 @@ export default function SeatSelector({
     );
   }
 
-  // Calculate grid dimensions
-  const totalSeatsCount = seats.length;
-  const cols = Math.ceil(Math.sqrt(totalSeatsCount));
+  // Generate seat numbers based on total seats from pool card (NO LIMIT - shows all seats)
+  const totalSeatsCount = totalSeats || 2400; // Default to daily pool seats if not provided
+  const seatNumbers = Array.from({ length: totalSeatsCount }, (_, i) => i + 1); // Shows ALL seats from pool card
+  
+  // Calculate grid dimensions dynamically based on seat count
+  const cols = Math.min(15, Math.ceil(Math.sqrt(seatNumbers.length)));
   
   // Group seats into rows
   const seatRows = [];
-  for (let i = 0; i < seats.length; i += cols) {
-    seatRows.push(seats.slice(i, i + cols));
+  for (let i = 0; i < seatNumbers.length; i += cols) {
+    seatRows.push(seatNumbers.slice(i, i + cols));
   }
 
-  const getSeatColor = (seat) => {
-    if (seat.status === 'taken') {
-      return 'bg-gray-400 cursor-not-allowed opacity-50';
+  const getSeatColor = (seatNum) => {
+    if (bookedSeats.includes(seatNum)) {
+      return 'bg-red-400 cursor-not-allowed opacity-70';
     }
-    if (seat.status === 'reserved') {
-      const isMyReservation = seat.reserved_by === currentUser?.id;
-      if (isMyReservation) {
-        return 'bg-yellow-400 hover:bg-yellow-500';
-      }
-      return 'bg-red-300 cursor-not-allowed';
+    if (selectedSeats.includes(seatNum)) {
+      return 'bg-green-600 text-white shadow-lg transform scale-105';
     }
-    if (selectedSeats.includes(seat.seat_number)) {
-      return 'bg-green-600 text-white';
-    }
-    return 'bg-green-100 hover:bg-green-200 cursor-pointer';
+    return 'bg-gray-200 hover:bg-gray-300 cursor-pointer transition-all hover:transform hover:scale-105';
   };
 
-  const getSeatStatusText = (seat) => {
-    if (seat.status === 'taken') {
+  const getSeatStatusText = (seatNum) => {
+    if (bookedSeats.includes(seatNum)) {
       return 'Taken';
     }
-    if (seat.status === 'reserved') {
-      const isMyReservation = seat.reserved_by === currentUser?.id;
-      if (isMyReservation) {
-        return 'Selected by you';
-      }
-      return 'Being selected';
+    if (selectedSeats.includes(seatNum)) {
+      return 'Selected by you';
     }
     return 'Available';
   };
 
-  const availableCount = seats.filter(s => s.status === 'available').length;
-  const takenCount = seats.filter(s => s.status === 'taken').length;
-  const reservedCount = seats.filter(s => s.status === 'reserved' && s.reserved_by !== currentUser?.id).length;
-  const myReservedCount = seats.filter(s => s.status === 'reserved' && s.reserved_by === currentUser?.id).length;
+  const availableCount = seatNumbers.filter(s => !bookedSeats.includes(s)).length;
+  const takenCount = bookedSeats.length;
+  const mySelectedCount = selectedSeats.length;
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6">
       <h3 className="text-xl font-bold mb-4">🎯 Select Your Seat(s)</h3>
       
+      {/* Pool Card Summary - Reading from poolInfo */}
+      {poolInfo && (
+        <div className="bg-gradient-to-r from-gray-700 to-gray-900 rounded-lg p-4 mb-4 text-white">
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <p className="text-xs opacity-80">Entry Fee</p>
+              <p className="text-xl font-bold">ETB {entryFee.toLocaleString()}</p>
+            </div>
+            <div>
+              <p className="text-xs opacity-80">Guaranteed Prize</p>
+              <p className="text-xl font-bold">ETB {poolInfo.prize?.toLocaleString()}</p>
+            </div>
+            <div>
+              <p className="text-xs opacity-80">Draw Frequency</p>
+              <p className="text-sm font-semibold">{poolInfo.frequency || 'TBA'}</p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Pool Summary */}
       <div className="bg-blue-50 rounded-lg p-3 mb-4 text-center">
         <p className="text-sm text-blue-800">
-          💺 Total Seats: {(totalSeats || totalSeatsCount).toLocaleString()} | 
+          💺 Total Seats: {totalSeatsCount.toLocaleString()} | 
           📊 Available: {availableCount.toLocaleString()} | 
-          🎫 Entry Fee: ETB {entryFee.toLocaleString()}
+          🎫 Entry Fee: ETB {entryFee.toLocaleString()} per seat
         </p>
       </div>
       
       {/* Legend */}
       <div className="flex flex-wrap gap-4 mb-6 text-sm">
         <div className="flex items-center gap-2">
-          <div className="w-5 h-5 bg-green-100 border border-green-300 rounded"></div>
+          <div className="w-5 h-5 bg-gray-200 border border-gray-300 rounded"></div>
           <span>Available</span>
         </div>
         <div className="flex items-center gap-2">
@@ -299,63 +285,57 @@ export default function SeatSelector({
           <span>Your Selection</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-5 h-5 bg-yellow-400 rounded"></div>
-          <span>Your Reserved</span>
+          <div className="w-5 h-5 bg-red-400 rounded"></div>
+          <span>Taken/Booked</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-5 h-5 bg-red-300 rounded"></div>
-          <span>Being Selected</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-5 bg-gray-400 rounded"></div>
-          <span>Taken</span>
+          <div className="w-5 h-5 bg-yellow-400 rounded animate-pulse"></div>
+          <span>Max {maxSeats} Seats</span>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-3 gap-3 mb-6">
         <div className="bg-green-50 rounded-lg p-3 text-center">
-          <p className="text-2xl font-bold text-green-600">{availableCount}</p>
-          <p className="text-xs text-gray-500">Available</p>
+          <p className="text-2xl font-bold text-green-600">{availableCount.toLocaleString()}</p>
+          <p className="text-xs text-gray-500">Available Seats</p>
         </div>
         <div className="bg-yellow-50 rounded-lg p-3 text-center">
-          <p className="text-2xl font-bold text-yellow-600">{myReservedCount}</p>
-          <p className="text-xs text-gray-500">Your Reserved</p>
+          <p className="text-2xl font-bold text-yellow-600">{mySelectedCount}</p>
+          <p className="text-xs text-gray-500">Your Selected</p>
         </div>
         <div className="bg-red-50 rounded-lg p-3 text-center">
-          <p className="text-2xl font-bold text-red-600">{reservedCount}</p>
-          <p className="text-xs text-gray-500">Others Reserved</p>
-        </div>
-        <div className="bg-gray-50 rounded-lg p-3 text-center">
-          <p className="text-2xl font-bold text-gray-600">{takenCount}</p>
-          <p className="text-xs text-gray-500">Taken</p>
+          <p className="text-2xl font-bold text-red-600">{takenCount.toLocaleString()}</p>
+          <p className="text-xs text-gray-500">Booked/Taken</p>
         </div>
       </div>
 
-      {/* Seat Grid */}
-      <div className="overflow-x-auto mb-6">
+      {/* Seat Grid - Dynamically sized, NO LIMIT on seats displayed */}
+      <div className="overflow-x-auto mb-6" style={{ maxHeight: '500px', overflowY: 'auto' }}>
         <div className="inline-block min-w-full">
           {seatRows.map((row, rowIndex) => (
-            <div key={rowIndex} className="flex justify-center gap-2 mb-2">
-              {row.map((seat) => {
-                const isDisabled = seat.status === 'taken' || (seat.status === 'reserved' && seat.reserved_by !== currentUser?.id);
-                const seatColor = getSeatColor(seat);
-                const statusText = getSeatStatusText(seat);
+            <div key={rowIndex} className="flex justify-center gap-2 mb-2 flex-wrap">
+              {row.map((seatNum) => {
+                const isDisabled = bookedSeats.includes(seatNum);
+                const seatColor = getSeatColor(seatNum);
+                const statusText = getSeatStatusText(seatNum);
+                const isSelected = selectedSeats.includes(seatNum);
                 
                 return (
                   <button
-                    key={seat.seat_number}
-                    onClick={() => handleSeatClick(seat)}
+                    key={seatNum}
+                    onClick={() => handleSeatClick(seatNum)}
                     disabled={isDisabled}
                     className={`
-                      w-12 h-12 rounded-lg flex flex-col items-center justify-center text-xs font-semibold transition-all
+                      w-12 h-12 rounded-lg flex flex-col items-center justify-center text-xs font-semibold transition-all duration-200
                       ${seatColor}
+                      ${isSelected ? 'ring-2 ring-green-300 ring-offset-2' : ''}
                     `}
-                    title={`Seat ${seat.seat_number} - ${statusText}`}
+                    title={`Seat ${seatNum} - ${statusText}`}
                   >
-                    <span className="text-sm">{seat.seat_number}</span>
+                    <span className="text-sm">{seatNum}</span>
                     <span className="text-[8px] mt-0.5">
-                      {seat.status === 'taken' ? '🔒' : seat.status === 'reserved' ? '⏳' : '🟢'}
+                      {isDisabled ? '🔒' : isSelected ? '✓' : '🟢'}
                     </span>
                   </button>
                 );
@@ -382,13 +362,13 @@ export default function SeatSelector({
           
           <button
             onClick={confirmSelection}
-            className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition"
+            className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition transform hover:scale-105"
           >
             Confirm Selection & Continue to Payment
           </button>
           
           <p className="text-xs text-gray-400 text-center mt-3">
-            ⏰ Your selected seats are reserved for 5 minutes
+            ⏰ Your selected seats will be reserved for 5 minutes
           </p>
         </div>
       )}
