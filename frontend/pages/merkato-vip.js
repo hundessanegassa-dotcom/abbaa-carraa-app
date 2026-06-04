@@ -131,16 +131,16 @@ const Ticket = ({ participant, pool, type = 'unverified', onClose }) => {
 
   const statusConfig = {
     unverified: {
-      bg: 'bg-yellow-50',
-      border: 'border-yellow-400',
-      badge: 'bg-yellow-500',
+      bg: 'bg-gray-50',
+      border: 'border-gray-400',
+      badge: 'bg-gray-500',
       badgeText: 'UNVERIFIED',
       text: 'Awaiting Admin Approval'
     },
     verified: {
-      bg: 'bg-green-50',
-      border: 'border-green-500',
-      badge: 'bg-green-600',
+      bg: 'bg-gray-50',
+      border: 'border-gray-600',
+      badge: 'bg-gray-700',
       badgeText: 'VERIFIED',
       text: 'Approved Entry'
     }
@@ -240,11 +240,11 @@ const Ticket = ({ participant, pool, type = 'unverified', onClose }) => {
         )}
 
         {type === 'unverified' && (
-          <div className="bg-yellow-100 rounded-lg p-3 mt-4 text-center">
-            <p className="text-yellow-800 text-sm font-semibold">
+          <div className="bg-gray-100 rounded-lg p-3 mt-4 text-center">
+            <p className="text-gray-800 text-sm font-semibold">
               ⏳ Awaiting Admin Verification
             </p>
-            <p className="text-yellow-600 text-xs">Your ticket will be activated once payment is confirmed</p>
+            <p className="text-gray-600 text-xs">Your ticket will be activated once payment is confirmed</p>
           </div>
         )}
 
@@ -259,7 +259,7 @@ const Ticket = ({ participant, pool, type = 'unverified', onClose }) => {
       <div className="text-center">
         <button
           onClick={downloadTicket}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition flex items-center gap-2 mx-auto"
+          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold transition flex items-center gap-2 mx-auto"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -284,7 +284,7 @@ export default function MerkatoVip() {
   const [selectedPoolType, setSelectedPoolType] = useState(null);
   const [showPayment, setShowPayment] = useState(false);
   const [participantId, setParticipantId] = useState(null);
-  const [maxSeats, setMaxSeats] = useState(10);
+  const [maxSeats, setMaxSeats] = useState(5); // Changed from 10 to 5
   
   // Ticket states
   const [showTicket, setShowTicket] = useState(false);
@@ -313,7 +313,7 @@ export default function MerkatoVip() {
     }
   };
 
-  // VIP Pool Data with LIGHT GREY THEME
+  // VIP Pool Data with GREY THEME
   const vipPools = {
     daily: {
       name: "ዕለታዊ ሚሊየነር | Daily Millionaire",
@@ -326,7 +326,7 @@ export default function MerkatoVip() {
       winnerCount: 1,
       totalSeats: 2400,
       time: "Every Day at 8:00 PM",
-      color: "from-gray-600 to-gray-800",
+      color: "from-gray-700 to-gray-900",
       icon: "⭐",
       slogan: "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው",
       sloganEn: "Let's make one participant a millionaire today, this week and this month",
@@ -346,7 +346,7 @@ export default function MerkatoVip() {
       winnerCount: 1,
       totalSeats: 4800,
       time: "Every Sunday at 6:00 PM",
-      color: "from-gray-600 to-gray-800",
+      color: "from-gray-700 to-gray-900",
       icon: "🏆",
       slogan: "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው",
       sloganEn: "Let's make one participant a millionaire today, this week and this month",
@@ -366,7 +366,7 @@ export default function MerkatoVip() {
       winnerCount: 1,
       totalSeats: 9600,
       time: "Last Day of Month at 8:00 PM",
-      color: "from-gray-600 to-gray-800",
+      color: "from-gray-700 to-gray-900",
       icon: "👑",
       slogan: "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው",
       sloganEn: "Let's make one participant a millionaire today, this week and this month",
@@ -867,9 +867,9 @@ export default function MerkatoVip() {
         <meta name="description" content="ልዩ የመርካቶ ነጋዴዎች የሽልማት ፕሮግራም፦ በየቀኑ 1ሚሊዮን ብር፣ በየሳምንቱ 10ሚሊዮን ብር፣ በየወሩ 40ሚሊዮን ብር ያሸንፉ!" />
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-        {/* Hero Section */}
-        <div className="relative bg-gradient-to-r from-gray-700 via-gray-800 to-gray-900 text-white overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
+        {/* Hero Section - Grey Theme */}
+        <div className="relative bg-gradient-to-r from-gray-800 via-gray-900 to-gray-800 text-white overflow-hidden">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-10 left-10 text-9xl animate-bounce">🏪</div>
             <div className="absolute bottom-10 right-10 text-9xl animate-pulse">🛺</div>
@@ -1026,7 +1026,7 @@ export default function MerkatoVip() {
               <tbody className="divide-y divide-gray-200">
                 <tr className="hover:bg-gray-50 transition">
                   <td className="px-6 py-4 font-semibold">⭐ Daily Millionaire</td>
-                  <td className="px-6 py-4"><span className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-sm">መርካቶ ለሁሉም | Merkato for All</span></td>
+                  <td className="px-6 py-4"><span className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-sm">መርካቶ ለሁሉም</span></td>
                   <td className="px-6 py-4 font-bold">500 ብር</td>
                   <td className="px-6 py-4 font-bold text-green-600">1,000,000 ብር</td>
                   <td className="px-6 py-4">Every Day at 8 PM</td>
