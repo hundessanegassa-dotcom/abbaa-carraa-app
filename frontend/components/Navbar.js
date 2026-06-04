@@ -103,6 +103,9 @@ export default function Navbar() {
         localStorage.removeItem('redirectAfterLogin');
         sessionStorage.removeItem('redirectAfterLogin');
         
+        // Clear VIP pending data
+        localStorage.removeItem('abbaa_vip_pending');
+        
         // Clear all cookies
         document.cookie.split(";").forEach(function(c) {
           document.cookie = c
@@ -218,6 +221,15 @@ export default function Navbar() {
             <div className="hidden md:flex items-center space-x-1">
               <Link href="/" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🏠 {t('common.home') || 'Home'} </Link>
               <Link href="/listings" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🎁 Browse Prizes </Link>
+              
+              {/* NEW: VIP Program Links */}
+              <Link href="/merkato-vip" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition flex items-center gap-1">
+                🏪 Merkato VIP
+              </Link>
+              <Link href="/cities" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition flex items-center gap-1">
+                🏙️ City VIP
+              </Link>
+              
               <Link href="/winners" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🏆 Winners </Link>
               <Link href="/how-it-works" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🎯 How It Works </Link>
               
@@ -280,6 +292,15 @@ export default function Navbar() {
                       <Link href={getDashboardLink()} className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded-lg transition">
                         <span>📊</span> Dashboard
                       </Link>
+                      
+                      {/* NEW: VIP Dashboard Links */}
+                      <Link href="/merkato-vip" className="flex items-center gap-2 px-3 py-2 text-sm text-yellow-700 hover:bg-yellow-50 rounded-lg transition">
+                        <span>🏪</span> Merkato VIP
+                      </Link>
+                      <Link href="/cities" className="flex items-center gap-2 px-3 py-2 text-sm text-blue-700 hover:bg-blue-50 rounded-lg transition">
+                        <span>🏙️</span> City VIP
+                      </Link>
+                      
                       <Link href="/profile" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded-lg transition">
                         <span>👤</span> Profile
                       </Link>
@@ -337,11 +358,20 @@ export default function Navbar() {
             </button>
           </div>
 
-          {/* Mobile Navigation Menu */}
+          {/* Mobile Navigation Menu - Updated with VIP links */}
           {mobileMenuOpen && (
             <div className="md:hidden pb-3 space-y-1 animate-fadeIn">
               <Link href="/" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🏠 Home </Link>
               <Link href="/listings" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🎁 Browse Prizes </Link>
+              
+              {/* NEW: VIP Mobile Links */}
+              <Link href="/merkato-vip" className="block py-2 px-3 text-sm text-yellow-700 bg-yellow-50 hover:bg-yellow-100 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
+                🏪 Merkato VIP
+              </Link>
+              <Link href="/cities" className="block py-2 px-3 text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
+                🏙️ City VIP
+              </Link>
+              
               <Link href="/winners" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🏆 Winners </Link>
               <Link href="/how-it-works" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🎯 How It Works </Link>
               
