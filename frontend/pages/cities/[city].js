@@ -425,28 +425,27 @@ export default function CityVip() {
     }
   };
 
-  // FIXED: Correct handleJoinPool function with localStorage
   const handleJoinPool = async (poolType) => {
     if (!user) {
-      // Store VIP data in localStorage (persists through OAuth redirects)
+      // Store VIP data in localStorage for redirect after login
       const vipData = {
-        role: 'individual',
-        poolType: poolType,
-        poolSource: 'city-vip',
+        type: 'city',
         city: city,
-        redirectUrl: `/cities/seat?city=${city}&type=${poolType}`,
+        poolType: poolType,
+        redirectTo: `/cities/seat?city=${city}&type=${poolType}`,
         timestamp: Date.now()
       };
       
       localStorage.setItem('abbaa_vip_pending', JSON.stringify(vipData));
-      console.log('City VIP - Stored in localStorage:', vipData);
+      sessionStorage.setItem('abbaa_vip_pending_backup', JSON.stringify(vipData));
+      
+      console.log('City VIP - Stored redirect data:', vipData);
       
       toast.loading('Please login to join City VIP...');
       router.push('/login');
       return;
     }
     
-    // User is already logged in, go directly to seat selection
     setSelectedPoolType(poolType);
     setSelectedSeats([]);
     setShowSeatSelector(true);
@@ -961,12 +960,36 @@ export default function CityVip() {
           <div className="overflow-x-auto">
             <table className="w-full bg-white rounded-2xl shadow-lg overflow-hidden">
               <thead className="bg-gradient-to-r from-gray-800 to-gray-900 text-white">
-                <tr><th className="px-6 py-4 text-left">ፕሮግራም | Program</th><th className="px-6 py-4 text-left">ደረጃ | Tier</th><th className="px-6 py-4 text-left">ክፍያ | Entry</th><th className="px-6 py-4 text-left">ሽልማት | Prize</th><th className="px-6 py-4 text-left">ጊዜ | When</th></tr>
+                <tr>
+                  <th className="px-6 py-4 text-left">ፕሮግራም | Program</th>
+                  <th className="px-6 py-4 text-left">ደረጃ | Tier</th>
+                  <th className="px-6 py-4 text-left">ክፍያ | Entry</th>
+                  <th className="px-6 py-4 text-left">ሽልማት | Prize</th>
+                  <th className="px-6 py-4 text-left">ጊዜ | When</th>
+                </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                <tr><td className="px-6 py-4 font-semibold">⭐ Daily Millionaire</td><td className="px-6 py-4"><span className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-sm">ለሁሉም ኢትዮጵያዊ</span></td><td className="px-6 py-4 font-bold">500 ብር</td><td className="px-6 py-4 font-bold text-green-600">1,000,000 ብር</td><td className="px-6 py-4">Every Day at 8 PM</td></tr>
-                <tr><td className="px-6 py-4 font-semibold">🏆 Weekly Mega Winner</td><td className="px-6 py-4"><span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">VIP 2</span></td><td className="px-6 py-4 font-bold">2,500 ብር</td><td className="px-6 py-4 font-bold text-purple-600">10,000,000 ብር</td><td className="px-6 py-4">Every Sunday at 6 PM</td></tr>
-                <tr><td className="px-6 py-4 font-semibold">👑 Monthly Winner</td><td className="px-6 py-4"><span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">VIP 1</span></td><td className="px-6 py-4 font-bold">5,000 ብር</td><td className="px-6 py-4 font-bold text-green-600">40,000,000 ብር</td><td className="px-6 py-4">Last Day of Month at 8 PM</td></tr>
+                <tr className="hover:bg-gray-50 transition">
+                  <td className="px-6 py-4 font-semibold">⭐ Daily Millionaire</td>
+                  <td className="px-6 py-4"><span className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-sm">ለሁሉም ኢትዮጵያዊ</span></td>
+                  <td className="px-6 py-4 font-bold">500 ብር</td>
+                  <td className="px-6 py-4 font-bold text-green-600">1,000,000 ብር</td>
+                  <td className="px-6 py-4">Every Day at 8 PM</td>
+                </tr>
+                <tr className="hover:bg-gray-50 transition">
+                  <td className="px-6 py-4 font-semibold">🏆 Weekly Mega Winner</td>
+                  <td className="px-6 py-4"><span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">VIP 2</span></td>
+                  <td className="px-6 py-4 font-bold">2,500 ብር</td>
+                  <td className="px-6 py-4 font-bold text-purple-600">10,000,000 ብር</td>
+                  <td className="px-6 py-4">Every Sunday at 6 PM</td>
+                </tr>
+                <tr className="hover:bg-gray-50 transition">
+                  <td className="px-6 py-4 font-semibold">👑 Monthly Winner</td>
+                  <td className="px-6 py-4"><span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">VIP 1</span></td>
+                  <td className="px-6 py-4 font-bold">5,000 ብር</td>
+                  <td className="px-6 py-4 font-bold text-green-600">40,000,000 ብር</td>
+                  <td className="px-6 py-4">Last Day of Month at 8 PM</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -978,11 +1001,31 @@ export default function CityVip() {
             <h2 className="text-3xl font-bold text-center mb-4">እንዴት እንሳተፋለን? | How It Works</h2>
             <p className="text-center text-gray-600 mb-12">Like traditional Equb, but BIGGER and BETTER!</p>
             <div className="grid md:grid-cols-3 gap-8">
-              <div className="text-center"><div className="w-20 h-20 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg text-white animate-bounce">1️⃣</div><h3 className="font-bold text-xl mb-2">ምረጥ | Choose</h3><p className="text-gray-600">በየቀኑ፣ በየሳምንቱ ወይም በየወሩ የሚካሄደውን ፑል ምረጥ</p><p className="text-green-600 font-semibold text-sm mt-1">Choose Daily, Weekly, or Monthly Millionaire pool</p></div>
-              <div className="text-center"><div className="w-20 h-20 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg text-white animate-bounce">2️⃣</div><h3 className="font-bold text-xl mb-2">ክፈል | Pay</h3><p className="text-gray-600">በቴሌብር ወይም በንግድ ባንክ መጠነኛ ክፍያ ክፈል</p><p className="text-green-600 font-semibold text-sm mt-1">Pay via TeleBirr or CBE Bank Transfer</p></div>
-              <div className="text-center"><div className="w-20 h-20 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg text-white animate-bounce">3️⃣</div><h3 className="font-bold text-xl mb-2">ሽለም | WIN!</h3><p className="text-gray-600">እጣው ሲነሳ ሚሊየነር ትሆናለህ!</p><p className="text-green-600 font-semibold text-sm mt-1">When the lottery is drawn - YOU become a MILLIONAIRE!</p></div>
+              <div className="text-center">
+                <div className="w-20 h-20 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg text-white animate-bounce">1️⃣</div>
+                <h3 className="font-bold text-xl mb-2">ምረጥ | Choose</h3>
+                <p className="text-gray-600">በየቀኑ፣ በየሳምንቱ ወይም በየወሩ የሚካሄደውን ፑል ምረጥ</p>
+                <p className="text-green-600 font-semibold text-sm mt-1">Choose Daily, Weekly, or Monthly Millionaire pool</p>
+              </div>
+              <div className="text-center">
+                <div className="w-20 h-20 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg text-white animate-bounce">2️⃣</div>
+                <h3 className="font-bold text-xl mb-2">ክፈል | Pay</h3>
+                <p className="text-gray-600">በቴሌብር ወይም በንግድ ባንክ መጠነኛ ክፍያ ክፈል</p>
+                <p className="text-green-600 font-semibold text-sm mt-1">Pay via TeleBirr or CBE Bank Transfer</p>
+              </div>
+              <div className="text-center">
+                <div className="w-20 h-20 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg text-white animate-bounce">3️⃣</div>
+                <h3 className="font-bold text-xl mb-2">ሽለም | WIN!</h3>
+                <p className="text-gray-600">እጣው ሲነሳ ሚሊየነር ትሆናለህ!</p>
+                <p className="text-green-600 font-semibold text-sm mt-1">When the lottery is drawn - YOU become a MILLIONAIRE!</p>
+              </div>
             </div>
-            <div className="mt-12 text-center"><div className="inline-flex items-center gap-2 bg-green-100 px-6 py-3 rounded-full"><span className="text-green-600">💚</span><span className="text-green-800">2% of every contribution supports kidney & heart disease patients</span></div></div>
+            <div className="mt-12 text-center">
+              <div className="inline-flex items-center gap-2 bg-green-100 px-6 py-3 rounded-full">
+                <span className="text-green-600">💚</span>
+                <span className="text-green-800">2% of every contribution supports kidney & heart disease patients</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -990,7 +1033,7 @@ export default function CityVip() {
         <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-16">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold mb-4">ዛሬውኑ ይቀላቀሉ!</h2>
-            <p className="text-xl mb-6">Join Today and Become {cityInfo.name.split('|')[0]}'s Next Millionaire!</p>
+            <p className="text-xl mb-6">Join Today and Become {cityInfo.name.split('|')[0]}&apos;s Next Millionaire!</p>
             <Link href="/cities" className="inline-block bg-white text-gray-900 px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-100 transition transform hover:scale-105 shadow-xl">🎯 Back to All Cities →</Link>
           </div>
         </div>
