@@ -426,22 +426,20 @@ export default function CityVip() {
     }
   };
 
-  const handleJoinPool = async (poolType) => {
-  // Check if user is logged in FIRST
+ const handleJoinPool = async (poolType) => {
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
-    // Store redirect for after login
-    const redirectUrl = `/cities/seat?city=${city}&type=${poolType}`;
+    const redirectUrl = `/merkato-seat?type=${poolType}`;
     sessionStorage.setItem('redirectAfterLogin', redirectUrl);
-    sessionStorage.setItem('pendingRole', 'individual');
+    sessionStorage.setItem('pendingRole', 'individual'); // Force individual role
+    sessionStorage.removeItem('isPartner'); // Clear any partner flag
     
-    toast.loading('Please login to join City VIP...');
+    toast.loading('Please login to join Merkato VIP...');
     router.push('/login');
     return;
   }
   
-  // User is logged in, show seat selector
   setSelectedPoolType(poolType);
   setSelectedSeats([]);
   setShowSeatSelector(true);
