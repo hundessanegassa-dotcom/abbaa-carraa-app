@@ -1,3 +1,4 @@
+// pages/auth/callback.js
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
@@ -12,6 +13,45 @@ export default function AuthCallback() {
   const [userRole, setUserRole] = useState(null);
   const [error, setError] = useState(null);
 
+  const getStoredVipData = () => {
+    // Try localStorage first
+    let vipData = null;
+    try {
+      const stored = localStorage.getItem('abbaa_vip_pending');
+      if (stored) {
+        vipData = JSON.parse(stored);
+        console.log('✅ Found VIP data in localStorage:', vipData);
+        return vipData;
+      }
+    } catch (e) {
+      console.error('Error parsing localStorage VIP data:', e);
+    }
+    
+    // Try sessionStorage backup
+    try {
+      const stored = sessionStorage.getItem('abbaa_vip_pending_backup');
+      if (stored) {
+        vipData = JSON.parse(stored);
+        console.log('✅ Found VIP data in sessionStorage backup:', vipData);
+        return vipData;
+      }
+    } catch (e) {
+      console.error('Error parsing sessionStorage VIP data:', e);
+    }
+    
+    return null;
+  };
+
+  const clearStoredVipData = () => {
+    localStorage.removeItem('abbaa_vip_pending');
+    sessionStorage.removeItem('abbaa_vip_pending_backup');
+    sessionStorage.removeItem('pendingRole');
+    sessionStorage.removeItem('pendingPoolType');
+    sessionStorage.removeItem('pendingPoolSource');
+    sessionStorage.removeItem('pendingCity');
+    sessionStorage.removeItem('redirectAfterLogin');
+  };
+
   const handleAcceptAgreement = useCallback(async () => {
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -19,26 +59,13 @@ export default function AuthCallback() {
       if (sessionError) throw sessionError;
       if (!session) throw new Error('No session found');
       
-      // Get VIP data from localStorage
-      let vipData = null;
-      try {
-        const vipDataRaw = localStorage.getItem('abbaa_vip_pending');
-        if (vipDataRaw) {
-          vipData = JSON.parse(vipDataRaw);
-          console.log('Found VIP data in localStorage:', vipData);
-        }
-      } catch (e) {
-        console.error('Error parsing VIP data:', e);
-      }
+      // Get VIP data
+      const vipData = getStoredVipData();
+      const pendingRole = sessionStorage.getItem('pendingRole') || vipData?.role;
+      const redirectUrl = vipData?.redirectTo || sessionStorage.getItem('redirectAfterLogin');
       
-      const pendingRole = vipData?.role || sessionStorage.getItem('pendingRole') || localStorage.getItem('pendingRole');
-      const pendingPoolSource = vipData?.poolSource;
-      const pendingPoolType = vipData?.poolType;
-      const pendingCity = vipData?.city;
-      
-      console.log('Accepting agreement - Pool Source:', pendingPoolSource);
-      console.log('Accepting agreement - Pool Type:', pendingPoolType);
-      console.log('Accepting agreement - City:', pendingCity);
+      console.log('🔴 Accepting agreement - Redirect URL:', redirectUrl);
+      console.log('🔴 VIP Data:', vipData);
       
       // Check if profile exists
       const { data: existingProfile } = await supabase
@@ -82,41 +109,17 @@ export default function AuthCallback() {
       
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // ========== CRITICAL: Handle VIP redirects from localStorage ==========
+      // ========== CRITICAL: Redirect based on VIP data ==========
+      clearStoredVipData();
       
-      // Priority 1: Merkato VIP redirect
-      if (pendingPoolSource === 'merkato-vip' && pendingPoolType) {
-        const merkatoRedirectUrl = `/merkato-seat?type=${pendingPoolType}`;
-        console.log('Redirecting to Merkato VIP:', merkatoRedirectUrl);
-        localStorage.removeItem('abbaa_vip_pending');
-        sessionStorage.clear();
-        router.push(merkatoRedirectUrl);
+      if (redirectUrl && (redirectUrl.includes('/merkato-seat') || redirectUrl.includes('/cities/seat'))) {
+        console.log('🎯 Redirecting to VIP page:', redirectUrl);
+        router.push(redirectUrl);
         return;
       }
       
-      // Priority 2: City VIP redirect
-      if (pendingPoolSource === 'city-vip' && pendingCity && pendingPoolType) {
-        const cityRedirectUrl = `/cities/seat?city=${pendingCity}&type=${pendingPoolType}`;
-        console.log('Redirecting to City VIP:', cityRedirectUrl);
-        localStorage.removeItem('abbaa_vip_pending');
-        sessionStorage.clear();
-        router.push(cityRedirectUrl);
-        return;
-      }
-      
-      // Priority 3: Regular pool redirect
-      const storedRedirect = sessionStorage.getItem('redirectAfterLogin');
-      if (storedRedirect && storedRedirect.startsWith('/pools/')) {
-        console.log('Redirecting to stored pool URL:', storedRedirect);
-        sessionStorage.clear();
-        router.push(storedRedirect);
-        return;
-      }
-      
-      // Priority 4: Default to listings
-      console.log('No stored redirect, going to listings');
-      localStorage.removeItem('abbaa_vip_pending');
-      sessionStorage.clear();
+      // Fallback to listings
+      console.log('🎯 No VIP redirect, going to listings');
       router.push('/listings');
       
     } catch (err) {
@@ -126,9 +129,7 @@ export default function AuthCallback() {
   }, [userRole, router]);
 
   const handleClose = useCallback(() => {
-    localStorage.removeItem('abbaa_vip_pending');
-    sessionStorage.clear();
-    localStorage.clear();
+    clearStoredVipData();
     supabase.auth.signOut();
     router.push('/login');
   }, [router]);
@@ -138,26 +139,12 @@ export default function AuthCallback() {
 
     const handleCallback = async () => {
       try {
-        // Get VIP data from localStorage FIRST
-        let vipData = null;
-        try {
-          const vipDataRaw = localStorage.getItem('abbaa_vip_pending');
-          if (vipDataRaw) {
-            vipData = JSON.parse(vipDataRaw);
-            console.log('Callback - Found VIP data:', vipData);
-          }
-        } catch (e) {
-          console.error('Error parsing VIP data:', e);
-        }
+        // Get VIP data from storage
+        const vipData = getStoredVipData();
+        const redirectUrl = vipData?.redirectTo || sessionStorage.getItem('redirectAfterLogin');
         
-        const pendingPoolSource = vipData?.poolSource;
-        const pendingPoolType = vipData?.poolType;
-        const pendingCity = vipData?.city;
-        const pendingRole = vipData?.role || sessionStorage.getItem('pendingRole');
-        
-        console.log('Callback - pending pool source:', pendingPoolSource);
-        console.log('Callback - pending pool type:', pendingPoolType);
-        console.log('Callback - pending city:', pendingCity);
+        console.log('🟢 Callback - VIP Data:', vipData);
+        console.log('🟢 Callback - Redirect URL:', redirectUrl);
 
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
@@ -181,24 +168,22 @@ export default function AuthCallback() {
           toast.success(`Welcome back, ${session.user.email}!`);
           
           // ========== CRITICAL: Redirect based on VIP data ==========
+          clearStoredVipData();
           
-          if (pendingPoolSource === 'merkato-vip' && pendingPoolType) {
-            console.log('Existing user - redirecting to Merkato VIP');
-            localStorage.removeItem('abbaa_vip_pending');
-            router.push(`/merkato-seat?type=${pendingPoolType}`);
+          if (vipData?.type === 'merkato' && vipData?.poolType) {
+            console.log('🎯 Existing user - Redirecting to Merkato VIP');
+            router.push(`/merkato-seat?type=${vipData.poolType}`);
             return;
           }
           
-          if (pendingPoolSource === 'city-vip' && pendingCity && pendingPoolType) {
-            console.log('Existing user - redirecting to City VIP');
-            localStorage.removeItem('abbaa_vip_pending');
-            router.push(`/cities/seat?city=${pendingCity}&type=${pendingPoolType}`);
+          if (vipData?.type === 'city' && vipData?.city && vipData?.poolType) {
+            console.log('🎯 Existing user - Redirecting to City VIP');
+            router.push(`/cities/seat?city=${vipData.city}&type=${vipData.poolType}`);
             return;
           }
           
-          const storedRedirect = sessionStorage.getItem('redirectAfterLogin');
-          if (storedRedirect && storedRedirect.startsWith('/pools/')) {
-            router.push(storedRedirect);
+          if (redirectUrl && redirectUrl.includes('/pools/')) {
+            router.push(redirectUrl);
             return;
           }
           
@@ -207,18 +192,14 @@ export default function AuthCallback() {
         }
 
         // New user or agreement not accepted
-        if (profile && !profile.agreement_accepted && profile.role) {
-          if (isMounted) {
-            setUserRole(profile.role);
-            setShowAgreement(true);
-            setLoading(false);
-          }
-          return;
+        let roleToUse = profile?.role || vipData?.role || 'individual';
+        
+        if (vipData?.type === 'merkato' || vipData?.type === 'city') {
+          roleToUse = 'individual';
         }
         
-        // Use role from VIP data or default to individual
         if (isMounted) {
-          setUserRole(pendingRole || 'individual');
+          setUserRole(roleToUse);
           setShowAgreement(true);
           setLoading(false);
         }
