@@ -376,24 +376,25 @@ export default function MerkatoVip() {
   };
 
   const handleJoinPool = async (poolType) => {
-    if (!user) {
-      // Store VIP data in localStorage for redirect after login
-      const vipData = {
-        type: 'merkato',
-        poolType: poolType,
-        redirectTo: `/merkato-seat?type=${poolType}`,
-        timestamp: Date.now()
-      };
-      
-      localStorage.setItem('abbaa_vip_pending', JSON.stringify(vipData));
-      sessionStorage.setItem('abbaa_vip_pending_backup', JSON.stringify(vipData));
-      
-      console.log('Merkato VIP - Stored redirect data:', vipData);
-      
-      toast.loading('Please login to join Merkato VIP...');
-      router.push('/login');
-      return;
-    }
+  // Check if user is logged in FIRST
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    // Store redirect for after login
+    const redirectUrl = `/merkato-seat?type=${poolType}`;
+    sessionStorage.setItem('redirectAfterLogin', redirectUrl);
+    sessionStorage.setItem('pendingRole', 'individual');
+    
+    toast.loading('Please login to join Merkato VIP...');
+    router.push('/login');
+    return;
+  }
+  
+  // User is logged in, show seat selector
+  setSelectedPoolType(poolType);
+  setSelectedSeats([]);
+  setShowSeatSelector(true);
+};
     
     setSelectedPoolType(poolType);
     setSelectedSeats([]);
