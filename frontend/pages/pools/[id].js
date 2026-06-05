@@ -212,7 +212,6 @@ export default function PoolDetails() {
   const [participantId, setParticipantId] = useState(null);
   const [participantData, setParticipantData] = useState(null);
   const [ticketType, setTicketType] = useState('unverified');
-  const [reference, setReference] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -303,31 +302,24 @@ export default function PoolDetails() {
     }
   }
 
-  // FIXED: Proper redirect for regular pool
-const handleJoinNow = () => {
-  if (!user) {
-    // Store redirect URL in BOTH localStorage and sessionStorage for redundancy
-    const redirectUrl = `/pools/${id}`;
-    
-    // Use localStorage (more reliable through OAuth)
-    localStorage.setItem('abbaa_redirect_after_login', redirectUrl);
-    localStorage.setItem('pendingRole', 'individual');
-    
-    // Also store in sessionStorage as backup
-    sessionStorage.setItem('redirectAfterLogin', redirectUrl);
-    sessionStorage.setItem('pendingRole', 'individual');
-    
-    console.log('🔵 Regular Pool - Stored redirect URL:', redirectUrl);
-    
-    toast.error('Please login to join this pool');
-    router.push('/login');
-    return;
-  }
-  setShowSeatSelector(true);
-};
+  const handleJoinNow = () => {
+    if (!user) {
+      const redirectUrl = `/pools/${id}`;
+      localStorage.setItem('abbaa_redirect_after_login', redirectUrl);
+      localStorage.setItem('pendingRole', 'individual');
+      sessionStorage.setItem('redirectAfterLogin', redirectUrl);
+      sessionStorage.setItem('pendingRole', 'individual');
+      
+      console.log('🔵 Regular Pool - Stored redirect URL:', redirectUrl);
+      
+      toast.error('Please login to join this pool');
+      router.push('/login');
+      return;
+    }
+    setShowSeatSelector(true);
+  };
 
   const handlePaymentSuccess = async () => {
-    // Fetch complete participant data
     const { data: participant } = await supabase
       .from('regular_pool_participants')
       .select('*')
@@ -341,8 +333,10 @@ const handleJoinNow = () => {
   };
 
   const handlePaymentSubmit = async () => {
-    if (!reference.trim()) { toast.error('Please enter reference number'); return; }
-    if (!selectedFile) { toast.error('Please upload payment screenshot'); return; }
+    if (!selectedFile) { 
+      toast.error('Please upload payment screenshot'); 
+      return; 
+    }
     
     setIsSubmitting(true);
     try {
@@ -356,7 +350,6 @@ const handleJoinNow = () => {
       await supabase.from('regular_pool_participants').update({
         payment_status: 'pending_verification',
         payment_proof_url: publicUrl,
-        reference: reference,
         payment_submitted_at: new Date().toISOString()
       }).eq('id', participantId);
       
@@ -417,7 +410,6 @@ const handleJoinNow = () => {
 
     setSelectedSeats(seatData.seats);
     
-    // Create participant record
     const ticketNumber = `POOL-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     const { data: participant, error } = await supabase
       .from('regular_pool_participants')
@@ -480,7 +472,6 @@ const handleJoinNow = () => {
   const progress = (currentAmount / totalCollection) * 100;
   const maxSeatsPerUser = Math.min(5, Math.floor(availableSeatsCount / 2) || 5);
 
-  // Seat selection UI
   const renderSeatSelector = () => {
     const seatNumbers = Array.from({ length: Math.min(totalSeats, 500) }, (_, i) => i + 1);
     const toggleSeat = (seatNum) => {
@@ -522,7 +513,6 @@ const handleJoinNow = () => {
     );
   };
 
-  // Payment modal
   const renderPayment = () => {
     const totalAmount = selectedSeats.length * entryFee;
     
@@ -544,29 +534,47 @@ const handleJoinNow = () => {
               <p className="font-semibold mt-2">🏦 CBE Bank: 1000601091686</p>
               <p className="text-sm text-gray-600 mt-2">Account Name: Negassa Hundessa</p>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Reference Number <span className="text-red-500">*</span></label>
-                <input type="text" placeholder="Enter transaction ID" className="w-full border rounded-lg px-3 py-2" value={reference} onChange={(e) => setReference(e.target.value)} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Upload Bank Transfer Screenshot <span className="text-red-500">*</span></label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-500 transition">
-                  <input type="file" accept="image/*" className="hidden" id="paymentFile" onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) { setSelectedFile(file); setPreviewUrl(URL.createObjectURL(file)); }
-                  }} />
-                  <label htmlFor="paymentFile" className="cursor-pointer">
-                    {previewUrl ? (
-                      <div><img src={previewUrl} className="max-h-32 mx-auto mb-2" /><p className="text-green-600">✓ {selectedFile?.name}</p></div>
-                    ) : (
-                      <div><svg className="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg><p className="text-gray-500 mt-2">Click to upload screenshot</p></div>
-                    )}
-                  </label>
-                </div>
-              </div>
+            
+            {/* Upload Section - NO REFERENCE NUMBER INPUT */}
+            <div className="border-2 border-dashed rounded-lg p-4 text-center mb-4 hover:border-green-500 transition">
+              <input 
+                type="file" 
+                accept="image/*" 
+                className="hidden" 
+                id="paymentFile" 
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) { 
+                    setSelectedFile(file); 
+                    setPreviewUrl(URL.createObjectURL(file)); 
+                  }
+                }} 
+              />
+              <label htmlFor="paymentFile" className="cursor-pointer block">
+                {previewUrl ? (
+                  <div>
+                    <img src={previewUrl} className="max-h-32 mx-auto mb-2 rounded" />
+                    <p className="text-green-600 text-sm">✓ Payment screenshot selected</p>
+                  </div>
+                ) : (
+                  <div>
+                    <svg className="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <p className="text-gray-500 mt-2">Click to upload payment screenshot</p>
+                    <p className="text-xs text-gray-400">JPEG, PNG (Max 5MB) - Will be auto-compressed</p>
+                  </div>
+                )}
+              </label>
             </div>
-            <button onClick={handlePaymentSubmit} disabled={isSubmitting} className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold mt-4">{isSubmitting ? 'Processing...' : 'Submit Payment & Get Ticket'}</button>
+            
+            <button 
+              onClick={handlePaymentSubmit} 
+              disabled={isSubmitting} 
+              className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:opacity-50"
+            >
+              {isSubmitting ? 'Processing...' : 'Submit Payment & Get Ticket'}
+            </button>
           </div>
         </div>
       </div>
