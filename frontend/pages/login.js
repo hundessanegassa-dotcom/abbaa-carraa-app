@@ -17,7 +17,7 @@ export default function Login() {
         const vipData = localStorage.getItem('abbaa_vip_pending');
         if (vipData) {
           const data = JSON.parse(vipData);
-          console.log('Login page - Found VIP data:', data);
+          console.log('📱 Login page - Found VIP data:', data);
         }
       } catch (e) {
         console.error('Error checking VIP data:', e);
@@ -30,13 +30,13 @@ export default function Login() {
     setLoading(true);
     
     try {
-      // Check if there's VIP data in localStorage
+      // Check for VIP data in localStorage
       let vipData = null;
       try {
         const vipDataRaw = localStorage.getItem('abbaa_vip_pending');
         if (vipDataRaw) {
           vipData = JSON.parse(vipDataRaw);
-          console.log('Login - Found VIP data:', vipData);
+          console.log('📱 Login - Found VIP data:', vipData);
         }
       } catch (e) {
         console.error('Error parsing VIP data:', e);
@@ -47,6 +47,12 @@ export default function Login() {
       
       if (!pendingRole) {
         localStorage.setItem('pendingRole', 'individual');
+      }
+      
+      // If there's VIP data, ensure it's preserved in both storages
+      if (vipData) {
+        // Backup in sessionStorage as well
+        sessionStorage.setItem('abbaa_vip_pending_backup', JSON.stringify(vipData));
       }
       
       // Force Google account selector
@@ -75,17 +81,24 @@ export default function Login() {
       const vipData = localStorage.getItem('abbaa_vip_pending');
       if (vipData) {
         const data = JSON.parse(vipData);
-        if (data.poolSource === 'merkato-vip') {
-          return { title: 'Join Merkato VIP', message: 'Sign in to select your seats and become a millionaire!', icon: '🏪' };
+        if (data.type === 'merkato') {
+          return { title: 'Join Merkato VIP', message: 'Sign in to select your seats and become a millionaire!', icon: '🏪', color: 'from-yellow-500 to-orange-600' };
         }
-        if (data.poolSource === 'city-vip') {
-          return { title: `Join ${data.city || 'City'} VIP`, message: 'Sign in to select your seats and become a millionaire!', icon: '🏙️' };
+        if (data.type === 'city') {
+          return { title: `Join ${data.city || 'City'} VIP`, message: 'Sign in to select your seats and become a millionaire!', icon: '🏙️', color: 'from-blue-500 to-cyan-600' };
         }
       }
     } catch (e) {
       console.error('Error getting pending source:', e);
     }
-    return { title: 'Welcome to Abbaa Carraa', message: 'Sign in to continue', icon: '🎁' };
+    
+    // Check regular pool redirect
+    const regularRedirect = sessionStorage.getItem('redirectAfterLogin');
+    if (regularRedirect && regularRedirect.includes('/pools/')) {
+      return { title: 'Join Prize Pool', message: 'Sign in to continue to the pool', icon: '🎁', color: 'from-green-500 to-teal-500' };
+    }
+    
+    return { title: 'Welcome to Abbaa Carraa', message: 'Sign in to continue', icon: '🎁', color: 'from-green-500 to-teal-500' };
   };
 
   const roleInfo = getPendingSource();
@@ -96,7 +109,7 @@ export default function Login() {
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
           <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className={`w-20 h-20 bg-gradient-to-r ${roleInfo.color} rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg`}>
               <span className="text-4xl">{roleInfo.icon}</span>
             </div>
             <h1 className="text-2xl font-bold text-gray-800 mb-2">{roleInfo.title}</h1>
@@ -120,6 +133,9 @@ export default function Login() {
               
               <div className="mt-6 pt-4 border-t border-gray-200 text-center">
                 <p className="text-xs text-gray-500">
+                  By continuing, you agree to our Terms of Service and Privacy Policy
+                </p>
+                <p className="text-xs text-gray-400 mt-2">
                   You'll only need to select your Google account once
                 </p>
               </div>
@@ -130,6 +146,13 @@ export default function Login() {
               <p className="mt-4 text-gray-600">Redirecting to Google...</p>
             </div>
           )}
+          
+          {/* Additional Info */}
+          <div className="mt-6 text-center">
+            <p className="text-xs text-gray-400">
+              Don't have an account? <button onClick={() => router.push('/register')} className="text-green-600 hover:underline">Register</button>
+            </p>
+          </div>
         </div>
       </div>
     </>
