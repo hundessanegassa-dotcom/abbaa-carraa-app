@@ -24,6 +24,175 @@ const getNextMonthEnd = () => {
   return lastDay.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 };
 
+// Complete City Data - ALL CITIES AVAILABLE
+const cityData = {
+  // Major Cities
+  'addis-ababa': {
+    name: 'አዲስ አበባ | Addis Ababa',
+    slogan: 'የኢትዮጵያ የንግድ እና የዲፕሎማሲ ልብ',
+    businesses: '50,000+',
+    workers: '200,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏙️',
+    product: 'ዘመናዊ አገልግሎቶች, ቴክኖሎጂ',
+    description: 'የኢትዮጵያ ዋና ከተማ እና የንግድ ማዕከል',
+    population: '5M+',
+    region: 'Central'
+  },
+  'shaggar': {
+    name: 'ሸገር | Shaggar City',
+    slogan: 'ብልህ ከተማ እና የኢንቨስትመንት ማዕከል',
+    businesses: '25,000+',
+    workers: '100,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏗️',
+    product: 'ቴክኖሎጂ, ዘመናዊ አገልግሎቶች',
+    description: 'ብልህ ከተማ እና የኢንቨስትመንት ማዕከል',
+    population: '3M+',
+    region: 'Oromia'
+  },
+  'dire-dawa': {
+    name: 'ድሬ ዳዋ | Dire Dawa',
+    slogan: 'የሎጂስቲክስ እና የማኑፋክቸሪንግ በር',
+    businesses: '15,000+',
+    workers: '60,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🚂',
+    product: 'ጨርቃጨርቅ, ሎጂስቲክስ',
+    description: 'ሁለተኛዋ ትልቋ ከተማ',
+    population: '535K+',
+    region: 'Dire Dawa'
+  },
+  'mekelle': {
+    name: 'መቀሌ | Mekelle',
+    slogan: 'የሰሜኑ የኢንዱስትሪ እና የትምህርት ማዕከል',
+    businesses: '18,000+',
+    workers: '70,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏭',
+    product: 'ሲሚንቶ, ፋርማሲዩቲካልስ',
+    description: 'የሰሜን ኢትዮጵያ የንግድ ማዕከል',
+    population: '500K+',
+    region: 'Tigray'
+  },
+  'adama': {
+    name: 'አዳማ | Adama',
+    slogan: 'የመኪና እና የኢንዱስትሪ ከተማ',
+    businesses: '20,000+',
+    workers: '80,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏭',
+    product: 'የመኪና መሰብሰቢያ, ጨርቃጨርቅ',
+    description: 'የኢንዱስትሪ ከተማ',
+    population: '500K+',
+    region: 'Oromia'
+  },
+  'hawassa': {
+    name: 'ሀዋሳ | Hawassa',
+    slogan: 'የኢንዱስትሪ ፓርክ እና የሀይቅ ከተማ',
+    businesses: '12,000+',
+    workers: '50,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏞️',
+    product: 'ጨርቃጨርቅ, አሳ',
+    description: 'የኢንዱስትሪ ፓርክ ከተማ',
+    population: '387K+',
+    region: 'Sidama'
+  },
+  'gondar': {
+    name: 'ጎንደር | Gondar',
+    slogan: 'የባህል ቅርስ እና የቱሪዝም ከተማ',
+    businesses: '10,000+',
+    workers: '40,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏰',
+    product: 'ቱሪዝም, ጨርቃጨርቅ',
+    description: 'የባህል ቅርስ ከተማ',
+    population: '350K+',
+    region: 'Amhara'
+  },
+  'bahir-dar': {
+    name: 'ባህር ዳር | Bahir Dar',
+    slogan: 'የሀይቆች እና የጨርቃጨርቅ ከተማ',
+    businesses: '12,000+',
+    workers: '50,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏞️',
+    product: 'ጨርቃጨርቅ, ቱሪዝም',
+    description: 'የታና ሀይቅ ዳርቻ',
+    population: '350K+',
+    region: 'Amhara'
+  },
+  'jimma': {
+    name: 'ጅማ | Jimma',
+    slogan: 'የቡና እና የንግድ ከተማ',
+    businesses: '8,000+',
+    workers: '30,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '☕',
+    product: 'ቡና, ማር',
+    description: 'የቡና ከተማ',
+    population: '250K+',
+    region: 'Oromia'
+  },
+  'bishoftu': {
+    name: 'ቢሾፍቱ | Bishoftu',
+    slogan: 'የሀይቆች እና የአየር ሃይል ከተማ',
+    businesses: '12,000+',
+    workers: '45,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '✈️',
+    product: 'ቱሪዝም, አቪዬሽን',
+    description: 'የሀይቆች ከተማ',
+    population: '150K+',
+    region: 'Oromia'
+  },
+  'dessie': {
+    name: 'ደሴ | Dessie',
+    slogan: 'የንግድ እና የእርሻ ከተማ',
+    businesses: '7,000+',
+    workers: '25,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏔️',
+    product: 'ግብርና, ንግድ',
+    description: 'የንግድ እና የእርሻ ከተማ',
+    population: '229K+',
+    region: 'Amhara'
+  },
+  'jijiga': {
+    name: 'ጅጅጋ | Jijiga',
+    slogan: 'የንግድ እና የእንስሳት ከተማ',
+    businesses: '6,000+',
+    workers: '20,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🐪',
+    product: 'ንግድ, እንስሳት',
+    description: 'የንግድ እና የእንስሳት ከተማ',
+    population: '200K+',
+    region: 'Somali'
+  },
+  'harar': {
+    name: 'ሀረር | Harar',
+    slogan: 'የባህል ቅርስ እና የቱሪዝም ከተማ',
+    businesses: '5,000+',
+    workers: '15,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏛️',
+    product: 'ቱሪዝም, ባህል',
+    description: 'የባህል ቅርስ ከተማ',
+    population: '150K+',
+    region: 'Harari'
+  }
+};
+
+// City list for dropdown
+const cityList = Object.keys(cityData).map(key => ({
+  id: key,
+  name: cityData[key].name.split('|')[0].trim(),
+  nameEn: cityData[key].name.split('|')[1]?.trim() || key,
+  icon: cityData[key].icon
+}));
+
 // Ticket Component for City VIP
 const CityTicket = ({ participant, pool, cityInfo, type = 'unverified' }) => {
   const ticketRef = useRef();
@@ -225,100 +394,6 @@ const compressImage = async (file) => {
   });
 };
 
-// City-specific data
-const cityData = {
-  'addis-ababa': {
-    name: 'አዲስ አበባ | Addis Ababa',
-    slogan: 'የኢትዮጵያ የንግድ እና የዲፕሎማሲ ልብ',
-    businesses: '50,000+',
-    workers: '200,000+',
-    color: 'from-gray-700 to-gray-900',
-    icon: '🏙️',
-    product: 'ዘመናዊ አገልግሎቶች, ቴክኖሎጂ',
-    description: 'የኢትዮጵያ ዋና ከተማ እና የንግድ ማዕከል'
-  },
-  'dire-dawa': {
-    name: 'ድሬ ዳዋ | Dire Dawa',
-    slogan: 'የሎጂስቲክስ እና የማኑፋክቸሪንግ በር',
-    businesses: '15,000+',
-    workers: '60,000+',
-    color: 'from-gray-700 to-gray-900',
-    icon: '🚂',
-    product: 'ጨርቃጨርቅ, ሎጂስቲክስ',
-    description: 'ሁለተኛዋ ትልቋ ከተማ'
-  },
-  'mekelle': {
-    name: 'መቀሌ | Mekelle',
-    slogan: 'የሰሜኑ የኢንዱስትሪ እና የትምህርት ማዕከል',
-    businesses: '18,000+',
-    workers: '70,000+',
-    color: 'from-gray-700 to-gray-900',
-    icon: '🏭',
-    product: 'ሲሚንቶ, ፋርማሲዩቲካልስ',
-    description: 'የሰሜን ኢትዮጵያ የንግድ ማዕከል'
-  },
-  'adama': {
-    name: 'አዳማ | Adama',
-    slogan: 'የመኪና እና የኢንዱስትሪ ከተማ',
-    businesses: '20,000+',
-    workers: '80,000+',
-    color: 'from-gray-700 to-gray-900',
-    icon: '🏭',
-    product: 'የመኪና መሰብሰቢያ, ጨርቃጨርቅ',
-    description: 'የኢንዱስትሪ ከተማ'
-  },
-  'hawassa': {
-    name: 'ሀዋሳ | Hawassa',
-    slogan: 'የኢንዱስትሪ ፓርክ እና የሀይቅ ከተማ',
-    businesses: '12,000+',
-    workers: '50,000+',
-    color: 'from-gray-700 to-gray-900',
-    icon: '🏞️',
-    product: 'ጨርቃጨርቅ, አሳ',
-    description: 'የኢንዱስትሪ ፓርክ ከተማ'
-  },
-  'gondar': {
-    name: 'ጎንደር | Gondar',
-    slogan: 'የባህል ቅርስ እና የቱሪዝም ከተማ',
-    businesses: '10,000+',
-    workers: '40,000+',
-    color: 'from-gray-700 to-gray-900',
-    icon: '🏰',
-    product: 'ቱሪዝም, ጨርቃጨርቅ',
-    description: 'የባህል ቅርስ ከተማ'
-  },
-  'bahir-dar': {
-    name: 'ባህር ዳር | Bahir Dar',
-    slogan: 'የሀይቆች እና የጨርቃጨርቅ ከተማ',
-    businesses: '12,000+',
-    workers: '50,000+',
-    color: 'from-gray-700 to-gray-900',
-    icon: '🏞️',
-    product: 'ጨርቃጨርቅ, ቱሪዝም',
-    description: 'የታና ሀይቅ ዳርቻ'
-  },
-  'jimma': {
-    name: 'ጅማ | Jimma',
-    slogan: 'የቡና እና የንግድ ከተማ',
-    businesses: '8,000+',
-    workers: '30,000+',
-    color: 'from-gray-700 to-gray-900',
-    icon: '☕',
-    product: 'ቡና, ማር',
-    description: 'የቡና ከተማ'
-  },
-  'bishoftu': {
-    name: 'ቢሾፍቱ | Bishoftu',
-    slogan: 'የሀይቆች እና የአየር ሃይል ከተማ',
-    businesses: '12,000+',
-    workers: '45,000+',
-    color: 'from-gray-700 to-gray-900',
-    icon: '✈️',
-    product: 'ቱሪዝም, አቪዬሽን',
-    description: 'የሀይቆች ከተማ'
-  }
-};
-
 export default function CityVip() {
   const router = useRouter();
   const { city, name } = router.query;
@@ -326,6 +401,7 @@ export default function CityVip() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [cityInfo, setCityInfo] = useState(null);
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
   
   // Seat selection states
   const [showSeatSelector, setShowSeatSelector] = useState(false);
@@ -354,7 +430,9 @@ export default function CityVip() {
           color: 'from-gray-700 to-gray-900',
           icon: '🇪🇹',
           product: 'ማህበረሰብ እና ንግድ | Community & Trade',
-          description: 'የኢትዮጵያ ከተማ | Ethiopian City'
+          description: 'የኢትዮጵያ ከተማ | Ethiopian City',
+          population: 'N/A',
+          region: 'Ethiopia'
         });
       }
     }
@@ -364,6 +442,11 @@ export default function CityVip() {
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     setUser(user);
+  };
+
+  const handleCityChange = (newCityId) => {
+    setShowCityDropdown(false);
+    router.push(`/cities/${newCityId}`);
   };
 
   const vipPools = {
@@ -426,40 +509,40 @@ export default function CityVip() {
     }
   };
   
-const handleJoinPool = async (poolType) => {
-  // Check if user is logged in FIRST
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    // Store redirect URL in BOTH localStorage and sessionStorage for redundancy
-    const redirectUrl = `/cities/seat?city=${city}&type=${poolType}`;
+  const handleJoinPool = async (poolType) => {
+    // Check if user is logged in FIRST
+    const { data: { user } } = await supabase.auth.getUser();
     
-    // Use localStorage (more reliable through OAuth)
-    localStorage.setItem('abbaa_redirect_after_login', redirectUrl);
-    localStorage.setItem('pendingRole', 'individual');
-    localStorage.setItem('pendingCity', city);
+    if (!user) {
+      // Store redirect URL in BOTH localStorage and sessionStorage for redundancy
+      const redirectUrl = `/cities/seat?city=${city}&type=${poolType}`;
+      
+      // Use localStorage (more reliable through OAuth)
+      localStorage.setItem('abbaa_redirect_after_login', redirectUrl);
+      localStorage.setItem('pendingRole', 'individual');
+      localStorage.setItem('pendingCity', city);
+      
+      // Also store in sessionStorage as backup
+      sessionStorage.setItem('redirectAfterLogin', redirectUrl);
+      sessionStorage.setItem('pendingRole', 'individual');
+      sessionStorage.setItem('pendingCity', city);
+      
+      // Clear any partner flags
+      localStorage.removeItem('isPartner');
+      sessionStorage.removeItem('isPartner');
+      
+      console.log('🔵 City VIP - Stored redirect URL:', redirectUrl);
+      
+      toast.loading('Please login to join City VIP...');
+      router.push('/login');
+      return;
+    }
     
-    // Also store in sessionStorage as backup
-    sessionStorage.setItem('redirectAfterLogin', redirectUrl);
-    sessionStorage.setItem('pendingRole', 'individual');
-    sessionStorage.setItem('pendingCity', city);
-    
-    // Clear any partner flags
-    localStorage.removeItem('isPartner');
-    sessionStorage.removeItem('isPartner');
-    
-    console.log('🔵 City VIP - Stored redirect URL:', redirectUrl);
-    
-    toast.loading('Please login to join City VIP...');
-    router.push('/login');
-    return;
-  }
-  
-  // User is logged in, show seat selector
-  setSelectedPoolType(poolType);
-  setSelectedSeats([]);
-  setShowSeatSelector(true);
-};
+    // User is logged in, show seat selector
+    setSelectedPoolType(poolType);
+    setSelectedSeats([]);
+    setShowSeatSelector(true);
+  };
 
   const submitPayment = async (participantId, reference, file) => {
     let loadingToast = toast.loading('Processing payment...');
@@ -907,8 +990,69 @@ const handleJoinPool = async (poolType) => {
         </Head>
 
         <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
+          {/* City Selector Dropdown - NEW */}
+          <div className="container mx-auto px-4 pt-6">
+            <div className="relative">
+              <button
+                onClick={() => setShowCityDropdown(!showCityDropdown)}
+                className="w-full md:w-auto bg-white border border-gray-300 rounded-xl px-5 py-3 flex items-center justify-between gap-3 hover:shadow-md transition group"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">{cityInfo.icon}</span>
+                  <div className="text-left">
+                    <div className="font-semibold text-gray-800">{cityInfo.name.split('|')[0]}</div>
+                    <div className="text-xs text-gray-500">{cityInfo.name.split('|')[1]}</div>
+                  </div>
+                </div>
+                <svg className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${showCityDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {showCityDropdown && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowCityDropdown(false)} />
+                  <div className="absolute top-full left-0 mt-2 w-full md:w-96 bg-white rounded-2xl shadow-2xl border z-50 max-h-96 overflow-y-auto">
+                    <div className="sticky top-0 bg-white p-3 border-b">
+                      <input
+                        type="text"
+                        id="citySearch"
+                        placeholder="Search city..."
+                        className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-500"
+                        onKeyUp={(e) => {
+                          const searchTerm = e.target.value.toLowerCase();
+                          const items = document.querySelectorAll('.city-dropdown-item');
+                          items.forEach(item => {
+                            const text = item.textContent.toLowerCase();
+                            item.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+                          });
+                        }}
+                      />
+                    </div>
+                    {cityList.map(c => (
+                      <button
+                        key={c.id}
+                        onClick={() => handleCityChange(c.id)}
+                        className={`city-dropdown-item w-full px-4 py-3 text-left hover:bg-gray-50 transition flex items-center gap-3 border-b last:border-b-0 ${city === c.id ? 'bg-gray-100' : ''}`}
+                      >
+                        <span className="text-2xl">{c.icon}</span>
+                        <div>
+                          <div className="font-medium text-gray-800">{c.name}</div>
+                          <div className="text-xs text-gray-500">{c.nameEn}</div>
+                        </div>
+                        {city === c.id && (
+                          <span className="ml-auto text-green-600 text-sm">✓ Current</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
           {/* Hero Section */}
-          <div className={`relative bg-gradient-to-r ${cityInfo.color} text-white overflow-hidden`}>
+          <div className={`relative bg-gradient-to-r ${cityInfo.color} text-white overflow-hidden mt-4`}>
             <div className="absolute inset-0 opacity-10">
               <div className="absolute top-10 left-10 text-9xl animate-bounce">{cityInfo.icon}</div>
               <div className="absolute bottom-10 right-10 text-9xl animate-pulse">🇪🇹</div>
@@ -1045,7 +1189,10 @@ const handleJoinPool = async (poolType) => {
             <div className="container mx-auto px-4 text-center">
               <h2 className="text-3xl font-bold mb-4">ዛሬውኑ ይቀላቀሉ!</h2>
               <p className="text-xl mb-6">Join Today and Become {cityInfo.name.split('|')[0]}&apos;s Next Millionaire!</p>
-              <Link href="/cities" className="inline-block bg-white text-gray-900 px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-100 transition transform hover:scale-105 shadow-xl">🎯 Back to All Cities →</Link>
+              <div className="flex flex-wrap justify-center gap-4">
+                <Link href="/cities" className="inline-block bg-white text-gray-900 px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-100 transition transform hover:scale-105 shadow-xl">🎯 Browse All Cities →</Link>
+                <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="inline-block bg-gray-700 text-white px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-800 transition transform hover:scale-105 shadow-xl">🏙️ Change City →</button>
+              </div>
             </div>
           </div>
         </div>
