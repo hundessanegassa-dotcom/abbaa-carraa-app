@@ -256,8 +256,30 @@ export default function Home() {
                 <span>→</span>
               </button>
             </div>
+
+            {/* Trust Badges - ADDED BACK */}
+            <div className="flex flex-wrap justify-center gap-3 mt-10 pt-6 border-t border-gray-200">
+              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full hover:bg-gray-200 transition">
+                <span className="text-green-600">✓</span> Cash Guarantee
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full hover:bg-gray-200 transition">
+                <span className="text-green-600">✓</span> Blockchain Verified
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full hover:bg-gray-200 transition">
+                <span className="text-green-600">💚</span> 2% for Health
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full hover:bg-gray-200 transition">
+                <span className="text-green-600">✓</span> 24/7 Support
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* MOVING AD - ABOVE COUNTER */}
+        <MovingAd />
+
+        {/* ADVERTISING BANNER - ABOVE COUNTER */}
+        <AdvertisingBanner />
 
         {/* Counter Section - SINGLE COUNTER */}
         <div ref={counterRef} className="relative bg-gradient-to-r from-green-900 via-teal-900 to-emerald-900 py-16 overflow-hidden">
@@ -315,6 +337,22 @@ export default function Home() {
         <div id="pools-section" className="container mx-auto px-4 py-12">
           <h2 className="text-3xl font-bold text-center mb-4">Available Opportunities</h2>
           <p className="text-center text-gray-500 mb-8">Choose from VIP programs or regular pools</p>
+
+          {/* Trust Badges - Also placed here for visibility */}
+          <div className="flex flex-wrap justify-center gap-3 mb-8">
+            <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
+              <span className="text-green-600">✓</span> Cash Guarantee
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
+              <span className="text-green-600">✓</span> Blockchain Verified
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
+              <span className="text-green-600">💚</span> 2% for Health
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
+              <span className="text-green-600">✓</span> 24/7 Support
+            </div>
+          </div>
 
           {/* MERKATO VIP - Featured Card */}
           <div className="mb-12">
@@ -431,8 +469,6 @@ export default function Home() {
           </div>
         </div>
 
-        <MovingAd />
-        <AdvertisingBanner />
         <Testimonials />
         <NewsletterSubscribe />
 
@@ -475,6 +511,9 @@ export default function Home() {
               <button onClick={() => handleRoleSelection('organization')} className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-xl transition transform hover:scale-105 flex items-center gap-2">
                 <span>🏢</span> Become an Organization
               </button>
+            </div>
+            <div className="mt-4 text-xs text-gray-400">
+              <p>✓ No upfront fees ✓ Earn 10% on every successful pool ✓ 24/7 support</p>
             </div>
           </div>
         </div>
