@@ -377,26 +377,23 @@ export default function MerkatoVip() {
   };
 
   const handleJoinPool = async (poolType) => {
-    // Check if user is logged in FIRST
-    const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    const redirectUrl = `/merkato-seat?type=${poolType}`;
+    sessionStorage.setItem('redirectAfterLogin', redirectUrl);
+    sessionStorage.setItem('pendingRole', 'individual'); // Force individual role
+    sessionStorage.removeItem('isPartner'); // Clear any partner flag
     
-    if (!user) {
-      // Store redirect for after login
-      const redirectUrl = `/merkato-seat?type=${poolType}`;
-      sessionStorage.setItem('redirectAfterLogin', redirectUrl);
-      sessionStorage.setItem('pendingRole', 'individual');
-      
-      toast.loading('Please login to join Merkato VIP...');
-      router.push('/login');
-      return;
-    }
-    
-    // User is logged in, show seat selector
-    setSelectedPoolType(poolType);
-    setSelectedSeats([]);
-    setShowSeatSelector(true);
-  };
-
+    toast.loading('Please login to join Merkato VIP...');
+    router.push('/login');
+    return;
+  }
+  
+  setSelectedPoolType(poolType);
+  setSelectedSeats([]);
+  setShowSeatSelector(true);
+};
   const handleFileUpload = async (file) => {
     try {
       validateFile(file);
