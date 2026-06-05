@@ -13,8 +13,16 @@ export default function AuthCallback() {
   const [userRole, setUserRole] = useState(null);
   const [error, setError] = useState(null);
 
+  // Use localStorage for persistence through OAuth redirects
   const getStoredRedirectUrl = () => {
-    const redirectUrl = sessionStorage.getItem('redirectAfterLogin');
+    // Try localStorage first (more reliable)
+    let redirectUrl = localStorage.getItem('abbaa_redirect_after_login');
+    if (redirectUrl) {
+      localStorage.removeItem('abbaa_redirect_after_login');
+      return redirectUrl;
+    }
+    // Fallback to sessionStorage
+    redirectUrl = sessionStorage.getItem('redirectAfterLogin');
     if (redirectUrl) {
       sessionStorage.removeItem('redirectAfterLogin');
       return redirectUrl;
@@ -22,14 +30,22 @@ export default function AuthCallback() {
     return null;
   };
 
+  const storeRedirectUrl = (url) => {
+    if (url) {
+      localStorage.setItem('abbaa_redirect_after_login', url);
+    }
+  };
+
   const isVipRedirect = (url) => {
-    return url && (url.includes('/merkato-seat') || url.includes('/cities/seat'));
+    return url && (url.includes('/merkato-seat') || url.includes('/cities/seat') || url.includes('/pools/'));
   };
 
   const clearStoredData = () => {
+    localStorage.removeItem('abbaa_redirect_after_login');
+    localStorage.removeItem('abbaa_vip_pending');
+    sessionStorage.removeItem('redirectAfterLogin');
     sessionStorage.removeItem('pendingRole');
     sessionStorage.removeItem('isPartner');
-    sessionStorage.removeItem('redirectAfterLogin');
     sessionStorage.removeItem('pendingPoolId');
     sessionStorage.removeItem('pendingPoolType');
     sessionStorage.removeItem('pendingCity');
@@ -42,7 +58,7 @@ export default function AuthCallback() {
       if (sessionError) throw sessionError;
       if (!session) throw new Error('No session found');
       
-      const pendingRole = sessionStorage.getItem('pendingRole') || 'individual';
+      const pendingRole = localStorage.getItem('pendingRole') || sessionStorage.getItem('pendingRole') || 'individual';
       
       // Check if profile exists
       const { data: existingProfile } = await supabase
@@ -89,8 +105,10 @@ export default function AuthCallback() {
       const redirectUrl = getStoredRedirectUrl();
       clearStoredData();
       
-      // CRITICAL: VIP redirect takes priority over everything
-      if (redirectUrl && isVipRedirect(redirectUrl)) {
+      console.log('🔴 Redirecting to:', redirectUrl);
+      
+      // CRITICAL: VIP/pool redirect takes priority
+      if (redirectUrl) {
         router.push(redirectUrl);
         return;
       }
@@ -121,9 +139,13 @@ export default function AuthCallback() {
 
     const handleCallback = async () => {
       try {
+        // Get redirect URL from storage
         const redirectUrl = getStoredRedirectUrl();
         const isVip = isVipRedirect(redirectUrl);
         
+        console.log('🟢 Callback - Redirect URL:', redirectUrl);
+        console.log('🟢 Callback - Is VIP redirect:', isVip);
+
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) throw sessionError;
@@ -145,10 +167,9 @@ export default function AuthCallback() {
         if (profile?.agreement_accepted === true && profile?.role) {
           toast.success(`Welcome back, ${session.user.email}!`);
           
-          const redirectUrl = getStoredRedirectUrl();
-          
-          // CRITICAL: VIP redirect takes priority - even for existing users
-          if (redirectUrl && isVipRedirect(redirectUrl)) {
+          // CRITICAL: Check for redirect URL FIRST - even for existing users
+          if (redirectUrl) {
+            console.log('🎯 Existing user - Redirecting to stored URL:', redirectUrl);
             clearStoredData();
             router.push(redirectUrl);
             return;
@@ -167,13 +188,13 @@ export default function AuthCallback() {
           return;
         }
 
-        // New user - determine if partner or individual
-        let pendingRole = sessionStorage.getItem('pendingRole') || 'individual';
+        // New user - determine role
+        let pendingRole = localStorage.getItem('pendingRole') || sessionStorage.getItem('pendingRole') || 'individual';
         
-        // If this is a VIP redirect, force role to individual
+        // If this is a VIP/pool redirect, force role to individual
         if (isVip) {
           pendingRole = 'individual';
-          sessionStorage.setItem('pendingRole', 'individual');
+          localStorage.setItem('pendingRole', 'individual');
         }
         
         if (isMounted) {
