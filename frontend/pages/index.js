@@ -9,6 +9,7 @@ import GlobalAnnouncement from '../components/GlobalAnnouncement';
 import CitySelector from '../components/CitySelector';
 import CountUp from 'react-countup';
 import { useInView } from 'react-intersection-observer';
+import TopCitySelector from '../components/TopCitySelector'; // NEW IMPORT
 
 // Dynamic imports
 const MovingAd = dynamic(() => import('../components/MovingAd'), { ssr: false, loading: () => null });
@@ -41,7 +42,7 @@ export default function Home() {
   const [showCitySelector, setShowCitySelector] = useState(false);
   const [regularPoolFilter, setRegularPoolFilter] = useState('featured');
 
-  // City VIP Programs Data
+  // City VIP Programs Data - KEPT AS IS
   const cityVipPrograms = [
     { id: 'addis-ababa', name: 'አዲስ አበባ', nameEn: 'Addis Ababa', region: 'Central', population: '5M+', icon: '🏙️', color: 'from-blue-500 to-cyan-600', description: 'የኢትዮጵያ የንግድ ልብ' },
     { id: 'dire-dawa', name: 'ድሬ ዳዋ', nameEn: 'Dire Dawa', region: 'Dire Dawa', population: '535K+', icon: '🚂', color: 'from-green-500 to-teal-600', description: 'የንግድ እና የማኑፋክቸሪንግ ከተማ' },
@@ -54,7 +55,7 @@ export default function Home() {
     { id: 'bishoftu', name: 'ቢሾፍቱ', nameEn: 'Bishoftu', region: 'Oromia', population: '150K+', icon: '✈️', color: 'from-sky-500 to-blue-600', description: 'የሀይቆች ከተማ' },
   ];
 
-  // Merkato VIP Data
+  // Merkato VIP Data - KEPT AS IS
   const merkatoVip = {
     id: 'merkato',
     name: 'መርካቶ',
@@ -156,7 +157,7 @@ export default function Home() {
     }
   };
 
-  // Filter regular pools
+  // Filter regular pools - KEPT AS IS
   const getFilteredPools = () => {
     let filtered = [...pools];
     
@@ -198,12 +199,31 @@ export default function Home() {
       </Head>
 
       <div className="min-h-screen bg-white w-full">
+        {/* PERSISTENT TOP NAVBAR WITH CITY SELECTOR - ADDED */}
+        <nav className="sticky top-0 z-50 bg-gray-900 shadow-lg border-b border-gray-700">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex items-center justify-between h-16">
+              {/* Logo/Brand */}
+              <Link href="/" className="flex items-center gap-2 group">
+                <span className="text-2xl group-hover:scale-110 transition-transform">🎫</span>
+                <div>
+                  <span className="font-bold text-white text-lg">Merkato VIP</span>
+                  <span className="text-xs text-gray-400 ml-2 hidden sm:inline">| Ethiopia's Premier Event Hub</span>
+                </div>
+              </Link>
+
+              {/* City Selector - PERSISTENT at top */}
+              <TopCitySelector />
+            </div>
+          </div>
+        </nav>
+
         <GlobalAnnouncement />
         
         <CashEquivalentBanner />
         <CharityBanner />
 
-        {/* Hero Section */}
+        {/* Hero Section - KEPT AS IS */}
         <div className="w-full bg-gradient-to-br from-green-700 to-teal-700">
           <div className="max-w-7xl mx-auto">
             {!imageLoaded && (
@@ -226,7 +246,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Text Content */}
+        {/* Text Content - KEPT AS IS */}
         <div className="bg-white py-12 w-full">
           <div className="container mx-auto px-4 text-center">
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-4 py-1.5 rounded-full text-sm font-semibold mb-5 animate-pulse">
@@ -257,7 +277,7 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Trust Badges - ADDED BACK */}
+            {/* Trust Badges - KEPT AS IS */}
             <div className="flex flex-wrap justify-center gap-3 mt-10 pt-6 border-t border-gray-200">
               <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full hover:bg-gray-200 transition">
                 <span className="text-green-600">✓</span> Cash Guarantee
@@ -275,13 +295,13 @@ export default function Home() {
           </div>
         </div>
 
-        {/* MOVING AD - ABOVE COUNTER */}
+        {/* MOVING AD - KEPT AS IS */}
         <MovingAd />
 
-        {/* ADVERTISING BANNER - ABOVE COUNTER */}
+        {/* ADVERTISING BANNER - KEPT AS IS */}
         <AdvertisingBanner />
 
-        {/* Counter Section - SINGLE COUNTER */}
+        {/* Counter Section - KEPT AS IS */}
         <div ref={counterRef} className="relative bg-gradient-to-r from-green-900 via-teal-900 to-emerald-900 py-16 overflow-hidden">
           <div className="relative container mx-auto px-4 z-10">
             <div className="text-center mb-8">
@@ -333,12 +353,12 @@ export default function Home() {
           </div>
         </div>
 
-        {/* POOLS SECTION - Under Start Winning Now button */}
+        {/* POOLS SECTION - KEPT AS IS */}
         <div id="pools-section" className="container mx-auto px-4 py-12">
           <h2 className="text-3xl font-bold text-center mb-4">Available Opportunities</h2>
           <p className="text-center text-gray-500 mb-8">Choose from VIP programs or regular pools</p>
 
-          {/* Trust Badges - Also placed here for visibility */}
+          {/* Trust Badges - KEPT AS IS */}
           <div className="flex flex-wrap justify-center gap-3 mb-8">
             <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
               <span className="text-green-600">✓</span> Cash Guarantee
@@ -354,7 +374,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* MERKATO VIP - Featured Card */}
+          {/* MERKATO VIP - KEPT AS IS */}
           <div className="mb-12">
             <Link href="/merkato-vip">
               <div className="relative bg-gradient-to-r from-yellow-500 via-orange-500 to-red-600 rounded-2xl p-8 text-white cursor-pointer transform hover:scale-105 transition-all duration-500 shadow-2xl overflow-hidden group">
@@ -390,7 +410,7 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* CITY VIP - Grid */}
+          {/* CITY VIP - Grid - KEPT AS IS */}
           <div className="mb-12">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-bold text-gray-800">🏙️ City VIP Programs</h3>
@@ -422,7 +442,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* REGULAR POOLS - With Filters */}
+          {/* REGULAR POOLS - KEPT AS IS */}
           <div>
             <div className="flex justify-between items-center flex-wrap gap-4 mb-6">
               <h3 className="text-2xl font-bold text-gray-800">🏊 Regular Pools</h3>
@@ -472,7 +492,7 @@ export default function Home() {
         <Testimonials />
         <NewsletterSubscribe />
 
-        {/* How It Works */}
+        {/* How It Works - KEPT AS IS */}
         <div className="bg-gray-50 py-16 w-full">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
@@ -496,7 +516,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Become Partner Section */}
+        {/* Become Partner Section - KEPT AS IS */}
         <div className={`bg-gradient-to-r from-gray-900 to-gray-800 text-white py-12 transition-all duration-700 transform ${showRoleButtons ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-2xl md:text-3xl font-bold mb-2">Want to Earn More?</h2>
@@ -518,7 +538,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* City Selector Modal */}
+        {/* City Selector Modal - KEPT AS IS */}
         {showCitySelector && (
           <CitySelector onClose={() => setShowCitySelector(false)} />
         )}
