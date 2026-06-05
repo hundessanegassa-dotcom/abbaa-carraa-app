@@ -12,44 +12,25 @@ export default function AuthCallback() {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
   const [error, setError] = useState(null);
+  const [isPartner, setIsPartner] = useState(false);
 
-  const getStoredVipData = () => {
-    // Try localStorage first
-    let vipData = null;
-    try {
-      const stored = localStorage.getItem('abbaa_vip_pending');
-      if (stored) {
-        vipData = JSON.parse(stored);
-        console.log('✅ Found VIP data in localStorage:', vipData);
-        return vipData;
-      }
-    } catch (e) {
-      console.error('Error parsing localStorage VIP data:', e);
+  const getStoredRedirectUrl = () => {
+    // Check for redirect from pool/VIP pages
+    const redirectUrl = sessionStorage.getItem('redirectAfterLogin');
+    if (redirectUrl) {
+      sessionStorage.removeItem('redirectAfterLogin');
+      return redirectUrl;
     }
-    
-    // Try sessionStorage backup
-    try {
-      const stored = sessionStorage.getItem('abbaa_vip_pending_backup');
-      if (stored) {
-        vipData = JSON.parse(stored);
-        console.log('✅ Found VIP data in sessionStorage backup:', vipData);
-        return vipData;
-      }
-    } catch (e) {
-      console.error('Error parsing sessionStorage VIP data:', e);
-    }
-    
     return null;
   };
 
-  const clearStoredVipData = () => {
-    localStorage.removeItem('abbaa_vip_pending');
-    sessionStorage.removeItem('abbaa_vip_pending_backup');
+  const clearStoredData = () => {
     sessionStorage.removeItem('pendingRole');
-    sessionStorage.removeItem('pendingPoolType');
-    sessionStorage.removeItem('pendingPoolSource');
-    sessionStorage.removeItem('pendingCity');
+    sessionStorage.removeItem('isPartner');
     sessionStorage.removeItem('redirectAfterLogin');
+    sessionStorage.removeItem('pendingPoolId');
+    sessionStorage.removeItem('pendingPoolType');
+    sessionStorage.removeItem('pendingCity');
   };
 
   const handleAcceptAgreement = useCallback(async () => {
@@ -59,13 +40,7 @@ export default function AuthCallback() {
       if (sessionError) throw sessionError;
       if (!session) throw new Error('No session found');
       
-      // Get VIP data
-      const vipData = getStoredVipData();
-      const pendingRole = sessionStorage.getItem('pendingRole') || vipData?.role;
-      const redirectUrl = vipData?.redirectTo || sessionStorage.getItem('redirectAfterLogin');
-      
-      console.log('🔴 Accepting agreement - Redirect URL:', redirectUrl);
-      console.log('🔴 VIP Data:', vipData);
+      const pendingRole = sessionStorage.getItem('pendingRole') || 'individual';
       
       // Check if profile exists
       const { data: existingProfile } = await supabase
@@ -81,8 +56,8 @@ export default function AuthCallback() {
             agreement_accepted: true,
             agreement_accepted_at: new Date().toISOString(),
             agreement_version: '1.0',
-            role: pendingRole || userRole,
-            user_type: pendingRole || userRole,
+            role: pendingRole,
+            user_type: pendingRole,
             status: pendingRole === 'individual' ? 'active' : 'pending_approval',
             updated_at: new Date().toISOString()
           })
@@ -94,8 +69,8 @@ export default function AuthCallback() {
             id: session.user.id,
             email: session.user.email,
             full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
-            role: pendingRole || userRole,
-            user_type: pendingRole || userRole,
+            role: pendingRole,
+            user_type: pendingRole,
             agreement_accepted: true,
             agreement_accepted_at: new Date().toISOString(),
             agreement_version: '1.0',
@@ -105,31 +80,35 @@ export default function AuthCallback() {
           });
       }
       
-      toast.success('Agreement accepted! Welcome to Abbaa Carraa!');
+      toast.success('Welcome to Abbaa Carraa!');
       
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // ========== CRITICAL: Redirect based on VIP data ==========
-      clearStoredVipData();
+      clearStoredData();
       
-      if (redirectUrl && (redirectUrl.includes('/merkato-seat') || redirectUrl.includes('/cities/seat'))) {
-        console.log('🎯 Redirecting to VIP page:', redirectUrl);
+      // Redirect partners to their application form
+      if (pendingRole !== 'individual') {
+        router.push(`/become-${pendingRole}`);
+        return;
+      }
+      
+      // Redirect individuals to their intended pool/VIP page or listings
+      const redirectUrl = getStoredRedirectUrl();
+      if (redirectUrl && (redirectUrl.includes('/pools/') || redirectUrl.includes('/merkato-seat') || redirectUrl.includes('/cities/seat'))) {
         router.push(redirectUrl);
         return;
       }
       
-      // Fallback to listings
-      console.log('🎯 No VIP redirect, going to listings');
       router.push('/listings');
       
     } catch (err) {
       console.error('Accept agreement error:', err);
       toast.error('Failed to save agreement: ' + err.message);
     }
-  }, [userRole, router]);
+  }, [router]);
 
   const handleClose = useCallback(() => {
-    clearStoredVipData();
+    clearStoredData();
     supabase.auth.signOut();
     router.push('/login');
   }, [router]);
@@ -139,13 +118,9 @@ export default function AuthCallback() {
 
     const handleCallback = async () => {
       try {
-        // Get VIP data from storage
-        const vipData = getStoredVipData();
-        const redirectUrl = vipData?.redirectTo || sessionStorage.getItem('redirectAfterLogin');
+        const isPartnerFlag = sessionStorage.getItem('isPartner') === 'true';
+        setIsPartner(isPartnerFlag);
         
-        console.log('🟢 Callback - VIP Data:', vipData);
-        console.log('🟢 Callback - Redirect URL:', redirectUrl);
-
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) throw sessionError;
@@ -167,22 +142,17 @@ export default function AuthCallback() {
         if (profile?.agreement_accepted === true && profile?.role) {
           toast.success(`Welcome back, ${session.user.email}!`);
           
-          // ========== CRITICAL: Redirect based on VIP data ==========
-          clearStoredVipData();
+          const redirectUrl = getStoredRedirectUrl();
+          clearStoredData();
           
-          if (vipData?.type === 'merkato' && vipData?.poolType) {
-            console.log('🎯 Existing user - Redirecting to Merkato VIP');
-            router.push(`/merkato-seat?type=${vipData.poolType}`);
+          // Partners go to their dashboard
+          if (profile.role !== 'individual') {
+            router.push(`/${profile.role}/dashboard`);
             return;
           }
           
-          if (vipData?.type === 'city' && vipData?.city && vipData?.poolType) {
-            console.log('🎯 Existing user - Redirecting to City VIP');
-            router.push(`/cities/seat?city=${vipData.city}&type=${vipData.poolType}`);
-            return;
-          }
-          
-          if (redirectUrl && redirectUrl.includes('/pools/')) {
+          // Individuals go to their intended page
+          if (redirectUrl && (redirectUrl.includes('/pools/') || redirectUrl.includes('/merkato-seat') || redirectUrl.includes('/cities/seat'))) {
             router.push(redirectUrl);
             return;
           }
@@ -191,16 +161,13 @@ export default function AuthCallback() {
           return;
         }
 
-        // New user or agreement not accepted
-        let roleToUse = profile?.role || vipData?.role || 'individual';
-        
-        if (vipData?.type === 'merkato' || vipData?.type === 'city') {
-          roleToUse = 'individual';
-        }
+        // New user - determine if partner or individual
+        const pendingRole = sessionStorage.getItem('pendingRole') || 'individual';
         
         if (isMounted) {
-          setUserRole(roleToUse);
-          setShowAgreement(true);
+          setUserRole(pendingRole);
+          // Only show agreement for partners
+          setShowAgreement(pendingRole !== 'individual');
           setLoading(false);
         }
         
@@ -245,7 +212,8 @@ export default function AuthCallback() {
     return <LoadingSpinner fullPage message="Completing sign in..." />;
   }
 
-  if (showAgreement && userRole) {
+  // Only show agreement for partners
+  if (showAgreement && userRole && userRole !== 'individual') {
     return (
       <AgreementModal
         isOpen={true}
@@ -254,6 +222,12 @@ export default function AuthCallback() {
         userRole={userRole}
       />
     );
+  }
+
+  // For individuals, skip agreement and proceed directly
+  if (userRole === 'individual') {
+    handleAcceptAgreement();
+    return <LoadingSpinner fullPage message="Redirecting..." />;
   }
 
   return null;
