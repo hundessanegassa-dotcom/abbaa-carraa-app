@@ -12,10 +12,8 @@ export default function AuthCallback() {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
   const [error, setError] = useState(null);
-  const [isPartner, setIsPartner] = useState(false);
 
   const getStoredRedirectUrl = () => {
-    // Check for redirect from pool/VIP pages
     const redirectUrl = sessionStorage.getItem('redirectAfterLogin');
     if (redirectUrl) {
       sessionStorage.removeItem('redirectAfterLogin');
@@ -94,7 +92,7 @@ export default function AuthCallback() {
       
       // Redirect individuals to their intended pool/VIP page or listings
       const redirectUrl = getStoredRedirectUrl();
-      if (redirectUrl && (redirectUrl.includes('/pools/') || redirectUrl.includes('/merkato-seat') || redirectUrl.includes('/cities/seat'))) {
+      if (redirectUrl) {
         router.push(redirectUrl);
         return;
       }
@@ -118,9 +116,6 @@ export default function AuthCallback() {
 
     const handleCallback = async () => {
       try {
-        const isPartnerFlag = sessionStorage.getItem('isPartner') === 'true';
-        setIsPartner(isPartnerFlag);
-        
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) throw sessionError;
@@ -152,7 +147,7 @@ export default function AuthCallback() {
           }
           
           // Individuals go to their intended page
-          if (redirectUrl && (redirectUrl.includes('/pools/') || redirectUrl.includes('/merkato-seat') || redirectUrl.includes('/cities/seat'))) {
+          if (redirectUrl) {
             router.push(redirectUrl);
             return;
           }
