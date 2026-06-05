@@ -304,16 +304,27 @@ export default function PoolDetails() {
   }
 
   // FIXED: Proper redirect for regular pool
-  const handleJoinNow = () => {
-    if (!user) {
-      sessionStorage.setItem('redirectAfterLogin', `/pools/${id}`);
-      sessionStorage.setItem('pendingRole', 'individual');
-      toast.error('Please login to join this pool');
-      router.push('/login');
-      return;
-    }
-    setShowSeatSelector(true);
-  };
+const handleJoinNow = () => {
+  if (!user) {
+    // Store redirect URL in BOTH localStorage and sessionStorage for redundancy
+    const redirectUrl = `/pools/${id}`;
+    
+    // Use localStorage (more reliable through OAuth)
+    localStorage.setItem('abbaa_redirect_after_login', redirectUrl);
+    localStorage.setItem('pendingRole', 'individual');
+    
+    // Also store in sessionStorage as backup
+    sessionStorage.setItem('redirectAfterLogin', redirectUrl);
+    sessionStorage.setItem('pendingRole', 'individual');
+    
+    console.log('🔵 Regular Pool - Stored redirect URL:', redirectUrl);
+    
+    toast.error('Please login to join this pool');
+    router.push('/login');
+    return;
+  }
+  setShowSeatSelector(true);
+};
 
   const handlePaymentSuccess = async () => {
     // Fetch complete participant data
