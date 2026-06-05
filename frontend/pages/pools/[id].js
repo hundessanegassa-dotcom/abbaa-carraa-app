@@ -303,11 +303,11 @@ export default function PoolDetails() {
     }
   }
 
+  // FIXED: Proper redirect for regular pool
   const handleJoinNow = () => {
     if (!user) {
-      sessionStorage.setItem('pendingPoolId', id);
-      sessionStorage.setItem('pendingRole', 'individual');
       sessionStorage.setItem('redirectAfterLogin', `/pools/${id}`);
+      sessionStorage.setItem('pendingRole', 'individual');
       toast.error('Please login to join this pool');
       router.push('/login');
       return;
