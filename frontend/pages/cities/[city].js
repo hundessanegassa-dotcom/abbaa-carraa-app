@@ -427,22 +427,25 @@ export default function CityVip() {
   };
 
   const handleJoinPool = async (poolType) => {
-    if (!user) {
-      // Store redirect for after login
-      const redirectUrl = `/cities/seat?city=${city}&type=${poolType}`;
-      sessionStorage.setItem('redirectAfterLogin', redirectUrl);
-      sessionStorage.setItem('pendingRole', 'individual');
-      
-      console.log('City VIP - Stored redirect URL:', redirectUrl);
-      toast.loading('Please login to join City VIP...');
-      router.push('/login');
-      return;
-    }
+  // Check if user is logged in FIRST
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    // Store redirect for after login
+    const redirectUrl = `/cities/seat?city=${city}&type=${poolType}`;
+    sessionStorage.setItem('redirectAfterLogin', redirectUrl);
+    sessionStorage.setItem('pendingRole', 'individual');
     
-    setSelectedPoolType(poolType);
-    setSelectedSeats([]);
-    setShowSeatSelector(true);
-  };
+    toast.loading('Please login to join City VIP...');
+    router.push('/login');
+    return;
+  }
+  
+  // User is logged in, show seat selector
+  setSelectedPoolType(poolType);
+  setSelectedSeats([]);
+  setShowSeatSelector(true);
+};
 
   const submitPayment = async (participantId, reference, file) => {
     let loadingToast = toast.loading('Processing payment...');
