@@ -297,20 +297,7 @@ export default function MerkatoVip() {
 
   useEffect(() => {
     checkUser();
-    // Check for stored VIP data on page load (for debugging)
-    checkStoredVipData();
   }, []);
-
-  const checkStoredVipData = () => {
-    try {
-      const vipData = localStorage.getItem('abbaa_vip_pending');
-      if (vipData) {
-        console.log('Found stored VIP data:', JSON.parse(vipData));
-      }
-    } catch (e) {
-      console.error('Error checking VIP data:', e);
-    }
-  };
 
   const checkUser = async () => {
     try {
@@ -388,27 +375,26 @@ export default function MerkatoVip() {
     }
   };
 
-  // FIXED: Correct handleJoinPool function with localStorage
   const handleJoinPool = async (poolType) => {
     if (!user) {
-      // Store VIP data in localStorage (persists through OAuth redirects)
+      // Store VIP data in localStorage for redirect after login
       const vipData = {
-        role: 'individual',
+        type: 'merkato',
         poolType: poolType,
-        poolSource: 'merkato-vip',
-        redirectUrl: `/merkato-seat?type=${poolType}`,
+        redirectTo: `/merkato-seat?type=${poolType}`,
         timestamp: Date.now()
       };
       
       localStorage.setItem('abbaa_vip_pending', JSON.stringify(vipData));
-      console.log('Merkato VIP - Stored in localStorage:', vipData);
+      sessionStorage.setItem('abbaa_vip_pending_backup', JSON.stringify(vipData));
+      
+      console.log('Merkato VIP - Stored redirect data:', vipData);
       
       toast.loading('Please login to join Merkato VIP...');
       router.push('/login');
       return;
     }
     
-    // User is already logged in, go directly to seat selection
     setSelectedPoolType(poolType);
     setSelectedSeats([]);
     setShowSeatSelector(true);
@@ -489,7 +475,6 @@ export default function MerkatoVip() {
     const pool = vipPools[selectedPoolType];
     const entryFeeAmount = parseInt(pool.contribution);
     const totalSeatsCount = pool.totalSeats;
-    // NO LIMIT - shows all seats
     const seatNumbers = Array.from({ length: totalSeatsCount }, (_, i) => i + 1);
     
     const toggleSeat = (seatNum) => {
@@ -852,15 +837,15 @@ export default function MerkatoVip() {
       <div className="p-6">
         <div className="space-y-3 mb-6">
           <div className="flex items-center gap-3 text-gray-600">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             <span>{pool.time}</span>
           </div>
           <div className="flex items-center gap-3 text-gray-600">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
             <span>📅 Listed: {pool.listedDate}</span>
           </div>
           <div className="flex items-center gap-3 text-gray-600">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             <span>🎲 Draw: {pool.drawDate}</span>
           </div>
           <div className="flex items-center gap-3 text-gray-600">
@@ -868,11 +853,11 @@ export default function MerkatoVip() {
             <span>Next Draw: {pool.nextDraw}</span>
           </div>
           <div className="flex items-center gap-3 text-gray-600">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
             <span>{pool.winnerCount} አሸናፊ | Winner Every {pool.frequency}</span>
           </div>
           <div className="flex items-center gap-3 text-gray-600">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
             <span>💺 Total Seats: {pool.totalSeats.toLocaleString()}</span>
           </div>
         </div>
