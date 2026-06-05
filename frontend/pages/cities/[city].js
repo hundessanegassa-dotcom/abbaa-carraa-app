@@ -427,20 +427,12 @@ export default function CityVip() {
 
   const handleJoinPool = async (poolType) => {
     if (!user) {
-      // Store VIP data in localStorage for redirect after login
-      const vipData = {
-        type: 'city',
-        city: city,
-        poolType: poolType,
-        redirectTo: `/cities/seat?city=${city}&type=${poolType}`,
-        timestamp: Date.now()
-      };
+      // Store redirect for after login - FIXED for proper redirect
+      const redirectUrl = `/cities/seat?city=${city}&type=${poolType}`;
+      sessionStorage.setItem('redirectAfterLogin', redirectUrl);
+      sessionStorage.setItem('pendingRole', 'individual');
       
-      localStorage.setItem('abbaa_vip_pending', JSON.stringify(vipData));
-      sessionStorage.setItem('abbaa_vip_pending_backup', JSON.stringify(vipData));
-      
-      console.log('City VIP - Stored redirect data:', vipData);
-      
+      console.log('City VIP - Stored redirect URL:', redirectUrl);
       toast.loading('Please login to join City VIP...');
       router.push('/login');
       return;
@@ -514,7 +506,6 @@ export default function CityVip() {
     const pool = vipPools[selectedPoolType];
     const entryFeeAmount = parseInt(pool.contribution);
     const totalSeatsCount = pool.totalSeats;
-    // NO LIMIT - shows ALL seats from pool card
     const seatNumbers = Array.from({ length: totalSeatsCount }, (_, i) => i + 1);
     
     const toggleSeat = (seatNum) => {
