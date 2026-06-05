@@ -1,4 +1,4 @@
-// components/TopCitySelector.js
+// components/TopCitySelector.js - FIXED VERSION
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
@@ -24,15 +24,10 @@ const allEthiopianCities = [
   { id: 'ambo', name: 'አምቦ', nameEn: 'Ambo', icon: '💧', region: 'Oromia', joinPath: '/cities/ambo' },
   { id: 'shashemene', name: 'ሻሸመኔ', nameEn: 'Shashemene', icon: '🛍️', region: 'Oromia', joinPath: '/cities/shashemene' },
   { id: 'assosa', name: 'አሶሳ', nameEn: 'Assosa', icon: '🌿', region: 'Benishangul', joinPath: '/cities/assosa' },
-  { id: 'semera', name: 'ሰሜና', nameEn: 'Semera', icon: '🐪', region: 'Afar', joinPath: '/cities/semera' },
   { id: 'welkite', name: 'ወልቂጤ', nameEn: 'Welkite', icon: '🌾', region: 'South', joinPath: '/cities/welkite' },
   { id: 'hosana', name: 'ሆሳና', nameEn: 'Hosana', icon: '🌻', region: 'South', joinPath: '/cities/hosana' },
   { id: 'metu', name: 'መቱ', nameEn: 'Metu', icon: '🌿', region: 'Oromia', joinPath: '/cities/metu' },
   { id: 'ziway', name: 'ዚዋይ', nameEn: 'Ziway', icon: '🐟', region: 'Oromia', joinPath: '/cities/ziway' },
-  { id: 'robe', name: 'ሮቤ', nameEn: 'Robe', icon: '🌄', region: 'Oromia', joinPath: '/cities/robe' },
-  { id: 'holeta', name: 'ሆሌታ', nameEn: 'Holeta', icon: '🌾', region: 'Oromia', joinPath: '/cities/holeta' },
-  { id: 'gelan', name: 'ገላን', nameEn: 'Gelan', icon: '🏘️', region: 'Oromia', joinPath: '/cities/gelan' },
-  { id: 'modjo', name: 'ሞጆ', nameEn: 'Modjo', icon: '🚛', region: 'Oromia', joinPath: '/cities/modjo' },
   { id: 'kombolcha', name: 'ኮምቦልቻ', nameEn: 'Kombolcha', icon: '🏭', region: 'Amhara', joinPath: '/cities/kombolcha' },
 ];
 
@@ -43,6 +38,7 @@ export default function TopCitySelector() {
   const [selectedCity, setSelectedCity] = useState(null);
 
   useEffect(() => {
+    // Only load from localStorage, don't auto-navigate
     const savedCity = localStorage.getItem('merkato_selected_city');
     if (savedCity) {
       try {
@@ -59,13 +55,16 @@ export default function TopCitySelector() {
   );
 
   const handleCitySelect = (city) => {
+    // Save to localStorage
     localStorage.setItem('merkato_selected_city', JSON.stringify(city));
     setSelectedCity(city);
     setIsOpen(false);
     setSearchTerm('');
     
-    toast.success(`${city.icon} Joining ${city.name} VIP Program...`, { duration: 2000, icon: '🎯' });
-    router.push(city.joinPath);
+    toast.success(`${city.icon} Joining ${city.name} VIP Program...`, { duration: 2000 });
+    
+    // Use window.location for hard navigation to avoid conflicts
+    window.location.href = city.joinPath;
   };
 
   return (
