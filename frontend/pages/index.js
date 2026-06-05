@@ -1,4 +1,4 @@
-// pages/index.js - COMPLETE UPDATED VERSION
+// pages/index.js - COMPLETE FIXED VERSION
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -41,10 +41,10 @@ export default function Home() {
   const [showRoleButtons, setShowRoleButtons] = useState(false);
   const [showCitySelector, setShowCitySelector] = useState(false);
   const [regularPoolFilter, setRegularPoolFilter] = useState('featured');
-  const [showCityDropdown, setShowCityDropdown] = useState(false); // For compact dropdown
-  const [citySearchTerm, setCitySearchTerm] = useState(''); // For search
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const [citySearchTerm, setCitySearchTerm] = useState('');
 
-  // Complete City VIP Programs Data - ALL CITIES
+  // Complete City VIP Programs Data - ALL CITIES (for dropdown only)
   const allCityVipPrograms = [
     { id: 'addis-ababa', name: 'አዲስ አበባ', nameEn: 'Addis Ababa', region: 'Central', icon: '🏙️' },
     { id: 'shaggar', name: 'ሸገር', nameEn: 'Shaggar City', region: 'Oromia', icon: '🏗️' },
@@ -209,7 +209,7 @@ export default function Home() {
       </Head>
 
       <div className="min-h-screen bg-white w-full">
-        {/* PERSISTENT TOP NAVBAR WITH CITY SELECTOR - DIRECTS TO JOIN */}
+        {/* PERSISTENT TOP NAVBAR WITH CITY SELECTOR */}
         <nav className="sticky top-0 z-50 bg-gray-900 shadow-lg border-b border-gray-700">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-between h-16">
@@ -375,10 +375,17 @@ export default function Home() {
             </div>
           </div>
 
-          {/* MERKATO VIP */}
+          {/* MERKATO VIP - FIXED with hard navigation */}
           <div className="mb-12">
-            <Link href="/merkato-vip">
-              <div className="relative bg-gradient-to-r from-yellow-500 via-orange-500 to-red-600 rounded-2xl p-8 text-white cursor-pointer transform hover:scale-105 transition-all duration-500 shadow-2xl overflow-hidden group">
+            <a 
+              href="/merkato-vip"
+              onClick={(e) => {
+                e.preventDefault();
+                window.location.href = '/merkato-vip';
+              }}
+              className="block cursor-pointer"
+            >
+              <div className="relative bg-gradient-to-r from-yellow-500 via-orange-500 to-red-600 rounded-2xl p-8 text-white transform hover:scale-105 transition-all duration-500 shadow-2xl overflow-hidden group">
                 <div className="absolute inset-0 opacity-20">
                   <div className="absolute -top-10 -left-10 text-8xl animate-bounce">🏪</div>
                   <div className="absolute -bottom-10 -right-10 text-8xl animate-pulse">💰</div>
@@ -408,10 +415,10 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-            </Link>
+            </a>
           </div>
 
-          {/* CITY VIP PROGRAMS - COMPACT DROPDOWN VERSION (NO BIG CARDS) */}
+          {/* CITY VIP PROGRAMS - COMPACT DROPDOWN VERSION (NO SEPARATE CARDS) */}
           <div className="mb-12">
             <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-6 shadow-xl">
               <div className="flex items-center justify-between flex-wrap gap-4">
@@ -436,7 +443,7 @@ export default function Home() {
                     </svg>
                   </button>
                   
-                  {/* DROPDOWN LIST - Appears when clicked */}
+                  {/* DROPDOWN LIST */}
                   {showCityDropdown && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setShowCityDropdown(false)} />
@@ -456,14 +463,16 @@ export default function Home() {
                             <div className="p-4 text-center text-gray-500">No cities found</div>
                           ) : (
                             filteredCityList.map(city => (
-                              <button
+                              <a
                                 key={city.id}
-                                onClick={() => {
+                                href={`/cities/${city.id}`}
+                                onClick={(e) => {
+                                  e.preventDefault();
                                   setShowCityDropdown(false);
                                   setCitySearchTerm('');
-                                  router.push(`/cities/${city.id}`);
+                                  window.location.href = `/cities/${city.id}`;
                                 }}
-                                className="w-full text-left px-4 py-3 hover:bg-gray-50 transition border-b last:border-0 flex items-center gap-3"
+                                className="w-full text-left px-4 py-3 hover:bg-gray-50 transition border-b last:border-0 flex items-center gap-3 cursor-pointer block"
                               >
                                 <span className="text-2xl">{city.icon}</span>
                                 <div className="flex-1">
@@ -471,7 +480,7 @@ export default function Home() {
                                   <div className="text-xs text-gray-500">{city.nameEn} • {city.region}</div>
                                 </div>
                                 <span className="text-green-600 text-sm font-medium">Join →</span>
-                              </button>
+                              </a>
                             ))
                           )}
                         </div>
