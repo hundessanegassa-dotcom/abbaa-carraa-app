@@ -1,5 +1,4 @@
-
-// pages/index.js
+// pages/index.js - COMPLETE UPDATED VERSION
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -42,62 +41,43 @@ export default function Home() {
   const [showRoleButtons, setShowRoleButtons] = useState(false);
   const [showCitySelector, setShowCitySelector] = useState(false);
   const [regularPoolFilter, setRegularPoolFilter] = useState('featured');
-  const [cityVipFilter, setCityVipFilter] = useState('all'); // NEW: Filter for City VIP Programs dropdown
+  const [showCityDropdown, setShowCityDropdown] = useState(false); // For compact dropdown
+  const [citySearchTerm, setCitySearchTerm] = useState(''); // For search
 
-  // Complete City VIP Programs Data - ALL 29+ CITIES
+  // Complete City VIP Programs Data - ALL CITIES
   const allCityVipPrograms = [
-    { id: 'addis-ababa', name: 'አዲስ አበባ', nameEn: 'Addis Ababa', region: 'Central', population: '5M+', icon: '🏙️', color: 'from-blue-500 to-cyan-600', description: 'የኢትዮጵያ የንግድ ልብ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'shaggar', name: 'ሸገር', nameEn: 'Shaggar City', region: 'Oromia', population: '3M+', icon: '🏗️', color: 'from-cyan-500 to-blue-600', description: 'ብልህ ከተማ እና የኢንቨስትመንት ማዕከል', prizeAmount: 'Up to 40M ETB' },
-    { id: 'dire-dawa', name: 'ድሬ ዳዋ', nameEn: 'Dire Dawa', region: 'Dire Dawa', population: '535K+', icon: '🚂', color: 'from-green-500 to-teal-600', description: 'የንግድ እና የማኑፋክቸሪንግ ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'mekelle', name: 'መቀሌ', nameEn: 'Mekelle', region: 'Tigray', population: '500K+', icon: '🏭', color: 'from-purple-500 to-pink-600', description: 'ከፍተኛ የኢኮኖሚ ዕድገት', prizeAmount: 'Up to 40M ETB' },
-    { id: 'adama', name: 'አዳማ', nameEn: 'Adama', region: 'Oromia', population: '500K+', icon: '🏭', color: 'from-orange-500 to-red-600', description: 'የኢንዱስትሪ እና የንግድ ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'hawassa', name: 'ሀዋሳ', nameEn: 'Hawassa', region: 'Sidama', population: '387K+', icon: '🏞️', color: 'from-teal-500 to-green-600', description: 'የኢንዱስትሪ ፓርክ ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'gondar', name: 'ጎንደር', nameEn: 'Gondar', region: 'Amhara', population: '350K+', icon: '🏰', color: 'from-amber-500 to-yellow-600', description: 'የባህል እና የቱሪዝም ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'bahir-dar', name: 'ባህር ዳር', nameEn: 'Bahir Dar', region: 'Amhara', population: '350K+', icon: '🏞️', color: 'from-cyan-500 to-blue-600', description: 'የቱሪዝም እና የጨርቃጨርቅ ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'jimma', name: 'ጅማ', nameEn: 'Jimma', region: 'Oromia', population: '250K+', icon: '☕', color: 'from-emerald-500 to-green-600', description: 'የቡና እና የንግድ ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'bishoftu', name: 'ቢሾፍቱ', nameEn: 'Bishoftu', region: 'Oromia', population: '150K+', icon: '✈️', color: 'from-sky-500 to-blue-600', description: 'የሀይቆች ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'dessie', name: 'ደሴ', nameEn: 'Dessie', region: 'Amhara', population: '229K+', icon: '🏔️', color: 'from-yellow-500 to-orange-600', description: 'የንግድ እና የእርሻ ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'jijiga', name: 'ጅጅጋ', nameEn: 'Jijiga', region: 'Somali', population: '200K+', icon: '🐪', color: 'from-emerald-500 to-teal-600', description: 'የንግድ እና የእንስሳት ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'harar', name: 'ሀረር', nameEn: 'Harar', region: 'Harari', population: '150K+', icon: '🏛️', color: 'from-rose-500 to-pink-600', description: 'የባህል ቅርስ እና የቱሪዝም ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'nekemte', name: 'ነቀምቴ', nameEn: 'Nekemte', region: 'Oromia', population: '150K+', icon: '☕', color: 'from-amber-500 to-yellow-600', description: 'የንግድ እና የቡና ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'arba-minch', name: 'አርባ ምንጭ', nameEn: 'Arba Minch', region: 'South', population: '150K+', icon: '🏞️', color: 'from-blue-500 to-cyan-600', description: 'የቱሪዝም እና የግብርና ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'sodo', name: 'ሶዶ', nameEn: 'Sodo', region: 'South', population: '150K+', icon: '🛍️', color: 'from-orange-500 to-red-600', description: 'የንግድ እና የግብርና ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'ambo', name: 'አምቦ', nameEn: 'Ambo', region: 'Oromia', population: '100K+', icon: '💧', color: 'from-green-500 to-teal-500', description: 'የማዕድን ውሃ እና የግብርና ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'shashemene', name: 'ሻሸመኔ', nameEn: 'Shashemene', region: 'Oromia', population: '150K+', icon: '🛍️', color: 'from-yellow-500 to-amber-600', description: 'የንግድ እና የኢንዱስትሪ ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'assosa', name: 'አሶሳ', nameEn: 'Assosa', region: 'Benishangul', population: '100K+', icon: '🌿', color: 'from-green-500 to-emerald-600', description: 'የንግድ እና የግብርና ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'semera', name: 'ሰሜና', nameEn: 'Semera', region: 'Afar', population: '50K+', icon: '🐪', color: 'from-yellow-500 to-orange-600', description: 'የንግድ እና የእንስሳት ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'welkite', name: 'ወልቂጤ', nameEn: 'Welkite', region: 'South', population: '70K+', icon: '🌾', color: 'from-lime-600 to-green-700', description: 'የግብርና እና የእርሻ ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'hosana', name: 'ሆሳና', nameEn: 'Hosana', region: 'South', population: '90K+', icon: '🌻', color: 'from-yellow-600 to-amber-700', description: 'የግብርና እና የንግድ ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'metu', name: 'መቱ', nameEn: 'Metu', region: 'Oromia', population: '60K+', icon: '🌿', color: 'from-emerald-600 to-green-700', description: 'የቡና እና የግብርና ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'ziway', name: 'ዚዋይ', nameEn: 'Ziway', region: 'Oromia', population: '80K+', icon: '🐟', color: 'from-teal-500 to-cyan-600', description: 'የአሳ ማጥመድ እና የቱሪዝም ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'robe', name: 'ሮቤ', nameEn: 'Robe', region: 'Oromia', population: '80K+', icon: '🌄', color: 'from-green-600 to-teal-600', description: 'የከፍተኛ ሀይላንድ ቱሪዝም', prizeAmount: 'Up to 40M ETB' },
-    { id: 'holeta', name: 'ሆሌታ', nameEn: 'Holeta', region: 'Oromia', population: '80K+', icon: '🌾', color: 'from-lime-500 to-green-500', description: 'የግብርና እና የሰልጠኛ ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'gelan', name: 'ገላን', nameEn: 'Gelan', region: 'Oromia', population: '200K+', icon: '🏘️', color: 'from-gray-500 to-slate-600', description: 'ፈጣን የከተማ ልማት', prizeAmount: 'Up to 40M ETB' },
-    { id: 'modjo', name: 'ሞጆ', nameEn: 'Modjo', region: 'Oromia', population: '120K+', icon: '🚛', color: 'from-amber-600 to-orange-600', description: 'የሎጂስቲክስ እና የደረቅ ወደብ ከተማ', prizeAmount: 'Up to 40M ETB' },
-    { id: 'kombolcha', name: 'ኮምቦልቻ', nameEn: 'Kombolcha', region: 'Amhara', population: '120K+', icon: '🏭', color: 'from-slate-600 to-gray-700', description: 'የኢንዱስትሪ ዞን እና ደረቅ ወደብ', prizeAmount: 'Up to 40M ETB' },
+    { id: 'addis-ababa', name: 'አዲስ አበባ', nameEn: 'Addis Ababa', region: 'Central', icon: '🏙️' },
+    { id: 'shaggar', name: 'ሸገር', nameEn: 'Shaggar City', region: 'Oromia', icon: '🏗️' },
+    { id: 'dire-dawa', name: 'ድሬ ዳዋ', nameEn: 'Dire Dawa', region: 'Dire Dawa', icon: '🚂' },
+    { id: 'mekelle', name: 'መቀሌ', nameEn: 'Mekelle', region: 'Tigray', icon: '🏭' },
+    { id: 'adama', name: 'አዳማ', nameEn: 'Adama', region: 'Oromia', icon: '🏭' },
+    { id: 'hawassa', name: 'ሀዋሳ', nameEn: 'Hawassa', region: 'Sidama', icon: '🏞️' },
+    { id: 'gondar', name: 'ጎንደር', nameEn: 'Gondar', region: 'Amhara', icon: '🏰' },
+    { id: 'bahir-dar', name: 'ባህር ዳር', nameEn: 'Bahir Dar', region: 'Amhara', icon: '🏞️' },
+    { id: 'jimma', name: 'ጅማ', nameEn: 'Jimma', region: 'Oromia', icon: '☕' },
+    { id: 'bishoftu', name: 'ቢሾፍቱ', nameEn: 'Bishoftu', region: 'Oromia', icon: '✈️' },
+    { id: 'dessie', name: 'ደሴ', nameEn: 'Dessie', region: 'Amhara', icon: '🏔️' },
+    { id: 'jijiga', name: 'ጅጅጋ', nameEn: 'Jijiga', region: 'Somali', icon: '🐪' },
+    { id: 'harar', name: 'ሀረር', nameEn: 'Harar', region: 'Harari', icon: '🏛️' },
+    { id: 'nekemte', name: 'ነቀምቴ', nameEn: 'Nekemte', region: 'Oromia', icon: '☕' },
+    { id: 'arba-minch', name: 'አርባ ምንጭ', nameEn: 'Arba Minch', region: 'South', icon: '🏞️' },
+    { id: 'sodo', name: 'ሶዶ', nameEn: 'Sodo', region: 'South', icon: '🛍️' },
+    { id: 'ambo', name: 'አምቦ', nameEn: 'Ambo', region: 'Oromia', icon: '💧' },
+    { id: 'shashemene', name: 'ሻሸመኔ', nameEn: 'Shashemene', region: 'Oromia', icon: '🛍️' },
+    { id: 'assosa', name: 'አሶሳ', nameEn: 'Assosa', region: 'Benishangul', icon: '🌿' },
+    { id: 'welkite', name: 'ወልቂጤ', nameEn: 'Welkite', region: 'South', icon: '🌾' },
+    { id: 'hosana', name: 'ሆሳና', nameEn: 'Hosana', region: 'South', icon: '🌻' },
+    { id: 'metu', name: 'መቱ', nameEn: 'Metu', region: 'Oromia', icon: '🌿' },
+    { id: 'ziway', name: 'ዚዋይ', nameEn: 'Ziway', region: 'Oromia', icon: '🐟' },
+    { id: 'kombolcha', name: 'ኮምቦልቻ', nameEn: 'Kombolcha', region: 'Amhara', icon: '🏭' },
   ];
 
-  // Filtered cities based on selected dropdown value
-  const getFilteredCities = () => {
-    if (cityVipFilter === 'all') return allCityVipPrograms;
-    if (cityVipFilter === 'major') return allCityVipPrograms.filter(c => ['Central', 'Oromia', 'Dire Dawa', 'Tigray'].includes(c.region));
-    if (cityVipFilter === 'popular') return allCityVipPrograms.slice(0, 12);
-    return allCityVipPrograms;
-  };
-
-  const displayedCities = getFilteredCities();
-
-  // Merkato VIP Data
-  const merkatoVip = {
-    id: 'merkato',
-    name: 'መርካቶ',
-    nameEn: 'Merkato',
-    icon: '🏪',
-    color: 'from-yellow-500 to-orange-600',
-    prize: '40M ETB',
-    description: 'የአፍሪካ ትልቁ ገበያ',
-    features: ['⭐ Daily 1,000,000 ETB', '🏆 Weekly 10,000,000 ETB', '👑 Monthly 40,000,000 ETB']
-  };
+  // Filter cities based on search
+  const filteredCityList = allCityVipPrograms.filter(city => 
+    city.name.toLowerCase().includes(citySearchTerm.toLowerCase()) ||
+    city.nameEn.toLowerCase().includes(citySearchTerm.toLowerCase()) ||
+    city.region.toLowerCase().includes(citySearchTerm.toLowerCase())
+  );
 
   const { ref: counterRef, inView: counterInView } = useInView({
     triggerOnce: true,
@@ -229,7 +209,7 @@ export default function Home() {
       </Head>
 
       <div className="min-h-screen bg-white w-full">
-        {/* PERSISTENT TOP NAVBAR WITH CITY SELECTOR */}
+        {/* PERSISTENT TOP NAVBAR WITH CITY SELECTOR - DIRECTS TO JOIN */}
         <nav className="sticky top-0 z-50 bg-gray-900 shadow-lg border-b border-gray-700">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-between h-16">
@@ -304,16 +284,16 @@ export default function Home() {
             </div>
 
             <div className="flex flex-wrap justify-center gap-3 mt-10 pt-6 border-t border-gray-200">
-              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full hover:bg-gray-200 transition">
+              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
                 <span className="text-green-600">✓</span> Cash Guarantee
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full hover:bg-gray-200 transition">
+              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
                 <span className="text-green-600">✓</span> Blockchain Verified
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full hover:bg-gray-200 transition">
+              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
                 <span className="text-green-600">💚</span> 2% for Health
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full hover:bg-gray-200 transition">
+              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
                 <span className="text-green-600">✓</span> 24/7 Support
               </div>
             </div>
@@ -431,60 +411,103 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* CITY VIP PROGRAMS - WITH ITS OWN DROPDOWN */}
+          {/* CITY VIP PROGRAMS - COMPACT DROPDOWN VERSION (NO BIG CARDS) */}
           <div className="mb-12">
-            <div className="flex justify-between items-center flex-wrap gap-4 mb-6">
-              <div>
-                <h3 className="text-2xl font-bold text-gray-800">🏙️ City VIP Programs</h3>
-                <p className="text-sm text-gray-500 mt-1">Join your city's exclusive VIP program and win up to 40 Million Birr!</p>
-              </div>
-              <div className="flex gap-3">
-                {/* CITY VIP DROPDOWN FILTER */}
-                <select
-                  value={cityVipFilter}
-                  onChange={(e) => setCityVipFilter(e.target.value)}
-                  className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-green-500 cursor-pointer"
-                >
-                  <option value="all">🏙️ All Cities ({allCityVipPrograms.length})</option>
-                  <option value="major">⭐ Major Cities</option>
-                  <option value="popular">🔥 Popular Cities</option>
-                </select>
-                <button 
-                  onClick={() => setShowCitySelector(true)}
-                  className="text-green-600 hover:text-green-700 font-medium text-sm px-3 py-2 rounded-lg border border-green-200 hover:bg-green-50 transition"
-                >
-                  View All →
-                </button>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {displayedCities.map((city) => (
-                <Link key={city.id} href={`/cities/${city.id}`}>
-                  <div className={`bg-gradient-to-r ${city.color} rounded-xl p-4 text-white hover:shadow-xl transition transform hover:scale-105 cursor-pointer`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="text-3xl">{city.icon}</div>
-                      <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{city.population}</span>
-                    </div>
-                    <h4 className="font-bold text-lg">{city.name}</h4>
-                    <p className="text-xs opacity-80">{city.nameEn}</p>
-                    <p className="text-[10px] opacity-70 mt-1 line-clamp-1">{city.description}</p>
-                    <div className="mt-2 flex justify-between items-center">
-                      <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{city.prizeAmount}</span>
-                      <span className="text-sm font-semibold flex items-center gap-1">
-                        Join <span className="text-base">→</span>
-                      </span>
-                    </div>
+            <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-6 shadow-xl">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-4xl">🏙️</span>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">City VIP Programs</h3>
+                    <p className="text-sm text-gray-300">Join your city's exclusive VIP program</p>
                   </div>
-                </Link>
-              ))}
-            </div>
-            
-            {displayedCities.length === 0 && (
-              <div className="text-center py-12 bg-gray-50 rounded-lg">
-                <p className="text-gray-500">No cities found in this category.</p>
+                </div>
+                
+                {/* DROPDOWN BUTTON */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowCityDropdown(!showCityDropdown)}
+                    className="flex items-center gap-2 px-5 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition shadow-md"
+                  >
+                    <span>🎯</span>
+                    Select Your City
+                    <svg className={`w-4 h-4 transition-transform ${showCityDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {/* DROPDOWN LIST - Appears when clicked */}
+                  {showCityDropdown && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowCityDropdown(false)} />
+                      <div className="absolute top-full left-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
+                        <div className="p-3 bg-gray-50 border-b">
+                          <input
+                            type="text"
+                            placeholder="🔍 Search your city..."
+                            value={citySearchTerm}
+                            onChange={(e) => setCitySearchTerm(e.target.value)}
+                            className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                            autoFocus
+                          />
+                        </div>
+                        <div className="max-h-64 overflow-y-auto">
+                          {filteredCityList.length === 0 ? (
+                            <div className="p-4 text-center text-gray-500">No cities found</div>
+                          ) : (
+                            filteredCityList.map(city => (
+                              <button
+                                key={city.id}
+                                onClick={() => {
+                                  setShowCityDropdown(false);
+                                  setCitySearchTerm('');
+                                  router.push(`/cities/${city.id}`);
+                                }}
+                                className="w-full text-left px-4 py-3 hover:bg-gray-50 transition border-b last:border-0 flex items-center gap-3"
+                              >
+                                <span className="text-2xl">{city.icon}</span>
+                                <div className="flex-1">
+                                  <div className="font-medium text-gray-800">{city.name}</div>
+                                  <div className="text-xs text-gray-500">{city.nameEn} • {city.region}</div>
+                                </div>
+                                <span className="text-green-600 text-sm font-medium">Join →</span>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                        <div className="p-2 text-center text-xs text-gray-400 bg-gray-50">
+                          {allCityVipPrograms.length}+ Ethiopian cities available
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
-            )}
+              
+              {/* Compact stats row */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-4 border-t border-gray-700">
+                <div className="text-center">
+                  <div className="text-2xl">🏆</div>
+                  <div className="text-white font-bold text-sm">1M ETB</div>
+                  <div className="text-[10px] text-gray-400">Daily Prize</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl">⭐</div>
+                  <div className="text-white font-bold text-sm">10M ETB</div>
+                  <div className="text-[10px] text-gray-400">Weekly Prize</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl">👑</div>
+                  <div className="text-white font-bold text-sm">40M ETB</div>
+                  <div className="text-[10px] text-gray-400">Monthly Prize</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl">📍</div>
+                  <div className="text-white font-bold text-sm">{allCityVipPrograms.length}+</div>
+                  <div className="text-[10px] text-gray-400">Cities</div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* REGULAR POOLS */}
