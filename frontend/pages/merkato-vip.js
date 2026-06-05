@@ -395,11 +395,6 @@ export default function MerkatoVip() {
   setSelectedSeats([]);
   setShowSeatSelector(true);
 };
-    
-    setSelectedPoolType(poolType);
-    setSelectedSeats([]);
-    setShowSeatSelector(true);
-  };
 
   const handleFileUpload = async (file) => {
     try {
