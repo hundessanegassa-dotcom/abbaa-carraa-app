@@ -1334,3 +1334,39 @@ export default function CityVip() {
     </NoSSR>
   );
 }
+{/* Become Agent Section - At the bottom of city page */}
+<div className="container mx-auto px-4 py-12">
+  <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-8 text-white">
+    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="flex items-center gap-4">
+        <span className="text-5xl">🤝</span>
+        <div>
+          <h3 className="text-2xl font-bold">Become an Agent for {cityInfo?.name?.split('|')[0]}</h3>
+          <p className="text-gray-300 mt-1">
+            Earn 10% commission on every successful contribution from customers you bring!
+          </p>
+          <p className="text-sm text-gray-400 mt-2">
+            💰 Example: Customer contributes 10,000 ETB → You earn 1,000 ETB
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={() => setShowAgentApplication(true)}
+        className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 shadow-lg flex items-center gap-2"
+      >
+        <span>🎯</span>
+        Apply as Agent
+        <span>→</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+{/* Agent Application Modal */}
+{showAgentApplication && (
+  <UnifiedAgentApplication 
+    onClose={() => setShowAgentApplication(false)} 
+    preSelectedCity={city}
+    preSelectedProgram="city_vip"
+  />
+)}
