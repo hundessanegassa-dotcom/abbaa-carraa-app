@@ -1,4 +1,4 @@
-// pages/index.js - COMPLETE WITH FIXED REGULAR POOLS SECTION
+// pages/index.js - COMPLETE FINAL VERSION
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -534,33 +534,67 @@ export default function Home() {
             </div>
           </div>
 
-          {/* REGULAR POOLS - ATTRACTIVE CLICKABLE SECTION */}
+          {/* REGULAR POOLS - ATTRACTIVE CLICKABLE SECTION WITH WINNER TEXT ON BUTTON */}
           <div className="mb-12">
+            {/* Main Grey Button - Always Visible with Winner Text */}
             <button
               onClick={() => setShowRegularPools(!showRegularPools)}
               className="w-full bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white rounded-2xl p-6 transition-all duration-300 shadow-lg group"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-4xl group-hover:scale-110 transition-transform">🏊</span>
-                  <div className="text-left">
-                    <h3 className="text-2xl font-bold">መደበኛ የእጣ መደቦች</h3>
-                    <p className="text-sm text-gray-300">Regular Pools</p>
+              <div className="flex flex-col items-center text-center">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-3">
+                    <span className="text-4xl group-hover:scale-110 transition-transform">🏊</span>
+                    <div className="text-left">
+                      <h3 className="text-2xl font-bold">መደበኛ የእጣ መደቦች</h3>
+                      <p className="text-sm text-gray-300">Regular Pools</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{showRegularPools ? 'ሰርዝ' : 'ይመልከቱ'}</span>
+                    <svg className={`w-5 h-5 transition-transform duration-300 ${showRegularPools ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">{showRegularPools ? 'ሰርዝ' : 'ይመልከቱ'}</span>
-                  <svg className={`w-5 h-5 transition-transform duration-300 ${showRegularPools ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
+                
+                {/* Winner Prize Text - Beautiful and visible on grey background */}
+                <div className="mt-3 pt-3 border-t border-gray-600 w-full">
+                  <div className="bg-yellow-500/10 rounded-lg p-2 backdrop-blur-sm">
+                    <p className="text-sm md:text-base font-bold text-yellow-300">
+                      🎯 ይሳተፉ እና ያሸንፉ!
+                    </p>
+                    <p className="text-xs text-yellow-200/80">
+                      Join and WIN!
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
+                      <span className="text-lg">🚗</span>
+                      <span className="text-xs font-semibold text-white">መኪና | Car</span>
+                      <span className="text-gray-400">•</span>
+                      <span className="text-lg">🏭</span>
+                      <span className="text-xs font-semibold text-white">ማሽኖች | Machinery</span>
+                      <span className="text-gray-400">•</span>
+                      <span className="text-lg">🏠</span>
+                      <span className="text-xs font-semibold text-white">ቤት | House</span>
+                      <span className="text-gray-400">•</span>
+                      <span className="text-lg">💻</span>
+                      <span className="text-xs font-semibold text-white">ኤሌክትሮኒክስ | Electronics</span>
+                      <span className="text-gray-400">•</span>
+                      <span className="text-lg">🎁</span>
+                      <span className="text-xs font-semibold text-white">ብዙ ተጨማሪ | Much More</span>
+                    </div>
+                    <p className="text-[10px] text-yellow-300/70 mt-1">
+                      ✨ እድለኛ ሊሆኑ ይችላሉ! | You could be the next winner! ✨
+                    </p>
+                  </div>
                 </div>
               </div>
             </button>
 
-            {/* Regular Pools Content - Shows when clicked */}
+            {/* Regular Pools Content - Shows ONLY when clicked */}
             {showRegularPools && (
               <div className="mt-6 animate-fade-in">
-                {/* WINNER PRIZE BANNER - CALL TO ACTION */}
+                {/* WINNER PRIZE BANNER - CALL TO ACTION (Inside when expanded) */}
                 <div className="bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 rounded-2xl p-5 mb-6 text-white shadow-lg">
                   <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
@@ -582,36 +616,38 @@ export default function Home() {
                   </div>
                 </div>
 
+                {/* Filter Buttons - ONLY visible when expanded */}
+                <div className="flex justify-end items-center flex-wrap gap-2 mb-6">
+                  <button
+                    onClick={() => setRegularPoolFilter('all')}
+                    className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition ${
+                      regularPoolFilter === 'all' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    ሁሉም | All
+                  </button>
+                  <button
+                    onClick={() => setRegularPoolFilter('lowToHigh')}
+                    className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition ${
+                      regularPoolFilter === 'lowToHigh' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    ከዝቅተኛ ወደ ከፍተኛ | Low to High
+                  </button>
+                  <button
+                    onClick={() => setRegularPoolFilter('highToLow')}
+                    className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition ${
+                      regularPoolFilter === 'highToLow' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    ከከፍተኛ ወደ ዝቅተኛ | High to Low
+                  </button>
+                </div>
+
                 <div className="flex justify-between items-center flex-wrap gap-4 mb-6">
                   <div>
                     <h4 className="text-lg font-semibold text-gray-700">የሚገኙ የእጣ መደቦች | Available Prize Pools</h4>
                     <p className="text-sm text-gray-500">በበጀትህ እና በምርጫህ መሰረት ምረጥ | Choose based on your budget and preference</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setRegularPoolFilter('all')}
-                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
-                        regularPoolFilter === 'all' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      }`}
-                    >
-                      ሁሉም | All
-                    </button>
-                    <button
-                      onClick={() => setRegularPoolFilter('lowToHigh')}
-                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
-                        regularPoolFilter === 'lowToHigh' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      }`}
-                    >
-                      ውድነት መጨመር | Price: Low to High
-                    </button>
-                    <button
-                      onClick={() => setRegularPoolFilter('highToLow')}
-                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
-                        regularPoolFilter === 'highToLow' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      }`}
-                    >
-                      ውድነት መቀነስ | Price: High to Low
-                    </button>
                   </div>
                 </div>
 
