@@ -1,12 +1,35 @@
-import { useState } from 'react';
+// components/DashboardLayout.js
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
-import TopCitySelector from './TopCitySelector'; // ADD THIS IMPORT
+import TopCitySelector from './TopCitySelector';
 
 export default function DashboardLayout({ children, title, subtitle, icon, bgGradient, user, profile }) {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isAgent, setIsAgent] = useState(false);
+  const [agentData, setAgentData] = useState(null);
+
+  useEffect(() => {
+    checkIfAgent();
+  }, [user]);
+
+  const checkIfAgent = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('agents')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('is_approved', true)
+      .single();
+    
+    if (data && !error) {
+      setIsAgent(true);
+      setAgentData(data);
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -19,7 +42,7 @@ export default function DashboardLayout({ children, title, subtitle, icon, bgGra
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Navbar with Logo and City Selector - Matching index page */}
+      {/* Top Navbar with Logo and City Selector */}
       <nav className="sticky top-0 z-50 bg-gray-900 shadow-lg border-b border-gray-700">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
@@ -32,13 +55,18 @@ export default function DashboardLayout({ children, title, subtitle, icon, bgGra
               </div>
             </Link>
 
-            {/* Right side: User info + City Selector */}
+            {/* Right side: City Selector + User Menu */}
             <div className="flex items-center gap-3">
               {/* City Selector */}
               <TopCitySelector />
               
               {/* User Menu (Desktop) */}
               <div className="hidden md:flex items-center gap-3">
+                {isAgent && (
+                  <Link href="/agent/dashboard" className="text-sm bg-yellow-600/20 hover:bg-yellow-600/30 text-yellow-300 px-3 py-1.5 rounded-full transition flex items-center gap-1">
+                    <span>🤝</span> Agent
+                  </Link>
+                )}
                 <span className="text-sm text-gray-300">Welcome, {userName}</span>
                 <button onClick={handleLogout} className="bg-red-600/20 hover:bg-red-600/30 text-white px-4 py-1.5 rounded-full text-sm transition">
                   Logout
@@ -56,7 +84,7 @@ export default function DashboardLayout({ children, title, subtitle, icon, bgGra
         </div>
       </nav>
 
-      {/* Original Dashboard Header (kept for backward compatibility but styled differently) */}
+      {/* Original Dashboard Header */}
       <div className={`bg-gradient-to-r ${bgGradient || 'from-green-600 to-teal-500'} text-white shadow-lg`}>
         <div className="container mx-auto px-4 py-4 sm:py-6">
           <div className="flex justify-between items-center flex-wrap gap-4">
@@ -67,7 +95,13 @@ export default function DashboardLayout({ children, title, subtitle, icon, bgGra
                 {subtitle && <p className="text-xs sm:text-sm opacity-90 mt-0.5 sm:mt-1">{subtitle}</p>}
               </div>
             </div>
-            {/* Removed duplicate logout button from here - now in navbar */}
+            
+            {/* Agent Badge (Mobile) */}
+            {isAgent && (
+              <Link href="/agent/dashboard" className="md:hidden bg-yellow-600/30 text-yellow-200 px-3 py-1 rounded-full text-xs flex items-center gap-1">
+                <span>🤝</span> Agent Portal
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -82,7 +116,10 @@ export default function DashboardLayout({ children, title, subtitle, icon, bgGra
           <Link href="/listings" className="block py-2 text-gray-700">🎁 Browse Prizes</Link>
           <Link href="/profile" className="block py-2 text-gray-700">👤 Profile</Link>
           <Link href="/merkato-vip" className="block py-2 text-gray-700">🏪 Merkato VIP</Link>
-          <Link href="/cities" className="block py-2 text-gray-700">🏙️ City VIP</Link>
+          <Link href="/cities/addis-ababa" className="block py-2 text-gray-700">🏙️ City VIP</Link>
+          {isAgent && (
+            <Link href="/agent/dashboard" className="block py-2 text-yellow-600">🤝 Agent Dashboard</Link>
+          )}
           <button onClick={handleLogout} className="block w-full text-left py-2 text-red-600">🚪 Logout</button>
         </div>
       )}
