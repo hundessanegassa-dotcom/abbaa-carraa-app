@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
+import TopCitySelector from './TopCitySelector'; // ADD THIS IMPORT
 
 export default function DashboardLayout({ children, title, subtitle, icon, bgGradient, user, profile }) {
   const router = useRouter();
@@ -18,7 +19,44 @@ export default function DashboardLayout({ children, title, subtitle, icon, bgGra
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Top Navbar with Logo and City Selector - Matching index page */}
+      <nav className="sticky top-0 z-50 bg-gray-900 shadow-lg border-b border-gray-700">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo/Brand */}
+            <Link href="/" className="flex items-center gap-2 group">
+              <span className="text-2xl group-hover:scale-110 transition-transform">🎫</span>
+              <div>
+                <span className="font-bold text-white text-lg">Merkato VIP</span>
+                <span className="text-xs text-gray-400 ml-2 hidden sm:inline">| Ethiopia's Premier Event Hub</span>
+              </div>
+            </Link>
+
+            {/* Right side: User info + City Selector */}
+            <div className="flex items-center gap-3">
+              {/* City Selector */}
+              <TopCitySelector />
+              
+              {/* User Menu (Desktop) */}
+              <div className="hidden md:flex items-center gap-3">
+                <span className="text-sm text-gray-300">Welcome, {userName}</span>
+                <button onClick={handleLogout} className="bg-red-600/20 hover:bg-red-600/30 text-white px-4 py-1.5 rounded-full text-sm transition">
+                  Logout
+                </button>
+              </div>
+              
+              {/* Mobile menu button */}
+              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden bg-gray-800 p-2 rounded-lg text-white">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Original Dashboard Header (kept for backward compatibility but styled differently) */}
       <div className={`bg-gradient-to-r ${bgGradient || 'from-green-600 to-teal-500'} text-white shadow-lg`}>
         <div className="container mx-auto px-4 py-4 sm:py-6">
           <div className="flex justify-between items-center flex-wrap gap-4">
@@ -29,15 +67,7 @@ export default function DashboardLayout({ children, title, subtitle, icon, bgGra
                 {subtitle && <p className="text-xs sm:text-sm opacity-90 mt-0.5 sm:mt-1">{subtitle}</p>}
               </div>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <span className="hidden md:inline text-sm">Welcome, {userName}</span>
-              <button onClick={handleLogout} className="bg-white/20 hover:bg-white/30 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm transition">
-                Logout
-              </button>
-              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden bg-white/20 p-1.5 sm:p-2 rounded-lg">
-                ☰
-              </button>
-            </div>
+            {/* Removed duplicate logout button from here - now in navbar */}
           </div>
         </div>
       </div>
@@ -45,9 +75,14 @@ export default function DashboardLayout({ children, title, subtitle, icon, bgGra
       {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-white border-b shadow-lg p-4 space-y-2">
+          <div className="pb-2 border-b border-gray-200 mb-2">
+            <p className="text-sm text-gray-600">Welcome, <span className="font-semibold">{userName}</span></p>
+          </div>
           <Link href="/dashboard" className="block py-2 text-gray-700">📊 Dashboard</Link>
           <Link href="/listings" className="block py-2 text-gray-700">🎁 Browse Prizes</Link>
           <Link href="/profile" className="block py-2 text-gray-700">👤 Profile</Link>
+          <Link href="/merkato-vip" className="block py-2 text-gray-700">🏪 Merkato VIP</Link>
+          <Link href="/cities" className="block py-2 text-gray-700">🏙️ City VIP</Link>
           <button onClick={handleLogout} className="block w-full text-left py-2 text-red-600">🚪 Logout</button>
         </div>
       )}
