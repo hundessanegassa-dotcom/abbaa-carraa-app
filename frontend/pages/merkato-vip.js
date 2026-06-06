@@ -1,16 +1,14 @@
-// pages/merkato-vip.js - COMPLETE FIXED WITH AGENT APPLICATION
+// pages/merkato-vip.js - UPDATED WITH ALL SEATS VISIBLE & PNG DOWNLOAD
 import Head from 'next/head';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
-import { QRCodeSVG } from 'qrcode.react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import NoSSR from '../components/NoSSR';
 import TopCitySelector from '../components/TopCitySelector';
 import Link from 'next/link';
 import UnifiedAgentApplication from '../components/UnifiedAgentApplication';
+import Ticket from '../components/Ticket';
 
 // Helper function for next draw dates
 const getNextSunday = () => {
@@ -42,8 +40,8 @@ const validateFile = (file) => {
   return true;
 };
 
-const optimizeImage = async (file) => {
-  return new Promise((resolve, reject) => {
+const compressImage = async (file) => {
+  return new Promise((resolve) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = (event) => {
@@ -75,10 +73,7 @@ const optimizeImage = async (file) => {
         ctx.drawImage(img, 0, 0, width, height);
         
         canvas.toBlob((blob) => {
-          const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), { 
-            type: 'image/jpeg' 
-          });
-          resolve(optimizedFile);
+          resolve(new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), { type: 'image/jpeg' }));
         }, 'image/jpeg', 0.7);
       };
       img.onerror = reject;
@@ -87,162 +82,13 @@ const optimizeImage = async (file) => {
   });
 };
 
-const compressImage = async (file) => {
-  const MAX_SIZE_MB = 2;
-  
-  if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-    return await optimizeImage(file);
-  }
-  
-  return file;
-};
-
-// Ticket Component
-const Ticket = ({ participant, pool, type = 'unverified' }) => {
-  const ticketRef = useRef();
-
-  const downloadTicket = async () => {
-    if (!ticketRef.current) return;
-    
-    try {
-      toast.loading('Generating PDF...', { id: 'pdf-gen' });
-      const canvas = await html2canvas(ticketRef.current, {
-        scale: 2,
-        backgroundColor: '#ffffff',
-        logging: false,
-        useCORS: true
-      });
-      
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a4'
-      });
-      
-      const imgWidth = 277;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-      pdf.save(`ticket-${participant.ticket_number}.pdf`);
-      toast.success('Ticket downloaded!', { id: 'pdf-gen' });
-      
-    } catch (error) {
-      console.error('Error downloading ticket:', error);
-      toast.error('Failed to download ticket');
-    }
-  };
-
-  const statusConfig = {
-    unverified: {
-      bg: 'bg-gray-50',
-      border: 'border-gray-400',
-      badge: 'bg-gray-500',
-      badgeText: 'UNVERIFIED',
-      text: 'Awaiting Admin Approval'
-    },
-    verified: {
-      bg: 'bg-gray-50',
-      border: 'border-gray-600',
-      badge: 'bg-gray-700',
-      badgeText: 'VERIFIED',
-      text: 'Approved Entry'
-    }
-  };
-
-  const config = statusConfig[type];
-
-  return (
-    <div className="space-y-4">
-      <div 
-        ref={ticketRef}
-        className={`${config.bg} border-2 ${config.border} rounded-2xl p-6 max-w-2xl mx-auto shadow-xl`}
-      >
-        <div className="text-center border-b pb-4 mb-4">
-          <div className="flex justify-between items-center">
-            <div className="text-left">
-              <div className="text-xs text-gray-500 font-mono">Ticket #{participant.ticket_number}</div>
-              <div className="text-sm font-semibold text-gray-700">
-                {participant.created_at ? new Date(participant.created_at).toLocaleDateString() : 'N/A'}
-              </div>
-            </div>
-            <div className={`${config.badge} text-white px-3 py-1 rounded-full text-xs font-bold`}>
-              {config.badgeText}
-            </div>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-800 mt-2">🏆 MERKATO VIP</h2>
-          <p className="text-sm text-gray-600">የሚሊየነር ቲኬት | Millionaire Ticket</p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div><p className="text-xs text-gray-500">Participant Name</p><p className="font-semibold text-sm">{participant.user_name || 'N/A'}</p></div>
-          <div><p className="text-xs text-gray-500">Email</p><p className="font-semibold text-sm">{participant.user_email || 'N/A'}</p></div>
-          <div><p className="text-xs text-gray-500">Pool Type</p><p className="font-semibold text-sm capitalize">{participant.pool_type}</p></div>
-          <div><p className="text-xs text-gray-500">City/Section</p><p className="font-semibold text-sm">{participant.city || 'Merkato'}</p></div>
-          <div><p className="text-xs text-gray-500">Seat Numbers</p><p className="font-semibold text-sm">{participant.seat_numbers?.join(', ') || 'N/A'}</p></div>
-          <div><p className="text-xs text-gray-500">Contribution</p><p className="font-semibold text-sm text-green-600">ETB {participant.contribution_amount?.toLocaleString()}</p></div>
-          <div><p className="text-xs text-gray-500">Prize Amount</p><p className="font-semibold text-sm text-purple-600">ETB {participant.prize_amount?.toLocaleString()}</p></div>
-          <div><p className="text-xs text-gray-500">Draw Date</p><p className="font-semibold text-sm">{pool?.drawDate || 'TBA'}</p></div>
-        </div>
-
-        <div className="flex justify-center py-4 border-t border-b border-dashed">
-          <div className="bg-white p-3 rounded-xl shadow-md">
-            <QRCodeSVG 
-              value={JSON.stringify({
-                ticket: participant.ticket_number,
-                name: participant.user_name,
-                email: participant.user_email,
-                seats: participant.seat_numbers,
-                pool: participant.pool_type,
-                amount: participant.contribution_amount,
-                verified: type === 'verified',
-                timestamp: new Date().toISOString()
-              })}
-              size={120}
-              level="H"
-            />
-          </div>
-        </div>
-
-        {type === 'verified' && participant.verified_at && (
-          <div className="bg-green-100 rounded-lg p-3 mt-4 text-center">
-            <p className="text-green-800 text-sm font-semibold">✓ Verified on {new Date(participant.verified_at).toLocaleString()}</p>
-            <p className="text-green-600 text-xs">This ticket is VALID for the upcoming draw</p>
-          </div>
-        )}
-
-        {type === 'unverified' && (
-          <div className="bg-gray-100 rounded-lg p-3 mt-4 text-center">
-            <p className="text-gray-800 text-sm font-semibold">⏳ Awaiting Admin Verification</p>
-            <p className="text-gray-600 text-xs">Your ticket will be activated once payment is confirmed</p>
-          </div>
-        )}
-
-        <div className="text-center text-xs text-gray-400 mt-4 pt-4 border-t">
-          <p>Abbaa Carraa • Merkato VIP Program</p>
-          <p>Terms & Conditions Apply • Keep this ticket safe for prize claims</p>
-        </div>
-      </div>
-
-      <div className="text-center">
-        <button onClick={downloadTicket} className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold transition flex items-center gap-2 mx-auto">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
-          Download Ticket (PDF)
-        </button>
-      </div>
-    </div>
-  );
-};
-
 export default function MerkatoVip() {
   const router = useRouter();
   const isMounted = useRef(true);
   const [activeTab, setActiveTab] = useState('daily');
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [showAgentApplication, setShowAgentApplication] = useState(false); // ADD THIS STATE
+  const [showAgentApplication, setShowAgentApplication] = useState(false);
   
   // Seat selection states
   const [showSeatSelector, setShowSeatSelector] = useState(false);
@@ -251,6 +97,11 @@ export default function MerkatoVip() {
   const [showPayment, setShowPayment] = useState(false);
   const [participantId, setParticipantId] = useState(null);
   const [maxSeats, setMaxSeats] = useState(5);
+  const [takenSeats, setTakenSeats] = useState([]);
+  const [reference, setReference] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Ticket states
   const [showTicket, setShowTicket] = useState(false);
@@ -273,6 +124,24 @@ export default function MerkatoVip() {
       if (isMounted.current) setUser(user);
     } catch (error) {
       console.error('Error checking user:', error);
+    }
+  };
+
+  // Fetch taken seats for the selected pool type
+  const fetchTakenSeats = async (poolType) => {
+    try {
+      const { data } = await supabase
+        .from('merkato_vip_participants')
+        .select('seat_numbers')
+        .eq('pool_type', poolType)
+        .eq('payment_status', 'verified');
+      
+      if (data) {
+        const allTaken = data.flatMap(p => p.seat_numbers || []);
+        setTakenSeats(allTaken);
+      }
+    } catch (error) {
+      console.error('Error fetching taken seats:', error);
     }
   };
 
@@ -344,7 +213,7 @@ export default function MerkatoVip() {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      const redirectUrl = `/merkato-seat?type=${poolType}`;
+      const redirectUrl = `/merkato-vip?type=${poolType}`;
       
       localStorage.setItem('abbaa_redirect_after_login', redirectUrl);
       localStorage.setItem('pendingRole', 'individual');
@@ -362,29 +231,17 @@ export default function MerkatoVip() {
     
     setSelectedPoolType(poolType);
     setSelectedSeats([]);
+    await fetchTakenSeats(poolType);
     setShowSeatSelector(true);
-  };
-  
-  const handleFileUpload = async (file) => {
-    try {
-      validateFile(file);
-      toast.loading('Optimizing image for upload...', { id: 'compress' });
-      const optimizedFile = await compressImage(file);
-      toast.success('Image optimized!', { id: 'compress' });
-      return optimizedFile;
-    } catch (error) {
-      toast.error(error.message);
-      throw error;
-    }
   };
 
   const submitPayment = async (participantId, reference, file) => {
     let loadingToast = toast.loading('Processing payment...');
     
     try {
-      const optimizedFile = await handleFileUpload(file);
+      const optimizedFile = await compressImage(file);
       
-      const fileName = `bank-transfers/${participantId}/${Date.now()}.jpg`;
+      const fileName = `merkato-payments/${participantId}/${Date.now()}.jpg`;
       const { error: uploadError } = await supabase.storage
         .from('payment-proofs')
         .upload(fileName, optimizedFile, {
@@ -433,6 +290,7 @@ export default function MerkatoVip() {
     }
   };
 
+  // UPDATED: Seat selector with ALL seats visible and proper color coding
   const renderSeatSelector = () => {
     if (!selectedPoolType) return null;
     
@@ -442,6 +300,10 @@ export default function MerkatoVip() {
     const seatNumbers = Array.from({ length: totalSeatsCount }, (_, i) => i + 1);
     
     const toggleSeat = (seatNum) => {
+      if (takenSeats.includes(seatNum)) {
+        toast.error(`Seat ${seatNum} is already taken`);
+        return;
+      }
       if (selectedSeats.includes(seatNum)) {
         setSelectedSeats(selectedSeats.filter(s => s !== seatNum));
       } else if (selectedSeats.length < maxSeats) {
@@ -499,11 +361,11 @@ export default function MerkatoVip() {
     
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="bg-white rounded-2xl shadow-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
           <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
             <div>
               <h2 className="text-xl font-bold">Select Your Seats</h2>
-              <p className="text-sm text-gray-500">{pool.name} • Max {maxSeats} seats</p>
+              <p className="text-sm text-gray-500">{pool.name} • Max {maxSeats} seats • Total {totalSeatsCount.toLocaleString()} seats</p>
             </div>
             <button 
               onClick={() => {
@@ -518,25 +380,49 @@ export default function MerkatoVip() {
           </div>
           
           <div className="p-6">
+            {/* Seat Legend */}
+            <div className="flex flex-wrap justify-center gap-4 mb-4 pb-3 border-b">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-green-500 rounded"></div>
+                <span className="text-xs">Selected by You</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-yellow-400 rounded"></div>
+                <span className="text-xs">Available</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-gray-300 rounded"></div>
+                <span className="text-xs">Taken by Others</span>
+              </div>
+            </div>
+
             <div className="bg-gray-50 rounded-lg p-4 mb-4 text-center">
               <p className="text-sm text-gray-600">Entry Fee: {pool.contributionFormatted} per seat</p>
               <p className="text-xs text-gray-400">Total Seats Available: {totalSeatsCount.toLocaleString()}</p>
             </div>
             
+            {/* Seat Grid - ALL SEATS VISIBLE */}
             <div className="grid grid-cols-10 md:grid-cols-15 lg:grid-cols-20 gap-2 mb-6 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-xl">
-              {seatNumbers.map(seatNum => (
-                <button
-                  key={seatNum}
-                  onClick={() => toggleSeat(seatNum)}
-                  className={`w-10 h-10 rounded-lg font-semibold transition ${
-                    selectedSeats.includes(seatNum)
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                  }`}
-                >
-                  {seatNum}
-                </button>
-              ))}
+              {seatNumbers.map(seatNum => {
+                const isTaken = takenSeats.includes(seatNum);
+                const isSelected = selectedSeats.includes(seatNum);
+                
+                let bgColor = 'bg-yellow-400 hover:bg-yellow-500 text-gray-800'; // Available = Yellow
+                if (isSelected) bgColor = 'bg-green-600 text-white';
+                if (isTaken) bgColor = 'bg-gray-400 text-white cursor-not-allowed';
+                
+                return (
+                  <button
+                    key={seatNum}
+                    onClick={() => !isTaken && toggleSeat(seatNum)}
+                    disabled={isTaken}
+                    className={`w-10 h-10 rounded-lg font-semibold transition ${bgColor} ${isTaken ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                    title={isTaken ? `Seat ${seatNum} is already taken` : `Select Seat ${seatNum}`}
+                  >
+                    {seatNum}
+                  </button>
+                );
+              })}
             </div>
             
             {totalSeatsCount > 500 && (
@@ -578,10 +464,6 @@ export default function MerkatoVip() {
     
     const pool = vipPools[selectedPoolType];
     const totalAmount = selectedSeats.length * parseInt(pool.contribution);
-    const [reference, setReference] = useState('');
-    const [selectedFile, setSelectedFile] = useState(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [previewUrl, setPreviewUrl] = useState(null);
     
     const handleFileSelect = async (e) => {
       const file = e.target.files[0];
@@ -745,9 +627,23 @@ export default function MerkatoVip() {
             </div>
             <div className="p-6">
               <Ticket 
-                participant={participantData} 
-                pool={pool} 
-                type={ticketType}
+                participant={{
+                  user_name: participantData.user_name,
+                  user_email: participantData.user_email,
+                  ticket_number: participantData.ticket_number,
+                  created_at: participantData.created_at,
+                  contribution_amount: participantData.contribution_amount
+                }}
+                pool={{
+                  prize_name: pool.name,
+                  target_amount: pool.prize,
+                  pool_type: participantData.pool_type
+                }}
+                isVerified={ticketType === 'verified'}
+                seatNumbers={participantData.seat_numbers}
+                ticketNumber={participantData.ticket_number}
+                amount={participantData.contribution_amount}
+                createdAt={participantData.created_at}
               />
               <div className="mt-6 text-center">
                 <button
@@ -798,41 +694,12 @@ export default function MerkatoVip() {
       
       <div className="p-6">
         <div className="space-y-3 mb-6">
-          <div className="flex items-center gap-3 text-gray-600">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>{pool.time}</span>
-          </div>
-          <div className="flex items-center gap-3 text-gray-600">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span>📅 Listed: {pool.listedDate}</span>
-          </div>
-          <div className="flex items-center gap-3 text-gray-600">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>🎲 Draw: {pool.drawDate}</span>
-          </div>
-          <div className="flex items-center gap-3 text-gray-600">
-            <span className="text-yellow-500">⏰</span>
-            <span>Next Draw: {pool.nextDraw}</span>
-          </div>
-          <div className="flex items-center gap-3 text-gray-600">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            <span>{pool.winnerCount} አሸናፊ | Winner Every {pool.frequency}</span>
-          </div>
-          <div className="flex items-center gap-3 text-gray-600">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-            <span>💺 Total Seats: {pool.totalSeats.toLocaleString()}</span>
-          </div>
+          <div className="flex items-center gap-3 text-gray-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>{pool.time}</span></div>
+          <div className="flex items-center gap-3 text-gray-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg><span>📅 Listed: {pool.listedDate}</span></div>
+          <div className="flex items-center gap-3 text-gray-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>🎲 Draw: {pool.drawDate}</span></div>
+          <div className="flex items-center gap-3 text-gray-600"><span className="text-yellow-500">⏰</span><span>Next Draw: {pool.nextDraw}</span></div>
+          <div className="flex items-center gap-3 text-gray-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg><span>{pool.winnerCount} አሸናፊ | Winner Every {pool.frequency}</span></div>
+          <div className="flex items-center gap-3 text-gray-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg><span>💺 Total Seats: {pool.totalSeats.toLocaleString()}</span></div>
         </div>
         
         <p className="text-gray-600 text-sm mb-6">{pool.description}</p>
@@ -1015,14 +882,14 @@ export default function MerkatoVip() {
                     <td className="px-6 py-4 font-bold">2,500 ብር</td>
                     <td className="px-6 py-4 font-bold text-purple-600">10,000,000 ብር</td>
                     <td className="px-6 py-4">Every Sunday at 6 PM</td>
-                   </tr>
+                  </tr>
                   <tr className="hover:bg-gray-50 transition">
                     <td className="px-6 py-4 font-semibold">👑 Monthly Winner</td>
                     <td className="px-6 py-4"><span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">VIP 1</span></td>
                     <td className="px-6 py-4 font-bold">5,000 ብር</td>
                     <td className="px-6 py-4 font-bold text-green-600">40,000,000 ብር</td>
                     <td className="px-6 py-4">Last Day of Month at 8 PM</td>
-                   </tr>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -1033,7 +900,7 @@ export default function MerkatoVip() {
             <div className="container mx-auto px-4">
               <h2 className="text-3xl font-bold text-center mb-4">እንዴት እንሳተፋለን? | How It Works</h2>
               <p className="text-center text-gray-600 mb-12">Like traditional Equb, but BIGGER and BETTER!</p>
-              <div className="grid md:grid-cols-3 gap-8">
+              <div className="grid md:grid-cols-3 gap-8 text-center">
                 <div className="text-center">
                   <div className="w-20 h-20 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg text-white animate-bounce">1️⃣</div>
                   <h3 className="font-bold text-xl mb-2">ምረጥ | Choose</h3>
@@ -1062,7 +929,7 @@ export default function MerkatoVip() {
             </div>
           </div>
 
-          {/* BECOME AN AGENT SECTION - ADDED AT THE BOTTOM */}
+          {/* BECOME AN AGENT SECTION */}
           <div className="container mx-auto px-4 py-12">
             <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-8 text-white shadow-xl">
               <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -1093,24 +960,11 @@ export default function MerkatoVip() {
                 </button>
               </div>
               
-              {/* Commission Info */}
               <div className="mt-6 pt-6 border-t border-gray-700">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                  <div>
-                    <div className="text-2xl mb-1">💰</div>
-                    <p className="font-semibold">10% Commission</p>
-                    <p className="text-xs text-gray-400">On every successful contribution</p>
-                  </div>
-                  <div>
-                    <div className="text-2xl mb-1">🔗</div>
-                    <p className="font-semibold">Referral Link</p>
-                    <p className="text-xs text-gray-400">Track all your customers</p>
-                  </div>
-                  <div>
-                    <div className="text-2xl mb-1">💳</div>
-                    <p className="font-semibold">Easy Withdrawal</p>
-                    <p className="text-xs text-gray-400">TeleBirr or Bank Transfer</p>
-                  </div>
+                  <div><div className="text-2xl mb-1">💰</div><p className="font-semibold">10% Commission</p><p className="text-xs text-gray-400">On every successful contribution</p></div>
+                  <div><div className="text-2xl mb-1">🔗</div><p className="font-semibold">Referral Link</p><p className="text-xs text-gray-400">Track all your customers</p></div>
+                  <div><div className="text-2xl mb-1">💳</div><p className="font-semibold">Easy Withdrawal</p><p className="text-xs text-gray-400">TeleBirr or Bank Transfer</p></div>
                 </div>
               </div>
             </div>
