@@ -1,4 +1,4 @@
-// pages/index.js
+// pages/index.js - COMPLETE WITH FIXED REGULAR POOLS SECTION
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -10,6 +10,7 @@ import CitySelector from '../components/CitySelector';
 import CountUp from 'react-countup';
 import { useInView } from 'react-intersection-observer';
 import TopCitySelector from '../components/TopCitySelector';
+import PoolCard from '../components/PoolCard';
 
 // Dynamic imports
 const MovingAd = dynamic(() => import('../components/MovingAd'), { ssr: false, loading: () => null });
@@ -18,7 +19,6 @@ const NewsletterSubscribe = dynamic(() => import('../components/NewsletterSubscr
 const AdvertisingBanner = dynamic(() => import('../components/AdvertisingBanner'), { ssr: false, loading: () => null });
 const CashEquivalentBanner = dynamic(() => import('../components/CashEquivalentBanner'), { ssr: false, loading: () => null });
 const CharityBanner = dynamic(() => import('../components/CharityBanner'), { ssr: false, loading: () => null });
-const PoolCard = dynamic(() => import('../components/PoolCard'), { ssr: false, loading: () => null });
 
 export async function getServerSideProps() {
   return { props: {} };
@@ -228,13 +228,13 @@ export default function Home() {
     }
   };
 
-  // Filter regular pools
+  // Filter regular pools - FIXED: Changed 'featured' to 'all'
   const getFilteredPools = () => {
     let filtered = [...pools];
     
     switch (regularPoolFilter) {
-      case 'featured':
-        filtered = filtered.filter(p => p.is_featured === true);
+      case 'all':
+        // Show all active pools - no filtering
         break;
       case 'lowToHigh':
         filtered.sort((a, b) => (a.entry_fee || 0) - (b.entry_fee || 0));
@@ -571,7 +571,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* REGULAR POOLS - Clickable section */}
+          {/* REGULAR POOLS - ATTRACTIVE CLICKABLE SECTION */}
           <div className="mb-12">
             <button
               onClick={() => setShowRegularPools(!showRegularPools)}
@@ -599,8 +599,8 @@ export default function Home() {
               <div className="mt-6 animate-fade-in">
                 <div className="flex justify-between items-center flex-wrap gap-4 mb-6">
                   <div>
-                    <h4 className="text-lg font-semibold text-gray-700">Available Pools</h4>
-                    <p className="text-sm text-gray-500">በጀትህ እና ምርጫህ መሰረት ምረጥ</p>
+                    <h4 className="text-lg font-semibold text-gray-700">የሚገኙ ፑሎች | Available Pools</h4>
+                    <p className="text-sm text-gray-500">በጀትህ እና ምርጫህ መሰረት ምረጥ | Choose based on your budget and preference</p>
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -632,8 +632,10 @@ export default function Home() {
 
                 {displayedPools.length === 0 ? (
                   <div className="text-center py-12 bg-gray-50 rounded-lg">
+                    <div className="text-5xl mb-3">🏊</div>
                     <p className="text-gray-500">ምንም ንቁ ፑሎች የሉም</p>
                     <p className="text-sm text-gray-400 mt-2">No active pools at the moment. Check back soon!</p>
+                    <p className="text-xs text-gray-400 mt-1">በቅርቡ አዳዲስ ዕድሎች ይመጣሉ | New opportunities coming soon</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
