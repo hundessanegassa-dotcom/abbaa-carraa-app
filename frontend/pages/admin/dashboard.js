@@ -1,4 +1,4 @@
-// pages/admin/dashboard.js - UPDATED FOR UNIFIED AGENT SYSTEM
+// pages/admin/dashboard.js - COMPLETE WITH UNIFIED AGENT/VENDOR/ORG APPROVALS
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -63,7 +63,7 @@ export default function AdminDashboard() {
     total_raised: 0, total_commission: 0, pending_commission: 0
   });
   
-  // Pending approvals - UPDATED for new agents table
+  // Pending approvals
   const [pendingAgents, setPendingAgents] = useState([]);
   const [pendingVendors, setPendingVendors] = useState([]);
   const [pendingOrganizations, setPendingOrganizations] = useState([]);
@@ -125,7 +125,7 @@ export default function AdminDashboard() {
     is_featured: true
   });
 
-  // View document modal
+  // Document viewer modal
   const [viewingDocument, setViewingDocument] = useState(null);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
 
@@ -220,7 +220,6 @@ export default function AdminDashboard() {
 
   async function loadCityVipData() {
     try {
-      // Load City VIP participants from city_vip_participants table
       const { data: participants, error: participantsError } = await supabase
         .from('city_vip_participants')
         .select('*')
@@ -230,10 +229,8 @@ export default function AdminDashboard() {
         setCityVipParticipants(participants);
       }
       
-      // Get unique cities from participants
       const uniqueCities = [...new Set(participants?.map(p => p.city).filter(Boolean))];
       
-      // Create city pools summary
       const cityPools = uniqueCities.map(city => ({
         id: `city-${city}`,
         city: city,
@@ -275,7 +272,6 @@ export default function AdminDashboard() {
     setDrawingCityWinner(true);
     
     try {
-      // Get all verified participants for this city and pool type
       const { data: participants, error: participantError } = await supabase
         .from('city_vip_participants')
         .select('*')
@@ -292,14 +288,10 @@ export default function AdminDashboard() {
         return;
       }
       
-      // Random selection
       const randomIndex = Math.floor(Math.random() * participants.length);
       const winner = participants[randomIndex];
-      
-      // Determine prize amount based on pool type
       const prizeAmount = poolType === 'daily' ? 1000000 : poolType === 'weekly' ? 10000000 : 40000000;
       
-      // Update participant as winner
       const { error: updateError } = await supabase
         .from('city_vip_participants')
         .update({
@@ -311,45 +303,35 @@ export default function AdminDashboard() {
       
       if (updateError) throw updateError;
       
-      // Record draw history
-      const { error: historyError } = await supabase
-        .from('merkato_vip_draws')
-        .insert({
-          pool_id: `city-${cityName}-${poolType}`,
-          pool_type: 'city',
-          city: cityName,
-          drawn_at: new Date().toISOString(),
-          winner_id: winner.user_id,
-          winner_email: winner.user_email,
-          winner_name: winner.user_name,
-          prize_amount: prizeAmount,
-          ticket_number: winner.ticket_number,
-          random_seed: Math.random().toString(),
-          verification_hash: btoa(`${cityName}-${winner.user_id}-${Date.now()}`),
-          drawn_by: user?.id
-        });
+      await supabase.from('merkato_vip_draws').insert({
+        pool_id: `city-${cityName}-${poolType}`,
+        pool_type: 'city',
+        city: cityName,
+        drawn_at: new Date().toISOString(),
+        winner_id: winner.user_id,
+        winner_email: winner.user_email,
+        winner_name: winner.user_name,
+        prize_amount: prizeAmount,
+        ticket_number: winner.ticket_number,
+        random_seed: Math.random().toString(),
+        verification_hash: btoa(`${cityName}-${winner.user_id}-${Date.now()}`),
+        drawn_by: user?.id
+      });
       
-      if (historyError) throw historyError;
-      
-      // Send notification to winner
-      await supabase
-        .from('notifications')
-        .insert({
-          user_id: winner.user_id,
-          title: '🎉 Congratulations! You Won!',
-          message: `You have won ${prizeAmount.toLocaleString()} ETB in the ${cityName} City VIP ${poolType} pool!`,
-          type: 'winner',
-          link_url: `/dashboard`,
-          created_at: new Date().toISOString()
-        });
+      await supabase.from('notifications').insert({
+        user_id: winner.user_id,
+        title: '🎉 Congratulations! You Won!',
+        message: `You have won ${prizeAmount.toLocaleString()} ETB in the ${cityName} City VIP ${poolType} pool!`,
+        type: 'winner',
+        link_url: `/dashboard`,
+        created_at: new Date().toISOString()
+      });
       
       toast.success(`🎉 Winner drawn for ${cityName} ${poolType}! ${winner.user_name || winner.user_email} wins ${prizeAmount.toLocaleString()} ETB!`);
       
-      // Refresh data
       await loadCityVipData();
       await loadCityVipWinners();
       
-      // Show winner details
       setSelectedCityPool({
         city: cityName,
         poolType: poolType,
@@ -571,7 +553,6 @@ export default function AdminDashboard() {
     });
   }
 
-  // UPDATED: Load pending approvals from new agents table
   async function loadPendingApprovals() {
     // Load pending agents from the unified agents table
     const { data: agents, error: agentsError } = await supabase
@@ -581,7 +562,6 @@ export default function AdminDashboard() {
       .order('created_at', { ascending: false });
     
     if (!agentsError && agents) {
-      // Get profile info for each agent
       const agentsWithProfiles = await Promise.all(
         agents.map(async (agent) => {
           const { data: profile } = await supabase
@@ -593,27 +573,37 @@ export default function AdminDashboard() {
         })
       );
       setPendingAgents(agentsWithProfiles || []);
+    } else {
+      setPendingAgents([]);
     }
     
-    // Load vendors and organizations (keep as is for now)
+    // Load vendors
     const { data: vendors } = await supabase
       .from('vendors')
       .select('*, profiles!user_id(full_name, email)')
-      .eq('verified', false);
+      .eq('verified', false)
+      .order('created_at', { ascending: false });
     
+    // Load organizations
     const { data: organizations } = await supabase
       .from('organizations')
       .select('*, profiles!user_id(full_name, email)')
-      .eq('verified', false);
+      .eq('verified', false)
+      .order('created_at', { ascending: false });
     
     if (!isMounted.current) return;
     setPendingVendors(vendors || []);
     setPendingOrganizations(organizations || []);
   }
 
-  // UPDATED: Approve agent application
   async function verifyAgent(agentId, approved, rejectionReason = null) {
     try {
+      const { data: agent } = await supabase
+        .from('agents')
+        .select('user_id, full_name, email')
+        .eq('id', agentId)
+        .single();
+      
       if (approved) {
         const { error } = await supabase
           .from('agents')
@@ -626,13 +616,6 @@ export default function AdminDashboard() {
           .eq('id', agentId);
         
         if (error) throw error;
-        
-        // Get agent details for notification
-        const { data: agent } = await supabase
-          .from('agents')
-          .select('user_id, full_name, email')
-          .eq('id', agentId)
-          .single();
         
         if (agent) {
           await supabase.from('notifications').insert({
@@ -651,11 +634,23 @@ export default function AdminDashboard() {
           .update({ 
             is_approved: false, 
             status: 'rejected',
-            rejection_reason: rejectionReason
+            rejection_reason: rejectionReason,
+            rejected_at: new Date().toISOString()
           })
           .eq('id', agentId);
         
         if (error) throw error;
+        
+        if (agent) {
+          await supabase.from('notifications').insert({
+            user_id: agent.user_id,
+            title: 'Agent Application Update',
+            message: `Dear ${agent.full_name}, your agent application has been reviewed. ${rejectionReason ? `Reason: ${rejectionReason}` : 'Please contact support for more information.'}`,
+            type: 'agent_rejection',
+            created_at: new Date().toISOString()
+          });
+        }
+        
         toast.success('Agent rejected');
       }
       
@@ -667,14 +662,132 @@ export default function AdminDashboard() {
     }
   }
 
-  async function verifyVendor(vendorId, verified) {
-    const { error } = await supabase.from('vendors').update({ verified, verified_at: new Date().toISOString() }).eq('id', vendorId);
-    if (error) toast.error('Failed'); else { toast.success(`Vendor ${verified ? 'approved' : 'rejected'}`); loadPendingApprovals(); loadStats(); }
+  async function verifyVendor(vendorId, approved, rejectionReason = null) {
+    try {
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('user_id, business_name')
+        .eq('id', vendorId)
+        .single();
+      
+      if (approved) {
+        const { error } = await supabase
+          .from('vendors')
+          .update({ 
+            verified: true, 
+            verified_at: new Date().toISOString(),
+            verified_by: user?.id,
+            status: 'active'
+          })
+          .eq('id', vendorId);
+        
+        if (error) throw error;
+        
+        await supabase.from('profiles').update({ role: 'vendor', user_type: 'vendor' }).eq('id', vendor.user_id);
+        
+        await supabase.from('notifications').insert({
+          user_id: vendor.user_id,
+          title: '🎉 Vendor Application Approved!',
+          message: `Congratulations! Your vendor application for "${vendor.business_name}" has been approved. You can now list products as prizes!`,
+          type: 'vendor_approval',
+          created_at: new Date().toISOString()
+        });
+        
+        toast.success('Vendor approved successfully');
+      } else {
+        const { error } = await supabase
+          .from('vendors')
+          .update({ 
+            verified: false, 
+            status: 'rejected',
+            rejection_reason: rejectionReason,
+            rejected_at: new Date().toISOString()
+          })
+          .eq('id', vendorId);
+        
+        if (error) throw error;
+        
+        await supabase.from('notifications').insert({
+          user_id: vendor.user_id,
+          title: 'Vendor Application Update',
+          message: `Your vendor application for "${vendor.business_name}" has been reviewed. ${rejectionReason ? `Reason: ${rejectionReason}` : 'Please contact support for more information.'}`,
+          type: 'vendor_rejection',
+          created_at: new Date().toISOString()
+        });
+        
+        toast.success('Vendor rejected');
+      }
+      
+      await loadPendingApprovals();
+      await loadStats();
+    } catch (error) {
+      console.error('Vendor approval error:', error);
+      toast.error('Failed to process vendor application');
+    }
   }
 
-  async function verifyOrganization(orgId, verified) {
-    const { error } = await supabase.from('organizations').update({ verified, verified_at: new Date().toISOString() }).eq('id', orgId);
-    if (error) toast.error('Failed'); else { toast.success(`Organization ${verified ? 'approved' : 'rejected'}`); loadPendingApprovals(); loadStats(); }
+  async function verifyOrganization(orgId, approved, rejectionReason = null) {
+    try {
+      const { data: org } = await supabase
+        .from('organizations')
+        .select('user_id, business_name')
+        .eq('id', orgId)
+        .single();
+      
+      if (approved) {
+        const { error } = await supabase
+          .from('organizations')
+          .update({ 
+            verified: true, 
+            verified_at: new Date().toISOString(),
+            verified_by: user?.id,
+            status: 'active'
+          })
+          .eq('id', orgId);
+        
+        if (error) throw error;
+        
+        await supabase.from('profiles').update({ role: 'organization', user_type: 'organization' }).eq('id', org.user_id);
+        
+        await supabase.from('notifications').insert({
+          user_id: org.user_id,
+          title: '🎉 Organization Application Approved!',
+          message: `Congratulations! Your organization "${org.business_name}" has been approved. You can now create private pools for your members!`,
+          type: 'organization_approval',
+          created_at: new Date().toISOString()
+        });
+        
+        toast.success('Organization approved successfully');
+      } else {
+        const { error } = await supabase
+          .from('organizations')
+          .update({ 
+            verified: false, 
+            status: 'rejected',
+            rejection_reason: rejectionReason,
+            rejected_at: new Date().toISOString()
+          })
+          .eq('id', orgId);
+        
+        if (error) throw error;
+        
+        await supabase.from('notifications').insert({
+          user_id: org.user_id,
+          title: 'Organization Application Update',
+          message: `Your organization application for "${org.business_name}" has been reviewed. ${rejectionReason ? `Reason: ${rejectionReason}` : 'Please contact support for more information.'}`,
+          type: 'organization_rejection',
+          created_at: new Date().toISOString()
+        });
+        
+        toast.success('Organization rejected');
+      }
+      
+      await loadPendingApprovals();
+      await loadStats();
+    } catch (error) {
+      console.error('Organization approval error:', error);
+      toast.error('Failed to process organization application');
+    }
   }
 
   // User management
@@ -874,7 +987,6 @@ export default function AdminDashboard() {
     }
   }
 
-  // Withdrawal management - UPDATED for withdrawals table
   async function processWithdrawal(requestId, approved) {
     const { error } = await supabase
       .from('withdrawals')
@@ -1154,7 +1266,6 @@ export default function AdminDashboard() {
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            {/* Keep your existing overview tab content */}
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
               <div className="bg-white rounded-xl p-3 text-center shadow-sm"><p className="text-2xl font-bold text-blue-600">{stats.total_users}</p><p className="text-xs text-gray-500">Users</p></div>
               <div className="bg-white rounded-xl p-3 text-center shadow-sm"><p className="text-2xl font-bold text-yellow-600">{stats.total_agents}</p><p className="text-xs text-gray-500">Agents</p></div>
@@ -1216,14 +1327,17 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Approvals Tab - UPDATED for unified agent system */}
+        {/* Approvals Tab - UPDATED */}
         {activeTab === 'approvals' && (
           <div className="space-y-6">
-            {/* Pending Agents Section - UPDATED */}
+            {/* Pending Agents Section */}
             <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="font-bold text-lg mb-4">🤝 Pending Agent Applications ({pendingAgents.length})</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-lg">🤝 Pending Agent Applications ({pendingAgents.length})</h3>
+                <span className="text-xs text-gray-500">Requires Digital ID & Business License</span>
+              </div>
               {pendingAgents.length === 0 ? (
-                <p className="text-gray-400">No pending agent applications</p>
+                <p className="text-gray-400 text-center py-4">No pending agent applications</p>
               ) : (
                 <div className="space-y-4">
                   {pendingAgents.map(agent => (
@@ -1254,39 +1368,16 @@ export default function AdminDashboard() {
                           </div>
                           <div className="flex gap-2 mt-2">
                             {agent.digital_id_url && (
-                              <button 
-                                onClick={() => { setViewingDocument(agent.digital_id_url); setShowDocumentModal(true); }}
-                                className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700"
-                              >
-                                📄 View Digital ID
-                              </button>
+                              <button onClick={() => { setViewingDocument(agent.digital_id_url); setShowDocumentModal(true); }} className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">📄 View Digital ID</button>
                             )}
                             {agent.business_license_url && (
-                              <button 
-                                onClick={() => { setViewingDocument(agent.business_license_url); setShowDocumentModal(true); }}
-                                className="bg-purple-600 text-white px-3 py-1 rounded text-xs hover:bg-purple-700"
-                              >
-                                📜 View Business License
-                              </button>
+                              <button onClick={() => { setViewingDocument(agent.business_license_url); setShowDocumentModal(true); }} className="bg-purple-600 text-white px-3 py-1 rounded text-xs hover:bg-purple-700">📜 View Business License</button>
                             )}
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <button 
-                            onClick={() => verifyAgent(agent.id, true)} 
-                            className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700"
-                          >
-                            ✅ Approve
-                          </button>
-                          <button 
-                            onClick={() => {
-                              const reason = prompt('Enter rejection reason (optional):');
-                              verifyAgent(agent.id, false, reason);
-                            }} 
-                            className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700"
-                          >
-                            ❌ Reject
-                          </button>
+                          <button onClick={() => verifyAgent(agent.id, true)} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700">✅ Approve</button>
+                          <button onClick={() => { const reason = prompt('Enter rejection reason (optional):'); verifyAgent(agent.id, false, reason); }} className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700">❌ Reject</button>
                         </div>
                       </div>
                     </div>
@@ -1295,21 +1386,100 @@ export default function AdminDashboard() {
               )}
             </div>
 
-            {/* Pending Vendors - Keep existing */}
+            {/* Pending Vendors Section */}
             <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="font-bold text-lg mb-4">🏪 Pending Vendors ({pendingVendors.length})</h3>
-              {pendingVendors.length === 0 ? <p className="text-gray-400">No pending vendors</p> : pendingVendors.map(v => (<div key={v.id} className="flex justify-between items-center border-b py-3"><div><p className="font-medium">{v.business_name}</p><p className="text-sm text-gray-500">{v.profiles?.email}</p></div><div><button onClick={() => verifyVendor(v.id, true)} className="bg-green-600 text-white px-4 py-1 rounded text-sm">Approve</button><button onClick={() => verifyVendor(v.id, false)} className="bg-red-600 text-white px-4 py-1 rounded text-sm ml-2">Reject</button></div></div>))}
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-lg">🏪 Pending Vendor Applications ({pendingVendors.length})</h3>
+                <span className="text-xs text-gray-500">Requires Business License</span>
+              </div>
+              {pendingVendors.length === 0 ? (
+                <p className="text-gray-400 text-center py-4">No pending vendor applications</p>
+              ) : (
+                <div className="space-y-4">
+                  {pendingVendors.map(vendor => (
+                    <div key={vendor.id} className="border rounded-lg p-4 hover:shadow-md transition">
+                      <div className="flex justify-between items-start flex-wrap gap-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-2xl">🏪</span>
+                            <div>
+                              <p className="font-semibold text-lg">{vendor.business_name}</p>
+                              <p className="text-sm text-gray-500">{vendor.profiles?.email}</p>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                            <p><span className="text-gray-500">Business Type:</span> {vendor.business_type || 'N/A'}</p>
+                            <p><span className="text-gray-500">TIN:</span> {vendor.tin || 'N/A'}</p>
+                            <p><span className="text-gray-500">Phone:</span> {vendor.phone || 'N/A'}</p>
+                            <p><span className="text-gray-500">Address:</span> {vendor.address || 'N/A'}</p>
+                            <p className="col-span-2"><span className="text-gray-500">Description:</span> {vendor.description || 'N/A'}</p>
+                            <p><span className="text-gray-500">Applied:</span> {new Date(vendor.created_at).toLocaleDateString()}</p>
+                          </div>
+                          {vendor.business_license_url && (
+                            <button onClick={() => { setViewingDocument(vendor.business_license_url); setShowDocumentModal(true); }} className="bg-purple-600 text-white px-3 py-1 rounded text-xs hover:bg-purple-700">📜 View Business License</button>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <button onClick={() => verifyVendor(vendor.id, true)} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700">✅ Approve</button>
+                          <button onClick={() => { const reason = prompt('Enter rejection reason (optional):'); verifyVendor(vendor.id, false, reason); }} className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700">❌ Reject</button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Pending Organizations - Keep existing */}
+            {/* Pending Organizations Section */}
             <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="font-bold text-lg mb-4">🏢 Pending Organizations ({pendingOrganizations.length})</h3>
-              {pendingOrganizations.length === 0 ? <p className="text-gray-400">No pending organizations</p> : pendingOrganizations.map(o => (<div key={o.id} className="flex justify-between items-center border-b py-3"><div><p className="font-medium">{o.business_name}</p><p className="text-sm text-gray-500">{o.profiles?.email}</p></div><div><button onClick={() => verifyOrganization(o.id, true)} className="bg-green-600 text-white px-4 py-1 rounded text-sm">Approve</button><button onClick={() => verifyOrganization(o.id, false)} className="bg-red-600 text-white px-4 py-1 rounded text-sm ml-2">Reject</button></div></div>))}
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-lg">🏢 Pending Organization Applications ({pendingOrganizations.length})</h3>
+                <span className="text-xs text-gray-500">Requires Registration Document</span>
+              </div>
+              {pendingOrganizations.length === 0 ? (
+                <p className="text-gray-400 text-center py-4">No pending organization applications</p>
+              ) : (
+                <div className="space-y-4">
+                  {pendingOrganizations.map(org => (
+                    <div key={org.id} className="border rounded-lg p-4 hover:shadow-md transition">
+                      <div className="flex justify-between items-start flex-wrap gap-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-2xl">🏢</span>
+                            <div>
+                              <p className="font-semibold text-lg">{org.business_name}</p>
+                              <p className="text-sm text-gray-500">{org.profiles?.email}</p>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                            <p><span className="text-gray-500">Organization Type:</span> {org.organization_type || 'N/A'}</p>
+                            <p><span className="text-gray-500">Registration No:</span> {org.registration_number || 'N/A'}</p>
+                            <p><span className="text-gray-500">TIN:</span> {org.tin || 'N/A'}</p>
+                            <p><span className="text-gray-500">Phone:</span> {org.phone || 'N/A'}</p>
+                            <p><span className="text-gray-500">Email:</span> {org.email || 'N/A'}</p>
+                            <p><span className="text-gray-500">Address:</span> {org.address || 'N/A'}</p>
+                            <p className="col-span-2"><span className="text-gray-500">Description:</span> {org.description || 'N/A'}</p>
+                            {org.website && <p><span className="text-gray-500">Website:</span> <a href={org.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{org.website}</a></p>}
+                            <p><span className="text-gray-500">Applied:</span> {new Date(org.created_at).toLocaleDateString()}</p>
+                          </div>
+                          {org.registration_document_url && (
+                            <button onClick={() => { setViewingDocument(org.registration_document_url); setShowDocumentModal(true); }} className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">📄 View Registration Document</button>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <button onClick={() => verifyOrganization(org.id, true)} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700">✅ Approve</button>
+                          <button onClick={() => { const reason = prompt('Enter rejection reason (optional):'); verifyOrganization(org.id, false, reason); }} className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700">❌ Reject</button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* Withdrawals Tab - UPDATED for withdrawals table */}
+        {/* Withdrawals Tab */}
         {activeTab === 'withdrawals' && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden p-6">
             <h3 className="font-bold text-lg mb-4">💰 Withdrawal Requests ({withdrawalRequests.length})</h3>
@@ -1353,16 +1523,406 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Keep your other tabs (my-pools, merkato, city-vip, users, pools, bank-transfers, finance, disputes, settings) as they are */}
-        {/* They remain unchanged from your original implementation */}
+        {/* My Pools Tab - Keep your existing implementation */}
+        {activeTab === 'my-pools' && (
+          <div className="bg-white rounded-xl shadow-md overflow-hidden">
+            <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
+              <h2 className="font-bold text-lg">💰 My Personal Pools (20% Commission)</h2>
+              <button onClick={() => setShowPoolModal(true)} className="bg-red-600 text-white px-4 py-1 rounded-full text-sm">+ Create</button>
+            </div>
+            <div className="p-6">
+              {myPools.length === 0 ? (
+                <div className="text-center py-8"><p className="text-gray-400">No pools created yet</p><button onClick={() => setShowPoolModal(true)} className="mt-2 text-red-600">Create your first pool →</button></div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr><th className="px-4 py-3 text-left">Prize</th><th className="px-4 py-3 text-left">Target</th><th className="px-4 py-3 text-left">Raised</th><th className="px-4 py-3 text-left">Your 20%</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Action</th></tr>
+                    </thead>
+                    <tbody>
+                      {myPools.map(pool => (
+                        <tr key={pool.id} className="border-b hover:bg-gray-50">
+                          <td className="px-4 py-3 font-medium">{pool.prize_name}</td>
+                          <td className="px-4 py-3">ETB {pool.target_amount?.toLocaleString()}</td>
+                          <td className="px-4 py-3">ETB {pool.current_amount?.toLocaleString()}</td>
+                          <td className="px-4 py-3 font-bold text-green-600">ETB {((pool.target_amount || 0) * 0.20).toLocaleString()}</td>
+                          <td className="px-4 py-3"><span className={`px-2 py-1 rounded-full text-xs ${pool.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{pool.status}</span></td>
+                          <td className="px-4 py-3"><Link href={`/pools/${pool.id}`} className="text-red-600 text-sm hover:underline">View</Link></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
-        {/* ... (rest of your tabs - my-pools, merkato, city-vip, users, pools, bank-transfers, finance, disputes, settings) ... */}
-        {/* For brevity, I'm not repeating them here, but they should remain exactly as in your original code */}
+        {/* Merkato VIP Tab - Keep your existing implementation */}
+        {activeTab === 'merkato' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="bg-gradient-to-r from-yellow-500 to-orange-600 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">{merkatoStats.total_participants}</p><p className="text-sm opacity-90">Total Participants</p></div>
+              <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">ETB {(merkatoStats.total_collected / 1000000).toFixed(1)}M</p><p className="text-sm opacity-90">Total Collected</p></div>
+              <div className="bg-gradient-to-r from-green-500 to-teal-600 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">ETB {(merkatoStats.total_paid_out / 1000000).toFixed(1)}M</p><p className="text-sm opacity-90">Paid Out</p></div>
+              <div className="bg-gradient-to-r from-red-500 to-rose-600 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">{merkatoStats.pending_draws}</p><p className="text-sm opacity-90">Pending Draws</p></div>
+              <div className="bg-gradient-to-r from-blue-500 to-cyan-600 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">{merkatoStats.pending_verification}</p><p className="text-sm opacity-90">Pending Verify</p></div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-md overflow-hidden">
+              <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
+                <h2 className="font-bold text-lg">🏪 Merkato VIP Pools</h2>
+                <button onClick={() => setShowMerkatoModal(true)} className="bg-yellow-600 text-white px-4 py-1 rounded-full text-sm">+ Create Pool</button>
+              </div>
+              <div className="p-4">
+                {merkatoPools.length === 0 ? (
+                  <p className="text-gray-400 text-center py-8">No Merkato pools created yet</p>
+                ) : (
+                  <div className="space-y-3">
+                    {merkatoPools.map(pool => {
+                      const colors = pool.tier === 'daily' ? 'from-yellow-500 to-orange-600' : pool.tier === 'weekly' ? 'from-purple-500 to-pink-600' : 'from-green-600 to-teal-700';
+                      const icon = pool.tier === 'daily' ? '⭐' : pool.tier === 'weekly' ? '🏆' : '👑';
+                      return (
+                        <div key={pool.id} className={`bg-gradient-to-r ${colors} rounded-lg p-4 text-white`}>
+                          <div className="flex justify-between items-center flex-wrap gap-3">
+                            <div className="flex items-center gap-3">
+                              <span className="text-3xl">{icon}</span>
+                              <div>
+                                <div className="font-bold text-lg">{pool.name}</div>
+                                <div className="text-xs opacity-90">{pool.tier === 'daily' ? 'Daily (1M)' : pool.tier === 'weekly' ? 'Weekly (10M)' : 'Monthly (40M)'}</div>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-4 text-center text-sm">
+                              <div><p className="text-xs opacity-75">Entry Fee</p><p className="font-bold">ETB {pool.contribution_amount?.toLocaleString()}</p></div>
+                              <div><p className="text-xs opacity-75">Prize</p><p className="font-bold">ETB {pool.prize_amount?.toLocaleString()}</p></div>
+                              <div><p className="text-xs opacity-75">Total Seats</p><p className="font-bold">{Math.floor((pool.prize_amount * 1.2) / pool.contribution_amount).toLocaleString()}</p></div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button onClick={() => openEditMerkatoModal(pool)} className="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-lg text-sm transition">✏️ Edit</button>
+                              <Link href={`/admin/draw-winner?pool=${pool.id}`} className="bg-purple-600 text-white px-3 py-1 rounded text-sm">Draw Winner</Link>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* City VIP Tab - Keep your existing implementation */}
+        {activeTab === 'city-vip' && (
+          <div className="space-y-6">
+            {/* Keep your existing City VIP implementation */}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              <div className="bg-gradient-to-r from-gray-700 to-gray-900 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">{cityVipParticipants.length}</p><p className="text-sm opacity-90">Total Participants</p></div>
+              <div className="bg-gradient-to-r from-gray-700 to-gray-900 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">{cityVipPools.length}</p><p className="text-sm opacity-90">Active Cities</p></div>
+              <div className="bg-gradient-to-r from-gray-700 to-gray-900 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">ETB {cityVipParticipants.reduce((sum, p) => sum + (p.contribution_amount || 0), 0).toLocaleString()}</p><p className="text-sm opacity-90">Total Collected</p></div>
+              <div className="bg-gradient-to-r from-yellow-600 to-orange-600 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">{cityVipParticipants.filter(p => p.payment_status === 'pending_verification').length}</p><p className="text-sm opacity-90">Pending Verify</p></div>
+              <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">{cityVipParticipants.filter(p => p.pool_type === 'daily' && p.payment_status === 'verified').length}</p><p className="text-sm opacity-90">Daily</p></div>
+              <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-4 text-white text-center"><p className="text-2xl font-bold">{cityVipParticipants.filter(p => p.pool_type === 'monthly' && p.payment_status === 'verified').length}</p><p className="text-sm opacity-90">Monthly</p></div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-md p-4 flex justify-between items-center flex-wrap gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Filter by City</label>
+                <select value={selectedCityFilter} onChange={(e) => setSelectedCityFilter(e.target.value)} className="w-full md:w-64 border rounded-lg px-3 py-2">
+                  <option value="all">All Cities ({cityVipParticipants.length})</option>
+                  {cityVipPools.map(pool => (<option key={pool.city} value={pool.city}>{pool.city} ({pool.total_participants} participants)</option>))}
+                </select>
+              </div>
+              <button onClick={() => setShowCreateCityModal(true)} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition">➕ Create New City VIP</button>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-md overflow-hidden">
+              <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">🏙️ City VIP Participants</h2></div>
+              <div className="p-4">
+                {cityVipParticipants.length === 0 ? (
+                  <div className="text-center py-12"><div className="text-5xl mb-3">🏙️</div><p className="text-gray-400">No City VIP participants yet</p></div>
+                ) : (
+                  <div className="space-y-4">
+                    {cityVipParticipants.filter(p => selectedCityFilter === 'all' || p.city === selectedCityFilter).map((participant) => {
+                      const isVerified = participant.payment_status === 'verified';
+                      const isPending = participant.payment_status === 'pending_verification';
+                      return (
+                        <div key={participant.id} className={`border rounded-lg p-4 ${isVerified ? 'border-green-200 bg-green-50/30' : isPending ? 'border-yellow-200 bg-yellow-50/30' : 'border-gray-200'}`}>
+                          <div className="flex justify-between items-start flex-wrap gap-4">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-2xl">🏙️</span>
+                                <span className="font-semibold">{participant.city || 'Unknown City'}</span>
+                                <span className="text-sm text-gray-500">{participant.pool_type} Pool</span>
+                                {isVerified ? <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">✓ Verified</span> : isPending ? <span className="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">⏳ Pending</span> : <span className="bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded-full">Pending Payment</span>}
+                              </div>
+                              <p className="text-sm font-medium">{participant.user_name}</p>
+                              <p className="text-sm text-gray-500">{participant.user_email}</p>
+                              <p className="text-sm">Seats: <span className="font-mono">{participant.seat_numbers?.join(', ')}</span></p>
+                              <p className="text-sm font-semibold text-green-600">Amount: ETB {participant.contribution_amount?.toLocaleString()}</p>
+                              <p className="text-xs text-gray-400">Ticket: {participant.ticket_number}</p>
+                              <p className="text-xs text-gray-400">Submitted: {new Date(participant.created_at).toLocaleString()}</p>
+                            </div>
+                            <div className="flex gap-2">
+                              {participant.payment_proof_url && (<button onClick={() => window.open(participant.payment_proof_url, '_blank')} className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">📸 View Proof</button>)}
+                              {isPending && (<><button onClick={() => verifyCityVipPayment(participant.id, true)} className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">✅ Approve</button><button onClick={() => verifyCityVipPayment(participant.id, false)} className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">❌ Reject</button></>)}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {cityVipPools.map(pool => (
+                <div key={pool.city} className="bg-white rounded-xl shadow-md p-4 border-l-4 border-gray-500">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">🏙️</span>
+                      <div>
+                        <h3 className="font-bold text-lg">{pool.city}</h3>
+                        <p className="text-xs text-gray-500">City VIP Program</p>
+                      </div>
+                    </div>
+                    <button onClick={() => { const cityConfig = cityVipConfigs.find(c => c.city_id === pool.city.toLowerCase().replace(/\s/g, '-')); setSelectedCityForEdit(cityConfig || pool); setShowEditCityModal(true); }} className="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700">✏️ Edit</button>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm"><span className="text-gray-500">Participants:</span><span className="font-semibold">{pool.total_participants}</span></div>
+                    <div className="flex justify-between text-sm"><span className="text-gray-500">Verified:</span><span className="font-semibold text-green-600">{pool.verified_participants || 0}</span></div>
+                    <div className="flex justify-between text-sm"><span className="text-gray-500">Pending Verify:</span><span className="font-semibold text-yellow-600">{pool.pending_verification}</span></div>
+                    <div className="flex justify-between text-sm"><span className="text-gray-500">Total Collected:</span><span className="font-semibold text-green-600">ETB {pool.total_collected.toLocaleString()}</span></div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t flex gap-2">
+                    <button onClick={() => drawCityVipWinner(pool.city, 'daily')} disabled={drawingCityWinner || (pool.verified_participants || 0) === 0} className="flex-1 bg-yellow-600 text-white px-2 py-1 rounded text-xs hover:bg-yellow-700 disabled:opacity-50">⭐ Daily Draw</button>
+                    <button onClick={() => drawCityVipWinner(pool.city, 'weekly')} disabled={drawingCityWinner || (pool.verified_participants || 0) === 0} className="flex-1 bg-purple-600 text-white px-2 py-1 rounded text-xs hover:bg-purple-700 disabled:opacity-50">🏆 Weekly Draw</button>
+                    <button onClick={() => drawCityVipWinner(pool.city, 'monthly')} disabled={drawingCityWinner || (pool.verified_participants || 0) === 0} className="flex-1 bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700 disabled:opacity-50">👑 Monthly Draw</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Users Tab - Keep your existing implementation */}
+        {activeTab === 'users' && (
+          <div className="bg-white rounded-xl shadow-md overflow-hidden">
+            <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">👥 User Management</h2></div>
+            <div className="overflow-x-auto p-4">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr><th className="px-4 py-3 text-left">Name</th><th className="px-4 py-3 text-left">Email</th><th className="px-4 py-3 text-left">Role</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Actions</th></tr>
+                </thead>
+                <tbody>
+                  {users.map(u => (
+                    <tr key={u.id} className="border-b hover:bg-gray-50">
+                      <td className="px-4 py-3">{u.full_name || 'N/A'}</td>
+                      <td className="px-4 py-3">{u.email}</td>
+                      <td className="px-4 py-3"><select onChange={(e) => updateUserRole(u.id, e.target.value)} defaultValue={u.role || 'individual'} className="border rounded px-2 py-1 text-sm"><option value="individual">Individual</option><option value="agent">Agent</option><option value="vendor">Vendor</option><option value="organization">Organization</option><option value="admin">Admin</option></select></td>
+                      <td className="px-4 py-3">{u.is_banned ? <span className="text-red-600 font-medium">Banned</span> : <span className="text-green-600">Active</span>}</td>
+                      <td className="px-4 py-3"><button onClick={() => toggleUserBan(u.id, u.is_banned)} className={`px-3 py-1 rounded text-xs ${u.is_banned ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>{u.is_banned ? 'Unban' : 'Ban'}</button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Pools Tab - Keep your existing implementation */}
+        {activeTab === 'pools' && (
+          <div className="bg-white rounded-xl shadow-md overflow-hidden">
+            <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">🌊 All Platform Pools</h2></div>
+            <div className="overflow-x-auto p-4">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr><th className="px-4 py-3 text-left">Prize</th><th className="px-4 py-3 text-left">Creator</th><th className="px-4 py-3 text-left">Target</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Featured</th><th className="px-4 py-3 text-left">Actions</th></tr>
+                </thead>
+                <tbody>
+                  {allPools.map(p => (
+                    <tr key={p.id} className="border-b hover:bg-gray-50">
+                      <td className="px-4 py-3 font-medium">{p.prize_name}</td>
+                      <td className="px-4 py-3">{p.profiles?.full_name || 'Admin'}</td>
+                      <td className="px-4 py-3">ETB {p.target_amount?.toLocaleString()}</td>
+                      <td className="px-4 py-3"><span className={`px-2 py-1 rounded-full text-xs ${p.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{p.status}</span></td>
+                      <td className="px-4 py-3">{p.is_featured ? '⭐ Featured' : ''}</td>
+                      <td className="px-4 py-3 flex gap-1 flex-wrap">
+                        <button onClick={() => togglePoolStatus(p.id, p.status)} className="bg-yellow-600 text-white px-2 py-1 rounded text-xs">{p.status === 'active' ? 'Pause' : 'Activate'}</button>
+                        <button onClick={() => toggleFeaturedPool(p.id, p.is_featured)} className="bg-blue-600 text-white px-2 py-1 rounded text-xs">{p.is_featured ? 'Unfeature' : 'Feature'}</button>
+                        <button onClick={() => deletePool(p.id)} className="bg-red-600 text-white px-2 py-1 rounded text-xs">Delete</button>
+                        <Link href={`/pools/${p.id}`} className="bg-gray-600 text-white px-2 py-1 rounded text-xs">View</Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Bank Transfers Tab - Keep your existing implementation */}
+        {activeTab === 'bank-transfers' && (
+          <div className="bg-white rounded-xl shadow-md overflow-hidden">
+            <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">🏦 Bank Transfer Verification</h2></div>
+            <div className="p-4">
+              {bankTransfers.length === 0 ? (
+                <div className="text-center py-12"><div className="text-5xl mb-3">✅</div><p className="text-gray-500">No pending bank transfers</p></div>
+              ) : (
+                <div className="space-y-4">
+                  {bankTransfers.map((transfer) => (
+                    <div key={transfer.id} className="border rounded-lg p-4 hover:shadow-md transition">
+                      <div className="flex justify-between items-start flex-wrap gap-4">
+                        <div className="space-y-1">
+                          <p className="font-semibold text-lg">{transfer.profiles?.full_name}</p>
+                          <p className="text-sm text-gray-500">{transfer.profiles?.email}</p>
+                          <p className="text-sm">🎯 Pool: <span className="font-medium">{transfer.pools?.prize_name}</span></p>
+                          <p className="text-sm">🎟️ Seats: <span className="font-mono">{transfer.seat_numbers?.join(', ')}</span></p>
+                          <p className="text-sm font-bold text-green-600">💰 ETB {transfer.amount?.toLocaleString()}</p>
+                          <p className="text-xs text-gray-400">Submitted: {new Date(transfer.created_at).toLocaleString()}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          {transfer.proof_image && (<button onClick={() => window.open(transfer.proof_image, '_blank')} className="bg-blue-600 text-white px-3 py-1 rounded text-sm">📸 View Proof</button>)}
+                        </div>
+                      </div>
+                      <div className="flex gap-3 mt-4 pt-3 border-t">
+                        <button onClick={() => verifyBankTransfer(transfer.id, transfer.user_id, transfer.pool_id, transfer.amount, transfer.seat_numbers, true)} className="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold">✅ Approve & Confirm Seats</button>
+                        <button onClick={() => verifyBankTransfer(transfer.id, transfer.user_id, transfer.pool_id, transfer.amount, transfer.seat_numbers, false)} className="flex-1 bg-red-600 text-white py-2 rounded-lg font-semibold">❌ Reject</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Finance Tab - Keep your existing implementation */}
+        {activeTab === 'finance' && (
+          <div className="space-y-6">
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="bg-white rounded-xl shadow-md p-6"><h3 className="font-bold text-gray-500">Total Volume</h3><p className="text-3xl font-bold text-green-600">ETB {stats.total_volume.toLocaleString()}</p></div>
+              <div className="bg-white rounded-xl shadow-md p-6"><h3 className="font-bold text-gray-500">Platform Revenue (10%)</h3><p className="text-3xl font-bold text-blue-600">ETB {stats.platform_revenue.toLocaleString()}</p></div>
+              <div className="bg-gradient-to-r from-red-500 to-pink-500 rounded-xl p-6 text-white"><h3 className="font-bold">Charity Fund (2%)</h3><p className="text-3xl font-bold">ETB {Math.floor(stats.charity_total).toLocaleString()}</p><p className="text-sm">Lives Impacted: {stats.lives_impacted}</p></div>
+            </div>
+            <div className="bg-white rounded-xl shadow-md p-6"><h3 className="font-bold text-lg mb-4">💚 Charity Transaction History</h3>{charityTransactions.length === 0 ? <p className="text-gray-400 text-center py-8">No charity transactions yet</p> : charityTransactions.map(t => (<div key={t.id} className="border-b py-3 flex justify-between"><span>{new Date(t.created_at).toLocaleDateString()}</span><span className="font-bold text-green-600">ETB {t.amount?.toLocaleString()}</span><span className="text-gray-500">{t.source}</span></div>))}</div>
+          </div>
+        )}
+
+        {/* Disputes Tab - Keep your existing implementation */}
+        {activeTab === 'disputes' && (
+          <div className="space-y-4">
+            {disputes.length === 0 ? <div className="bg-white rounded-xl p-8 text-center"><p className="text-gray-400">✅ No pending disputes</p></div> : disputes.map(d => (<div key={d.id} className="bg-white rounded-xl shadow-md p-6"><p className="font-bold text-lg">Pool: {d.pool?.prize_name}</p><p className="text-gray-600">Filed by: {d.user?.full_name}</p><p className="mt-2">{d.description}</p><textarea id={`res-${d.id}`} placeholder="Enter resolution notes..." className="w-full border rounded-lg p-2 mt-3"></textarea><button onClick={() => resolveDispute(d.id, document.getElementById(`res-${d.id}`).value)} className="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg">Resolve Dispute</button></div>))}
+          </div>
+        )}
+
+        {/* Settings Tab - Keep your existing implementation */}
+        {activeTab === 'settings' && (
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <h2 className="font-bold text-xl mb-4">⚙️ Platform Settings</h2>
+            <button onClick={() => setShowAnnouncementModal(true)} className="bg-blue-600 text-white px-6 py-2 rounded-lg">📢 Create Announcement</button>
+            <div className="mt-6 pt-6 border-t"><Link href="/admin/analytics" className="text-blue-600 hover:underline">📊 View Full Analytics →</Link></div>
+            <div className="mt-4"><Link href="/admin/logs" className="text-blue-600 hover:underline">📜 View System Logs →</Link></div>
+          </div>
+        )}
       </div>
 
-      {/* Modals - Keep all your existing modals */}
-      {/* Create Pool Modal, Merkato VIP Modal, Edit Merkato Modal, Announcement Modal, Create City VIP Modal, Edit City VIP Modal */}
-      {/* ... (keep your existing modal implementations) ... */}
+      {/* City Winner Draw Modal */}
+      {showCityDrawModal && selectedCityPool && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="text-6xl mb-3">🏆</div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Winner Announced!</h2>
+              <p className="text-gray-500 mb-4">{selectedCityPool.city} VIP {selectedCityPool.poolType} Pool</p>
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-4 mb-4">
+                <p className="text-sm text-gray-500">Winner</p>
+                <p className="text-xl font-bold text-gray-800">{selectedCityPool.winner?.user_name || selectedCityPool.winner?.user_email}</p>
+                <p className="text-2xl font-bold text-green-600 mt-2">ETB {selectedCityPool.prize?.toLocaleString()}</p>
+              </div>
+              <div className="text-left text-sm space-y-2 mb-4">
+                <p><span className="text-gray-500">Email:</span> {selectedCityPool.winner?.user_email}</p>
+                <p><span className="text-gray-500">Ticket:</span> <span className="font-mono">{selectedCityPool.winner?.ticket_number}</span></p>
+                <p><span className="text-gray-500">Seats:</span> {selectedCityPool.winner?.seat_numbers?.join(', ')}</p>
+              </div>
+              <button onClick={() => setShowCityDrawModal(false)} className="w-full bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Pool Modal - Keep your existing implementation */}
+      {showPoolModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center"><h2 className="text-xl font-bold">✨ Create Featured Pool (20% Commission)</h2><button onClick={() => setShowPoolModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button></div>
+            <div className="p-6 space-y-5">
+              <div><label className="block text-sm font-medium mb-1">Prize Name *</label><input type="text" className="w-full border rounded-lg p-3" placeholder="e.g., iPhone 15 Pro Max" value={newPool.prize_name} onChange={(e) => setNewPool({...newPool, prize_name: e.target.value})} /></div>
+              <div><label className="block text-sm font-medium mb-1">Description</label><textarea rows="3" className="w-full border rounded-lg p-3" placeholder="Describe the prize and pool rules..." value={newPool.description} onChange={(e) => setNewPool({...newPool, description: e.target.value})} /></div>
+              <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-1">Target Amount (ETB) *</label><input type="number" className="w-full border rounded-lg p-3" placeholder="10000" value={newPool.target_amount} onChange={(e) => setNewPool({...newPool, target_amount: e.target.value})} /></div><div><label className="block text-sm font-medium mb-1">Entry Fee (ETB)</label><input type="number" className="w-full border rounded-lg p-3" placeholder="10" value={newPool.entry_fee} onChange={(e) => setNewPool({...newPool, entry_fee: e.target.value})} /></div></div>
+              <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-1">Start Date</label><input type="datetime-local" className="w-full border rounded-lg p-3" value={newPool.start_date} onChange={(e) => setNewPool({...newPool, start_date: e.target.value})} /></div><div><label className="block text-sm font-medium mb-1">End Date *</label><input type="datetime-local" className="w-full border rounded-lg p-3" value={newPool.end_date} onChange={(e) => setNewPool({...newPool, end_date: e.target.value})} /></div></div>
+              <div><label className="block text-sm font-medium mb-1">Pool Image</label><input type="file" accept="image/*" onChange={handlePoolImageUpload} disabled={uploading} className="w-full border rounded-lg p-2" />{uploading && <p className="text-sm text-gray-500 mt-1">Uploading...</p>}{newPool.image_url && <div className="mt-2"><img src={newPool.image_url} alt="Preview" className="w-32 h-32 object-cover rounded-lg" /></div>}</div>
+              <div className="flex items-center gap-3"><input type="checkbox" id="is_featured" checked={newPool.is_featured} onChange={(e) => setNewPool({...newPool, is_featured: e.target.checked})} className="w-5 h-5" /><label htmlFor="is_featured" className="text-sm font-medium">⭐ Feature this pool on homepage</label></div>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm"><p className="font-semibold text-yellow-800">💰 Admin Commission: 20%</p><p className="text-yellow-700 text-xs mt-1">When this pool reaches target, you earn 20% of the total amount. Target: ETB {parseFloat(newPool.target_amount || 0).toLocaleString()} → Your commission: ETB {(parseFloat(newPool.target_amount || 0) * 0.20).toLocaleString()}</p></div>
+              <div className="flex gap-3 pt-4"><button onClick={createAdminPool} disabled={loading || uploading} className="flex-1 bg-gradient-to-r from-red-600 to-rose-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition">{loading ? 'Creating...' : '✨ Create Featured Pool'}</button><button onClick={() => setShowPoolModal(false)} className="flex-1 border border-gray-300 py-3 rounded-lg hover:bg-gray-50">Cancel</button></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Merkato VIP Pool Creation Modal - Keep your existing implementation */}
+      {showMerkatoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-md w-full">
+            <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center"><h2 className="text-xl font-bold">🏪 Create Merkato VIP Pool</h2><button onClick={() => setShowMerkatoModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button></div>
+            <div className="p-6 space-y-5">
+              <div><label className="block text-sm font-medium mb-2">Select Tier</label>
+                <div className="grid grid-cols-3 gap-3">{Object.entries(tierConfig).map(([key, config]) => (<button key={key} onClick={() => setNewMerkatoPool({...newMerkatoPool, tier: key, contribution_amount: config.contribution, prize_amount: config.prize})} className={`p-3 rounded-xl text-center transition ${newMerkatoPool.tier === key ? 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700'}`}><div className="text-2xl">{config.icon}</div><div className="font-bold text-xs">{config.name}</div><div className="text-xs">{config.prize.toLocaleString()} ETB</div></button>))}</div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4"><div className="flex justify-between mb-2"><span>Entry Fee:</span><span className="font-bold">{newMerkatoPool.contribution_amount.toLocaleString()} ETB</span></div><div className="flex justify-between mb-2"><span>Prize:</span><span className="font-bold text-green-600">{newMerkatoPool.prize_amount.toLocaleString()} ETB</span></div><div className="flex justify-between"><span>Winner:</span><span>1 Lucky Winner</span></div></div>
+              <div><label className="block text-sm font-medium mb-2">Draw Time (Ethiopia Time)</label><input type="time" className="w-full border rounded-lg p-3" value={newMerkatoPool.draw_time} onChange={(e) => setNewMerkatoPool({...newMerkatoPool, draw_time: e.target.value})} /></div>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm"><p className="font-semibold">📝 Pool Rules:</p><ul className="text-xs mt-1 space-y-1"><li>• Daily: 500 ETB entry → Win 1,000,000 ETB</li><li>• Weekly: 2,500 ETB entry → Win 10,000,000 ETB</li><li>• Monthly: 5,000 ETB entry → Win 40,000,000 ETB</li></ul></div>
+              <div className="flex gap-3 pt-4"><button onClick={createMerkatoPool} disabled={loading} className="flex-1 bg-gradient-to-r from-yellow-600 to-orange-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition">{loading ? 'Creating...' : '✨ Create Merkato Pool'}</button><button onClick={() => setShowMerkatoModal(false)} className="flex-1 border border-gray-300 py-3 rounded-lg hover:bg-gray-50">Cancel</button></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Merkato VIP Pool Modal - Keep your existing implementation */}
+      {showEditMerkatoModal && editingMerkatoPool && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-md w-full">
+            <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center"><h2 className="text-xl font-bold">✏️ Edit Merkato VIP Pool</h2><button onClick={() => setShowEditMerkatoModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button></div>
+            <div className="p-6 space-y-5">
+              <div className="bg-gray-100 rounded-xl p-4 text-center"><p className="font-bold">{editingMerkatoPool.name}</p><p className="text-xs text-gray-500">{editingMerkatoPool.tier === 'daily' ? 'Daily Millionaire' : editingMerkatoPool.tier === 'weekly' ? 'Weekly Mega Winner' : 'Monthly Winner'}</p></div>
+              <div><label className="block text-sm font-medium text-gray-700 mb-1">Pool Name</label><input type="text" value={editMerkatoData.name} onChange={(e) => setEditMerkatoData({...editMerkatoData, name: e.target.value})} className="w-full border rounded-lg px-3 py-2" /></div>
+              <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium text-gray-700 mb-1">Entry Fee (ETB)</label><input type="number" value={editMerkatoData.contribution_amount} onChange={(e) => setEditMerkatoData({...editMerkatoData, contribution_amount: parseInt(e.target.value)})} className="w-full border rounded-lg px-3 py-2" /></div><div><label className="block text-sm font-medium text-gray-700 mb-1">Prize Amount (ETB)</label><input type="number" value={editMerkatoData.prize_amount} onChange={(e) => setEditMerkatoData({...editMerkatoData, prize_amount: parseInt(e.target.value)})} className="w-full border rounded-lg px-3 py-2" /></div></div>
+              <div><label className="block text-sm font-medium text-gray-700 mb-1">Draw Time</label><input type="datetime-local" value={editMerkatoData.draw_time} onChange={(e) => setEditMerkatoData({...editMerkatoData, draw_time: e.target.value})} className="w-full border rounded-lg px-3 py-2" /></div>
+              <div className="flex gap-3 pt-4"><button onClick={updateMerkatoPool} disabled={loading} className="flex-1 bg-gradient-to-r from-yellow-600 to-orange-600 text-white py-2 rounded-lg font-semibold">{loading ? 'Saving...' : '💾 Save Changes'}</button><button onClick={() => setShowEditMerkatoModal(false)} className="flex-1 border border-gray-300 py-2 rounded-lg">Cancel</button></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Announcement Modal - Keep your existing implementation */}
+      {showAnnouncementModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold mb-4">Create Announcement</h3>
+            <input type="text" placeholder="Title" className="w-full border rounded-lg p-2 mb-3" value={newAnnouncement.title} onChange={(e) => setNewAnnouncement({...newAnnouncement, title: e.target.value})} />
+            <textarea placeholder="Content" rows="4" className="w-full border rounded-lg p-2 mb-3" value={newAnnouncement.content} onChange={(e) => setNewAnnouncement({...newAnnouncement, content: e.target.value})}></textarea>
+            <select className="w-full border rounded-lg p-2 mb-4" value={newAnnouncement.target_audience} onChange={(e) => setNewAnnouncement({...newAnnouncement, target_audience: e.target.value})}><option value="all">All Users</option><option value="agents">Agents</option><option value="vendors">Vendors</option><option value="individuals">Individuals</option></select>
+            <div className="flex gap-3"><button onClick={createAnnouncement} className="flex-1 bg-blue-600 text-white py-2 rounded-lg">Publish</button><button onClick={() => setShowAnnouncementModal(false)} className="flex-1 bg-gray-200 py-2 rounded-lg">Cancel</button></div>
+          </div>
+        </div>
+      )}
+
+      {/* Create City VIP Modal */}
+      <CreateCityVipModal isOpen={showCreateCityModal} onClose={() => setShowCreateCityModal(false)} onSuccess={() => { loadCityVipData(); loadCityVipConfigs(); }} />
+
+      {/* Edit City VIP Modal */}
+      <EditCityVipModal isOpen={showEditCityModal} onClose={() => { setShowEditCityModal(false); setSelectedCityForEdit(null); }} onSuccess={() => { loadCityVipData(); loadCityVipConfigs(); }} cityData={selectedCityForEdit} />
     </div>
   );
 }
