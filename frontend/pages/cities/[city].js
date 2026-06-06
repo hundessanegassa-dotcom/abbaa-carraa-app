@@ -1,4 +1,4 @@
-// pages/cities/[city].js - COMPLETE WITH ALL CITIES AND AGENT SECTION
+// pages/cities/[city].js - COMPLETE WITH ALL ETHIOPIAN CITIES (FULL LIST)
 import { useRouter } from 'next/router';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -55,8 +55,6 @@ const cityData = {
     population: '3M+',
     region: 'Oromia'
   },
-
-  // ===================== DIRE DAWA =====================
   'dire-dawa': {
     name: 'ድሬ ዳዋ | Dire Dawa',
     slogan: 'የሎጂስቲክስ እና የማኑፋክቸሪንግ በር',
@@ -117,6 +115,30 @@ const cityData = {
     product: 'ንግድ, ግብርና',
     description: 'የምዕራብ ትግራይ የንግድ ማዕከል',
     population: '100K+',
+    region: 'Tigray'
+  },
+  'mekoni': {
+    name: 'መቆኒ | Mekoni',
+    slogan: 'የምዕራብ ትግራይ ከተማ',
+    businesses: '3,000+',
+    workers: '12,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏔️',
+    product: 'ንግድ, ግብርና',
+    description: 'የምዕራብ ትግራይ ከተማ',
+    population: '50K+',
+    region: 'Tigray'
+  },
+  'maychew': {
+    name: 'ማይጨው | Maychew',
+    slogan: 'የደቡብ ትግራይ ከተማ',
+    businesses: '3,000+',
+    workers: '12,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏔️',
+    product: 'ንግድ, ግብርና',
+    description: 'የደቡብ ትግራይ ከተማ',
+    population: '40K+',
     region: 'Tigray'
   },
 
@@ -217,6 +239,54 @@ const cityData = {
     population: '120K+',
     region: 'Amhara'
   },
+  'sekota': {
+    name: 'ሰቆጣ | Sekota',
+    slogan: 'የዋግ ሽራ ዞን ዋና ከተማ',
+    businesses: '3,000+',
+    workers: '12,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏔️',
+    product: 'ንግድ, ግብርና',
+    description: 'የዋግ ሽራ ዞን ዋና ከተማ',
+    population: '40K+',
+    region: 'Amhara'
+  },
+  'aykal': {
+    name: 'አይከል | Aykal',
+    slogan: 'የምዕራብ ጎጃም ከተማ',
+    businesses: '3,000+',
+    workers: '10,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏔️',
+    product: 'ንግድ, ግብርና',
+    description: 'የምዕራብ ጎጃም ከተማ',
+    population: '35K+',
+    region: 'Amhara'
+  },
+  'metema': {
+    name: 'ሜተማ | Metema',
+    slogan: 'የኢትዮ-ሱዳን ድንበር ከተማ',
+    businesses: '3,000+',
+    workers: '12,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🛣️',
+    product: 'ንግድ, ድንበር',
+    description: 'የኢትዮ-ሱዳን ድንበር ከተማ',
+    population: '50K+',
+    region: 'Amhara'
+  },
+  'debre-tabor': {
+    name: 'ደብረ ታቦር | Debre Tabor',
+    slogan: 'የጥንታዊ ገዳማት ከተማ',
+    businesses: '4,000+',
+    workers: '15,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '⛪',
+    product: 'ቱሪዝም, ግብርና',
+    description: 'የጥንታዊ ገዳማት ከተማ',
+    population: '70K+',
+    region: 'Amhara'
+  },
 
   // ===================== OROMIA REGION =====================
   'adama': {
@@ -291,16 +361,76 @@ const cityData = {
     population: '80K+',
     region: 'Oromia'
   },
-  'nekemte': {
-    name: 'ነቀምቴ | Nekemte',
-    slogan: 'የንግድ እና የቡና ከተማ',
-    businesses: '6,000+',
-    workers: '25,000+',
+  'ginir': {
+    name: 'ጊኒር | Ginir',
+    slogan: 'የባሌ ምስራቅ የንግድ ማዕከል',
+    businesses: '4,000+',
+    workers: '15,000+',
     color: 'from-gray-700 to-gray-900',
-    icon: '☕',
-    product: 'ቡና, ንግድ',
-    description: 'የንግድ እና የቡና ከተማ',
-    population: '150K+',
+    icon: '🏞️',
+    product: 'ንግድ, ግብርና',
+    description: 'የባሌ ምስራቅ የንግድ ማዕከል',
+    population: '60K+',
+    region: 'Oromia'
+  },
+  'yabelo': {
+    name: 'ያቤሎ | Yabelo',
+    slogan: 'የእንስሳት እርባታ እና የንግድ ከተማ',
+    businesses: '4,000+',
+    workers: '15,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🐪',
+    product: 'እንስሳት, ንግድ',
+    description: 'የእንስሳት እርባታ ከተማ',
+    population: '50K+',
+    region: 'Oromia'
+  },
+  'moyale': {
+    name: 'ሞያሌ | Moyale',
+    slogan: 'የኢትዮ-ኬንያ ድንበር ከተማ',
+    businesses: '3,000+',
+    workers: '12,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🛣️',
+    product: 'ንግድ, ድንበር',
+    description: 'የኢትዮ-ኬንያ ድንበር ከተማ',
+    population: '40K+',
+    region: 'Oromia'
+  },
+  'chiro': {
+    name: 'ቺሮ | Chiro',
+    slogan: 'የምስራቅ ሀረርጌ ዋና ከተማ',
+    businesses: '5,000+',
+    workers: '20,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏔️',
+    product: 'ንግድ, ግብርና',
+    description: 'የምስራቅ ሀረርጌ ዋና ከተማ',
+    population: '80K+',
+    region: 'Oromia'
+  },
+  'fiche': {
+    name: 'ፊጬ | Fiche',
+    slogan: 'የሰሜን ሸዋ የእህል ማዕከል',
+    businesses: '5,000+',
+    workers: '18,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🌾',
+    product: 'እህል, ግብርና',
+    description: 'የሰሜን ሸዋ የእህል ማዕከል',
+    population: '70K+',
+    region: 'Oromia'
+  },
+  'woliso': {
+    name: 'ወሊሶ | Woliso',
+    slogan: 'የሙቀት ምንጭ እና የቱሪዝም ከተማ',
+    businesses: '4,000+',
+    workers: '15,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '💧',
+    product: 'ቱሪዝም, ሙቀት ምንጭ',
+    description: 'የሙቀት ምንጭ ከተማ',
+    population: '50K+',
     region: 'Oromia'
   },
   'ambo': {
@@ -315,6 +445,54 @@ const cityData = {
     population: '100K+',
     region: 'Oromia'
   },
+  'nekemte': {
+    name: 'ነቀምቴ | Nekemte',
+    slogan: 'የቡና እና የንግድ ከተማ',
+    businesses: '6,000+',
+    workers: '25,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '☕',
+    product: 'ቡና, ንግድ',
+    description: 'የቡና እና የንግድ ከተማ',
+    population: '150K+',
+    region: 'Oromia'
+  },
+  'gimbi': {
+    name: 'ጊምቢ | Gimbi',
+    slogan: 'የምዕራብ ወለጋ የንግድ ማዕከል',
+    businesses: '4,000+',
+    workers: '15,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏔️',
+    product: 'ንግድ, ግብርና',
+    description: 'የምዕራብ ወለጋ የንግድ ማዕከል',
+    population: '60K+',
+    region: 'Oromia'
+  },
+  'dembi-dollo': {
+    name: 'ደምቢ ዶሎ | Dembi Dollo',
+    slogan: 'የወርቅ ማዕድን እና የንግድ ከተማ',
+    businesses: '4,000+',
+    workers: '18,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '💰',
+    product: 'ወርቅ, ንግድ',
+    description: 'የወርቅ ማዕድን ከተማ',
+    population: '50K+',
+    region: 'Oromia'
+  },
+  'shambu': {
+    name: 'ሻምቡ | Shambu',
+    slogan: 'የሆሮ ጉዱሩ ዋና ከተማ',
+    businesses: '4,000+',
+    workers: '15,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🌾',
+    product: 'ንግድ, ግብርና',
+    description: 'የሆሮ ጉዱሩ ዋና ከተማ',
+    population: '50K+',
+    region: 'Oromia'
+  },
   'metu': {
     name: 'መቱ | Metu',
     slogan: 'የቡና እና የግብርና ከተማ',
@@ -324,6 +502,42 @@ const cityData = {
     icon: '🌿',
     product: 'ቡና, ግብርና',
     description: 'የቡና እና የግብርና ከተማ',
+    population: '60K+',
+    region: 'Oromia'
+  },
+  'bedele': {
+    name: 'በደሌ | Bedele',
+    slogan: 'የቢራ ፋብሪካ እና የቡና ከተማ',
+    businesses: '3,000+',
+    workers: '12,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🍺',
+    product: 'ቢራ, ቡና',
+    description: 'የቢራ ፋብሪካ ከተማ',
+    population: '40K+',
+    region: 'Oromia'
+  },
+  'bule-hora': {
+    name: 'ቡሌ ሆራ | Bule Hora',
+    slogan: 'የቡሌ ሆራ ዩኒቨርሲቲ ከተማ',
+    businesses: '4,000+',
+    workers: '15,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🎓',
+    product: 'ትምህርት, ንግድ',
+    description: 'የቡሌ ሆራ ዩኒቨርሲቲ ከተማ',
+    population: '70K+',
+    region: 'Oromia'
+  },
+  'negele-borana': {
+    name: 'ነገሌ ቦረና | Negele Borana',
+    slogan: 'የቦረና የእንስሳት እርባታ ማዕከል',
+    businesses: '4,000+',
+    workers: '15,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🐪',
+    product: 'እንስሳት, ንግድ',
+    description: 'የቦረና የእንስሳት እርባታ ማዕከል',
     population: '60K+',
     region: 'Oromia'
   },
@@ -353,6 +567,42 @@ const cityData = {
     population: '200K+',
     region: 'Somali'
   },
+  'degehabur': {
+    name: 'ደገሃቡር | Degehabur',
+    slogan: 'የሶማሌ ክልል ከተማ',
+    businesses: '3,000+',
+    workers: '12,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏔️',
+    product: 'ንግድ, እንስሳት',
+    description: 'የሶማሌ ክልል ከተማ',
+    population: '60K+',
+    region: 'Somali'
+  },
+  'kebri-dehar': {
+    name: 'ቀብሪ ደሃር | Kebri Dehar',
+    slogan: 'የሶማሌ ክልል የንግድ ማዕከል',
+    businesses: '4,000+',
+    workers: '15,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏔️',
+    product: 'ንግድ, እንስሳት',
+    description: 'የሶማሌ ክልል የንግድ ማዕከል',
+    population: '80K+',
+    region: 'Somali'
+  },
+  'gode': {
+    name: 'ጎዴ | Gode',
+    slogan: 'የሶማሌ ክልል ከተማ',
+    businesses: '3,000+',
+    workers: '12,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏔️',
+    product: 'ንግድ, እንስሳት',
+    description: 'የሶማሌ ክልል ከተማ',
+    population: '50K+',
+    region: 'Somali'
+  },
 
   // ===================== HARARI REGION =====================
   'harar': {
@@ -379,6 +629,18 @@ const cityData = {
     product: 'ጨርቃጨርቅ, አሳ',
     description: 'የሲዳማ ክልል ዋና ከተማ',
     population: '387K+',
+    region: 'Sidama'
+  },
+  'yirgalem': {
+    name: 'ይርጋለም | Yirgalem',
+    slogan: 'የቡና እና የግብርና ከተማ',
+    businesses: '3,000+',
+    workers: '12,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '☕',
+    product: 'ቡና, ግብርና',
+    description: 'የቡና እና የግብርና ከተማ',
+    population: '40K+',
     region: 'Sidama'
   },
 
@@ -419,6 +681,18 @@ const cityData = {
     population: '100K+',
     region: 'South'
   },
+  'sawla': {
+    name: 'ሳውላ | Sawla',
+    slogan: 'የደቡብ ኢትዮጵያ ከተማ',
+    businesses: '3,000+',
+    workers: '12,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏔️',
+    product: 'ንግድ, ግብርና',
+    description: 'የደቡብ ኢትዮጵያ ከተማ',
+    population: '50K+',
+    region: 'South'
+  },
   'jinka': {
     name: 'ጂንካ | Jinka',
     slogan: 'የደቡብ ኢትዮጵያ ባህላዊ ከተማ',
@@ -443,6 +717,18 @@ const cityData = {
     population: '60K+',
     region: 'South'
   },
+  'karat': {
+    name: 'ካራት | Karat',
+    slogan: 'የኮንሶ ዞን ዋና ከተማ',
+    businesses: '3,000+',
+    workers: '12,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏔️',
+    product: 'ንግድ, ግብርና',
+    description: 'የኮንሶ ዞን ዋና ከተማ',
+    population: '50K+',
+    region: 'South'
+  },
 
   // ===================== BENISHANGUL-GUMUZ REGION =====================
   'assosa': {
@@ -455,6 +741,30 @@ const cityData = {
     product: 'ንግድ, ግብርና',
     description: 'የቤንሻንጉል ክልል ዋና ከተማ',
     population: '100K+',
+    region: 'Benishangul'
+  },
+  'gilgel-beles': {
+    name: 'ግልገል በለስ | Gilgel Beles',
+    slogan: 'የግልገል በለስ ከተማ',
+    businesses: '2,500+',
+    workers: '10,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '💧',
+    product: 'ንግድ, ግብርና',
+    description: 'የግልገል በለስ ከተማ',
+    population: '40K+',
+    region: 'Benishangul'
+  },
+  'kamashi': {
+    name: 'ካማሺ | Kamashi',
+    slogan: 'የካማሺ ዞን ዋና ከተማ',
+    businesses: '2,000+',
+    workers: '8,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏔️',
+    product: 'ንግድ, ግብርና',
+    description: 'የካማሺ ዞን ዋና ከተማ',
+    population: '30K+',
     region: 'Benishangul'
   },
 
@@ -471,6 +781,18 @@ const cityData = {
     population: '80K+',
     region: 'Gambella'
   },
+  'meti': {
+    name: 'ሜቲ | Meti',
+    slogan: 'የጋምቤላ ክልል ከተማ',
+    businesses: '2,000+',
+    workers: '8,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏔️',
+    product: 'ንግድ, ግብርና',
+    description: 'የጋምቤላ ክልል ከተማ',
+    population: '30K+',
+    region: 'Gambella'
+  },
 
   // ===================== AFAR REGION =====================
   'semera': {
@@ -483,6 +805,30 @@ const cityData = {
     product: 'ንግድ, እንስሳት',
     description: 'የአፋር ክልል ዋና ከተማ',
     population: '50K+',
+    region: 'Afar'
+  },
+  'asaita': {
+    name: 'አሳይታ | Asaita',
+    slogan: 'የአፋር ክልል ታሪካዊ ከተማ',
+    businesses: '2,000+',
+    workers: '8,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏔️',
+    product: 'ንግድ, እንስሳት',
+    description: 'የአፋር ክልል ታሪካዊ ከተማ',
+    population: '30K+',
+    region: 'Afar'
+  },
+  'logiya': {
+    name: 'ሎጊያ | Logiya',
+    slogan: 'የአፋር ክልል ከተማ',
+    businesses: '2,000+',
+    workers: '7,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🛣️',
+    product: 'ንግድ, እንስሳት',
+    description: 'የአፋር ክልል ከተማ',
+    population: '25K+',
     region: 'Afar'
   }
 };
@@ -1437,14 +1783,14 @@ export default function CityVip() {
                     <td className="px-6 py-4 font-bold">2,500 ብር</td>
                     <td className="px-6 py-4 font-bold text-purple-600">10,000,000 ብር</td>
                     <td className="px-6 py-4">Every Sunday at 6 PM</td>
-                   </tr>
+                  </tr>
                   <tr className="hover:bg-gray-50 transition">
                     <td className="px-6 py-4 font-semibold">👑 Monthly Winner</td>
                     <td className="px-6 py-4"><span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">VIP 1</span></td>
                     <td className="px-6 py-4 font-bold">5,000 ብር</td>
                     <td className="px-6 py-4 font-bold text-green-600">40,000,000 ብር</td>
                     <td className="px-6 py-4">Last Day of Month at 8 PM</td>
-                   </tr>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -1455,7 +1801,7 @@ export default function CityVip() {
             <div className="container mx-auto px-4">
               <h2 className="text-3xl font-bold text-center mb-4">እንዴት እንሳተፋለን? | How It Works</h2>
               <p className="text-center text-gray-600 mb-12">Like traditional Equb, but BIGGER and BETTER!</p>
-              <div className="grid md:grid-cols-3 gap-8">
+              <div className="grid md:grid-cols-3 gap-8 text-center">
                 <div className="text-center">
                   <div className="w-20 h-20 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg text-white animate-bounce">1️⃣</div>
                   <h3 className="font-bold text-xl mb-2">ምረጥ | Choose</h3>
@@ -1484,21 +1830,7 @@ export default function CityVip() {
             </div>
           </div>
 
-          {/* CTA Banner */}
-          <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-16">
-            <div className="container mx-auto px-4 text-center">
-              <h2 className="text-3xl font-bold mb-4">ዛሬውኑ ይቀላቀሉ!</h2>
-              <p className="text-xl mb-6">Join Today and Become {cityInfo.name.split('|')[0]}&apos;s Next Millionaire!</p>
-              <div className="flex flex-wrap justify-center gap-4">
-                <a href="/cities" className="inline-block bg-white text-gray-900 px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-100 transition transform hover:scale-105 shadow-xl">🎯 Browse All Cities →</a>
-                <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="inline-block bg-gray-700 text-white px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-800 transition transform hover:scale-105 shadow-xl">🏙️ Change City →</button>
-              </div>
-            </div>
-          </div>
-
-          {/* ============================================ */}
-          {/* BECOME AN AGENT SECTION - AT THE BOTTOM */}
-          {/* ============================================ */}
+          {/* BECOME AN AGENT SECTION - ADDED AT THE BOTTOM */}
           <div className="container mx-auto px-4 py-12">
             <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-8 text-white shadow-xl">
               <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -1548,6 +1880,18 @@ export default function CityVip() {
                     <p className="text-xs text-gray-400">TeleBirr or Bank Transfer</p>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA Banner */}
+          <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-16">
+            <div className="container mx-auto px-4 text-center">
+              <h2 className="text-3xl font-bold mb-4">ዛሬውኑ ይቀላቀሉ!</h2>
+              <p className="text-xl mb-6">Join Today and Become {cityInfo.name.split('|')[0]}&apos;s Next Millionaire!</p>
+              <div className="flex flex-wrap justify-center gap-4">
+                <a href="/cities" className="inline-block bg-white text-gray-900 px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-100 transition transform hover:scale-105 shadow-xl">🎯 Browse All Cities →</a>
+                <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="inline-block bg-gray-700 text-white px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-800 transition transform hover:scale-105 shadow-xl">🏙️ Change City →</button>
               </div>
             </div>
           </div>
