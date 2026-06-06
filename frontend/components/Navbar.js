@@ -1,4 +1,4 @@
-// components/Navbar.js - UPDATED with TopCitySelector and fixed City VIP link
+// components/Navbar.js - UPDATED to hide on homepage
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
@@ -26,6 +26,11 @@ export default function Navbar() {
   const [hasOrgApplication, setHasOrgApplication] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // HIDE NAVBAR ON HOMEPAGE - ADD THIS CHECK
+  if (router.pathname === '/') {
+    return null;
+  }
 
   useEffect(() => {
     if (isClient) {
@@ -171,8 +176,8 @@ export default function Navbar() {
   const createAction = getCreateAction();
   const becomeLinks = getBecomeLinks();
 
-  // Don't render navbar on login page
-  if (router.pathname === '/login' || router.pathname === '/register') {
+  // Don't render navbar on login page or homepage
+  if (router.pathname === '/login' || router.pathname === '/register' || router.pathname === '/') {
     return null;
   }
 
@@ -213,7 +218,6 @@ export default function Navbar() {
               <Link href="/merkato-vip" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition flex items-center gap-1">
                 🏪 Merkato VIP
               </Link>
-              {/* FIXED: City VIP link now points to /cities page */}
               <Link href="/cities" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition flex items-center gap-1">
                 🏙️ City VIP
               </Link>
@@ -235,11 +239,9 @@ export default function Navbar() {
               )}
             </div>
             
-            {/* Right side icons - ADDED TopCitySelector */}
+            {/* Right side icons - Added TopCitySelector */}
             <div className="flex items-center gap-1 sm:gap-2">
-              {/* TopCitySelector - Added here */}
               <TopCitySelector />
-              
               <NotificationBell />
               <LanguageToggle />
               
@@ -359,7 +361,6 @@ export default function Navbar() {
               <Link href="/merkato-vip" className="block py-2 px-3 text-sm text-yellow-700 bg-yellow-50 hover:bg-yellow-100 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
                 🏪 Merkato VIP
               </Link>
-              {/* FIXED: City VIP link points to /cities page */}
               <Link href="/cities" className="block py-2 px-3 text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
                 🏙️ City VIP
               </Link>
