@@ -1,4 +1,4 @@
-// pages/pools/[id].js
+// pages/pools/[id].js - COMPLETE FIXED VERSION
 import { useRouter } from 'next/router';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -7,145 +7,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { QRCodeSVG } from 'qrcode.react';
 import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
-
-// Ticket Component for Regular Pool
-const PoolTicket = ({ participant, pool, type = 'unverified' }) => {
-  const ticketRef = useRef();
-
-  const downloadTicket = async () => {
-    if (!ticketRef.current) return;
-    
-    try {
-      toast.loading('Generating PDF...', { id: 'pdf-gen' });
-      const canvas = await html2canvas(ticketRef.current, {
-        scale: 2,
-        backgroundColor: '#ffffff',
-        logging: false,
-        useCORS: true
-      });
-      
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a4'
-      });
-      
-      const imgWidth = 277;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-      pdf.save(`pool-ticket-${participant.ticket_number}.pdf`);
-      toast.success('Ticket downloaded!', { id: 'pdf-gen' });
-      
-    } catch (error) {
-      console.error('Error downloading ticket:', error);
-      toast.error('Failed to download ticket');
-    }
-  };
-
-  const statusConfig = {
-    unverified: {
-      bg: 'bg-gray-50',
-      border: 'border-gray-400',
-      badge: 'bg-gray-500',
-      badgeText: 'UNVERIFIED',
-      text: 'Awaiting Admin Approval'
-    },
-    verified: {
-      bg: 'bg-gray-50',
-      border: 'border-gray-600',
-      badge: 'bg-gray-700',
-      badgeText: 'VERIFIED',
-      text: 'Approved Entry'
-    }
-  };
-
-  const config = statusConfig[type];
-
-  return (
-    <div className="space-y-4">
-      <div 
-        ref={ticketRef}
-        className={`${config.bg} border-2 ${config.border} rounded-2xl p-6 max-w-2xl mx-auto shadow-xl`}
-      >
-        <div className="text-center border-b pb-4 mb-4">
-          <div className="flex justify-between items-center">
-            <div className="text-left">
-              <div className="text-xs text-gray-500 font-mono">Ticket #{participant.ticket_number}</div>
-              <div className="text-sm font-semibold text-gray-700">
-                {participant.created_at ? new Date(participant.created_at).toLocaleDateString() : 'N/A'}
-              </div>
-            </div>
-            <div className={`${config.badge} text-white px-3 py-1 rounded-full text-xs font-bold`}>
-              {config.badgeText}
-            </div>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-800 mt-2">🎁 REGULAR POOL</h2>
-          <p className="text-sm text-gray-600">የሽልማት ቲኬት | Prize Ticket</p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div><p className="text-xs text-gray-500">Participant Name</p><p className="font-semibold text-sm">{participant.user_name || 'N/A'}</p></div>
-          <div><p className="text-xs text-gray-500">Email</p><p className="font-semibold text-sm">{participant.user_email || 'N/A'}</p></div>
-          <div><p className="text-xs text-gray-500">Pool Name</p><p className="font-semibold text-sm">{pool?.prize_name || 'N/A'}</p></div>
-          <div><p className="text-xs text-gray-500">Seat Numbers</p><p className="font-semibold text-sm">{participant.seat_numbers?.join(', ') || 'N/A'}</p></div>
-          <div><p className="text-xs text-gray-500">Contribution</p><p className="font-semibold text-sm text-green-600">ETB {participant.contribution_amount?.toLocaleString()}</p></div>
-          <div><p className="text-xs text-gray-500">Prize Amount</p><p className="font-semibold text-sm text-purple-600">ETB {pool?.target_amount?.toLocaleString()}</p></div>
-          <div><p className="text-xs text-gray-500">Draw Date</p><p className="font-semibold text-sm">{pool?.end_date ? new Date(pool.end_date).toLocaleDateString() : 'TBA'}</p></div>
-        </div>
-
-        <div className="flex justify-center py-4 border-t border-b border-dashed">
-          <div className="bg-white p-3 rounded-xl shadow-md">
-            <QRCodeSVG 
-              value={JSON.stringify({
-                ticket: participant.ticket_number,
-                name: participant.user_name,
-                email: participant.user_email,
-                seats: participant.seat_numbers,
-                pool: pool?.prize_name,
-                amount: participant.contribution_amount,
-                verified: type === 'verified',
-                timestamp: new Date().toISOString()
-              })}
-              size={120}
-              level="H"
-            />
-          </div>
-        </div>
-
-        {type === 'verified' && participant.verified_at && (
-          <div className="bg-green-100 rounded-lg p-3 mt-4 text-center">
-            <p className="text-green-800 text-sm font-semibold">✓ Verified on {new Date(participant.verified_at).toLocaleString()}</p>
-            <p className="text-green-600 text-xs">This ticket is VALID for the upcoming draw</p>
-          </div>
-        )}
-
-        {type === 'unverified' && (
-          <div className="bg-gray-100 rounded-lg p-3 mt-4 text-center">
-            <p className="text-gray-800 text-sm font-semibold">⏳ Awaiting Admin Verification</p>
-            <p className="text-gray-600 text-xs">Your ticket will be activated once payment is confirmed</p>
-          </div>
-        )}
-
-        <div className="text-center text-xs text-gray-400 mt-4 pt-4 border-t">
-          <p>Abbaa Carraa • Regular Pool Program</p>
-          <p>Keep this ticket safe for prize claims</p>
-        </div>
-      </div>
-
-      <div className="text-center">
-        <button onClick={downloadTicket} className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold transition flex items-center gap-2 mx-auto">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
-          Download Ticket (PDF)
-        </button>
-      </div>
-    </div>
-  );
-};
+import Ticket from '../../components/Ticket';
 
 // Optimized file upload utilities
 const validateFile = (file) => {
@@ -216,6 +78,8 @@ export default function PoolDetails() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableSeats, setAvailableSeats] = useState(0);
+  const [takenSeats, setTakenSeats] = useState([]);
+  const [reference, setReference] = useState('');
 
   useEffect(() => {
     return () => {
@@ -228,6 +92,7 @@ export default function PoolDetails() {
       fetchPool();
       getCurrentUser();
       fetchAvailableSeats();
+      fetchTakenSeats();
     }
   }, [id]);
 
@@ -267,6 +132,18 @@ export default function PoolDetails() {
       .eq('pool_id', id)
       .eq('status', 'available');
     if (isMounted.current) setAvailableSeats(count || 0);
+  }
+
+  async function fetchTakenSeats() {
+    const { data } = await supabase
+      .from('pool_seats')
+      .select('seat_number')
+      .eq('pool_id', id)
+      .eq('status', 'taken');
+    
+    if (data) {
+      setTakenSeats(data.map(s => s.seat_number));
+    }
   }
 
   async function releaseSeats(seatNumbers) {
@@ -310,9 +187,7 @@ export default function PoolDetails() {
       sessionStorage.setItem('redirectAfterLogin', redirectUrl);
       sessionStorage.setItem('pendingRole', 'individual');
       
-      console.log('🔵 Regular Pool - Stored redirect URL:', redirectUrl);
-      
-      toast.error('Please login to join this pool');
+      toast.loading('Please login to join this pool...');
       router.push('/login');
       return;
     }
@@ -350,6 +225,7 @@ export default function PoolDetails() {
       await supabase.from('regular_pool_participants').update({
         payment_status: 'pending_verification',
         payment_proof_url: publicUrl,
+        reference: reference,
         payment_submitted_at: new Date().toISOString()
       }).eq('id', participantId);
       
@@ -387,6 +263,7 @@ export default function PoolDetails() {
     if (unavailableSeats.length > 0) {
       toast.error(`Seats ${unavailableSeats.map(s => s.seat_number).join(', ')} are not available`);
       await fetchAvailableSeats();
+      await fetchTakenSeats();
       setShowSeatSelector(true);
       return;
     }
@@ -472,9 +349,14 @@ export default function PoolDetails() {
   const progress = (currentAmount / totalCollection) * 100;
   const maxSeatsPerUser = Math.min(5, Math.floor(availableSeatsCount / 2) || 5);
 
+  // IMPROVED: Render seat selector with ALL seats visible and color coding
   const renderSeatSelector = () => {
-    const seatNumbers = Array.from({ length: Math.min(totalSeats, 500) }, (_, i) => i + 1);
+    const seatNumbers = Array.from({ length: totalSeats }, (_, i) => i + 1);
     const toggleSeat = (seatNum) => {
+      if (takenSeats.includes(seatNum)) {
+        toast.error(`Seat ${seatNum} is already taken`);
+        return;
+      }
       if (selectedSeats.includes(seatNum)) {
         setSelectedSeats(selectedSeats.filter(s => s !== seatNum));
       } else if (selectedSeats.length < maxSeatsPerUser) {
@@ -486,29 +368,86 @@ export default function PoolDetails() {
     const totalAmount = selectedSeats.length * entryFee;
 
     return (
-      <div className="bg-white rounded-2xl shadow-lg p-6">
-        <h3 className="text-xl font-bold mb-4">Select Your Seats (Max {maxSeatsPerUser})</h3>
-        <div className="bg-gray-50 rounded-lg p-4 mb-4 text-center">
-          <p>Entry Fee: ETB {entryFee.toLocaleString()} per seat | Total Seats: {totalSeats.toLocaleString()}</p>
-        </div>
-        <div className="grid grid-cols-10 md:grid-cols-15 gap-2 mb-6 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-xl">
-          {seatNumbers.map(seatNum => (
-            <button key={seatNum} onClick={() => toggleSeat(seatNum)}
-              className={`w-10 h-10 rounded-lg font-semibold transition ${selectedSeats.includes(seatNum) ? 'bg-green-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}>
-              {seatNum}
-            </button>
-          ))}
-        </div>
-        {selectedSeats.length > 0 && (
-          <div className="border-t pt-4">
-            <div className="flex justify-between mb-4">
-              <div><p className="text-gray-500">Selected Seats</p><p className="font-bold">{selectedSeats.sort((a,b)=>a-b).join(', ')}</p></div>
-              <div className="text-right"><p className="text-gray-500">Total Amount</p><p className="font-bold text-2xl text-green-600">ETB {totalAmount.toLocaleString()}</p></div>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl shadow-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-bold">Select Your Seats</h2>
+              <p className="text-sm text-gray-500">{pool.prize_name} • Max {maxSeatsPerUser} seats • Total {totalSeats.toLocaleString()} seats</p>
             </div>
-            <button onClick={() => handleSeatsSelected({ seats: selectedSeats, totalAmount })} className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold">Confirm & Proceed to Payment</button>
+            <button onClick={handleCancelSeatSelection} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
           </div>
-        )}
-        <button onClick={handleCancelSeatSelection} className="w-full mt-3 bg-gray-200 py-2 rounded-lg">Cancel</button>
+          
+          <div className="p-6">
+            {/* Seat Legend */}
+            <div className="flex flex-wrap justify-center gap-4 mb-4 pb-3 border-b">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-green-500 rounded"></div>
+                <span className="text-xs">Selected by You</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-yellow-400 rounded"></div>
+                <span className="text-xs">Available</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-gray-300 rounded"></div>
+                <span className="text-xs">Taken by Others</span>
+              </div>
+            </div>
+
+            {/* Seat Grid - ALL SEATS VISIBLE */}
+            <div className="grid grid-cols-10 md:grid-cols-15 lg:grid-cols-20 gap-2 mb-6 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-xl">
+              {seatNumbers.map(seatNum => {
+                const isTaken = takenSeats.includes(seatNum);
+                const isSelected = selectedSeats.includes(seatNum);
+                
+                let bgColor = 'bg-yellow-400 hover:bg-yellow-500 text-gray-800'; // Available = Yellow
+                if (isSelected) bgColor = 'bg-green-600 text-white';
+                if (isTaken) bgColor = 'bg-gray-400 text-white cursor-not-allowed';
+                
+                return (
+                  <button
+                    key={seatNum}
+                    onClick={() => !isTaken && toggleSeat(seatNum)}
+                    disabled={isTaken}
+                    className={`w-10 h-10 rounded-lg font-semibold transition ${bgColor} ${isTaken ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                    title={isTaken ? `Seat ${seatNum} is already taken` : `Select Seat ${seatNum}`}
+                  >
+                    {seatNum}
+                  </button>
+                );
+              })}
+            </div>
+            
+            {totalSeats > 500 && (
+              <p className="text-xs text-gray-400 text-center mb-4">
+                Showing all {totalSeats.toLocaleString()} seats (scroll to see more)
+              </p>
+            )}
+            
+            {selectedSeats.length > 0 && (
+              <div className="border-t pt-4">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <p className="text-sm text-gray-500">Selected Seats</p>
+                    <p className="font-bold text-lg">{selectedSeats.sort((a,b)=>a-b).join(', ')}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-gray-500">Total Amount</p>
+                    <p className="font-bold text-2xl text-green-600">ETB {totalAmount.toLocaleString()}</p>
+                    <p className="text-xs text-gray-400">({selectedSeats.length} seats × ETB {entryFee.toLocaleString()})</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleSeatsSelected({ seats: selectedSeats, totalAmount })}
+                  className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition"
+                >
+                  Confirm & Proceed to Payment
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     );
   };
@@ -529,13 +468,27 @@ export default function PoolDetails() {
               <p className="text-sm text-gray-600">Seats: {selectedSeats.join(', ')}</p>
               <p className="text-xl font-bold text-green-600 mt-2">ETB {totalAmount.toLocaleString()}</p>
             </div>
+            
+            <p className="text-sm text-gray-600 mb-2">Please send payment to:</p>
             <div className="bg-blue-50 rounded-lg p-3 mb-4">
               <p className="font-semibold">📱 TeleBirr: 0913277922</p>
               <p className="font-semibold mt-2">🏦 CBE Bank: 1000601091686</p>
               <p className="text-sm text-gray-600 mt-2">Account Name: Negassa Hundessa</p>
             </div>
             
-            {/* Upload Section - NO REFERENCE NUMBER INPUT */}
+            {/* Reference Number Input */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Reference Number/Transaction ID *</label>
+              <input
+                type="text"
+                placeholder="Enter transaction ID or reference number"
+                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+              />
+            </div>
+            
+            {/* Upload Section */}
             <div className="border-2 border-dashed rounded-lg p-4 text-center mb-4 hover:border-green-500 transition">
               <input 
                 type="file" 
@@ -570,8 +523,8 @@ export default function PoolDetails() {
             
             <button 
               onClick={handlePaymentSubmit} 
-              disabled={isSubmitting} 
-              className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:opacity-50"
+              disabled={isSubmitting || !reference.trim()} 
+              className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50"
             >
               {isSubmitting ? 'Processing...' : 'Submit Payment & Get Ticket'}
             </button>
@@ -636,9 +589,30 @@ export default function PoolDetails() {
               {showPayment && renderPayment()}
               {showTicket && participantData && (
                 <div className="bg-white rounded-2xl shadow-xl p-6">
-                  <PoolTicket participant={participantData} pool={pool} type="unverified" />
+                  <Ticket 
+                    participant={{
+                      user_name: participantData.user_name,
+                      user_email: participantData.user_email,
+                      ticket_number: participantData.ticket_number,
+                      created_at: participantData.created_at,
+                      contribution_amount: participantData.contribution_amount
+                    }}
+                    pool={{
+                      prize_name: pool.prize_name,
+                      target_amount: pool.target_amount,
+                      end_date: pool.end_date,
+                      created_at: pool.created_at
+                    }}
+                    isVerified={false}
+                    seatNumbers={participantData.seat_numbers}
+                    ticketNumber={participantData.ticket_number}
+                    amount={participantData.contribution_amount}
+                    createdAt={participantData.created_at}
+                  />
                   <div className="text-center mt-6">
-                    <button onClick={() => router.push('/dashboard')} className="bg-gray-600 text-white px-6 py-2 rounded-lg">Go to Dashboard</button>
+                    <button onClick={() => router.push('/dashboard')} className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition">
+                      Go to Dashboard
+                    </button>
                   </div>
                 </div>
               )}
