@@ -61,73 +61,37 @@ export default function Home() {
     { id: 'asella', name: 'አሰላ', nameEn: 'Asella', region: 'Oromia', icon: '🏔️', descriptionAm: 'የአርሲ ዋና ከተማ እና የእርሻ ማዕከል', descriptionEn: 'Capital of Arsi & Agricultural Hub' },
     { id: 'shashemene', name: 'ሻሸመኔ', nameEn: 'Shashemene', region: 'Oromia', icon: '🛍️', descriptionAm: 'የንግድ እና የኢንዱስትሪ ከተማ', descriptionEn: 'Trade & Industrial City' },
     { id: 'robe', name: 'ሮቤ', nameEn: 'Robe', region: 'Oromia', icon: '🌄', descriptionAm: 'የባሌ ተራራ በር | የቱሪዝም ማዕከል', descriptionEn: 'Gateway to Bale Mountains | Tourism Hub' },
-    { id: 'ginir', name: 'ጊኒር', nameEn: 'Ginir', region: 'Oromia', icon: '🏞️', descriptionAm: 'የባሌ ምስራቅ የንግድ ማዕከል', descriptionEn: 'Eastern Bale Trade Center' },
-    { id: 'yabelo', name: 'ያቤሎ', nameEn: 'Yabelo', region: 'Oromia', icon: '🐪', descriptionAm: 'የእንስሳት እርባታ እና የንግድ ከተማ', descriptionEn: 'Livestock & Trade City' },
-    { id: 'moyale', name: 'ሞያሌ', nameEn: 'Moyale', region: 'Oromia', icon: '🛣️', descriptionAm: 'የኢትዮ-ኬንያ ድንበር ከተማ', descriptionEn: 'Ethio-Kenya Border Town' },
-    { id: 'harar', name: 'ሀረር', nameEn: 'Harar', region: 'Harari', icon: '🏛️', descriptionAm: 'የባህል ቅርስ እና የእስላም ቅድስት ከተማ', descriptionEn: 'Cultural Heritage & Islamic Holy City' },
-    { id: 'chiro', name: 'ቺሮ', nameEn: 'Chiro', region: 'Oromia', icon: '🏔️', descriptionAm: 'የምስራቅ ሀረርጌ ዋና ከተማ', descriptionEn: 'Capital of East Hararghe' },
-    { id: 'fiche', name: 'ፊጬ', nameEn: 'Fiche', region: 'Oromia', icon: '🌾', descriptionAm: 'የሰሜን ሸዋ የእህል ማዕከል', descriptionEn: 'North Shewa Grain Center' },
-    { id: 'woliso', name: 'ወሊሶ', nameEn: 'Woliso', region: 'Oromia', icon: '💧', descriptionAm: 'የሙቀት ምንጭ እና የቱሪዝም ከተማ', descriptionEn: 'Hot Springs & Tourism City' },
-    { id: 'ambo', name: 'አምቦ', nameEn: 'Ambo', region: 'Oromia', icon: '💧', descriptionAm: 'የማዕድን ውሃ እና የግብርና ከተማ', descriptionEn: 'Mineral Water & Agriculture City' },
     { id: 'nekemte', name: 'ነቀምቴ', nameEn: 'Nekemte', region: 'Oromia', icon: '☕', descriptionAm: 'የቡና እና የንግድ ከተማ', descriptionEn: 'Coffee & Trade City' },
-    { id: 'gimbi', name: 'ጊምቢ', nameEn: 'Gimbi', region: 'Oromia', icon: '🏔️', descriptionAm: 'የምዕራብ ወለጋ የንግድ ማዕከል', descriptionEn: 'West Wollega Trade Center' },
-    { id: 'dembi-dollo', name: 'ደምቢ ዶሎ', nameEn: 'Dembi Dollo', region: 'Oromia', icon: '💰', descriptionAm: 'የወርቅ ማዕድን እና የንግድ ከተማ', descriptionEn: 'Gold Mining & Trade City' },
-    { id: 'shambu', name: 'ሻምቡ', nameEn: 'Shambu', region: 'Oromia', icon: '🌾', descriptionAm: 'የሆሮ ጉዱሩ ዋና ከተማ', descriptionEn: 'Capital of Horo Guduru' },
+    { id: 'ambo', name: 'አምቦ', nameEn: 'Ambo', region: 'Oromia', icon: '💧', descriptionAm: 'የማዕድን ውሃ እና የግብርና ከተማ', descriptionEn: 'Mineral Water & Agriculture City' },
     { id: 'metu', name: 'መቱ', nameEn: 'Metu', region: 'Oromia', icon: '🌿', descriptionAm: 'የቡና እና የግብርና ከተማ', descriptionEn: 'Coffee & Agriculture City' },
-    { id: 'bedele', name: 'በደሌ', nameEn: 'Bedele', region: 'Oromia', icon: '🍺', descriptionAm: 'የቢራ ፋብሪካ እና የቡና ከተማ', descriptionEn: 'Brewery & Coffee City' },
-    { id: 'bule-hora', name: 'ቡሌ ሆራ', nameEn: 'Bule Hora', region: 'Oromia', icon: '🎓', descriptionAm: 'የቡሌ ሆራ ዩኒቨርሲቲ ከተማ', descriptionEn: 'Bule Hora University City' },
-    { id: 'negele-borana', name: 'ነገሌ ቦረና', nameEn: 'Negele Borana', region: 'Oromia', icon: '🐪', descriptionAm: 'የቦረና የእንስሳት እርባታ ማዕከል', descriptionEn: 'Borana Livestock Center' },
     { id: 'ziway', name: 'ዚዋይ', nameEn: 'Ziway', region: 'Oromia', icon: '🐟', descriptionAm: 'የአሳ ማጥመድ እና የቱሪዝም ከተማ', descriptionEn: 'Fishing & Tourism City' },
     
     // AMHARA REGION CITIES
+    { id: 'dessie', name: 'ደሴ', nameEn: 'Dessie', region: 'Amhara', icon: '🏔️', descriptionAm: 'የንግድ እና የእርሻ ከተማ', descriptionEn: 'Trade & Agriculture City' },
     { id: 'debre-markos', name: 'ደብረ ማርቆስ', nameEn: 'Debre Markos', region: 'Amhara', icon: '⛪', descriptionAm: 'የምስራቅ ጎጃም ዋና ከተማ', descriptionEn: 'Capital of East Gojjam' },
     { id: 'finote-selam', name: 'ፍኖተ ሰላም', nameEn: 'Finote Selam', region: 'Amhara', icon: '🌅', descriptionAm: 'የምዕራብ ጎጃም ዋና ከተማ', descriptionEn: 'Capital of West Gojjam' },
-    { id: 'dessie', name: 'ደሴ', nameEn: 'Dessie', region: 'Amhara', icon: '🏔️', descriptionAm: 'የንግድ እና የእርሻ ከተማ', descriptionEn: 'Trade & Agriculture City' },
-    { id: 'woldia', name: 'ወልዲያ', nameEn: 'Woldia', region: 'Amhara', icon: '🏔️', descriptionAm: 'የወልዲያ ዩኒቨርሲቲ ከተማ', descriptionEn: 'Woldia University City' },
-    { id: 'debre-birhan', name: 'ደብረ ብርሃን', nameEn: 'Debre Birhan', region: 'Amhara', icon: '⭐', descriptionAm: 'የፀሐይ ብርሃን ከተማ', descriptionEn: 'City of Sunlight' },
-    { id: 'sekota', name: 'ሰቆጣ', nameEn: 'Sekota', region: 'Amhara', icon: '🏔️', descriptionAm: 'የዋግ ሽራ ዞን ዋና ከተማ', descriptionEn: 'Capital of Wag Hemra Zone' },
-    { id: 'aykal', name: 'አይከል', nameEn: 'Aykal', region: 'Amhara', icon: '🏔️', descriptionAm: 'የምዕራብ ጎጃም ከተማ', descriptionEn: 'West Gojjam Town' },
-    { id: 'metema', name: 'ሜተማ', nameEn: 'Metema', region: 'Amhara', icon: '🛣️', descriptionAm: 'የኢትዮ-ሱዳን ድንበር ከተማ', descriptionEn: 'Ethio-Sudan Border Town' },
-    { id: 'debre-tabor', name: 'ደብረ ታቦር', nameEn: 'Debre Tabor', region: 'Amhara', icon: '⛪', descriptionAm: 'የጥንታዊ ገዳማት ከተማ', descriptionEn: 'City of Ancient Monasteries' },
     
     // TIGRAY REGION CITIES
     { id: 'axum', name: 'አክሱም', nameEn: 'Axum', region: 'Tigray', icon: '🏛️', descriptionAm: 'የታላቁ የአክሱም መንግስት ዋና ከተማ', descriptionEn: 'Capital of the Ancient Axumite Kingdom' },
     { id: 'adigrat', name: 'አዲግራት', nameEn: 'Adigrat', region: 'Tigray', icon: '🏔️', descriptionAm: 'የሰሜን ትግራይ የንግድ ማዕከል', descriptionEn: 'North Tigray Trade Center' },
-    { id: 'shire', name: 'ሽሬ', nameEn: 'Shire', region: 'Tigray', icon: '🏔️', descriptionAm: 'የምዕራብ ትግራይ ዋና ከተማ', descriptionEn: 'Capital of West Tigray' },
-    { id: 'mekoni', name: 'መቆኒ', nameEn: 'Mekoni', region: 'Tigray', icon: '🏔️', descriptionAm: 'የምዕራብ ትግራይ ከተማ', descriptionEn: 'West Tigray Town' },
-    { id: 'maychew', name: 'ማይጨው', nameEn: 'Maychew', region: 'Tigray', icon: '🏔️', descriptionAm: 'የደቡብ ትግራይ ከተማ', descriptionEn: 'South Tigray Town' },
     
     // SOMALI REGION CITIES
     { id: 'jijiga', name: 'ጅጅጋ', nameEn: 'Jijiga', region: 'Somali', icon: '🐪', descriptionAm: 'የሶማሌ ክልል ዋና ከተማ', descriptionEn: 'Capital of Somali Region' },
-    { id: 'degehabur', name: 'ደገሃቡር', nameEn: 'Degehabur', region: 'Somali', icon: '🏔️', descriptionAm: 'የሶማሌ ክልል ከተማ', descriptionEn: 'Somali Region Town' },
-    { id: 'kebri-dehar', name: 'ቀብሪ ደሃር', nameEn: 'Kebri Dehar', region: 'Somali', icon: '🏔️', descriptionAm: 'የሶማሌ ክልል የንግድ ማዕከል', descriptionEn: 'Somali Region Trade Center' },
-    { id: 'gode', name: 'ጎዴ', nameEn: 'Gode', region: 'Somali', icon: '🏔️', descriptionAm: 'የሶማሌ ክልል ከተማ', descriptionEn: 'Somali Region Town' },
+    { id: 'harar', name: 'ሀረር', nameEn: 'Harar', region: 'Harari', icon: '🏛️', descriptionAm: 'የባህል ቅርስ እና የእስላም ቅድስት ከተማ', descriptionEn: 'Cultural Heritage & Islamic Holy City' },
     
     // BENISHANGUL-GUMUZ REGION
     { id: 'assosa', name: 'አሶሳ', nameEn: 'Assosa', region: 'Benishangul', icon: '🌿', descriptionAm: 'የቤንሻንጉል ክልል ዋና ከተማ', descriptionEn: 'Capital of Benishangul Region' },
-    { id: 'gilgel-beles', name: 'ግልገል በለስ', nameEn: 'Gilgel Beles', region: 'Benishangul', icon: '💧', descriptionAm: 'የግልገል በለስ ከተማ', descriptionEn: 'Gilgel Beles Town' },
-    { id: 'kamashi', name: 'ካማሺ', nameEn: 'Kamashi', region: 'Benishangul', icon: '🏔️', descriptionAm: 'የካማሺ ዞን ዋና ከተማ', descriptionEn: 'Capital of Kamashi Zone' },
-    
-    // GAMBELLA REGION
-    { id: 'gambella', name: 'ጋምቤላ', nameEn: 'Gambella', region: 'Gambella', icon: '🏞️', descriptionAm: 'የጋምቤላ ክልል ዋና ከተማ', descriptionEn: 'Capital of Gambella Region' },
-    { id: 'meti', name: 'ሜቲ', nameEn: 'Meti', region: 'Gambella', icon: '🏔️', descriptionAm: 'የጋምቤላ ክልል ከተማ', descriptionEn: 'Gambella Region Town' },
-    
-    // SIDAMA REGION
-    { id: 'hawassa', name: 'ሀዋሳ', nameEn: 'Hawassa', region: 'Sidama', icon: '🏞️', descriptionAm: 'የሲዳማ ክልል ዋና ከተማ', descriptionEn: 'Capital of Sidama Region' },
-    { id: 'yirgalem', name: 'ይርጋለም', nameEn: 'Yirgalem', region: 'Sidama', icon: '☕', descriptionAm: 'የቡና እና የግብርና ከተማ', descriptionEn: 'Coffee & Agriculture Town' },
     
     // SOUTH ETHIOPIA REGION
     { id: 'arba-minch', name: 'አርባ ምንጭ', nameEn: 'Arba Minch', region: 'South', icon: '🏞️', descriptionAm: 'የአርባ ምንጭ ዩኒቨርሲቲ ከተማ', descriptionEn: 'Arba Minch University City' },
     { id: 'sodo', name: 'ሶዶ', nameEn: 'Sodo', region: 'South', icon: '🛍️', descriptionAm: 'የወላይታ ዞን ዋና ከተማ', descriptionEn: 'Capital of Wolayita Zone' },
     { id: 'dilla', name: 'ዲላ', nameEn: 'Dilla', region: 'South', icon: '☕', descriptionAm: 'የቡና እና የንግድ ከተማ', descriptionEn: 'Coffee & Trade City' },
-    { id: 'sawla', name: 'ሳውላ', nameEn: 'Sawla', region: 'South', icon: '🏔️', descriptionAm: 'የደቡብ ኢትዮጵያ ከተማ', descriptionEn: 'South Ethiopia Town' },
-    { id: 'jinka', name: 'ጂንካ', nameEn: 'Jinka', region: 'South', icon: '🏔️', descriptionAm: 'የደቡብ ኢትዮጵያ ከተማ', descriptionEn: 'South Ethiopia Town' },
-    { id: 'konso', name: 'ኮንሶ', nameEn: 'Konso', region: 'South', icon: '🏔️', descriptionAm: 'የዩኔስኮ ቅርስ ከተማ', descriptionEn: 'UNESCO Heritage Town' },
     
     // AFAR REGION
     { id: 'semera', name: 'ሰሜራ', nameEn: 'Semera', region: 'Afar', icon: '🐪', descriptionAm: 'የአፋር ክልል ዋና ከተማ', descriptionEn: 'Capital of Afar Region' },
-    { id: 'asaita', name: 'አሳይታ', nameEn: 'Asaita', region: 'Afar', icon: '🏔️', descriptionAm: 'የአፋር ክልል ታሪካዊ ከተማ', descriptionEn: 'Historical Afar Town' },
-    { id: 'logiya', name: 'ሎጊያ', nameEn: 'Logiya', region: 'Afar', icon: '🛣️', descriptionAm: 'የአፋር ክልል ከተማ', descriptionEn: 'Afar Region Town' },
+    
+    // GAMBELLA REGION
+    { id: 'gambella', name: 'ጋምቤላ', nameEn: 'Gambella', region: 'Gambella', icon: '🏞️', descriptionAm: 'የጋምቤላ ክልል ዋና ከተማ', descriptionEn: 'Capital of Gambella Region' },
   ];
 
   // Remove duplicates by id
@@ -228,13 +192,12 @@ export default function Home() {
     }
   };
 
-  // Filter regular pools - FIXED: Changed 'featured' to 'all'
+  // Filter regular pools
   const getFilteredPools = () => {
     let filtered = [...pools];
     
     switch (regularPoolFilter) {
       case 'all':
-        // Show all active pools - no filtering
         break;
       case 'lowToHigh':
         filtered.sort((a, b) => (a.entry_fee || 0) - (b.entry_fee || 0));
@@ -420,7 +383,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* MERKATO VIP - FIXED with proper CTA buttons */}
+          {/* MERKATO VIP */}
           <div className="mb-12">
             <a 
               href="/merkato-vip"
@@ -597,10 +560,32 @@ export default function Home() {
             {/* Regular Pools Content - Shows when clicked */}
             {showRegularPools && (
               <div className="mt-6 animate-fade-in">
+                {/* WINNER PRIZE BANNER - CALL TO ACTION */}
+                <div className="bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 rounded-2xl p-5 mb-6 text-white shadow-lg">
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <span className="text-4xl animate-pulse">🏆</span>
+                      <div>
+                        <p className="text-sm font-semibold opacity-90">✨ አሸናፊ የሚሸለምው | What Winners Win ✨</p>
+                        <p className="text-lg md:text-xl font-bold">
+                          🚗 መኪና | 🏭 ማሽኖች | 🏠 ቤት | 💻 ኤሌክትሮኒክስ | 🎁 ብዙ ተጨማሪ
+                        </p>
+                        <p className="text-xs opacity-90">
+                          Cars | Machinery | House | Electronics | And Much More!
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-white/20 backdrop-blur rounded-full px-4 py-2 text-center">
+                      <p className="text-sm font-bold">🎯 ይሳተፉ እና ያሸንፉ!</p>
+                      <p className="text-xs">Join and WIN!</p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex justify-between items-center flex-wrap gap-4 mb-6">
                   <div>
-                    <h4 className="text-lg font-semibold text-gray-700">የሚገኙ ፑሎች | Available Pools</h4>
-                    <p className="text-sm text-gray-500">በጀትህ እና ምርጫህ መሰረት ምረጥ | Choose based on your budget and preference</p>
+                    <h4 className="text-lg font-semibold text-gray-700">የሚገኙ የእጣ መደቦች | Available Prize Pools</h4>
+                    <p className="text-sm text-gray-500">በበጀትህ እና በምርጫህ መሰረት ምረጥ | Choose based on your budget and preference</p>
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -633,8 +618,8 @@ export default function Home() {
                 {displayedPools.length === 0 ? (
                   <div className="text-center py-12 bg-gray-50 rounded-lg">
                     <div className="text-5xl mb-3">🏊</div>
-                    <p className="text-gray-500">ምንም ንቁ ፑሎች የሉም</p>
-                    <p className="text-sm text-gray-400 mt-2">No active pools at the moment. Check back soon!</p>
+                    <p className="text-gray-500">ምንም ንቁ የእጣ መደቦች የሉም</p>
+                    <p className="text-sm text-gray-400 mt-2">No active prize pools at the moment. Check back soon!</p>
                     <p className="text-xs text-gray-400 mt-1">በቅርቡ አዳዲስ ዕድሎች ይመጣሉ | New opportunities coming soon</p>
                   </div>
                 ) : (
@@ -681,7 +666,7 @@ export default function Home() {
 
         {/* PARTNER PROGRAM - With divider line */}
         <div className="border-t border-gray-200"></div>
-        <div className={`bg-gradient-to-r from-gray-900 to-gray-800 text-white py-12 transition-all duration-700 ${showRoleButtons ? 'opacity-100' : 'opacity-100'}`}>
+        <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-12">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-2xl md:text-3xl font-bold mb-2">ተባባሪ ፕሮግራም | Partner Program</h2>
             <p className="text-gray-300 text-sm md:text-base mb-6">Join our partner program and start earning commissions today!</p>
