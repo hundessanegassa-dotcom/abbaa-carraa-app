@@ -1,6 +1,8 @@
+// components/Ticket.js - FIXED DOWNLOAD AS FULL IMAGE
 import { useState, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import { QRCodeSVG } from 'qrcode.react';
+import toast from 'react-hot-toast';
 
 // Only show logs in development mode
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -18,22 +20,6 @@ export default function Ticket({
   const ticketRef = useRef(null);
   const [downloading, setDownloading] = useState(false);
   const isMounted = useRef(true);
-
-  // Development-only debug logs
-  if (isDevelopment) {
-    console.log('========== TICKET DEBUG LOGS ==========');
-    console.log('1. Received participant data:', participant);
-    console.log('2. Received pool data:', pool);
-    console.log('3. Pool prize_name:', pool?.prize_name);
-    console.log('4. Pool name:', pool?.name);
-    console.log('5. Pool created_at:', pool?.created_at);
-    console.log('6. Pool end_date:', pool?.end_date);
-    console.log('7. isVerified:', isVerified);
-    console.log('8. seatNumbers:', seatNumbers);
-    console.log('9. ticketNumber prop:', propTicketNumber);
-    console.log('10. amount prop:', propAmount);
-    console.log('=========================================');
-  }
 
   useEffect(() => {
     return () => {
@@ -54,7 +40,7 @@ export default function Ticket({
   const displayUserEmail = participant?.user_email || participant?.email || 'N/A';
   const displayUserPhone = participant?.phone || participant?.user_phone || 'N/A';
   
-  // POOL INFO - CRITICAL: These determine what shows on the ticket
+  // POOL INFO
   const displayPoolName = pool?.prize_name || pool?.name || 'Prize Pool';
   const displayPrizeName = pool?.prize_name || pool?.name || 'Prize';
   const displayPrizeDescription = pool?.description || '';
@@ -63,22 +49,10 @@ export default function Ticket({
   const displayAmount = propAmount || participant?.amount || displayEntryFee * (seatNumbers?.length || 1);
   const displaySeatNumbers = seatNumbers || participant?.seat_numbers || [];
   
-  // DATES - Using real pool dates
+  // DATES
   const displayPoolListedDate = pool?.created_at || new Date().toISOString();
   const displayDrawDate = pool?.end_date || pool?.draw_date || pool?.drawTime;
   const displayIssueDate = propCreatedAt || participant?.created_at || new Date().toISOString();
-
-  // Development-only display check
-  if (isDevelopment) {
-    console.log('========== WHAT WILL BE DISPLAYED ==========');
-    console.log('Pool Name on Ticket:', displayPoolName);
-    console.log('Prize Name on Ticket:', displayPrizeName);
-    console.log('Listed Date on Ticket:', new Date(displayPoolListedDate).toLocaleDateString());
-    console.log('Draw Date on Ticket:', displayDrawDate ? new Date(displayDrawDate).toLocaleString() : 'TBD');
-    console.log('Participant Name:', displayUserName);
-    console.log('Seats:', displaySeatNumbers);
-    console.log('============================================');
-  }
 
   const getTicketStatus = () => {
     return isVerified ? '✓ VERIFIED' : '⏳ UNVERIFIED';
@@ -121,21 +95,38 @@ export default function Ticket({
     return JSON.stringify(ticketData);
   };
 
+  // FIXED: Better html2canvas configuration for FULL ticket capture
   const downloadTicket = async () => {
     if (!ticketRef.current) return;
     if (!isMounted.current) return;
     
     setDownloading(true);
+    const loadingToast = toast.loading('Generating your ticket...');
+    
     try {
-      const canvas = await html2canvas(ticketRef.current, {
-        scale: 2.5,
+      // Get the actual dimensions of the ticket element
+      const element = ticketRef.current;
+      const originalWidth = element.offsetWidth;
+      const originalHeight = element.offsetHeight;
+      
+      // Capture with higher scale for better quality
+      const canvas = await html2canvas(element, {
+        scale: 3,
         backgroundColor: '#ffffff',
         logging: false,
-        useCORS: true
+        useCORS: true,
+        allowTaint: false,
+        windowWidth: originalWidth,
+        windowHeight: originalHeight,
+        onclone: (clonedDoc, element) => {
+          // Ensure all styles are applied in the clone
+          console.log('Ticket cloned successfully');
+        }
       });
       
       if (!isMounted.current) return;
       
+      // Create download link
       const image = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       const fileName = `AbbaaCarraa_Ticket_${displayTicketNumber}_${isVerified ? 'VERIFIED' : 'UNVERIFIED'}.png`;
@@ -143,9 +134,12 @@ export default function Ticket({
       link.href = image;
       link.click();
       
+      toast.success('Ticket downloaded successfully!', { id: loadingToast });
+      
       if (onDownload && isMounted.current) onDownload();
     } catch (error) {
       console.error('Download error:', error);
+      toast.error('Failed to download ticket. Please try again.', { id: loadingToast });
     } finally {
       if (isMounted.current) setDownloading(false);
     }
@@ -165,10 +159,15 @@ export default function Ticket({
 
   return (
     <div className="space-y-4">
+      {/* Ticket Container - Set fixed min-width to ensure full capture */}
       <div 
         ref={ticketRef}
         className="bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-dashed border-gray-300 max-w-md mx-auto relative"
-        style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+        style={{ 
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+          minWidth: '380px',
+          width: '100%'
+        }}
       >
         {/* Header with Abbaa Carraa branding */}
         <div className={`bg-gradient-to-r ${getHeaderGradient()} p-4 text-white text-center relative`}>
@@ -214,29 +213,25 @@ export default function Ticket({
             <p className="text-sm font-mono font-bold tracking-wider">{displayTicketNumber}</p>
           </div>
           
-          {/* QR Code */}
+          {/* QR Code - Increased size for better scanning */}
           <div className="flex justify-center mb-4">
             <QRCodeSVG 
               value={getQRCodeData()} 
-              size={100}
+              size={120}
               bgColor="#ffffff"
               fgColor="#000000"
-              level="L"
+              level="H"
               includeMargin={false}
             />
           </div>
           
-          {/* POOL NAME - Shows real name */}
+          {/* POOL NAME */}
           <div className="bg-blue-50 rounded-lg p-3 mb-3 text-center border border-blue-200">
             <p className="text-[8px] font-semibold text-blue-600 mb-1">🏊 POOL NAME | የፑል ስም | Maqaa Paawulii</p>
             <p className="text-sm font-bold text-gray-800">{displayPoolName}</p>
-            {/* Development-only debug indicator - remove in production if desired */}
-            {isDevelopment && (
-              <p className="text-[6px] text-blue-400 mt-1">Pool ID: {pool?.id?.slice(-8) || 'N/A'}</p>
-            )}
           </div>
           
-          {/* PRIZE NAME - Shows real prize */}
+          {/* PRIZE NAME */}
           <div className={`${getInfoBgClass()} rounded-lg p-3 mb-3 text-center`}>
             <p className="text-[8px] font-semibold mb-1">🏆 PRIZE | ሽልማት | Badhaasa</p>
             <p className="text-base font-bold">{getPrizeIcon()} {displayPrizeName}</p>
@@ -270,13 +265,15 @@ export default function Ticket({
             </div>
           </div>
           
-          {/* Seats & Amount */}
+          {/* Seats & Amount - IMPROVED VISIBILITY */}
           <div className="bg-gray-50 rounded-lg p-3 mb-3">
             <p className="text-[8px] font-semibold text-gray-500 mb-2">💺 SEATS | መቀመጫዎች | Iddoowwan</p>
             <div className="space-y-2 text-[10px]">
               <div className="flex justify-between">
                 <span className="text-gray-600">Selected | የተመረጡ | Filataman:</span>
-                <span className="font-mono font-bold">{displaySeatNumbers.length > 0 ? displaySeatNumbers.sort((a,b)=>a-b).join(', ') : 'N/A'}</span>
+                <span className="font-mono font-bold bg-yellow-100 px-2 py-0.5 rounded">
+                  {displaySeatNumbers.length > 0 ? displaySeatNumbers.sort((a,b)=>a-b).join(', ') : 'N/A'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Entry Fee | ክፍያ | Kaffaltii:</span>
@@ -289,7 +286,7 @@ export default function Ticket({
             </div>
           </div>
           
-          {/* POOL LISTED DATE - Shows real creation date */}
+          {/* POOL LISTED DATE */}
           <div className="text-center mb-3">
             <p className="text-[8px] text-gray-400">📅 LISTED DATE | የተዘረዘረበት ቀን | Guyyaa Itti Baafame</p>
             <p className="text-[10px] font-medium">{new Date(displayPoolListedDate).toLocaleDateString()}</p>
@@ -347,17 +344,20 @@ export default function Ticket({
         <button
           onClick={downloadTicket}
           disabled={downloading}
-          className={`${isVerified ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white px-6 py-2 rounded-lg font-semibold transition flex items-center gap-2 mx-auto disabled:opacity-50 shadow-md text-sm`}
+          className={`${isVerified ? 'bg-gradient-to-r from-green-600 to-teal-600' : 'bg-gradient-to-r from-gray-600 to-gray-700'} text-white px-6 py-2.5 rounded-lg font-semibold transition flex items-center gap-2 mx-auto disabled:opacity-50 shadow-md text-sm hover:scale-105 transform duration-200`}
         >
           {downloading ? (
             <>
-              <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></div>
-              Downloading...
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+              Generating...
             </>
           ) : (
-            <>📥 DOWNLOAD | አውርድ | Buufadhu</>
+            <>📥 DOWNLOAD TICKET (PNG) | አውርድ | Buufadhu</>
           )}
         </button>
+        <p className="text-[10px] text-gray-400 mt-2">
+          Save this ticket. Present it to claim your prize if you win.
+        </p>
       </div>
     </div>
   );
