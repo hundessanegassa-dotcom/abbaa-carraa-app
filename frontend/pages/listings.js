@@ -6,6 +6,7 @@ import Head from 'next/head';
 import { useTranslation } from 'react-i18next';
 import PoolCard from '../components/PoolCard';
 import NoSSR from '../components/NoSSR';
+import UnifiedAgentApplication from '../components/UnifiedAgentApplication'; // ADD THIS IMPORT
 
 export async function getServerSideProps() {
   return { props: {} };
@@ -18,6 +19,7 @@ export default function Listings() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [showAllCities, setShowAllCities] = useState(false);
+  const [showAgentApplication, setShowAgentApplication] = useState(false); // ADD THIS STATE
 
   // Complete City VIP Programs Data - ALL ACTIVE
   const cityVipPrograms = [
@@ -253,8 +255,72 @@ export default function Listings() {
                 <button onClick={() => setFilter('all')} className="mt-4 text-green-600 hover:text-green-700 font-medium">View all pools →</button>
               </div>
             )}
+
+            {/* ============================================ */}
+            {/* BECOME AN AGENT SECTION - ADDED AT THE BOTTOM */}
+            {/* ============================================ */}
+            <div className="mt-16">
+              <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-8 text-white shadow-xl">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div className="flex items-center gap-4">
+                    <span className="text-5xl">🤝</span>
+                    <div>
+                      <h3 className="text-2xl font-bold">Become an Agent for Regular Pools</h3>
+                      <p className="text-gray-300 mt-1">
+                        Earn 10% commission on every successful contribution from customers you bring!
+                      </p>
+                      <p className="text-sm text-gray-400 mt-2">
+                        💰 Example: Customer contributes 10,000 ETB → You earn 1,000 ETB
+                      </p>
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        <span className="text-xs bg-green-600/30 rounded-full px-2 py-1">✓ Regular Pools</span>
+                        <span className="text-xs bg-purple-600/30 rounded-full px-2 py-1">✓ City VIP Programs</span>
+                        <span className="text-xs bg-yellow-600/30 rounded-full px-2 py-1">✓ Merkato VIP</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowAgentApplication(true)}
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 shadow-lg flex items-center gap-2"
+                  >
+                    <span>🎯</span>
+                    Apply as Agent
+                    <span>→</span>
+                  </button>
+                </div>
+                
+                {/* Commission Info */}
+                <div className="mt-6 pt-6 border-t border-gray-700">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl mb-1">💰</div>
+                      <p className="font-semibold">10% Commission</p>
+                      <p className="text-xs text-gray-400">On every successful contribution</p>
+                    </div>
+                    <div>
+                      <div className="text-2xl mb-1">🔗</div>
+                      <p className="font-semibold">Referral Link</p>
+                      <p className="text-xs text-gray-400">Track all your customers</p>
+                    </div>
+                    <div>
+                      <div className="text-2xl mb-1">💳</div>
+                      <p className="font-semibold">Easy Withdrawal</p>
+                      <p className="text-xs text-gray-400">TeleBirr or Bank Transfer</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Agent Application Modal */}
+        {showAgentApplication && (
+          <UnifiedAgentApplication 
+            onClose={() => setShowAgentApplication(false)} 
+            preSelectedProgram="regular"
+          />
+        )}
       </>
     </NoSSR>
   );
