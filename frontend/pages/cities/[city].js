@@ -1,4 +1,4 @@
-// pages/cities/[city].js
+// pages/cities/[city].js - COMPLETE WITH ALL ETHIOPIAN CITIES (FULL LIST - NO DELETIONS)
 import { useRouter } from 'next/router';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -915,7 +915,6 @@ export default function CityVip() {
   const [participantId, setParticipantId] = useState(null);
   const [maxSeats, setMaxSeats] = useState(5);
   const [takenSeats, setTakenSeats] = useState([]);
-  const [reference, setReference] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1060,21 +1059,26 @@ export default function CityVip() {
     setShowSeatSelector(true);
   };
 
-  const submitPayment = async (participantId, reference, file) => {
-    let loadingToast = toast.loading('Processing payment...');
+  // ========== UPDATED: submitPayment (No Reference Number) ==========
+  const submitPayment = async (participantId, file) => {
+    const loadingToast = toast.loading('Uploading payment screenshot...');
     
     try {
+      validateFile(file);
       const optimizedFile = await compressImage(file);
       
-      const fileName = `city-payments/${participantId}/${Date.now()}.jpg`;
+      const fileExt = optimizedFile.name.split('.').pop();
+      const fileName = `city-payments/${participantId}/${Date.now()}.${fileExt}`;
+      
       const { error: uploadError } = await supabase.storage
         .from('payment-proofs')
         .upload(fileName, optimizedFile, {
           cacheControl: '3600',
-          upsert: false
+          upsert: false,
+          contentType: 'image/jpeg'
         });
       
-      if (uploadError) throw uploadError;
+      if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
       
       const { data: { publicUrl } } = supabase.storage
         .from('payment-proofs')
@@ -1085,13 +1089,12 @@ export default function CityVip() {
         .update({
           payment_status: 'pending_verification',
           payment_proof_url: publicUrl,
-          reference: reference,
           updated_at: new Date().toISOString(),
           payment_submitted_at: new Date().toISOString()
         })
         .eq('id', participantId);
       
-      if (updateError) throw updateError;
+      if (updateError) throw new Error(`Update failed: ${updateError.message}`);
       
       const { data: updatedParticipant, error: fetchError } = await supabase
         .from('city_vip_participants')
@@ -1099,7 +1102,7 @@ export default function CityVip() {
         .eq('id', participantId)
         .single();
       
-      if (fetchError) throw fetchError;
+      if (fetchError) throw new Error(`Fetch failed: ${fetchError.message}`);
       
       setParticipantData(updatedParticipant);
       setTicketType('unverified');
@@ -1111,12 +1114,12 @@ export default function CityVip() {
       
     } catch (error) {
       console.error('Payment submission error:', error);
-      toast.error('Failed to submit payment. Please try again.', { id: loadingToast });
+      toast.error(error.message || 'Failed to submit payment. Please try again.', { id: loadingToast });
       throw error;
     }
   };
 
-  // UPDATED: Seat selector with ALL seats visible and proper color coding
+  // Seat selector with ALL seats visible and proper color coding
   const renderSeatSelector = () => {
     if (!selectedPoolType) return null;
     
@@ -1227,13 +1230,12 @@ export default function CityVip() {
               <p className="text-xs text-gray-400">Total Seats Available: {totalSeatsCount.toLocaleString()}</p>
             </div>
             
-            {/* Seat Grid - ALL SEATS VISIBLE */}
             <div className="grid grid-cols-10 md:grid-cols-15 lg:grid-cols-20 gap-2 mb-6 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-xl">
               {seatNumbers.map(seatNum => {
                 const isTaken = takenSeats.includes(seatNum);
                 const isSelected = selectedSeats.includes(seatNum);
                 
-                let bgColor = 'bg-yellow-400 hover:bg-yellow-500 text-gray-800'; // Available = Yellow
+                let bgColor = 'bg-yellow-400 hover:bg-yellow-500 text-gray-800';
                 if (isSelected) bgColor = 'bg-green-600 text-white';
                 if (isTaken) bgColor = 'bg-gray-400 text-white cursor-not-allowed';
                 
@@ -1285,6 +1287,7 @@ export default function CityVip() {
     );
   };
 
+  // ========== UPDATED: renderPayment (No Reference Number) ==========
   const renderPayment = () => {
     if (!showPayment || !participantId || !selectedPoolType) return null;
     
@@ -1346,72 +1349,46 @@ export default function CityVip() {
               <p className="text-sm text-gray-600 mt-2">Account Name: Negassa Hundessa</p>
             </div>
             
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Reference Number <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter transaction ID or reference number"
-                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={reference}
-                  onChange={(e) => setReference(e.target.value)}
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Upload Bank Transfer Screenshot <span className="text-red-500">*</span>
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-500 transition">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    id="paymentScreenshot"
-                    onChange={handleFileSelect}
-                  />
-                  <label htmlFor="paymentScreenshot" className="cursor-pointer">
-                    {previewUrl ? (
-                      <div>
-                        <img src={previewUrl} alt="Preview" className="max-h-32 mx-auto mb-2 rounded" />
-                        <p className="text-green-600">✓ {selectedFile?.name}</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {(selectedFile?.size / 1024).toFixed(1)} KB
-                        </p>
-                      </div>
-                    ) : (
-                      <div>
-                        <svg className="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <p className="text-gray-500 mt-2">Click to upload screenshot</p>
-                        <p className="text-xs text-gray-400 mt-1">JPEG, PNG (Max 5MB) - Auto-compressed</p>
-                      </div>
-                    )}
-                  </label>
-                </div>
-              </div>
+            {/* NO REFERENCE NUMBER FIELD - Only screenshot upload */}
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-500 transition">
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                id="paymentScreenshot"
+                onChange={handleFileSelect}
+              />
+              <label htmlFor="paymentScreenshot" className="cursor-pointer">
+                {previewUrl ? (
+                  <div>
+                    <img src={previewUrl} alt="Preview" className="max-h-32 mx-auto mb-2 rounded" />
+                    <p className="text-green-600">✓ {selectedFile?.name}</p>
+                  </div>
+                ) : (
+                  <div>
+                    <svg className="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <p className="text-gray-500 mt-2">Click to upload payment screenshot</p>
+                    <p className="text-xs text-gray-400 mt-1">JPEG, PNG (Max 5MB) - Auto-compressed</p>
+                  </div>
+                )}
+              </label>
             </div>
             
             <button
               onClick={async () => {
-                if (!reference.trim()) {
-                  toast.error('Please enter reference number');
-                  return;
-                }
                 if (!selectedFile) {
                   toast.error('Please upload payment screenshot');
                   return;
                 }
                 
                 setIsSubmitting(true);
-                await submitPayment(participantId, reference, selectedFile);
+                await submitPayment(participantId, selectedFile);
                 setIsSubmitting(false);
               }}
               disabled={isSubmitting}
-              className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition mt-4 disabled:opacity-50"
+              className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition mt-4 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <span className="flex items-center justify-center gap-2">
