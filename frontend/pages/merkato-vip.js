@@ -1,4 +1,4 @@
-// pages/merkato-vip.js
+// pages/merkato-vip.js - FIXED with TopCitySelector in navbar
 import Head from 'next/head';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
@@ -8,6 +8,8 @@ import { QRCodeSVG } from 'qrcode.react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import NoSSR from '../components/NoSSR';
+import TopCitySelector from '../components/TopCitySelector'; // ADD THIS IMPORT
+import Link from 'next/link'; // ADD THIS IMPORT
 
 // Helper function for next draw dates
 const getNextSunday = () => {
@@ -304,9 +306,6 @@ export default function MerkatoVip() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (isMounted.current) setUser(user);
-      else if (!user) {
-        router.push('/login');
-      }
     } catch (error) {
       console.error('Error checking user:', error);
     }
@@ -376,38 +375,31 @@ export default function MerkatoVip() {
     }
   };
   
-const handleJoinPool = async (poolType) => {
-  // Check if user is logged in FIRST
-  const { data: { user } } = await supabase.auth.getUser();
+  const handleJoinPool = async (poolType) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      const redirectUrl = `/merkato-seat?type=${poolType}`;
+      
+      localStorage.setItem('abbaa_redirect_after_login', redirectUrl);
+      localStorage.setItem('pendingRole', 'individual');
+      
+      sessionStorage.setItem('redirectAfterLogin', redirectUrl);
+      sessionStorage.setItem('pendingRole', 'individual');
+      
+      localStorage.removeItem('isPartner');
+      sessionStorage.removeItem('isPartner');
+      
+      toast.loading('Please login to join Merkato VIP...');
+      router.push('/login');
+      return;
+    }
+    
+    setSelectedPoolType(poolType);
+    setSelectedSeats([]);
+    setShowSeatSelector(true);
+  };
   
-  if (!user) {
-    // Store redirect URL in BOTH localStorage and sessionStorage for redundancy
-    const redirectUrl = `/merkato-seat?type=${poolType}`;
-    
-    // Use localStorage (more reliable through OAuth)
-    localStorage.setItem('abbaa_redirect_after_login', redirectUrl);
-    localStorage.setItem('pendingRole', 'individual');
-    
-    // Also store in sessionStorage as backup
-    sessionStorage.setItem('redirectAfterLogin', redirectUrl);
-    sessionStorage.setItem('pendingRole', 'individual');
-    
-    // Clear any partner flags
-    localStorage.removeItem('isPartner');
-    sessionStorage.removeItem('isPartner');
-    
-    console.log('🔵 Merkato VIP - Stored redirect URL:', redirectUrl);
-    
-    toast.loading('Please login to join Merkato VIP...');
-    router.push('/login');
-    return;
-  }
-  
-  // User is logged in, show seat selector
-  setSelectedPoolType(poolType);
-  setSelectedSeats([]);
-  setShowSeatSelector(true);
-};
   const handleFileUpload = async (file) => {
     try {
       validateFile(file);
@@ -887,7 +879,7 @@ const handleJoinPool = async (poolType) => {
           onClick={() => handleJoinPool(type)}
           className={`w-full bg-gradient-to-r ${pool.color} text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition transform hover:scale-105 flex items-center justify-center gap-2`}
         >
-          <span>🎯</span> Select Seat & Join {pool.frequency} Pool
+          <span>🎯</span> ይቀላቀሉ | Select Seat & Join
           <span className="group-hover:translate-x-1 transition">→</span>
         </button>
       </div>
@@ -901,6 +893,22 @@ const handleJoinPool = async (poolType) => {
           <title>Merkato VIP - ዕለታዊ 1ሚሊዮን፣ ሳምንታዊ 10ሚሊዮን፣ ወርሃዊ 40ሚሊዮን ብር | Abbaa Carraa</title>
           <meta name="description" content="ልዩ የመርካቶ ነጋዴዎች የሽልማት ፕሮግራም፦ በየቀኑ 1ሚሊዮን ብር፣ በየሳምንቱ 10ሚሊዮን ብር፣ በየወሩ 40ሚሊዮን ብር ያሸንፉ!" />
         </Head>
+
+        {/* ADDED: Top Navbar with City Selector - matching index page */}
+        <nav className="sticky top-0 z-50 bg-gray-900 shadow-lg border-b border-gray-700">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex items-center justify-between h-16">
+              <Link href="/" className="flex items-center gap-2 group">
+                <span className="text-2xl group-hover:scale-110 transition-transform">🎫</span>
+                <div>
+                  <span className="font-bold text-white text-lg">Merkato VIP</span>
+                  <span className="text-xs text-gray-400 ml-2 hidden sm:inline">| Ethiopia's Premier Event Hub</span>
+                </div>
+              </Link>
+              <TopCitySelector />
+            </div>
+          </div>
+        </nav>
 
         <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
           {/* Hero Section */}
@@ -1097,7 +1105,10 @@ const handleJoinPool = async (poolType) => {
             <div className="container mx-auto px-4 text-center">
               <h2 className="text-3xl font-bold mb-4 animate-bounce">ዛሬውኑ ይቀላቀሉ!</h2>
               <p className="text-xl mb-6">Join Today and Become Merkato&apos;s Next Millionaire!</p>
-              <button onClick={() => handleJoinPool('daily')} className="bg-white text-gray-900 px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-100 transition transform hover:scale-105 shadow-xl">🎯 Start Winning Now →</button>
+              <button onClick={() => handleJoinPool('daily')} className="bg-white text-gray-900 px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-100 transition transform hover:scale-105 shadow-xl inline-flex items-center gap-2">
+                <span>🎯</span> ይሳተፉ | Start Winning
+                <span>→</span>
+              </button>
               <p className="text-sm opacity-80 mt-4">በቴሌብር እና በንግድ ባንክ መክፈል ይቻላል | Pay via TeleBirr or CBE</p>
             </div>
           </div>
