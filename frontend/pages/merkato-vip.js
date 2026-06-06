@@ -1,4 +1,4 @@
-// pages/merkato-vip.js - FIXED with TopCitySelector in navbar
+// pages/merkato-vip.js - COMPLETE FIXED WITH AGENT APPLICATION
 import Head from 'next/head';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
@@ -8,8 +8,9 @@ import { QRCodeSVG } from 'qrcode.react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import NoSSR from '../components/NoSSR';
-import TopCitySelector from '../components/TopCitySelector'; // ADD THIS IMPORT
-import Link from 'next/link'; // ADD THIS IMPORT
+import TopCitySelector from '../components/TopCitySelector';
+import Link from 'next/link';
+import UnifiedAgentApplication from '../components/UnifiedAgentApplication';
 
 // Helper function for next draw dates
 const getNextSunday = () => {
@@ -157,7 +158,6 @@ const Ticket = ({ participant, pool, type = 'unverified' }) => {
         ref={ticketRef}
         className={`${config.bg} border-2 ${config.border} rounded-2xl p-6 max-w-2xl mx-auto shadow-xl`}
       >
-        {/* Ticket Header */}
         <div className="text-center border-b pb-4 mb-4">
           <div className="flex justify-between items-center">
             <div className="text-left">
@@ -174,43 +174,17 @@ const Ticket = ({ participant, pool, type = 'unverified' }) => {
           <p className="text-sm text-gray-600">የሚሊየነር ቲኬት | Millionaire Ticket</p>
         </div>
 
-        {/* Ticket Body */}
         <div className="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <p className="text-xs text-gray-500">Participant Name</p>
-            <p className="font-semibold text-sm">{participant.user_name || 'N/A'}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500">Email</p>
-            <p className="font-semibold text-sm">{participant.user_email || 'N/A'}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500">Pool Type</p>
-            <p className="font-semibold text-sm capitalize">{participant.pool_type}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500">City/Section</p>
-            <p className="font-semibold text-sm">{participant.city || 'Merkato'}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500">Seat Numbers</p>
-            <p className="font-semibold text-sm">{participant.seat_numbers?.join(', ') || 'N/A'}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500">Contribution</p>
-            <p className="font-semibold text-sm text-green-600">ETB {participant.contribution_amount?.toLocaleString()}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500">Prize Amount</p>
-            <p className="font-semibold text-sm text-purple-600">ETB {participant.prize_amount?.toLocaleString()}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500">Draw Date</p>
-            <p className="font-semibold text-sm">{pool?.drawDate || 'TBA'}</p>
-          </div>
+          <div><p className="text-xs text-gray-500">Participant Name</p><p className="font-semibold text-sm">{participant.user_name || 'N/A'}</p></div>
+          <div><p className="text-xs text-gray-500">Email</p><p className="font-semibold text-sm">{participant.user_email || 'N/A'}</p></div>
+          <div><p className="text-xs text-gray-500">Pool Type</p><p className="font-semibold text-sm capitalize">{participant.pool_type}</p></div>
+          <div><p className="text-xs text-gray-500">City/Section</p><p className="font-semibold text-sm">{participant.city || 'Merkato'}</p></div>
+          <div><p className="text-xs text-gray-500">Seat Numbers</p><p className="font-semibold text-sm">{participant.seat_numbers?.join(', ') || 'N/A'}</p></div>
+          <div><p className="text-xs text-gray-500">Contribution</p><p className="font-semibold text-sm text-green-600">ETB {participant.contribution_amount?.toLocaleString()}</p></div>
+          <div><p className="text-xs text-gray-500">Prize Amount</p><p className="font-semibold text-sm text-purple-600">ETB {participant.prize_amount?.toLocaleString()}</p></div>
+          <div><p className="text-xs text-gray-500">Draw Date</p><p className="font-semibold text-sm">{pool?.drawDate || 'TBA'}</p></div>
         </div>
 
-        {/* QR Code Section */}
         <div className="flex justify-center py-4 border-t border-b border-dashed">
           <div className="bg-white p-3 rounded-xl shadow-md">
             <QRCodeSVG 
@@ -230,38 +204,28 @@ const Ticket = ({ participant, pool, type = 'unverified' }) => {
           </div>
         </div>
 
-        {/* Verification Status */}
         {type === 'verified' && participant.verified_at && (
           <div className="bg-green-100 rounded-lg p-3 mt-4 text-center">
-            <p className="text-green-800 text-sm font-semibold">
-              ✓ Verified on {new Date(participant.verified_at).toLocaleString()}
-            </p>
+            <p className="text-green-800 text-sm font-semibold">✓ Verified on {new Date(participant.verified_at).toLocaleString()}</p>
             <p className="text-green-600 text-xs">This ticket is VALID for the upcoming draw</p>
           </div>
         )}
 
         {type === 'unverified' && (
           <div className="bg-gray-100 rounded-lg p-3 mt-4 text-center">
-            <p className="text-gray-800 text-sm font-semibold">
-              ⏳ Awaiting Admin Verification
-            </p>
+            <p className="text-gray-800 text-sm font-semibold">⏳ Awaiting Admin Verification</p>
             <p className="text-gray-600 text-xs">Your ticket will be activated once payment is confirmed</p>
           </div>
         )}
 
-        {/* Footer */}
         <div className="text-center text-xs text-gray-400 mt-4 pt-4 border-t">
           <p>Abbaa Carraa • Merkato VIP Program</p>
           <p>Terms & Conditions Apply • Keep this ticket safe for prize claims</p>
         </div>
       </div>
 
-      {/* Download Button */}
       <div className="text-center">
-        <button
-          onClick={downloadTicket}
-          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold transition flex items-center gap-2 mx-auto"
-        >
+        <button onClick={downloadTicket} className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold transition flex items-center gap-2 mx-auto">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
@@ -278,6 +242,7 @@ export default function MerkatoVip() {
   const [activeTab, setActiveTab] = useState('daily');
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showAgentApplication, setShowAgentApplication] = useState(false); // ADD THIS STATE
   
   // Seat selection states
   const [showSeatSelector, setShowSeatSelector] = useState(false);
@@ -468,7 +433,6 @@ export default function MerkatoVip() {
     }
   };
 
-  // Render seat selection UI
   const renderSeatSelector = () => {
     if (!selectedPoolType) return null;
     
@@ -609,7 +573,6 @@ export default function MerkatoVip() {
     );
   };
 
-  // Render payment modal
   const renderPayment = () => {
     if (!showPayment || !participantId || !selectedPoolType) return null;
     
@@ -759,7 +722,6 @@ export default function MerkatoVip() {
     );
   };
 
-  // Render ticket modal
   const renderTicketModal = () => {
     if (!showTicket || !participantData) return null;
     
@@ -894,7 +856,7 @@ export default function MerkatoVip() {
           <meta name="description" content="ልዩ የመርካቶ ነጋዴዎች የሽልማት ፕሮግራም፦ በየቀኑ 1ሚሊዮን ብር፣ በየሳምንቱ 10ሚሊዮን ብር፣ በየወሩ 40ሚሊዮን ብር ያሸንፉ!" />
         </Head>
 
-        {/* ADDED: Top Navbar with City Selector - matching index page */}
+        {/* Top Navbar with City Selector */}
         <nav className="sticky top-0 z-50 bg-gray-900 shadow-lg border-b border-gray-700">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-between h-16">
@@ -1053,14 +1015,14 @@ export default function MerkatoVip() {
                     <td className="px-6 py-4 font-bold">2,500 ብር</td>
                     <td className="px-6 py-4 font-bold text-purple-600">10,000,000 ብር</td>
                     <td className="px-6 py-4">Every Sunday at 6 PM</td>
-                  </tr>
+                   </tr>
                   <tr className="hover:bg-gray-50 transition">
                     <td className="px-6 py-4 font-semibold">👑 Monthly Winner</td>
                     <td className="px-6 py-4"><span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">VIP 1</span></td>
                     <td className="px-6 py-4 font-bold">5,000 ብር</td>
                     <td className="px-6 py-4 font-bold text-green-600">40,000,000 ብር</td>
                     <td className="px-6 py-4">Last Day of Month at 8 PM</td>
-                  </tr>
+                   </tr>
                 </tbody>
               </table>
             </div>
@@ -1100,6 +1062,60 @@ export default function MerkatoVip() {
             </div>
           </div>
 
+          {/* BECOME AN AGENT SECTION - ADDED AT THE BOTTOM */}
+          <div className="container mx-auto px-4 py-12">
+            <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-8 text-white shadow-xl">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                  <span className="text-5xl">🤝</span>
+                  <div>
+                    <h3 className="text-2xl font-bold">Become an Agent for Merkato VIP</h3>
+                    <p className="text-gray-300 mt-1">
+                      Earn 10% commission on every successful contribution from customers you bring!
+                    </p>
+                    <p className="text-sm text-gray-400 mt-2">
+                      💰 Example: Customer contributes 10,000 ETB → You earn 1,000 ETB
+                    </p>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      <span className="text-xs bg-green-600/30 rounded-full px-2 py-1">✓ Regular Pools</span>
+                      <span className="text-xs bg-purple-600/30 rounded-full px-2 py-1">✓ City VIP Programs</span>
+                      <span className="text-xs bg-yellow-600/30 rounded-full px-2 py-1">✓ Merkato VIP</span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowAgentApplication(true)}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 shadow-lg flex items-center gap-2"
+                >
+                  <span>🎯</span>
+                  Apply as Agent
+                  <span>→</span>
+                </button>
+              </div>
+              
+              {/* Commission Info */}
+              <div className="mt-6 pt-6 border-t border-gray-700">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl mb-1">💰</div>
+                    <p className="font-semibold">10% Commission</p>
+                    <p className="text-xs text-gray-400">On every successful contribution</p>
+                  </div>
+                  <div>
+                    <div className="text-2xl mb-1">🔗</div>
+                    <p className="font-semibold">Referral Link</p>
+                    <p className="text-xs text-gray-400">Track all your customers</p>
+                  </div>
+                  <div>
+                    <div className="text-2xl mb-1">💳</div>
+                    <p className="font-semibold">Easy Withdrawal</p>
+                    <p className="text-xs text-gray-400">TeleBirr or Bank Transfer</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* CTA Banner */}
           <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-16 animate-pulse-slow">
             <div className="container mx-auto px-4 text-center">
@@ -1118,42 +1134,15 @@ export default function MerkatoVip() {
         {renderSeatSelector()}
         {renderPayment()}
         {renderTicketModal()}
+
+        {/* Agent Application Modal */}
+        {showAgentApplication && (
+          <UnifiedAgentApplication 
+            onClose={() => setShowAgentApplication(false)} 
+            preSelectedProgram="merkato_vip"
+          />
+        )}
       </>
     </NoSSR>
   );
 }
-{/* Become Agent Section - At the bottom of Merkato VIP page */}
-<div className="container mx-auto px-4 py-12">
-  <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-8 text-white">
-    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-      <div className="flex items-center gap-4">
-        <span className="text-5xl">🤝</span>
-        <div>
-          <h3 className="text-2xl font-bold">Become an Agent for Merkato VIP</h3>
-          <p className="text-gray-300 mt-1">
-            Earn 10% commission on every successful contribution from customers you bring!
-          </p>
-          <p className="text-sm text-gray-400 mt-2">
-            💰 Example: Customer contributes 10,000 ETB → You earn 1,000 ETB
-          </p>
-        </div>
-      </div>
-      <button
-        onClick={() => setShowAgentApplication(true)}
-        className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 shadow-lg flex items-center gap-2"
-      >
-        <span>🎯</span>
-        Apply as Agent
-        <span>→</span>
-      </button>
-    </div>
-  </div>
-</div>
-
-{/* Agent Application Modal */}
-{showAgentApplication && (
-  <UnifiedAgentApplication 
-    onClose={() => setShowAgentApplication(false)} 
-    preSelectedProgram="merkato_vip"
-  />
-)}
