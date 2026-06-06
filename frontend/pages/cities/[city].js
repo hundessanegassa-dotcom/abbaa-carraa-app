@@ -1,4 +1,4 @@
-// pages/cities/[city].js - COMPLETE FIXED VERSION
+// pages/cities/[city].js - COMPLETE WITH ALL CITIES AND AGENT SECTION
 import { useRouter } from 'next/router';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -10,6 +10,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import NoSSR from '../../components/NoSSR';
 import TopCitySelector from '../../components/TopCitySelector';
+import UnifiedAgentApplication from '../../components/UnifiedAgentApplication';
 
 // Helper function for next draw dates
 const getNextSunday = () => {
@@ -25,9 +26,11 @@ const getNextMonthEnd = () => {
   return lastDay.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 };
 
-// Complete City Data - ALL CITIES AVAILABLE (MUST BE DEFINED BEFORE COMPONENT)
+// ============================================
+// COMPLETE CITY DATA - ALL ETHIOPIAN CITIES
+// ============================================
 const cityData = {
-  // Major Cities
+  // ===================== CENTRAL & MAJOR CITIES =====================
   'addis-ababa': {
     name: 'አዲስ አበባ | Addis Ababa',
     slogan: 'የኢትዮጵያ የንግድ እና የዲፕሎማሲ ልብ',
@@ -52,6 +55,8 @@ const cityData = {
     population: '3M+',
     region: 'Oromia'
   },
+
+  // ===================== DIRE DAWA =====================
   'dire-dawa': {
     name: 'ድሬ ዳዋ | Dire Dawa',
     slogan: 'የሎጂስቲክስ እና የማኑፋክቸሪንግ በር',
@@ -64,6 +69,8 @@ const cityData = {
     population: '535K+',
     region: 'Dire Dawa'
   },
+
+  // ===================== TIGRAY REGION =====================
   'mekelle': {
     name: 'መቀሌ | Mekelle',
     slogan: 'የሰሜኑ የኢንዱስትሪ እና የትምህርት ማዕከል',
@@ -76,30 +83,44 @@ const cityData = {
     population: '500K+',
     region: 'Tigray'
   },
-  'adama': {
-    name: 'አዳማ | Adama',
-    slogan: 'የመኪና እና የኢንዱስትሪ ከተማ',
-    businesses: '20,000+',
-    workers: '80,000+',
+  'axum': {
+    name: 'አክሱም | Axum',
+    slogan: 'የታላቁ የአክሱም መንግስት ዋና ከተማ',
+    businesses: '5,000+',
+    workers: '20,000+',
     color: 'from-gray-700 to-gray-900',
-    icon: '🏭',
-    product: 'የመኪና መሰብሰቢያ, ጨርቃጨርቅ',
-    description: 'የኢንዱስትሪ ከተማ',
-    population: '500K+',
-    region: 'Oromia'
+    icon: '🏛️',
+    product: 'ቱሪዝም, ቅርስ',
+    description: 'የታሪካዊ ቅርስ ከተማ',
+    population: '70K+',
+    region: 'Tigray'
   },
-  'hawassa': {
-    name: 'ሀዋሳ | Hawassa',
-    slogan: 'የኢንዱስትሪ ፓርክ እና የሀይቅ ከተማ',
-    businesses: '12,000+',
-    workers: '50,000+',
+  'adigrat': {
+    name: 'አዲግራት | Adigrat',
+    slogan: 'የሰሜን ትግራይ የንግድ ማዕከል',
+    businesses: '4,000+',
+    workers: '15,000+',
     color: 'from-gray-700 to-gray-900',
-    icon: '🏞️',
-    product: 'ጨርቃጨርቅ, አሳ',
-    description: 'የኢንዱስትሪ ፓርክ ከተማ',
-    population: '387K+',
-    region: 'Sidama'
+    icon: '🏔️',
+    product: 'ንግድ, ግብርና',
+    description: 'የሰሜን ትግራይ የንግድ ማዕከል',
+    population: '80K+',
+    region: 'Tigray'
   },
+  'shire': {
+    name: 'ሽሬ | Shire',
+    slogan: 'የምዕራብ ትግራይ ዋና ከተማ',
+    businesses: '6,000+',
+    workers: '25,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏔️',
+    product: 'ንግድ, ግብርና',
+    description: 'የምዕራብ ትግራይ የንግድ ማዕከል',
+    population: '100K+',
+    region: 'Tigray'
+  },
+
+  // ===================== AMHARA REGION =====================
   'gondar': {
     name: 'ጎንደር | Gondar',
     slogan: 'የባህል ቅርስ እና የቱሪዝም ከተማ',
@@ -123,6 +144,92 @@ const cityData = {
     description: 'የታና ሀይቅ ዳርቻ',
     population: '350K+',
     region: 'Amhara'
+  },
+  'dessie': {
+    name: 'ደሴ | Dessie',
+    slogan: 'የንግድ እና የእርሻ ከተማ',
+    businesses: '7,000+',
+    workers: '25,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏔️',
+    product: 'ግብርና, ንግድ',
+    description: 'የንግድ እና የእርሻ ከተማ',
+    population: '229K+',
+    region: 'Amhara'
+  },
+  'debre-markos': {
+    name: 'ደብረ ማርቆስ | Debre Markos',
+    slogan: 'የምስራቅ ጎጃም ዋና ከተማ',
+    businesses: '8,000+',
+    workers: '30,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '⛪',
+    product: 'ንግድ, ግብርና',
+    description: 'የምስራቅ ጎጃም ዋና ከተማ',
+    population: '120K+',
+    region: 'Amhara'
+  },
+  'finote-selam': {
+    name: 'ፍኖተ ሰላም | Finote Selam',
+    slogan: 'የምዕራብ ጎጃም ዋና ከተማ',
+    businesses: '6,000+',
+    workers: '20,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🌅',
+    product: 'ንግድ, ግብርና',
+    description: 'የምዕራብ ጎጃም ዋና ከተማ',
+    population: '80K+',
+    region: 'Amhara'
+  },
+  'woldia': {
+    name: 'ወልዲያ | Woldia',
+    slogan: 'የወልዲያ ዩኒቨርሲቲ ከተማ',
+    businesses: '5,000+',
+    workers: '15,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🎓',
+    product: 'ትምህርት, ንግድ',
+    description: 'የወልዲያ ዩኒቨርሲቲ ከተማ',
+    population: '60K+',
+    region: 'Amhara'
+  },
+  'debre-birhan': {
+    name: 'ደብረ ብርሃን | Debre Birhan',
+    slogan: 'የፀሐይ ብርሃን ከተማ',
+    businesses: '7,000+',
+    workers: '25,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '⭐',
+    product: 'ንግድ, ግብርና',
+    description: 'የፀሐይ ብርሃን ከተማ',
+    population: '100K+',
+    region: 'Amhara'
+  },
+  'kombolcha': {
+    name: 'ኮምቦልቻ | Kombolcha',
+    slogan: 'የኢንዱስትሪ ዞን እና ደረቅ ወደብ',
+    businesses: '4,000+',
+    workers: '18,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏭',
+    product: 'ኢንዱስትሪ, ሎጂስቲክስ',
+    description: 'የኢንዱስትሪ ዞን እና ደረቅ ወደብ',
+    population: '120K+',
+    region: 'Amhara'
+  },
+
+  // ===================== OROMIA REGION =====================
+  'adama': {
+    name: 'አዳማ | Adama',
+    slogan: 'የመኪና እና የኢንዱስትሪ ከተማ',
+    businesses: '20,000+',
+    workers: '80,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏭',
+    product: 'የመኪና መሰብሰቢያ, ጨርቃጨርቅ',
+    description: 'የኢንዱስትሪ ከተማ',
+    population: '500K+',
+    region: 'Oromia'
   },
   'jimma': {
     name: 'ጅማ | Jimma',
@@ -148,88 +255,16 @@ const cityData = {
     population: '150K+',
     region: 'Oromia'
   },
-  'dessie': {
-    name: 'ደሴ | Dessie',
-    slogan: 'የንግድ እና የእርሻ ከተማ',
-    businesses: '7,000+',
-    workers: '25,000+',
+  'asella': {
+    name: 'አሰላ | Asella',
+    slogan: 'የአርሲ ዋና ከተማ እና የእርሻ ማዕከል',
+    businesses: '8,000+',
+    workers: '30,000+',
     color: 'from-gray-700 to-gray-900',
     icon: '🏔️',
-    product: 'ግብርና, ንግድ',
-    description: 'የንግድ እና የእርሻ ከተማ',
-    population: '229K+',
-    region: 'Amhara'
-  },
-  'jijiga': {
-    name: 'ጅጅጋ | Jijiga',
-    slogan: 'የንግድ እና የእንስሳት ከተማ',
-    businesses: '6,000+',
-    workers: '20,000+',
-    color: 'from-gray-700 to-gray-900',
-    icon: '🐪',
-    product: 'ንግድ, እንስሳት',
-    description: 'የንግድ እና የእንስሳት ከተማ',
-    population: '200K+',
-    region: 'Somali'
-  },
-  'harar': {
-    name: 'ሀረር | Harar',
-    slogan: 'የባህል ቅርስ እና የቱሪዝም ከተማ',
-    businesses: '5,000+',
-    workers: '15,000+',
-    color: 'from-gray-700 to-gray-900',
-    icon: '🏛️',
-    product: 'ቱሪዝም, ባህል',
-    description: 'የባህል ቅርስ ከተማ',
-    population: '150K+',
-    region: 'Harari'
-  },
-  'nekemte': {
-    name: 'ነቀምቴ | Nekemte',
-    slogan: 'የንግድ እና የቡና ከተማ',
-    businesses: '6,000+',
-    workers: '25,000+',
-    color: 'from-gray-700 to-gray-900',
-    icon: '☕',
-    product: 'ቡና, ንግድ',
-    description: 'የንግድ እና የቡና ከተማ',
-    population: '150K+',
-    region: 'Oromia'
-  },
-  'arba-minch': {
-    name: 'አርባ ምንጭ | Arba Minch',
-    slogan: 'የቱሪዝም እና የግብርና ከተማ',
-    businesses: '5,000+',
-    workers: '20,000+',
-    color: 'from-gray-700 to-gray-900',
-    icon: '🏞️',
-    product: 'ቱሪዝም, ግብርና',
-    description: 'የቱሪዝም እና የግብርና ከተማ',
-    population: '150K+',
-    region: 'South'
-  },
-  'sodo': {
-    name: 'ሶዶ | Sodo',
-    slogan: 'የንግድ እና የግብርና ከተማ',
-    businesses: '5,000+',
-    workers: '18,000+',
-    color: 'from-gray-700 to-gray-900',
-    icon: '🛍️',
-    product: 'ንግድ, ግብርና',
-    description: 'የንግድ እና የግብርና ከተማ',
-    population: '150K+',
-    region: 'South'
-  },
-  'ambo': {
-    name: 'አምቦ | Ambo',
-    slogan: 'የማዕድን ውሃ እና የግብርና ከተማ',
-    businesses: '4,000+',
-    workers: '15,000+',
-    color: 'from-gray-700 to-gray-900',
-    icon: '💧',
-    product: 'ማዕድን ውሃ, ግብርና',
-    description: 'የማዕድን ውሃ እና የግብርና ከተማ',
-    population: '100K+',
+    product: 'እህል, ግብርና',
+    description: 'የአርሲ ዋና ከተማ',
+    population: '130K+',
     region: 'Oromia'
   },
   'shashemene': {
@@ -244,41 +279,41 @@ const cityData = {
     population: '150K+',
     region: 'Oromia'
   },
-  'assosa': {
-    name: 'አሶሳ | Assosa',
-    slogan: 'የንግድ እና የግብርና ከተማ',
-    businesses: '3,000+',
-    workers: '12,000+',
+  'robe': {
+    name: 'ሮቤ | Robe',
+    slogan: 'የባሌ ተራራ በር | የቱሪዝም ማዕከል',
+    businesses: '5,000+',
+    workers: '20,000+',
     color: 'from-gray-700 to-gray-900',
-    icon: '🌿',
-    product: 'ንግድ, ግብርና',
-    description: 'የንግድ እና የግብርና ከተማ',
+    icon: '🌄',
+    product: 'ቱሪዝም, ግብርና',
+    description: 'የባሌ ተራራ በር',
+    population: '80K+',
+    region: 'Oromia'
+  },
+  'nekemte': {
+    name: 'ነቀምቴ | Nekemte',
+    slogan: 'የንግድ እና የቡና ከተማ',
+    businesses: '6,000+',
+    workers: '25,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '☕',
+    product: 'ቡና, ንግድ',
+    description: 'የንግድ እና የቡና ከተማ',
+    population: '150K+',
+    region: 'Oromia'
+  },
+  'ambo': {
+    name: 'አምቦ | Ambo',
+    slogan: 'የማዕድን ውሃ እና የግብርና ከተማ',
+    businesses: '4,000+',
+    workers: '15,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '💧',
+    product: 'ማዕድን ውሃ, ግብርና',
+    description: 'የማዕድን ውሃ ከተማ',
     population: '100K+',
-    region: 'Benishangul'
-  },
-  'welkite': {
-    name: 'ወልቂጤ | Welkite',
-    slogan: 'የግብርና እና የእርሻ ከተማ',
-    businesses: '3,000+',
-    workers: '10,000+',
-    color: 'from-gray-700 to-gray-900',
-    icon: '🌾',
-    product: 'ግብርና',
-    description: 'የግብርና እና የእርሻ ከተማ',
-    population: '70K+',
-    region: 'South'
-  },
-  'hosana': {
-    name: 'ሆሳና | Hosana',
-    slogan: 'የግብርና እና የንግድ ከተማ',
-    businesses: '3,500+',
-    workers: '14,000+',
-    color: 'from-gray-700 to-gray-900',
-    icon: '🌻',
-    product: 'ግብርና, ንግድ',
-    description: 'የግብርና እና የንግድ ከተማ',
-    population: '90K+',
-    region: 'South'
+    region: 'Oromia'
   },
   'metu': {
     name: 'መቱ | Metu',
@@ -300,21 +335,155 @@ const cityData = {
     color: 'from-gray-700 to-gray-900',
     icon: '🐟',
     product: 'አሳ, ቱሪዝም',
-    description: 'የአሳ ማጥመድ እና የቱሪዝም ከተማ',
+    description: 'የአሳ ማጥመድ ከተማ',
     population: '80K+',
     region: 'Oromia'
   },
-  'kombolcha': {
-    name: 'ኮምቦልቻ | Kombolcha',
-    slogan: 'የኢንዱስትሪ ዞን እና ደረቅ ወደብ',
-    businesses: '4,000+',
+
+  // ===================== SOMALI REGION =====================
+  'jijiga': {
+    name: 'ጅጅጋ | Jijiga',
+    slogan: 'የንግድ እና የእንስሳት ከተማ',
+    businesses: '6,000+',
+    workers: '20,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🐪',
+    product: 'ንግድ, እንስሳት',
+    description: 'የሶማሌ ክልል ዋና ከተማ',
+    population: '200K+',
+    region: 'Somali'
+  },
+
+  // ===================== HARARI REGION =====================
+  'harar': {
+    name: 'ሀረር | Harar',
+    slogan: 'የባህል ቅርስ እና የእስላም ቅድስት ከተማ',
+    businesses: '5,000+',
+    workers: '15,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏛️',
+    product: 'ቱሪዝም, ባህል',
+    description: 'የባህል ቅርስ ከተማ',
+    population: '150K+',
+    region: 'Harari'
+  },
+
+  // ===================== SIDAMA REGION =====================
+  'hawassa': {
+    name: 'ሀዋሳ | Hawassa',
+    slogan: 'የኢንዱስትሪ ፓርክ እና የሀይቅ ከተማ',
+    businesses: '12,000+',
+    workers: '50,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏞️',
+    product: 'ጨርቃጨርቅ, አሳ',
+    description: 'የሲዳማ ክልል ዋና ከተማ',
+    population: '387K+',
+    region: 'Sidama'
+  },
+
+  // ===================== SOUTH ETHIOPIA REGION =====================
+  'arba-minch': {
+    name: 'አርባ ምንጭ | Arba Minch',
+    slogan: 'የቱሪዝም እና የግብርና ከተማ',
+    businesses: '5,000+',
+    workers: '20,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏞️',
+    product: 'ቱሪዝም, ግብርና',
+    description: 'የአርባ ምንጭ ዩኒቨርሲቲ ከተማ',
+    population: '150K+',
+    region: 'South'
+  },
+  'sodo': {
+    name: 'ሶዶ | Sodo',
+    slogan: 'የንግድ እና የግብርና ከተማ',
+    businesses: '5,000+',
     workers: '18,000+',
     color: 'from-gray-700 to-gray-900',
-    icon: '🏭',
-    product: 'ኢንዱስትሪ, ሎጂስቲክስ',
-    description: 'የኢንዱስትሪ ዞን እና ደረቅ ወደብ',
-    population: '120K+',
-    region: 'Amhara'
+    icon: '🛍️',
+    product: 'ንግድ, ግብርና',
+    description: 'የወላይታ ዞን ዋና ከተማ',
+    population: '150K+',
+    region: 'South'
+  },
+  'dilla': {
+    name: 'ዲላ | Dilla',
+    slogan: 'የቡና እና የንግድ ከተማ',
+    businesses: '6,000+',
+    workers: '22,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '☕',
+    product: 'ቡና, ግብርና',
+    description: 'የጌዴኦ ዞን ዋና ከተማ',
+    population: '100K+',
+    region: 'South'
+  },
+  'jinka': {
+    name: 'ጂንካ | Jinka',
+    slogan: 'የደቡብ ኢትዮጵያ ባህላዊ ከተማ',
+    businesses: '4,000+',
+    workers: '15,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏔️',
+    product: 'ቱሪዝም, ባህል',
+    description: 'የደቡብ ኢትዮጵያ ባህላዊ ከተማ',
+    population: '70K+',
+    region: 'South'
+  },
+  'konso': {
+    name: 'ኮንሶ | Konso',
+    slogan: 'የዩኔስኮ ቅርስ ከተማ',
+    businesses: '3,000+',
+    workers: '12,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏔️',
+    product: 'ቱሪዝም, ግብርና',
+    description: 'የዩኔስኮ ቅርስ ከተማ',
+    population: '60K+',
+    region: 'South'
+  },
+
+  // ===================== BENISHANGUL-GUMUZ REGION =====================
+  'assosa': {
+    name: 'አሶሳ | Assosa',
+    slogan: 'የንግድ እና የግብርና ከተማ',
+    businesses: '3,000+',
+    workers: '12,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🌿',
+    product: 'ንግድ, ግብርና',
+    description: 'የቤንሻንጉል ክልል ዋና ከተማ',
+    population: '100K+',
+    region: 'Benishangul'
+  },
+
+  // ===================== GAMBELLA REGION =====================
+  'gambella': {
+    name: 'ጋምቤላ | Gambella',
+    slogan: 'የጋምቤላ ክልል ዋና ከተማ',
+    businesses: '3,500+',
+    workers: '15,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🏞️',
+    product: 'ንግድ, ግብርና',
+    description: 'የጋምቤላ ክልል ዋና ከተማ',
+    population: '80K+',
+    region: 'Gambella'
+  },
+
+  // ===================== AFAR REGION =====================
+  'semera': {
+    name: 'ሰሜራ | Semera',
+    slogan: 'የአፋር ክልል ዋና ከተማ',
+    businesses: '2,000+',
+    workers: '8,000+',
+    color: 'from-gray-700 to-gray-900',
+    icon: '🐪',
+    product: 'ንግድ, እንስሳት',
+    description: 'የአፋር ክልል ዋና ከተማ',
+    population: '50K+',
+    region: 'Afar'
   }
 };
 
@@ -535,6 +704,7 @@ export default function CityVip() {
   const [loading, setLoading] = useState(false);
   const [cityInfo, setCityInfo] = useState(null);
   const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const [showAgentApplication, setShowAgentApplication] = useState(false);
   
   // Seat selection states
   const [showSeatSelector, setShowSeatSelector] = useState(false);
@@ -1267,14 +1437,14 @@ export default function CityVip() {
                     <td className="px-6 py-4 font-bold">2,500 ብር</td>
                     <td className="px-6 py-4 font-bold text-purple-600">10,000,000 ብር</td>
                     <td className="px-6 py-4">Every Sunday at 6 PM</td>
-                  </tr>
+                   </tr>
                   <tr className="hover:bg-gray-50 transition">
                     <td className="px-6 py-4 font-semibold">👑 Monthly Winner</td>
                     <td className="px-6 py-4"><span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">VIP 1</span></td>
                     <td className="px-6 py-4 font-bold">5,000 ብር</td>
                     <td className="px-6 py-4 font-bold text-green-600">40,000,000 ብር</td>
                     <td className="px-6 py-4">Last Day of Month at 8 PM</td>
-                  </tr>
+                   </tr>
                 </tbody>
               </table>
             </div>
@@ -1325,48 +1495,77 @@ export default function CityVip() {
               </div>
             </div>
           </div>
+
+          {/* ============================================ */}
+          {/* BECOME AN AGENT SECTION - AT THE BOTTOM */}
+          {/* ============================================ */}
+          <div className="container mx-auto px-4 py-12">
+            <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-8 text-white shadow-xl">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                  <span className="text-5xl">🤝</span>
+                  <div>
+                    <h3 className="text-2xl font-bold">Become an Agent for {cityInfo?.name?.split('|')[0]}</h3>
+                    <p className="text-gray-300 mt-1">
+                      Earn 10% commission on every successful contribution from customers you bring!
+                    </p>
+                    <p className="text-sm text-gray-400 mt-2">
+                      💰 Example: Customer contributes 10,000 ETB → You earn 1,000 ETB
+                    </p>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      <span className="text-xs bg-green-600/30 rounded-full px-2 py-1">✓ Regular Pools</span>
+                      <span className="text-xs bg-purple-600/30 rounded-full px-2 py-1">✓ City VIP Programs</span>
+                      <span className="text-xs bg-yellow-600/30 rounded-full px-2 py-1">✓ Merkato VIP</span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowAgentApplication(true)}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 shadow-lg flex items-center gap-2"
+                >
+                  <span>🎯</span>
+                  Apply as Agent
+                  <span>→</span>
+                </button>
+              </div>
+              
+              {/* Commission Info */}
+              <div className="mt-6 pt-6 border-t border-gray-700">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl mb-1">💰</div>
+                    <p className="font-semibold">10% Commission</p>
+                    <p className="text-xs text-gray-400">On every successful contribution</p>
+                  </div>
+                  <div>
+                    <div className="text-2xl mb-1">🔗</div>
+                    <p className="font-semibold">Referral Link</p>
+                    <p className="text-xs text-gray-400">Track all your customers</p>
+                  </div>
+                  <div>
+                    <div className="text-2xl mb-1">💳</div>
+                    <p className="font-semibold">Easy Withdrawal</p>
+                    <p className="text-xs text-gray-400">TeleBirr or Bank Transfer</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {renderSeatSelector()}
         {renderPayment()}
         {renderTicketModal()}
+
+        {/* Agent Application Modal */}
+        {showAgentApplication && (
+          <UnifiedAgentApplication 
+            onClose={() => setShowAgentApplication(false)} 
+            preSelectedCity={city}
+            preSelectedProgram="city_vip"
+          />
+        )}
       </>
     </NoSSR>
   );
 }
-{/* Become Agent Section - At the bottom of city page */}
-<div className="container mx-auto px-4 py-12">
-  <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-8 text-white">
-    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-      <div className="flex items-center gap-4">
-        <span className="text-5xl">🤝</span>
-        <div>
-          <h3 className="text-2xl font-bold">Become an Agent for {cityInfo?.name?.split('|')[0]}</h3>
-          <p className="text-gray-300 mt-1">
-            Earn 10% commission on every successful contribution from customers you bring!
-          </p>
-          <p className="text-sm text-gray-400 mt-2">
-            💰 Example: Customer contributes 10,000 ETB → You earn 1,000 ETB
-          </p>
-        </div>
-      </div>
-      <button
-        onClick={() => setShowAgentApplication(true)}
-        className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 shadow-lg flex items-center gap-2"
-      >
-        <span>🎯</span>
-        Apply as Agent
-        <span>→</span>
-      </button>
-    </div>
-  </div>
-</div>
-
-{/* Agent Application Modal */}
-{showAgentApplication && (
-  <UnifiedAgentApplication 
-    onClose={() => setShowAgentApplication(false)} 
-    preSelectedCity={city}
-    preSelectedProgram="city_vip"
-  />
-)}
