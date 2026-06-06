@@ -1,4 +1,4 @@
-// pages/auth/callback.js
+// pages/auth/callback.js - FIXED VERSION
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
@@ -13,7 +13,7 @@ export default function AuthCallback() {
   const [userRole, setUserRole] = useState(null);
   const [error, setError] = useState(null);
 
-  // Use localStorage for persistence through OAuth redirects
+  // Get stored redirect URL - CRITICAL for pool/VIP joining
   const getStoredRedirectUrl = () => {
     // Try localStorage first (more reliable)
     let redirectUrl = localStorage.getItem('abbaa_redirect_after_login');
@@ -30,14 +30,14 @@ export default function AuthCallback() {
     return null;
   };
 
-  const storeRedirectUrl = (url) => {
-    if (url) {
-      localStorage.setItem('abbaa_redirect_after_login', url);
-    }
-  };
-
-  const isVipRedirect = (url) => {
-    return url && (url.includes('/merkato-seat') || url.includes('/cities/seat') || url.includes('/pools/'));
+  const isPoolOrVipRedirect = (url) => {
+    return url && (
+      url.includes('/merkato-seat') || 
+      url.includes('/cities/seat') || 
+      url.includes('/pools/') ||
+      url.includes('/cities/') && url.includes('?type=') ||
+      url.includes('/merkato-vip')
+    );
   };
 
   const clearStoredData = () => {
@@ -59,6 +59,11 @@ export default function AuthCallback() {
       if (!session) throw new Error('No session found');
       
       const pendingRole = localStorage.getItem('pendingRole') || sessionStorage.getItem('pendingRole') || 'individual';
+      const redirectUrl = getStoredRedirectUrl();
+      const isPoolVipRedirect = isPoolOrVipRedirect(redirectUrl);
+      
+      // For pool/VIP joining, force role to individual
+      const finalRole = isPoolVipRedirect ? 'individual' : pendingRole;
       
       // Check if profile exists
       const { data: existingProfile } = await supabase
@@ -74,9 +79,9 @@ export default function AuthCallback() {
             agreement_accepted: true,
             agreement_accepted_at: new Date().toISOString(),
             agreement_version: '1.0',
-            role: pendingRole,
-            user_type: pendingRole,
-            status: pendingRole === 'individual' ? 'active' : 'pending_approval',
+            role: finalRole,
+            user_type: finalRole,
+            status: finalRole === 'individual' ? 'active' : 'pending_approval',
             updated_at: new Date().toISOString()
           })
           .eq('id', session.user.id);
@@ -87,12 +92,12 @@ export default function AuthCallback() {
             id: session.user.id,
             email: session.user.email,
             full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
-            role: pendingRole,
-            user_type: pendingRole,
+            role: finalRole,
+            user_type: finalRole,
             agreement_accepted: true,
             agreement_accepted_at: new Date().toISOString(),
             agreement_version: '1.0',
-            status: pendingRole === 'individual' ? 'active' : 'pending_approval',
+            status: finalRole === 'individual' ? 'active' : 'pending_approval',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           });
@@ -102,20 +107,19 @@ export default function AuthCallback() {
       
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      const redirectUrl = getStoredRedirectUrl();
-      clearStoredData();
-      
-      console.log('🔴 Redirecting to:', redirectUrl);
-      
-      // CRITICAL: VIP/pool redirect takes priority
+      // CRITICAL: Pool/VIP redirect takes HIGHEST priority
       if (redirectUrl) {
-        router.push(redirectUrl);
+        console.log('🎯 Redirecting to pool/VIP:', redirectUrl);
+        clearStoredData();
+        window.location.href = redirectUrl;
         return;
       }
       
+      clearStoredData();
+      
       // Redirect partners to their application form
-      if (pendingRole !== 'individual') {
-        router.push(`/become-${pendingRole}`);
+      if (finalRole !== 'individual') {
+        router.push(`/become-${finalRole}`);
         return;
       }
       
@@ -141,10 +145,10 @@ export default function AuthCallback() {
       try {
         // Get redirect URL from storage
         const redirectUrl = getStoredRedirectUrl();
-        const isVip = isVipRedirect(redirectUrl);
+        const isPoolVip = isPoolOrVipRedirect(redirectUrl);
         
         console.log('🟢 Callback - Redirect URL:', redirectUrl);
-        console.log('🟢 Callback - Is VIP redirect:', isVip);
+        console.log('🟢 Callback - Is Pool/VIP redirect:', isPoolVip);
 
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
@@ -164,14 +168,12 @@ export default function AuthCallback() {
           .maybeSingle();
 
         // If user has a profile with agreement accepted
-        if (profile?.agreement_accepted === true && profile?.role) {
-          toast.success(`Welcome back, ${session.user.email}!`);
-          
+        if (profile?.agreement_accepted === true) {
           // CRITICAL: Check for redirect URL FIRST - even for existing users
           if (redirectUrl) {
-            console.log('🎯 Existing user - Redirecting to stored URL:', redirectUrl);
+            console.log('🎯 Existing user - Redirecting to pool/VIP:', redirectUrl);
             clearStoredData();
-            router.push(redirectUrl);
+            window.location.href = redirectUrl;
             return;
           }
           
@@ -191,15 +193,17 @@ export default function AuthCallback() {
         // New user - determine role
         let pendingRole = localStorage.getItem('pendingRole') || sessionStorage.getItem('pendingRole') || 'individual';
         
-        // If this is a VIP/pool redirect, force role to individual
-        if (isVip) {
+        // If this is a pool/VIP redirect, force role to individual
+        if (isPoolVip) {
           pendingRole = 'individual';
           localStorage.setItem('pendingRole', 'individual');
+          sessionStorage.setItem('pendingRole', 'individual');
         }
         
         if (isMounted) {
           setUserRole(pendingRole);
-          // Only show agreement for partners (not for VIP individuals)
+          // Only show agreement for partners (agents/vendors/orgs)
+          // Individuals (including pool/VIP joiners) skip agreement
           setShowAgreement(pendingRole !== 'individual');
           setLoading(false);
         }
@@ -245,6 +249,12 @@ export default function AuthCallback() {
     return <LoadingSpinner fullPage message="Completing sign in..." />;
   }
 
+  // For individuals (including pool/VIP joiners), skip agreement and proceed directly
+  if (userRole === 'individual') {
+    handleAcceptAgreement();
+    return <LoadingSpinner fullPage message="Redirecting to your pool..." />;
+  }
+
   // Only show agreement for partners (agents/vendors/organizations)
   if (showAgreement && userRole && userRole !== 'individual') {
     return (
@@ -255,12 +265,6 @@ export default function AuthCallback() {
         userRole={userRole}
       />
     );
-  }
-
-  // For individuals (including VIP users), skip agreement and proceed directly
-  if (userRole === 'individual') {
-    handleAcceptAgreement();
-    return <LoadingSpinner fullPage message="Redirecting..." />;
   }
 
   return null;
