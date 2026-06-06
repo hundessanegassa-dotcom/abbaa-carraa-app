@@ -1,3 +1,4 @@
+// components/Navbar.js - UPDATED with TopCitySelector and fixed City VIP link
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
@@ -6,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import LanguageToggle from './LanguageToggle';
 import NotificationBell from './NotificationBell';
+import TopCitySelector from './TopCitySelector';
 import { checkAdminStatus } from '../lib/adminCheck';
 
 // Check if running on client side
@@ -57,7 +59,7 @@ export default function Navbar() {
         
         const { data: agentCheck } = await supabase
           .from('agents')
-          .select('id, verified')
+          .select('id, is_approved')
           .eq('user_id', user.id)
           .maybeSingle();
         setHasAgentApplication(!!agentCheck);
@@ -89,31 +91,20 @@ export default function Navbar() {
       setIsLoading(true);
       
       if (typeof window !== 'undefined') {
-        // Clear all localStorage
         localStorage.clear();
-        
-        // Clear all sessionStorage
         sessionStorage.clear();
-        
-        // Clear pending roles specifically
         localStorage.removeItem('pendingRole');
         sessionStorage.removeItem('pendingRole');
-        
-        // Clear redirect storage
         localStorage.removeItem('redirectAfterLogin');
         sessionStorage.removeItem('redirectAfterLogin');
-        
-        // Clear VIP pending data
         localStorage.removeItem('abbaa_vip_pending');
         
-        // Clear all cookies
         document.cookie.split(";").forEach(function(c) {
           document.cookie = c
             .replace(/^ +/, "")
             .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
         });
         
-        // Clear Supabase-specific storage
         const keys = Object.keys(localStorage);
         keys.forEach(key => {
           if (key.includes('supabase') || key.includes('sb-') || key.includes('abbaa')) {
@@ -122,11 +113,9 @@ export default function Navbar() {
         });
       }
       
-      // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      // Reset all states
       setUser(null);
       setUserRole(null);
       setUserType(null);
@@ -136,8 +125,6 @@ export default function Navbar() {
       setHasOrgApplication(false);
       
       toast.success('Logged out successfully!');
-      
-      // Redirect to login page (not home)
       window.location.href = '/login';
       
     } catch (error) {
@@ -184,7 +171,7 @@ export default function Navbar() {
   const createAction = getCreateAction();
   const becomeLinks = getBecomeLinks();
 
-  // Don't render navbar on login page to avoid confusion
+  // Don't render navbar on login page
   if (router.pathname === '/login' || router.pathname === '/register') {
     return null;
   }
@@ -222,10 +209,11 @@ export default function Navbar() {
               <Link href="/" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🏠 {t('common.home') || 'Home'} </Link>
               <Link href="/listings" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🎁 Browse Prizes </Link>
               
-              {/* NEW: VIP Program Links */}
+              {/* VIP Program Links */}
               <Link href="/merkato-vip" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition flex items-center gap-1">
                 🏪 Merkato VIP
               </Link>
+              {/* FIXED: City VIP link now points to /cities page */}
               <Link href="/cities" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition flex items-center gap-1">
                 🏙️ City VIP
               </Link>
@@ -233,7 +221,7 @@ export default function Navbar() {
               <Link href="/winners" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🏆 Winners </Link>
               <Link href="/how-it-works" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🎯 How It Works </Link>
               
-              {/* Admin Panel Link - Only visible to admin users */}
+              {/* Admin Panel Link */}
               {isAdmin && (
                 <Link href="/admin/dashboard" className="ml-2 bg-red-600 text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-red-700 transition flex items-center gap-1">
                   👑 Admin
@@ -247,8 +235,11 @@ export default function Navbar() {
               )}
             </div>
             
-            {/* Right side icons */}
+            {/* Right side icons - ADDED TopCitySelector */}
             <div className="flex items-center gap-1 sm:gap-2">
+              {/* TopCitySelector - Added here */}
+              <TopCitySelector />
+              
               <NotificationBell />
               <LanguageToggle />
               
@@ -273,7 +264,7 @@ export default function Navbar() {
                         <p className="text-xs text-gray-500">{user.email}</p>
                       </div>
                       
-                      {/* Admin quick links in dropdown */}
+                      {/* Admin quick links */}
                       {isAdmin && (
                         <>
                           <Link href="/admin/dashboard" className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition">
@@ -293,7 +284,7 @@ export default function Navbar() {
                         <span>📊</span> Dashboard
                       </Link>
                       
-                      {/* NEW: VIP Dashboard Links */}
+                      {/* VIP Dashboard Links */}
                       <Link href="/merkato-vip" className="flex items-center gap-2 px-3 py-2 text-sm text-yellow-700 hover:bg-yellow-50 rounded-lg transition">
                         <span>🏪</span> Merkato VIP
                       </Link>
@@ -358,16 +349,17 @@ export default function Navbar() {
             </button>
           </div>
 
-          {/* Mobile Navigation Menu - Updated with VIP links */}
+          {/* Mobile Navigation Menu */}
           {mobileMenuOpen && (
             <div className="md:hidden pb-3 space-y-1 animate-fadeIn">
               <Link href="/" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🏠 Home </Link>
               <Link href="/listings" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🎁 Browse Prizes </Link>
               
-              {/* NEW: VIP Mobile Links */}
+              {/* VIP Mobile Links */}
               <Link href="/merkato-vip" className="block py-2 px-3 text-sm text-yellow-700 bg-yellow-50 hover:bg-yellow-100 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
                 🏪 Merkato VIP
               </Link>
+              {/* FIXED: City VIP link points to /cities page */}
               <Link href="/cities" className="block py-2 px-3 text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
                 🏙️ City VIP
               </Link>
