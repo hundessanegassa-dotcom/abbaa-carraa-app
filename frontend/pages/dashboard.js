@@ -23,6 +23,8 @@ export default function Dashboard() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [isAgent, setIsAgent] = useState(false);
+  const [agentData, setAgentData] = useState(null);
   
   const [stats, setStats] = useState({ 
     totalSpent: 0, 
@@ -66,6 +68,19 @@ export default function Dashboard() {
       if (!isMounted.current) return;
       setUser(user);
 
+      // Check if user is an agent
+      const { data: agentInfo } = await supabase
+        .from('agents')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_approved', true)
+        .single();
+      
+      if (agentInfo) {
+        setIsAgent(true);
+        setAgentData(agentInfo);
+      }
+
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
@@ -94,7 +109,7 @@ export default function Dashboard() {
 
   async function loadUserTickets(userId) {
     try {
-      // 1. Load Regular Pool tickets from regular_pool_participants table
+      // 1. Load Regular Pool tickets
       const { data: regularData, error: regularError } = await supabase
         .from('regular_pool_participants')
         .select('*, pools:pool_id(prize_name, target_amount, end_date)')
@@ -267,10 +282,25 @@ export default function Dashboard() {
         .order('updated_at', { ascending: false })
         .limit(5);
 
+      // Also get VIP wins if applicable
+      const { data: merkatoWins } = await supabase
+        .from('merkato_vip_participants')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('payment_status', 'verified')
+        .limit(3);
+      
+      const { data: cityWins } = await supabase
+        .from('city_vip_participants')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('payment_status', 'verified')
+        .limit(3);
+
       const activities = [
         ...(contributions || []).map(c => ({
           type: 'contribution',
-          title: `Joined "${c.pools?.prize_name}"`,
+          title: `Joined "${c.pools?.prize_name || 'Pool'}"`,
           amount: c.amount,
           date: c.created_at,
           icon: '🎯',
@@ -283,6 +313,22 @@ export default function Dashboard() {
           date: w.updated_at,
           icon: '🏆',
           color: 'yellow'
+        })),
+        ...(merkatoWins || []).slice(0, 2).map(m => ({
+          type: 'vip',
+          title: `Merkato VIP - ${m.pool_type} Pool Joined`,
+          amount: m.contribution_amount,
+          date: m.created_at,
+          icon: '🏪',
+          color: 'orange'
+        })),
+        ...(cityWins || []).slice(0, 2).map(c => ({
+          type: 'vip',
+          title: `${c.city} VIP - ${c.pool_type} Pool Joined`,
+          amount: c.contribution_amount,
+          date: c.created_at,
+          icon: '🏙️',
+          color: 'purple'
         }))
       ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
 
@@ -295,17 +341,28 @@ export default function Dashboard() {
   async function loadBadges(userId, winsCount, totalSpent, profile) {
     const badgesList = [];
     
-    if (winsCount >= 1) badgesList.push({ name: 'First Win', icon: '🥇', color: 'bg-yellow-100 text-yellow-700' });
-    if (winsCount >= 5) badgesList.push({ name: 'Rising Star', icon: '⭐', color: 'bg-blue-100 text-blue-700' });
-    if (winsCount >= 10) badgesList.push({ name: 'Champion', icon: '🏆', color: 'bg-purple-100 text-purple-700' });
-    if (totalSpent >= 10000) badgesList.push({ name: 'Big Spender', icon: '💰', color: 'bg-green-100 text-green-700' });
-    if (profile?.referral_count >= 5) badgesList.push({ name: 'Super Referrer', icon: '🤝', color: 'bg-orange-100 text-orange-700' });
+    if (winsCount >= 1) badgesList.push({ name: 'First Win', nameAm: 'የመጀመሪያ ድል', icon: '🥇', color: 'bg-yellow-100 text-yellow-700' });
+    if (winsCount >= 5) badgesList.push({ name: 'Rising Star', nameAm: 'እያደገ ያለ ኮከብ', icon: '⭐', color: 'bg-blue-100 text-blue-700' });
+    if (winsCount >= 10) badgesList.push({ name: 'Champion', nameAm: 'ሻምፒዮን', icon: '🏆', color: 'bg-purple-100 text-purple-700' });
+    if (totalSpent >= 10000) badgesList.push({ name: 'Big Spender', nameAm: 'ታላቅ አበርካች', icon: '💰', color: 'bg-green-100 text-green-700' });
+    if (profile?.referral_count >= 5) badgesList.push({ name: 'Super Referrer', nameAm: 'ከፍተኛ አመላካች', icon: '🤝', color: 'bg-orange-100 text-orange-700' });
     
-    if (badgesList.length === 0) {
-      badgesList.push({ name: 'Newcomer', icon: '🌱', color: 'bg-gray-100 text-gray-700' });
+    // VIP participant badges
+    const hasMerkato = await supabase.from('merkato_vip_participants').select('id').eq('user_id', userId).limit(1);
+    if (hasMerkato.data?.length > 0) {
+      badgesList.push({ name: 'Merkato VIP', nameAm: 'መርካቶ VIP', icon: '🏪', color: 'bg-yellow-100 text-yellow-700' });
     }
     
-    if (isMounted.current) setBadges(badgesList);
+    const hasCityVip = await supabase.from('city_vip_participants').select('id').eq('user_id', userId).limit(1);
+    if (hasCityVip.data?.length > 0) {
+      badgesList.push({ name: 'City VIP', nameAm: 'ከተማ VIP', icon: '🏙️', color: 'bg-blue-100 text-blue-700' });
+    }
+    
+    if (badgesList.length === 0) {
+      badgesList.push({ name: 'Newcomer', nameAm: 'አዲስ ተሳታፊ', icon: '🌱', color: 'bg-gray-100 text-gray-700' });
+    }
+    
+    if (isMounted.current) setBadges(badgesList.slice(0, 6));
   }
 
   const copyReferralLink = useCallback(() => {
@@ -330,25 +387,28 @@ export default function Dashboard() {
       displayName: `${t.pools?.prize_name || 'Regular Pool'} - Seats ${t.seat_numbers?.join(', ') || 'N/A'}`,
       poolInfo: t.pools,
       icon: '🎁',
-      bgColor: 'bg-purple-50'
+      bgColor: 'bg-purple-50',
+      statusText: t.payment_status === 'verified' ? 'Verified ✓' : 'Pending Verification'
     })),
     ...merkatoTickets.map(t => ({ 
       ...t, 
       type: 'merkato', 
       verified: t.payment_status === 'verified',
-      displayName: `Merkato VIP - ${t.pool_type === 'daily' ? 'Daily' : t.pool_type === 'weekly' ? 'Weekly' : 'Monthly'}`,
+      displayName: `Merkato VIP - ${t.pool_type === 'daily' ? 'Daily Millionaire' : t.pool_type === 'weekly' ? 'Weekly Mega Winner' : 'Monthly Winner'}`,
       city: 'Merkato',
       icon: '🏪',
-      bgColor: 'bg-yellow-50'
+      bgColor: 'bg-yellow-50',
+      statusText: t.payment_status === 'verified' ? 'Verified ✓' : 'Pending Verification'
     })),
     ...cityTickets.map(t => ({ 
       ...t, 
       type: 'city', 
       verified: t.payment_status === 'verified',
-      displayName: `${t.city} VIP - ${t.pool_type === 'daily' ? 'Daily' : t.pool_type === 'weekly' ? 'Weekly' : 'Monthly'}`,
+      displayName: `${t.city?.charAt(0).toUpperCase() + t.city?.slice(1) || 'City'} VIP - ${t.pool_type === 'daily' ? 'Daily Millionaire' : t.pool_type === 'weekly' ? 'Weekly Mega Winner' : 'Monthly Winner'}`,
       city: t.city,
       icon: '🏙️',
-      bgColor: 'bg-blue-50'
+      bgColor: 'bg-blue-50',
+      statusText: t.payment_status === 'verified' ? 'Verified ✓' : 'Pending Verification'
     }))
   ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
@@ -368,13 +428,30 @@ export default function Dashboard() {
       
       <GlobalAnnouncement />
       
+      {/* Agent Banner - Show if user is an agent */}
+      {isAgent && agentData && (
+        <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl p-4 mb-6 text-white">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">🤝</span>
+              <div>
+                <p className="font-bold">Agent Dashboard Access</p>
+                <p className="text-sm opacity-90">You are an approved agent! Manage your referrals and earnings.</p>
+              </div>
+            </div>
+            <Link href="/agent/dashboard" className="bg-white text-orange-600 px-4 py-2 rounded-lg font-semibold text-sm hover:bg-gray-100 transition">
+              Go to Agent Dashboard →
+            </Link>
+          </div>
+        </div>
+      )}
+      
       {/* Role Description Card */}
       <div className="bg-gradient-to-r from-green-50 to-teal-50 border-l-4 border-green-500 rounded-xl p-5 mb-8">
         <h3 className="font-bold text-green-800 text-lg mb-2">✨ Your Role: Individual Participant</h3>
         <p className="text-green-700 text-sm leading-relaxed">
           As an individual participant, you can browse and join various pools created by Admins, Agents, or Organizations.
-          Each pool has <strong>one winner</strong> who receives <strong>100% of the target amount</strong>. 
-          The pool creator earns their commission (10% or 20%), and the platform/admin earns a 10% fee on agent/organization pools.
+          You can participate in <strong>Regular Pools</strong>, <strong>City VIP Programs</strong>, and <strong>Merkato VIP</strong>.
           <strong className="block mt-2">💚 2% of every contribution supports kidney & heart disease patients.</strong>
         </p>
       </div>
@@ -496,14 +573,14 @@ export default function Dashboard() {
               <div className="space-y-3">
                 {recentActivities.map((activity, idx) => (
                   <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <div className={`text-2xl ${activity.color === 'yellow' ? 'text-yellow-500' : 'text-blue-500'}`}>
+                    <div className={`text-2xl ${activity.color === 'yellow' ? 'text-yellow-500' : activity.color === 'orange' ? 'text-orange-500' : activity.color === 'purple' ? 'text-purple-500' : 'text-blue-500'}`}>
                       {activity.icon}
                     </div>
                     <div className="flex-1">
                       <p className="font-medium text-gray-800 text-sm">{activity.title}</p>
                       <p className="text-xs text-gray-400">{new Date(activity.date).toLocaleDateString()}</p>
                     </div>
-                    <div className={`font-bold text-sm ${activity.type === 'win' ? 'text-yellow-600' : 'text-green-600'}`}>
+                    <div className={`font-bold text-sm ${activity.type === 'win' ? 'text-yellow-600' : activity.type === 'vip' ? 'text-purple-600' : 'text-green-600'}`}>
                       {activity.type === 'win' ? '+' : ''}{activity.amount?.toLocaleString()} ETB
                     </div>
                   </div>
@@ -579,7 +656,7 @@ export default function Dashboard() {
                   <Link href="/merkato-vip" className="inline-block text-yellow-600 font-medium text-sm hover:underline">
                     🏪 Join Merkato VIP →
                   </Link>
-                  <Link href="/cities" className="inline-block text-blue-600 font-medium text-sm hover:underline">
+                  <Link href="/cities/addis-ababa" className="inline-block text-blue-600 font-medium text-sm hover:underline">
                     🏙️ Join City VIP →
                   </Link>
                   <Link href="/listings" className="inline-block text-purple-600 font-medium text-sm hover:underline">
