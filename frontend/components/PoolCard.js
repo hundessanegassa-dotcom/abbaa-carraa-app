@@ -27,6 +27,40 @@ export default function PoolCard({ pool, featured = false }) {
 
   const formatPrice = (price) => price?.toLocaleString() || '0';
 
+  // Attractive prize description based on amount
+  const getAttractivePrizeDescription = () => {
+    const amount = winnerPrize;
+    
+    if (amount >= 10000000) {
+      return {
+        am: `🎉 ታላቅ እድል! ${(amount / 1000000).toLocaleString()} ሚሊዮን ብር ያሸንፉ! ህይወትዎን ሙሉ በሙሉ የሚቀይር ዕድል!`,
+        en: `🎉 Mega Opportunity! Win ${(amount / 1000000).toLocaleString()} Million Birr! A life-changing opportunity!`
+      };
+    } else if (amount >= 1000000) {
+      return {
+        am: `🏆 ወርቃማ እድል! ${(amount / 1000000).toLocaleString()} ሚሊዮን ብር ሚሊየነር ያደርግዎታል!`,
+        en: `🏆 Golden Chance! Win ${(amount / 1000000).toLocaleString()} Million Birr - Become a Millionaire!`
+      };
+    } else if (amount >= 500000) {
+      return {
+        am: `⭐ ከፍተኛ ሽልማት! ${amount.toLocaleString()} ብር ያሸንፉ! ህልሞችዎን እውን ያድርጉ!`,
+        en: `⭐ Grand Prize! Win ${amount.toLocaleString()} Birr! Make your dreams come true!`
+      };
+    } else if (amount >= 100000) {
+      return {
+        am: `💎 አስደናቂ ሽልማት! ${amount.toLocaleString()} ብር ያሸንፉ! ዛሬ እድለኛ ቀንዎ ነው!`,
+        en: `💎 Amazing Prize! Win ${amount.toLocaleString()} Birr! Today could be your lucky day!`
+      };
+    } else {
+      return {
+        am: `🎁 ድንቅ ሽልማት! ${amount.toLocaleString()} ብር ያሸንፉ! ተሳትፎዎ ይክፈላል!`,
+        en: `🎁 Great Prize! Win ${amount.toLocaleString()} Birr! Your participation pays off!`
+      };
+    }
+  };
+
+  const prizeDesc = getAttractivePrizeDescription();
+
   const getCategoryIcon = (category) => {
     const icons = { vehicle: '🚗', machinery: '🏭', electronics: '💻', property: '🏠', furniture: '🛋️', other: '🎁' };
     return icons[category] || '🎁';
@@ -123,6 +157,16 @@ export default function PoolCard({ pool, featured = false }) {
           <p className="text-gray-500 text-xs sm:text-sm mb-2 line-clamp-2">
             {pool.description || 'Join this pool for a chance to win!'}
           </p>
+
+          {/* Attractive Prize Description - NEW */}
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-2 mb-3 text-center border border-purple-100">
+            <p className="text-[10px] sm:text-xs font-medium text-purple-700">
+              {prizeDesc.am}
+            </p>
+            <p className="text-[8px] sm:text-[10px] text-purple-600 mt-0.5 italic">
+              {prizeDesc.en}
+            </p>
+          </div>
 
           {/* Stats Grid - Bilingual with small font */}
           <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 mb-3 text-[9px] sm:text-[10px]">
@@ -226,13 +270,13 @@ export default function PoolCard({ pool, featured = false }) {
                       ...
                     </span>
                   ) : (
-                    <>🎯 Join Now (ETB {formatPrice(entryFee)})</>
+                    <>🎯 ይቀላቀሉ | Join Now (ETB {formatPrice(entryFee)})</>
                   )}
                 </button>
               </Link>
             ) : (
               <button disabled className="w-full bg-gray-400 text-white py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm cursor-not-allowed">
-                ⏳ Coming Soon
+                ⏳ በቅርቡ | Coming Soon
               </button>
             )}
 
@@ -243,7 +287,7 @@ export default function PoolCard({ pool, featured = false }) {
                   onClick={() => setShowShareMenu(!showShareMenu)}
                   className="w-full bg-blue-500 hover:bg-blue-600 text-white py-1.5 rounded-lg text-xs sm:text-sm transition flex items-center justify-center gap-1 cursor-pointer"
                 >
-                  📤 Share
+                  📤 አጋራ | Share
                 </button>
                 
                 {showShareMenu && (
@@ -258,7 +302,7 @@ export default function PoolCard({ pool, featured = false }) {
                       <span className="text-blue-700">📘</span> Facebook
                     </button>
                     <button onClick={copyLink} className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-xs border-t cursor-pointer">
-                      <span className="text-gray-600">🔗</span> Copy Link
+                      <span className="text-gray-600">🔗</span> ሊንክ ይቅዱ | Copy Link
                     </button>
                   </div>
                 )}
@@ -266,15 +310,22 @@ export default function PoolCard({ pool, featured = false }) {
             )}
           </div>
 
-          {/* Cash Equivalent Badge */}
+          {/* Winner encouragement text */}
           {isActive && (
             <div className="mt-2 text-center">
               <span className="text-[8px] sm:text-[9px] text-gray-400 flex flex-wrap items-center justify-center gap-1">
+                ⚡ እድለኛ ሊሆኑ ይችላሉ! | You could be the next winner!
+              </span>
+            </div>
+          )}
+
+          {/* Cash Equivalent Badge */}
+          {isActive && (
+            <div className="mt-1 text-center">
+              <span className="text-[7px] sm:text-[8px] text-gray-400 flex flex-wrap items-center justify-center gap-1">
                 <span>💰</span> Cash Equivalent Guaranteed
-                <span className="text-[7px] mx-1">|</span>
+                <span className="text-[6px] mx-0.5">|</span>
                 <span>የገንዘብ ዋስትና</span>
-                <span className="text-[7px] mx-1">|</span>
-                <span>wabiin qarshiidhan</span>
               </span>
             </div>
           )}
