@@ -1,4 +1,4 @@
-// pages/pools/[id].js - COMPLETE FIXED VERSION
+// pages/pools/[id].js - FULL CORRECTED CODE
 import { useRouter } from 'next/router';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -7,6 +7,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { QRCodeSVG } from 'qrcode.react';
 import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import Ticket from '../../components/Ticket';
 
 // Optimized file upload utilities
@@ -194,6 +195,78 @@ export default function PoolDetails() {
     setShowSeatSelector(true);
   };
 
+  // ========== UPDATED: handlePaymentSubmit (Fixed) ==========
+  const handlePaymentSubmit = async () => {
+    if (!selectedFile) { 
+      toast.error('Please upload payment screenshot'); 
+      return; 
+    }
+    
+    setIsSubmitting(true);
+    const loadingToast = toast.loading('Uploading payment screenshot...');
+    
+    try {
+      validateFile(selectedFile);
+      const compressedFile = await compressImage(selectedFile);
+      
+      const fileExt = compressedFile.name.split('.').pop();
+      const fileName = `regular-payments/${participantId}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('payment-proofs')
+        .upload(fileName, compressedFile, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: 'image/jpeg'
+        });
+      
+      if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('payment-proofs')
+        .getPublicUrl(fileName);
+      
+      const { error: updateError } = await supabase
+        .from('regular_pool_participants')
+        .update({
+          payment_status: 'pending_verification',
+          payment_proof_url: publicUrl,
+          payment_submitted_at: new Date().toISOString()
+        })
+        .eq('id', participantId);
+      
+      if (updateError) throw new Error(`Update failed: ${updateError.message}`);
+      
+      const { error: seatError } = await supabase
+        .from('pool_seats')
+        .update({ status: 'taken', user_id: user.id })
+        .in('seat_number', selectedSeats)
+        .eq('pool_id', pool.id);
+      
+      if (seatError) console.error('Seat update warning:', seatError);
+      
+      const { data: updatedParticipant, error: fetchError } = await supabase
+        .from('regular_pool_participants')
+        .select('*')
+        .eq('id', participantId)
+        .single();
+      
+      if (fetchError) throw new Error(`Fetch failed: ${fetchError.message}`);
+      
+      setParticipantData(updatedParticipant);
+      setShowPayment(false);
+      setShowTicket(true);
+      
+      toast.success('Payment submitted! Your unverified ticket is ready', { id: loadingToast });
+      
+    } catch (error) {
+      console.error('Payment submission error:', error);
+      toast.error(error.message || 'Failed to submit payment. Please try again.', { id: loadingToast });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handlePaymentSuccess = async () => {
     const { data: participant } = await supabase
       .from('regular_pool_participants')
@@ -205,42 +278,6 @@ export default function PoolDetails() {
     setShowPayment(false);
     setShowTicket(true);
     toast.success('Payment submitted! Your unverified ticket is ready');
-  };
-
-  const handlePaymentSubmit = async () => {
-    if (!selectedFile) { 
-      toast.error('Please upload payment screenshot'); 
-      return; 
-    }
-    
-    setIsSubmitting(true);
-    try {
-      validateFile(selectedFile);
-      const compressedFile = await compressImage(selectedFile);
-      const fileName = `regular-payments/${participantId}/${Date.now()}.jpg`;
-      const { error: uploadError } = await supabase.storage.from('payment-proofs').upload(fileName, compressedFile);
-      if (uploadError) throw uploadError;
-      const { data: { publicUrl } } = supabase.storage.from('payment-proofs').getPublicUrl(fileName);
-      
-      await supabase.from('regular_pool_participants').update({
-        payment_status: 'pending_verification',
-        payment_proof_url: publicUrl,
-        reference: reference,
-        payment_submitted_at: new Date().toISOString()
-      }).eq('id', participantId);
-      
-      await supabase
-        .from('pool_seats')
-        .update({ status: 'taken' })
-        .in('seat_number', selectedSeats)
-        .eq('pool_id', pool.id);
-      
-      await handlePaymentSuccess();
-    } catch (error) {
-      toast.error(error.message || 'Failed to submit payment');
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   const handleSeatsSelected = async (seatData) => {
@@ -349,7 +386,7 @@ export default function PoolDetails() {
   const progress = (currentAmount / totalCollection) * 100;
   const maxSeatsPerUser = Math.min(5, Math.floor(availableSeatsCount / 2) || 5);
 
-  // IMPROVED: Render seat selector with ALL seats visible and color coding
+  // Seat selector with ALL seats visible and color coding
   const renderSeatSelector = () => {
     const seatNumbers = Array.from({ length: totalSeats }, (_, i) => i + 1);
     const toggleSeat = (seatNum) => {
@@ -395,13 +432,12 @@ export default function PoolDetails() {
               </div>
             </div>
 
-            {/* Seat Grid - ALL SEATS VISIBLE */}
             <div className="grid grid-cols-10 md:grid-cols-15 lg:grid-cols-20 gap-2 mb-6 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-xl">
               {seatNumbers.map(seatNum => {
                 const isTaken = takenSeats.includes(seatNum);
                 const isSelected = selectedSeats.includes(seatNum);
                 
-                let bgColor = 'bg-yellow-400 hover:bg-yellow-500 text-gray-800'; // Available = Yellow
+                let bgColor = 'bg-yellow-400 hover:bg-yellow-500 text-gray-800';
                 if (isSelected) bgColor = 'bg-green-600 text-white';
                 if (isTaken) bgColor = 'bg-gray-400 text-white cursor-not-allowed';
                 
@@ -452,6 +488,7 @@ export default function PoolDetails() {
     );
   };
 
+  // ========== UPDATED: renderPayment (No Reference Number) ==========
   const renderPayment = () => {
     const totalAmount = selectedSeats.length * entryFee;
     
@@ -476,19 +513,7 @@ export default function PoolDetails() {
               <p className="text-sm text-gray-600 mt-2">Account Name: Negassa Hundessa</p>
             </div>
             
-            {/* Reference Number Input */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">Reference Number/Transaction ID *</label>
-              <input
-                type="text"
-                placeholder="Enter transaction ID or reference number"
-                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
-                value={reference}
-                onChange={(e) => setReference(e.target.value)}
-              />
-            </div>
-            
-            {/* Upload Section */}
+            {/* NO REFERENCE NUMBER FIELD - Only screenshot upload */}
             <div className="border-2 border-dashed rounded-lg p-4 text-center mb-4 hover:border-green-500 transition">
               <input 
                 type="file" 
@@ -515,7 +540,7 @@ export default function PoolDetails() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     <p className="text-gray-500 mt-2">Click to upload payment screenshot</p>
-                    <p className="text-xs text-gray-400">JPEG, PNG (Max 5MB) - Will be auto-compressed</p>
+                    <p className="text-xs text-gray-400">JPEG, PNG (Max 5MB) - Auto-compressed</p>
                   </div>
                 )}
               </label>
@@ -523,7 +548,7 @@ export default function PoolDetails() {
             
             <button 
               onClick={handlePaymentSubmit} 
-              disabled={isSubmitting || !reference.trim()} 
+              disabled={isSubmitting || !selectedFile} 
               className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50"
             >
               {isSubmitting ? 'Processing...' : 'Submit Payment & Get Ticket'}
