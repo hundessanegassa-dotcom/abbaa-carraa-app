@@ -1,8 +1,8 @@
-// pages/index.js - COMPLETE WITH ALL 80+ ETHIOPIAN CITIES
+// pages/index.js - COMPLETE BEAUTIFIED HOMEPAGE
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
 import GlobalAnnouncement from '../components/GlobalAnnouncement';
@@ -42,141 +42,49 @@ export default function Home() {
   const [regularPoolFilter, setRegularPoolFilter] = useState('all');
   const [showCityDropdown, setShowCityDropdown] = useState(false);
   const [citySearchTerm, setCitySearchTerm] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Refs for scrolling
+  const merkatoRef = useRef(null);
+  const cityVipRef = useRef(null);
+  const regularPoolsRef = useRef(null);
 
   // ============================================
   // ALL ETHIOPIAN CITIES - COMPLETE LIST (80+ CITIES)
   // ============================================
   const allCityVipPrograms = [
-    // ===================== CENTRAL & MAJOR CITIES =====================
     { id: 'addis-ababa', name: 'አዲስ አበባ', nameEn: 'Addis Ababa', region: 'Central', icon: '🏙️', descriptionAm: 'የኢትዮጵያ የንግድ እና ዲፕሎማሲ ልብ', descriptionEn: 'Heart of Ethiopian Commerce & Diplomacy' },
     { id: 'shaggar', name: 'ሸገር', nameEn: 'Shaggar City', region: 'Oromia', icon: '🏗️', descriptionAm: 'ብልህ ከተማ እና የኢንቨስትመንት ማዕከል', descriptionEn: 'Smart City & Investment Hub' },
     { id: 'dire-dawa', name: 'ድሬ ዳዋ', nameEn: 'Dire Dawa', region: 'Dire Dawa', icon: '🚂', descriptionAm: 'የንግድ እና የማኑፋክቸሪንግ ከተማ', descriptionEn: 'Trade & Manufacturing Hub' },
-    
-    // ===================== TIGRAY REGION (7 cities) =====================
     { id: 'mekelle', name: 'መቀሌ', nameEn: 'Mekelle', region: 'Tigray', icon: '🏭', descriptionAm: 'ከፍተኛ የኢኮኖሚ ዕድገት ካለው ከተማ', descriptionEn: 'City with Highest GDP per Capita' },
     { id: 'axum', name: 'አክሱም', nameEn: 'Axum', region: 'Tigray', icon: '🏛️', descriptionAm: 'የታላቁ የአክሱም መንግስት ዋና ከተማ', descriptionEn: 'Capital of the Ancient Axumite Kingdom' },
-    { id: 'adigrat', name: 'አዲግራት', nameEn: 'Adigrat', region: 'Tigray', icon: '🏔️', descriptionAm: 'የሰሜን ትግራይ የንግድ ማዕከል', descriptionEn: 'North Tigray Trade Center' },
-    { id: 'shire', name: 'ሽሬ', nameEn: 'Shire', region: 'Tigray', icon: '🏔️', descriptionAm: 'የምዕራብ ትግራይ ዋና ከተማ', descriptionEn: 'Capital of West Tigray' },
-    { id: 'mekoni', name: 'መቆኒ', nameEn: 'Mekoni', region: 'Tigray', icon: '🏔️', descriptionAm: 'የምዕራብ ትግራይ ከተማ', descriptionEn: 'West Tigray Town' },
-    { id: 'maychew', name: 'ማይጨው', nameEn: 'Maychew', region: 'Tigray', icon: '🏔️', descriptionAm: 'የደቡብ ትግራይ ከተማ', descriptionEn: 'South Tigray Town' },
-    { id: 'abiy-addi', name: 'አቢይ አዲ', nameEn: 'Abiy Addi', region: 'Tigray', icon: '🏔️', descriptionAm: 'የማዕከላዊ ትግራይ ከተማ', descriptionEn: 'Central Tigray Town' },
-    
-    // ===================== AMHARA REGION (15 cities) =====================
     { id: 'gondar', name: 'ጎንደር', nameEn: 'Gondar', region: 'Amhara', icon: '🏰', descriptionAm: 'የባህል ቅርስ እና የቱሪዝም ከተማ', descriptionEn: 'Cultural Heritage & Tourism City' },
     { id: 'bahir-dar', name: 'ባህር ዳር', nameEn: 'Bahir Dar', region: 'Amhara', icon: '🏞️', descriptionAm: 'የታና ሀይቅ እና የጨርቃጨርቅ ከተማ', descriptionEn: 'Lake Tana & Textile City' },
-    { id: 'dessie', name: 'ደሴ', nameEn: 'Dessie', region: 'Amhara', icon: '🏔️', descriptionAm: 'የንግድ እና የእርሻ ከተማ', descriptionEn: 'Trade & Agriculture City' },
-    { id: 'debre-markos', name: 'ደብረ ማርቆስ', nameEn: 'Debre Markos', region: 'Amhara', icon: '⛪', descriptionAm: 'የምስራቅ ጎጃም ዋና ከተማ', descriptionEn: 'Capital of East Gojjam' },
-    { id: 'finote-selam', name: 'ፍኖተ ሰላም', nameEn: 'Finote Selam', region: 'Amhara', icon: '🌅', descriptionAm: 'የምዕራብ ጎጃም ዋና ከተማ', descriptionEn: 'Capital of West Gojjam' },
-    { id: 'woldia', name: 'ወልዲያ', nameEn: 'Woldia', region: 'Amhara', icon: '🎓', descriptionAm: 'የወልዲያ ዩኒቨርሲቲ ከተማ', descriptionEn: 'Woldia University City' },
-    { id: 'debre-birhan', name: 'ደብረ ብርሃን', nameEn: 'Debre Birhan', region: 'Amhara', icon: '⭐', descriptionAm: 'የፀሐይ ብርሃን ከተማ', descriptionEn: 'City of Sunlight' },
-    { id: 'kombolcha', name: 'ኮምቦልቻ', nameEn: 'Kombolcha', region: 'Amhara', icon: '🏭', descriptionAm: 'የኢንዱስትሪ ዞን እና ደረቅ ወደብ', descriptionEn: 'Industrial Zone & Dry Port' },
-    { id: 'sekota', name: 'ሰቆጣ', nameEn: 'Sekota', region: 'Amhara', icon: '🏔️', descriptionAm: 'የዋግ ሽራ ዞን ዋና ከተማ', descriptionEn: 'Capital of Wag Hemra Zone' },
-    { id: 'aykal', name: 'አይከል', nameEn: 'Aykal', region: 'Amhara', icon: '🏔️', descriptionAm: 'የምዕራብ ጎጃም ከተማ', descriptionEn: 'West Gojjam Town' },
-    { id: 'metema', name: 'ሜተማ', nameEn: 'Metema', region: 'Amhara', icon: '🛣️', descriptionAm: 'የኢትዮ-ሱዳን ድንበር ከተማ', descriptionEn: 'Ethio-Sudan Border Town' },
-    { id: 'debre-tabor', name: 'ደብረ ታቦር', nameEn: 'Debre Tabor', region: 'Amhara', icon: '⛪', descriptionAm: 'የጥንታዊ ገዳማት ከተማ', descriptionEn: 'City of Ancient Monasteries' },
-    { id: 'bati', name: 'ባቲ', nameEn: 'Bati', region: 'Amhara', icon: '🏔️', descriptionAm: 'የንግድ እና የእርሻ ከተማ', descriptionEn: 'Trade & Agriculture Town' },
-    { id: 'kemise', name: 'ቀሚሴ', nameEn: 'Kemise', region: 'Amhara', icon: '🏔️', descriptionAm: 'የንግድ እና የእርሻ ከተማ', descriptionEn: 'Trade & Agriculture Town' },
-    { id: 'injibara', name: 'እንጅባራ', nameEn: 'Injibara', region: 'Amhara', icon: '🏔️', descriptionAm: 'የአዊ ዞን ዋና ከተማ', descriptionEn: 'Capital of Awi Zone' },
-    
-    // ===================== OROMIA REGION (35 cities) =====================
-    { id: 'adama', name: 'አዳማ', nameEn: 'Adama', region: 'Oromia', icon: '🏭', descriptionAm: 'የኢንዱስትሪ እና የንግድ ከተማ', descriptionEn: 'Industrial & Trade City' },
-    { id: 'jimma', name: 'ጅማ', nameEn: 'Jimma', region: 'Oromia', icon: '☕', descriptionAm: 'የቡና እና የንግድ ከተማ', descriptionEn: 'Coffee & Trade City' },
-    { id: 'bishoftu', name: 'ቢሾፍቱ', nameEn: 'Bishoftu', region: 'Oromia', icon: '✈️', descriptionAm: 'የሀይቆች እና የአየር ሃይል ከተማ', descriptionEn: 'City of Lakes & Air Force Base' },
-    { id: 'asella', name: 'አሰላ', nameEn: 'Asella', region: 'Oromia', icon: '🏔️', descriptionAm: 'የአርሲ ዋና ከተማ እና የእርሻ ማዕከል', descriptionEn: 'Capital of Arsi & Agricultural Hub' },
-    { id: 'shashemene', name: 'ሻሸመኔ', nameEn: 'Shashemene', region: 'Oromia', icon: '🛍️', descriptionAm: 'የንግድ እና የኢንዱስትሪ ከተማ', descriptionEn: 'Trade & Industrial City' },
-    { id: 'robe', name: 'ሮቤ', nameEn: 'Robe', region: 'Oromia', icon: '🌄', descriptionAm: 'የባሌ ተራራ በር | የቱሪዝም ማዕከል', descriptionEn: 'Gateway to Bale Mountains | Tourism Hub' },
-    { id: 'ginir', name: 'ጊኒር', nameEn: 'Ginir', region: 'Oromia', icon: '🏞️', descriptionAm: 'የባሌ ምስራቅ የንግድ ማዕከል', descriptionEn: 'Eastern Bale Trade Center' },
-    { id: 'yabelo', name: 'ያቤሎ', nameEn: 'Yabelo', region: 'Oromia', icon: '🐪', descriptionAm: 'የእንስሳት እርባታ እና የንግድ ከተማ', descriptionEn: 'Livestock & Trade City' },
-    { id: 'moyale', name: 'ሞያሌ', nameEn: 'Moyale', region: 'Oromia', icon: '🛣️', descriptionAm: 'የኢትዮ-ኬንያ ድንበር ከተማ', descriptionEn: 'Ethio-Kenya Border Town' },
-    { id: 'chiro', name: 'ቺሮ', nameEn: 'Chiro', region: 'Oromia', icon: '🏔️', descriptionAm: 'የምስራቅ ሀረርጌ ዋና ከተማ', descriptionEn: 'Capital of East Hararghe' },
-    { id: 'fiche', name: 'ፊጬ', nameEn: 'Fiche', region: 'Oromia', icon: '🌾', descriptionAm: 'የሰሜን ሸዋ የእህል ማዕከል', descriptionEn: 'North Shewa Grain Center' },
-    { id: 'woliso', name: 'ወሊሶ', nameEn: 'Woliso', region: 'Oromia', icon: '💧', descriptionAm: 'የሙቀት ምንጭ እና የቱሪዝም ከተማ', descriptionEn: 'Hot Springs & Tourism City' },
-    { id: 'ambo', name: 'አምቦ', nameEn: 'Ambo', region: 'Oromia', icon: '💧', descriptionAm: 'የማዕድን ውሃ እና የግብርና ከተማ', descriptionEn: 'Mineral Water & Agriculture City' },
-    { id: 'nekemte', name: 'ነቀምቴ', nameEn: 'Nekemte', region: 'Oromia', icon: '☕', descriptionAm: 'የቡና እና የንግድ ከተማ', descriptionEn: 'Coffee & Trade City' },
-    { id: 'gimbi', name: 'ጊምቢ', nameEn: 'Gimbi', region: 'Oromia', icon: '🏔️', descriptionAm: 'የምዕራብ ወለጋ የንግድ ማዕከል', descriptionEn: 'West Wollega Trade Center' },
-    { id: 'dembi-dollo', name: 'ደምቢ ዶሎ', nameEn: 'Dembi Dollo', region: 'Oromia', icon: '💰', descriptionAm: 'የወርቅ ማዕድን እና የንግድ ከተማ', descriptionEn: 'Gold Mining & Trade City' },
-    { id: 'shambu', name: 'ሻምቡ', nameEn: 'Shambu', region: 'Oromia', icon: '🌾', descriptionAm: 'የሆሮ ጉዱሩ ዋና ከተማ', descriptionEn: 'Capital of Horo Guduru' },
-    { id: 'metu', name: 'መቱ', nameEn: 'Metu', region: 'Oromia', icon: '🌿', descriptionAm: 'የቡና እና የግብርና ከተማ', descriptionEn: 'Coffee & Agriculture City' },
-    { id: 'bedele', name: 'በደሌ', nameEn: 'Bedele', region: 'Oromia', icon: '🍺', descriptionAm: 'የቢራ ፋብሪካ እና የቡና ከተማ', descriptionEn: 'Brewery & Coffee City' },
-    { id: 'bule-hora', name: 'ቡሌ ሆራ', nameEn: 'Bule Hora', region: 'Oromia', icon: '🎓', descriptionAm: 'የቡሌ ሆራ ዩኒቨርሲቲ ከተማ', descriptionEn: 'Bule Hora University City' },
-    { id: 'negele-borana', name: 'ነገሌ ቦረና', nameEn: 'Negele Borana', region: 'Oromia', icon: '🐪', descriptionAm: 'የቦረና የእንስሳት እርባታ ማዕከል', descriptionEn: 'Borana Livestock Center' },
-    { id: 'ziway', name: 'ዚዋይ', nameEn: 'Ziway', region: 'Oromia', icon: '🐟', descriptionAm: 'የአሳ ማጥመድ እና የቱሪዝም ከተማ', descriptionEn: 'Fishing & Tourism City' },
-    { id: 'mojo', name: 'ሞጆ', nameEn: 'Mojo', region: 'Oromia', icon: '🚛', descriptionAm: 'የሎጂስቲክስ እና የኢንዱስትሪ ከተማ', descriptionEn: 'Logistics & Industrial Town' },
-    { id: 'dodola', name: 'ዶዶላ', nameEn: 'Dodola', region: 'Oromia', icon: '🏔️', descriptionAm: 'የባሌ ተራራ መግቢያ', descriptionEn: 'Gateway to Bale Mountains' },
-    { id: 'gera', name: 'ጌራ', nameEn: 'Gera', region: 'Oromia', icon: '☕', descriptionAm: 'የቡና ማምረቻ አካባቢ', descriptionEn: 'Coffee Producing Area' },
-    { id: 'agaro', name: 'አጋሮ', nameEn: 'Agaro', region: 'Oromia', icon: '☕', descriptionAm: 'የቡና እና የንግድ ከተማ', descriptionEn: 'Coffee & Trade Town' },
-    { id: 'lemu', name: 'ለሙ', nameEn: 'Lemu', region: 'Oromia', icon: '🌾', descriptionAm: 'የእህል እርሻ አካባቢ', descriptionEn: 'Grain Farming Area' },
-    { id: 'hagere-mariam', name: 'ሀገረ ማርያም', nameEn: 'Hagere Mariam', region: 'Oromia', icon: '🏔️', descriptionAm: 'የደቡብ ኢትዮጵያ ከተማ', descriptionEn: 'South Ethiopia Town' },
-    { id: 'shakiso', name: 'ሻኪሶ', nameEn: 'Shakiso', region: 'Oromia', icon: '💰', descriptionAm: 'የወርቅ ማዕድን ከተማ', descriptionEn: 'Gold Mining Town' },
-    { id: 'kibre-mengist', name: 'ቅብረ መንግስት', nameEn: 'Kibre Mengist', region: 'Oromia', icon: '🏔️', descriptionAm: 'የደቡብ ኢትዮጵያ ከተማ', descriptionEn: 'South Ethiopia Town' },
-    { id: 'wachile', name: 'ዋቺሌ', nameEn: 'Wachile', region: 'Oromia', icon: '🐪', descriptionAm: 'የእንስሳት እርባታ አካባቢ', descriptionEn: 'Livestock Area' },
-    { id: 'goba', name: 'ጎባ', nameEn: 'Goba', region: 'Oromia', icon: '🏔️', descriptionAm: 'የባሌ ተራራ መግቢያ', descriptionEn: 'Gateway to Bale Mountains' },
-    { id: 'sinana', name: 'ሲናና', nameEn: 'Sinana', region: 'Oromia', icon: '🌾', descriptionAm: 'የእህል እርሻ አካባቢ', descriptionEn: 'Grain Farming Area' },
-    
-    // ===================== SOMALI REGION (7 cities) =====================
-    { id: 'jijiga', name: 'ጅጅጋ', nameEn: 'Jijiga', region: 'Somali', icon: '🐪', descriptionAm: 'የሶማሌ ክልል ዋና ከተማ', descriptionEn: 'Capital of Somali Region' },
-    { id: 'degehabur', name: 'ደገሃቡር', nameEn: 'Degehabur', region: 'Somali', icon: '🏔️', descriptionAm: 'የሶማሌ ክልል ከተማ', descriptionEn: 'Somali Region Town' },
-    { id: 'kebri-dehar', name: 'ቀብሪ ደሃር', nameEn: 'Kebri Dehar', region: 'Somali', icon: '🏔️', descriptionAm: 'የሶማሌ ክልል የንግድ ማዕከል', descriptionEn: 'Somali Region Trade Center' },
-    { id: 'gode', name: 'ጎዴ', nameEn: 'Gode', region: 'Somali', icon: '🏔️', descriptionAm: 'የሶማሌ ክልል ከተማ', descriptionEn: 'Somali Region Town' },
-    { id: 'warder', name: 'ዋርደር', nameEn: 'Warder', region: 'Somali', icon: '🐪', descriptionAm: 'የሶማሌ ክልል ከተማ', descriptionEn: 'Somali Region Town' },
-    { id: 'shilabo', name: 'ሺላቦ', nameEn: 'Shilabo', region: 'Somali', icon: '🐪', descriptionAm: 'የሶማሌ ክልል ከተማ', descriptionEn: 'Somali Region Town' },
-    { id: 'kelafo', name: 'ከላፎ', nameEn: 'Kelafo', region: 'Somali', icon: '🏔️', descriptionAm: 'የሶማሌ ክልል ከተማ', descriptionEn: 'Somali Region Town' },
-    
-    // ===================== HARARI REGION =====================
-    { id: 'harar', name: 'ሀረር', nameEn: 'Harar', region: 'Harari', icon: '🏛️', descriptionAm: 'የባህል ቅርስ እና የእስላም ቅድስት ከተማ', descriptionEn: 'Cultural Heritage & Islamic Holy City' },
-    
-    // ===================== SIDAMA REGION =====================
     { id: 'hawassa', name: 'ሀዋሳ', nameEn: 'Hawassa', region: 'Sidama', icon: '🏞️', descriptionAm: 'የኢንዱስትሪ ፓርክ እና የሀይቅ ከተማ', descriptionEn: 'Industrial Park & Lake City' },
-    { id: 'yirgalem', name: 'ይርጋለም', nameEn: 'Yirgalem', region: 'Sidama', icon: '☕', descriptionAm: 'የቡና እና የግብርና ከተማ', descriptionEn: 'Coffee & Agriculture Town' },
-    { id: 'awassa', name: 'አዋሳ', nameEn: 'Awassa', region: 'Sidama', icon: '🏞️', descriptionAm: 'የሲዳማ ክልል ዋና ከተማ', descriptionEn: 'Capital of Sidama Region' },
-    
-    // ===================== SOUTH ETHIOPIA REGION (12 cities) =====================
+    { id: 'jimma', name: 'ጅማ', nameEn: 'Jimma', region: 'Oromia', icon: '☕', descriptionAm: 'የቡና እና የንግድ ከተማ', descriptionEn: 'Coffee & Trade City' },
+    { id: 'adama', name: 'አዳማ', nameEn: 'Adama', region: 'Oromia', icon: '🏭', descriptionAm: 'የኢንዱስትሪ እና የንግድ ከተማ', descriptionEn: 'Industrial & Trade City' },
+    { id: 'harar', name: 'ሀረር', nameEn: 'Harar', region: 'Harari', icon: '🏛️', descriptionAm: 'የባህል ቅርስ እና የእስላም ቅድስት ከተማ', descriptionEn: 'Cultural Heritage & Islamic Holy City' },
+    { id: 'jijiga', name: 'ጅጅጋ', nameEn: 'Jijiga', region: 'Somali', icon: '🐪', descriptionAm: 'የሶማሌ ክልል ዋና ከተማ', descriptionEn: 'Capital of Somali Region' },
+    { id: 'assosa', name: 'አሶሳ', nameEn: 'Assosa', region: 'Benishangul', icon: '🌿', descriptionAm: 'የቤንሻንጉል ክልል ዋና ከተማ', descriptionEn: 'Capital of Benishangul Region' },
+    { id: 'gambella', name: 'ጋምቤላ', nameEn: 'Gambella', region: 'Gambella', icon: '🏞️', descriptionAm: 'የጋምቤላ ክልል ዋና ከተማ', descriptionEn: 'Capital of Gambella Region' },
+    { id: 'semera', name: 'ሰሜራ', nameEn: 'Semera', region: 'Afar', icon: '🐪', descriptionAm: 'የአፋር ክልል ዋና ከተማ', descriptionEn: 'Capital of Afar Region' },
     { id: 'arba-minch', name: 'አርባ ምንጭ', nameEn: 'Arba Minch', region: 'South', icon: '🏞️', descriptionAm: 'የአርባ ምንጭ ዩኒቨርሲቲ ከተማ', descriptionEn: 'Arba Minch University City' },
     { id: 'sodo', name: 'ሶዶ', nameEn: 'Sodo', region: 'South', icon: '🛍️', descriptionAm: 'የወላይታ ዞን ዋና ከተማ', descriptionEn: 'Capital of Wolayita Zone' },
     { id: 'dilla', name: 'ዲላ', nameEn: 'Dilla', region: 'South', icon: '☕', descriptionAm: 'የቡና እና የንግድ ከተማ', descriptionEn: 'Coffee & Trade City' },
-    { id: 'sawla', name: 'ሳውላ', nameEn: 'Sawla', region: 'South', icon: '🏔️', descriptionAm: 'የደቡብ ኢትዮጵያ ከተማ', descriptionEn: 'South Ethiopia Town' },
-    { id: 'jinka', name: 'ጂንካ', nameEn: 'Jinka', region: 'South', icon: '🏔️', descriptionAm: 'የደቡብ ኢትዮጵያ ባህላዊ ከተማ', descriptionEn: 'Traditional City of South Ethiopia' },
-    { id: 'konso', name: 'ኮንሶ', nameEn: 'Konso', region: 'South', icon: '🏔️', descriptionAm: 'የዩኔስኮ ቅርስ ከተማ', descriptionEn: 'UNESCO Heritage Town' },
-    { id: 'karat', name: 'ካራት', nameEn: 'Karat', region: 'South', icon: '🏔️', descriptionAm: 'የኮንሶ ዞን ዋና ከተማ', descriptionEn: 'Capital of Konso Zone' },
-    { id: 'bonga', name: 'ቦንጋ', nameEn: 'Bonga', region: 'South', icon: '☕', descriptionAm: 'የቡና ማምረቻ አካባቢ', descriptionEn: 'Coffee Producing Area' },
-    { id: 'mizan-teferi', name: 'ሚዛን ተፈሪ', nameEn: 'Mizan Teferi', region: 'South', icon: '🏔️', descriptionAm: 'የቤንች ማጂ ዞን ዋና ከተማ', descriptionEn: 'Capital of Bench Maji Zone' },
-    { id: 'teppi', name: 'ቴፒ', nameEn: 'Teppi', region: 'South', icon: '🌿', descriptionAm: 'የቡና እርሻ አካባቢ', descriptionEn: 'Coffee Farming Area' },
-    { id: 'gereb', name: 'ገሬብ', nameEn: 'Gereb', region: 'South', icon: '🏔️', descriptionAm: 'የደቡብ ኢትዮጵያ ከተማ', descriptionEn: 'South Ethiopia Town' },
-    { id: 'key-afar', name: 'ቀይ አፋር', nameEn: 'Key Afar', region: 'South', icon: '🏔️', descriptionAm: 'የደቡብ ኢትዮጵያ ከተማ', descriptionEn: 'South Ethiopia Town' },
-    
-    // ===================== BENISHANGUL-GUMUZ REGION (4 cities) =====================
-    { id: 'assosa', name: 'አሶሳ', nameEn: 'Assosa', region: 'Benishangul', icon: '🌿', descriptionAm: 'የቤንሻንጉል ክልል ዋና ከተማ', descriptionEn: 'Capital of Benishangul Region' },
-    { id: 'gilgel-beles', name: 'ግልገል በለስ', nameEn: 'Gilgel Beles', region: 'Benishangul', icon: '💧', descriptionAm: 'የግልገል በለስ ከተማ', descriptionEn: 'Gilgel Beles Town' },
-    { id: 'kamashi', name: 'ካማሺ', nameEn: 'Kamashi', region: 'Benishangul', icon: '🏔️', descriptionAm: 'የካማሺ ዞን ዋና ከተማ', descriptionEn: 'Capital of Kamashi Zone' },
-    { id: 'metekel', name: 'ሜተከል', nameEn: 'Metekel', region: 'Benishangul', icon: '🏔️', descriptionAm: 'የሜተከል ዞን ዋና ከተማ', descriptionEn: 'Capital of Metekel Zone' },
-    
-    // ===================== GAMBELLA REGION (3 cities) =====================
-    { id: 'gambella', name: 'ጋምቤላ', nameEn: 'Gambella', region: 'Gambella', icon: '🏞️', descriptionAm: 'የጋምቤላ ክልል ዋና ከተማ', descriptionEn: 'Capital of Gambella Region' },
-    { id: 'meti', name: 'ሜቲ', nameEn: 'Meti', region: 'Gambella', icon: '🏔️', descriptionAm: 'የጋምቤላ ክልል ከተማ', descriptionEn: 'Gambella Region Town' },
-    { id: 'fugnido', name: 'ፉኝዶ', nameEn: 'Fugnido', region: 'Gambella', icon: '🏞️', descriptionAm: 'የስደተኞች ከተማ', descriptionEn: 'Refugee Town' },
-    
-    // ===================== AFAR REGION (6 cities) =====================
-    { id: 'semera', name: 'ሰሜራ', nameEn: 'Semera', region: 'Afar', icon: '🐪', descriptionAm: 'የአፋር ክልል ዋና ከተማ', descriptionEn: 'Capital of Afar Region' },
-    { id: 'asaita', name: 'አሳይታ', nameEn: 'Asaita', region: 'Afar', icon: '🏔️', descriptionAm: 'የአፋር ክልል ታሪካዊ ከተማ', descriptionEn: 'Historical Afar Town' },
-    { id: 'logiya', name: 'ሎጊያ', nameEn: 'Logiya', region: 'Afar', icon: '🛣️', descriptionAm: 'የአፋር ክልል ከተማ', descriptionEn: 'Afar Region Town' },
-    { id: 'abila', name: 'አቢላ', nameEn: 'Abila', region: 'Afar', icon: '🐪', descriptionAm: 'የአፋር ክልል ከተማ', descriptionEn: 'Afar Region Town' },
-    { id: 'dubti', name: 'ዱብቲ', nameEn: 'Dubti', region: 'Afar', icon: '🏔️', descriptionAm: 'የአፋር ክልል ከተማ', descriptionEn: 'Afar Region Town' },
-    { id: 'elidar', name: 'ኤልዳር', nameEn: 'Elidar', region: 'Afar', icon: '🏔️', descriptionAm: 'የአፋር ክልል ከተማ', descriptionEn: 'Afar Region Town' },
+    { id: 'bishoftu', name: 'ቢሾፍቱ', nameEn: 'Bishoftu', region: 'Oromia', icon: '✈️', descriptionAm: 'የሀይቆች እና የአየር ሃይል ከተማ', descriptionEn: 'City of Lakes & Air Force Base' },
+    { id: 'dessie', name: 'ደሴ', nameEn: 'Dessie', region: 'Amhara', icon: '🏔️', descriptionAm: 'የንግድ እና የእርሻ ከተማ', descriptionEn: 'Trade & Agriculture City' },
   ];
 
-  // Remove duplicates by id
   const uniqueCities = allCityVipPrograms.filter((city, index, self) => 
     index === self.findIndex((c) => c.id === city.id)
   );
 
-  // Filter cities based on search
   const filteredCityList = uniqueCities.filter(city => 
     city.name.toLowerCase().includes(citySearchTerm.toLowerCase()) ||
     city.nameEn.toLowerCase().includes(citySearchTerm.toLowerCase()) ||
     city.region.toLowerCase().includes(citySearchTerm.toLowerCase())
   );
 
-  // Single counter animation
   const { ref: counterRef, inView: counterInView } = useInView({
     triggerOnce: true,
     threshold: 0.3,
@@ -255,14 +163,13 @@ export default function Home() {
     router.push('/login');
   };
 
-  const handleStartWinning = () => {
-    const element = document.getElementById('pools-section');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+  const scrollToSection = (ref) => {
+    if (ref.current) {
+      ref.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+    setMobileMenuOpen(false);
   };
 
-  // Filter regular pools
   const getFilteredPools = () => {
     let filtered = [...pools];
     
@@ -298,24 +205,106 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Abbaa Carraa - Win Amazing Prizes | Merkato VIP | City VIP</title>
+        <title>Abbaa Carraa - Win Amazing Prizes | Merkato VIP | City VIP | Regular Pools</title>
         <meta name="description" content="Win amazing prizes. Join Merkato VIP, City VIP, or Regular Pools. 2% supports kidney & heart disease patients." />
       </Head>
 
       <div className="min-h-screen bg-white w-full">
-        {/* PERSISTENT TOP NAVBAR WITH CITY SELECTOR */}
+        {/* STICKY NAVBAR WITH MODERN MENU */}
         <nav className="sticky top-0 z-50 bg-gray-900 shadow-lg border-b border-gray-700">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-between h-16">
-              <Link href="/" className="flex items-center gap-2 group">
+              {/* Logo */}
+              <Link href="/" className="flex items-center gap-2 group shrink-0">
                 <span className="text-2xl group-hover:scale-110 transition-transform">🎫</span>
                 <div>
-                  <span className="font-bold text-white text-lg">Merkato VIP</span>
-                  <span className="text-xs text-gray-400 ml-2 hidden sm:inline">| Ethiopia's Premier Event Hub</span>
+                  <span className="font-bold text-white text-lg">Abbaa Carraa</span>
+                  <span className="text-xs text-gray-400 ml-2 hidden sm:inline">| Ethiopia's Premier Platform</span>
                 </div>
               </Link>
-              <TopCitySelector />
+
+              {/* Desktop Menu - Scrollable tabs */}
+              <div className="hidden md:flex items-center gap-1 overflow-x-auto max-w-xl px-2">
+                <button onClick={() => scrollToSection(merkatoRef)} className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition whitespace-nowrap text-sm font-medium">
+                  🏪 Merkato VIP
+                </button>
+                <button onClick={() => scrollToSection(cityVipRef)} className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition whitespace-nowrap text-sm font-medium">
+                  🏙️ City VIP
+                </button>
+                <button onClick={() => scrollToSection(regularPoolsRef)} className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition whitespace-nowrap text-sm font-medium">
+                  🏊 Regular Pool
+                </button>
+                <Link href="/dashboard" className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition whitespace-nowrap text-sm font-medium">
+                  📊 Dashboard
+                </Link>
+                <Link href="/about" className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition whitespace-nowrap text-sm font-medium">
+                  ℹ️ About
+                </Link>
+                <Link href="/contact" className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition whitespace-nowrap text-sm font-medium">
+                  📞 Contact
+                </Link>
+              </div>
+
+              {/* Desktop Auth Buttons */}
+              <div className="hidden md:flex items-center gap-2">
+                <Link href="/login" className="px-4 py-2 text-gray-300 hover:text-white transition text-sm font-medium">
+                  Login
+                </Link>
+                <Link href="/register" className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium">
+                  Register
+                </Link>
+                <TopCitySelector />
+              </div>
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {mobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
             </div>
+
+            {/* Mobile Menu Dropdown */}
+            {mobileMenuOpen && (
+              <div className="md:hidden py-4 border-t border-gray-700 space-y-2">
+                <button onClick={() => scrollToSection(merkatoRef)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-2">
+                  <span>🏪</span> Merkato VIP
+                </button>
+                <button onClick={() => scrollToSection(cityVipRef)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-2">
+                  <span>🏙️</span> City VIP
+                </button>
+                <button onClick={() => scrollToSection(regularPoolsRef)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-2">
+                  <span>🏊</span> Regular Pool
+                </button>
+                <Link href="/dashboard" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-2">
+                  <span>📊</span> Dashboard
+                </Link>
+                <Link href="/about" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-2">
+                  <span>ℹ️</span> About
+                </Link>
+                <Link href="/contact" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-2">
+                  <span>📞</span> Contact
+                </Link>
+                <div className="pt-2 border-t border-gray-700">
+                  <Link href="/login" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-2">
+                    <span>🔐</span> Login
+                  </Link>
+                  <Link href="/register" className="w-full text-left px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition flex items-center gap-2 mt-2">
+                    <span>📝</span> Register
+                  </Link>
+                </div>
+                <div className="pt-2">
+                  <TopCitySelector />
+                </div>
+              </div>
+            )}
           </div>
         </nav>
 
@@ -323,7 +312,7 @@ export default function Home() {
         <CashEquivalentBanner />
         <CharityBanner />
 
-        {/* Hero Section */}
+        {/* Hero Section with CTA Buttons */}
         <div className="w-full bg-gradient-to-br from-green-700 to-teal-700">
           <div className="max-w-7xl mx-auto">
             {!imageLoaded && (
@@ -346,7 +335,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Text Content */}
+        {/* Text Content with CTA Buttons */}
         <div className="bg-white py-12 w-full">
           <div className="container mx-auto px-4 text-center">
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-4 py-1.5 rounded-full text-sm font-semibold mb-5 animate-pulse">
@@ -366,13 +355,30 @@ export default function Home() {
               <span className="text-green-700 font-medium">2% supports kidney & heart disease patients</span>
             </div>
 
-            <div className="flex justify-center mt-4">
+            {/* Three CTA Buttons */}
+            <div className="flex flex-wrap justify-center gap-4 mt-8">
               <button
-                onClick={handleStartWinning}
-                className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-8 py-3 rounded-full font-semibold text-lg shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2"
+                onClick={() => scrollToSection(merkatoRef)}
+                className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2"
               >
-                <span>🎯</span>
-                ይሳተፉ | Start Winning
+                <span>🏪</span>
+                የመርካቶ ቪአይፒ ይቀላቀሉ
+                <span>→</span>
+              </button>
+              <button
+                onClick={() => scrollToSection(cityVipRef)}
+                className="bg-gradient-to-r from-gray-700 to-gray-900 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2"
+              >
+                <span>🏙️</span>
+                የከተማ ቪአይፒ ይቀላቀሉ
+                <span>→</span>
+              </button>
+              <button
+                onClick={() => scrollToSection(regularPoolsRef)}
+                className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2"
+              >
+                <span>🏊</span>
+                መደበኛ ፑል ይቀላቀሉ
                 <span>→</span>
               </button>
             </div>
@@ -394,37 +400,34 @@ export default function Home() {
           </div>
         </div>
 
-        {/* SINGLE COUNTER - White background, above Moving Ad */}
-        <div ref={counterRef} className="bg-white py-8 border-y border-gray-100">
+        {/* SINGLE LINE COUNTER - Minimalist Design */}
+        <div ref={counterRef} className="bg-gradient-to-r from-gray-50 to-white border-y border-gray-200 py-3">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto bg-gradient-to-r from-gray-50 to-white rounded-2xl p-8 shadow-lg border border-gray-100">
-              <div className="text-center">
-                <div className="inline-flex items-center gap-2 bg-green-100 rounded-full px-4 py-1 mb-4">
-                  <span className="text-green-600 text-lg">📊</span>
-                  <span className="text-green-700 text-sm font-semibold">Total Impact</span>
-                </div>
-                <div className="text-5xl md:text-7xl font-bold text-green-600 mb-3">
-                  {counterInView ? <CountUp start={0} end={Math.floor(stats.total_raised / 1000)} duration={2.5} separator="," /> : '0'}+
-                  <span className="text-2xl md:text-3xl text-gray-500">K ETB</span>
-                </div>
-                <p className="text-gray-500 text-sm">Total Prize Money Distributed</p>
-                <p className="text-green-600 text-xs mt-2">አጠቃላይ የተሰራጨ የሽልማት ገንዘብ</p>
-                <div className="flex justify-center gap-8 mt-6">
-                  <div>
-                    <div className="text-2xl font-bold text-gray-700">{stats.total_winners}+</div>
-                    <div className="text-xs text-gray-400">Happy Winners</div>
-                  </div>
-                  <div className="w-px h-8 bg-gray-200"></div>
-                  <div>
-                    <div className="text-2xl font-bold text-gray-700">{stats.total_pools}+</div>
-                    <div className="text-xs text-gray-400">Active Pools</div>
-                  </div>
-                  <div className="w-px h-8 bg-gray-200"></div>
-                  <div>
-                    <div className="text-2xl font-bold text-gray-700">{stats.total_agents}+</div>
-                    <div className="text-xs text-gray-400">Trusted Agents</div>
-                  </div>
-                </div>
+            <div className="flex flex-wrap justify-center items-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-green-600 text-lg">💰</span>
+                <span className="text-gray-600">Total Prize:</span>
+                <span className="font-bold text-gray-800">
+                  {counterInView ? <CountUp start={0} end={Math.floor(stats.total_raised / 1000)} duration={2} separator="," /> : '0'}+K ETB
+                </span>
+              </div>
+              <div className="w-px h-6 bg-gray-300 hidden sm:block"></div>
+              <div className="flex items-center gap-2">
+                <span className="text-yellow-600 text-lg">🏆</span>
+                <span className="text-gray-600">Winners:</span>
+                <span className="font-bold text-gray-800">{stats.total_winners}+</span>
+              </div>
+              <div className="w-px h-6 bg-gray-300 hidden sm:block"></div>
+              <div className="flex items-center gap-2">
+                <span className="text-blue-600 text-lg">🎯</span>
+                <span className="text-gray-600">Active Pools:</span>
+                <span className="font-bold text-gray-800">{stats.total_pools}+</span>
+              </div>
+              <div className="w-px h-6 bg-gray-300 hidden sm:block"></div>
+              <div className="flex items-center gap-2">
+                <span className="text-purple-600 text-lg">🤝</span>
+                <span className="text-gray-600">Agents:</span>
+                <span className="font-bold text-gray-800">{stats.total_agents}+</span>
               </div>
             </div>
           </div>
@@ -438,23 +441,8 @@ export default function Home() {
           <h2 className="text-3xl font-bold text-center mb-4">Available Opportunities</h2>
           <p className="text-center text-gray-500 mb-8">Choose from VIP programs or regular pools</p>
 
-          <div className="flex flex-wrap justify-center gap-3 mb-8">
-            <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
-              <span className="text-green-600">✓</span> Cash Guarantee
-            </div>
-            <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
-              <span className="text-green-600">✓</span> Blockchain Verified
-            </div>
-            <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
-              <span className="text-green-600">💚</span> 2% for Health
-            </div>
-            <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
-              <span className="text-green-600">✓</span> 24/7 Support
-            </div>
-          </div>
-
-          {/* MERKATO VIP - Fixed with Next.js router */}
-          <div className="mb-12">
+          {/* MERKATO VIP SECTION */}
+          <div ref={merkatoRef} className="mb-12 scroll-mt-20">
             <div 
               onClick={() => router.push('/merkato-vip')}
               className="relative bg-gradient-to-r from-yellow-500 via-orange-500 to-red-600 rounded-2xl p-6 md:p-8 text-white transform hover:scale-105 transition-all duration-500 shadow-2xl overflow-hidden group cursor-pointer"
@@ -493,8 +481,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* CITY VIP PROGRAMS - COMPACT DROPDOWN WITH ALL 80+ CITIES */}
-          <div className="mb-12">
+          {/* CITY VIP PROGRAMS SECTION */}
+          <div ref={cityVipRef} className="mb-12 scroll-mt-20">
             <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-6 shadow-xl">
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-3">
@@ -598,9 +586,9 @@ export default function Home() {
             </div>
           </div>
 
-          {/* REGULAR POOLS - ATTRACTIVE CLICKABLE SECTION */}
-          <div className="mb-12">
-            {/* Main Grey Button - Always Visible with Winner Text */}
+          {/* REGULAR POOLS SECTION */}
+          <div ref={regularPoolsRef} className="mb-12 scroll-mt-20">
+            {/* Main Grey Button - Always Visible with Winner Text (NO YELLOW BACKGROUND) */}
             <button
               onClick={() => setShowRegularPools(!showRegularPools)}
               className="w-full bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white rounded-2xl p-6 transition-all duration-300 shadow-lg group"
@@ -622,13 +610,13 @@ export default function Home() {
                   </div>
                 </div>
                 
-                {/* Winner Prize Text - Beautiful and visible on grey background */}
+                {/* Winner Prize Text - Beautiful and visible on grey background (No yellow background) */}
                 <div className="mt-3 pt-3 border-t border-gray-600 w-full">
-                  <div className="bg-yellow-500/10 rounded-lg p-2 backdrop-blur-sm">
+                  <div className="rounded-lg p-2">
                     <p className="text-sm md:text-base font-bold text-yellow-300">
                       🎯 ይሳተፉ እና ያሸንፉ!
                     </p>
-                    <p className="text-xs text-yellow-200/80">
+                    <p className="text-xs text-gray-300">
                       Join and WIN!
                     </p>
                     <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
@@ -658,28 +646,6 @@ export default function Home() {
             {/* Regular Pools Content - Shows ONLY when clicked */}
             {showRegularPools && (
               <div className="mt-6 animate-fade-in">
-                {/* WINNER PRIZE BANNER - CALL TO ACTION (Inside when expanded) */}
-                <div className="bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 rounded-2xl p-5 mb-6 text-white shadow-lg">
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <span className="text-4xl animate-pulse">🏆</span>
-                      <div>
-                        <p className="text-sm font-semibold opacity-90">✨ አሸናፊ የሚሸለምው | What Winners Win ✨</p>
-                        <p className="text-lg md:text-xl font-bold">
-                          🚗 መኪና | 🏭 ማሽኖች | 🏠 ቤት | 💻 ኤሌክትሮኒክስ | 🎁 ብዙ ተጨማሪ
-                        </p>
-                        <p className="text-xs opacity-90">
-                          Cars | Machinery | House | Electronics | And Much More!
-                        </p>
-                      </div>
-                    </div>
-                    <div className="bg-white/20 backdrop-blur rounded-full px-4 py-2 text-center">
-                      <p className="text-sm font-bold">🎯 ይሳተፉ እና ያሸንፉ!</p>
-                      <p className="text-xs">Join and WIN!</p>
-                    </div>
-                  </div>
-                </div>
-
                 {/* Filter Buttons - ONLY visible when expanded */}
                 <div className="flex justify-end items-center flex-wrap gap-2 mb-6">
                   <button
@@ -764,7 +730,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* PARTNER PROGRAM - With divider line */}
+        {/* PARTNER PROGRAM */}
         <div className="border-t border-gray-200"></div>
         <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-12">
           <div className="container mx-auto px-4 text-center">
@@ -799,6 +765,7 @@ export default function Home() {
           to { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-in { animation: fade-in 0.5s ease-out; }
+        .scroll-mt-20 { scroll-margin-top: 80px; }
       `}</style>
     </>
   );
