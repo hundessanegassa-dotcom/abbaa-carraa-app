@@ -1,4 +1,4 @@
-// pages/merkato-vip.js - COMPLETE OPTIMIZED FOR MOBILE (Light Grey Background, Green Buttons)
+// pages/merkato-vip.js - COMPLETE FIXED VERSION (No Hooks Errors)
 import Head from 'next/head';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
@@ -24,7 +24,7 @@ const getNextMonthEnd = () => {
   return lastDay.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 };
 
-// FIXED: compressImage without reject
+// compressImage without reject
 const compressImage = async (file) => {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -82,6 +82,75 @@ const validateFile = (file) => {
   return true;
 };
 
+const vipPools = {
+  daily: {
+    name: "ዕለታዊ ሚሊየነር | Daily Millionaire",
+    tier: "መርካቶ ለሁሉም | Merkato for All",
+    frequency: "Daily",
+    contribution: "500",
+    contributionFormatted: "500 ETB",
+    prize: "1,000,000 ETB",
+    prizeNumber: 1000000,
+    winnerCount: 1,
+    totalSeats: 2400,
+    seatsPerRow: 20,
+    rows: 120,
+    time: "Every Day at 8:00 PM",
+    color: "from-gray-700 to-gray-900",
+    icon: "⭐",
+    slogan: "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው",
+    sloganEn: "Let's make one participant a millionaire today, this week and this month",
+    description: "Start your day with a chance to become an instant millionaire!",
+    listedDate: "January 1, 2024",
+    drawDate: "Every Day at 8:00 PM",
+    nextDraw: "Today at 8:00 PM"
+  },
+  weekly: {
+    name: "ሳምንታዊ ግዙፍ አሸናፊ | Weekly Mega Winner",
+    tier: "VIP 2",
+    frequency: "Weekly",
+    contribution: "2500",
+    contributionFormatted: "2,500 ETB",
+    prize: "10,000,000 ETB",
+    prizeNumber: 10000000,
+    winnerCount: 1,
+    totalSeats: 4800,
+    seatsPerRow: 20,
+    rows: 240,
+    time: "Every Sunday at 6:00 PM",
+    color: "from-gray-700 to-gray-900",
+    icon: "🏆",
+    slogan: "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው",
+    sloganEn: "Let's make one participant a millionaire today, this week and this month",
+    description: "Ten MILLION Birr changes everything!",
+    listedDate: "January 1, 2024",
+    drawDate: "Every Sunday at 6:00 PM",
+    nextDraw: getNextSunday()
+  },
+  monthly: {
+    name: "ወርሃዊ አሸናፊ | Monthly Winner",
+    tier: "VIP 1",
+    frequency: "Monthly",
+    contribution: "5000",
+    contributionFormatted: "5,000 ETB",
+    prize: "40,000,000 ETB",
+    prizeNumber: 40000000,
+    winnerCount: 1,
+    totalSeats: 9600,
+    seatsPerRow: 20,
+    rows: 480,
+    time: "Last Day of Month at 8:00 PM",
+    color: "from-gray-700 to-gray-900",
+    icon: "👑",
+    slogan: "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው",
+    sloganEn: "Let's make one participant a millionaire today, this week and this month",
+    description: "The ULTIMATE Merkato prize pool!",
+    listedDate: "January 1, 2024",
+    drawDate: "Last Day of Month at 8:00 PM",
+    nextDraw: getNextMonthEnd()
+  }
+};
+
 export default function MerkatoVip() {
   const router = useRouter();
   const isMounted = useRef(true);
@@ -101,11 +170,16 @@ export default function MerkatoVip() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reference, setReference] = useState('');
   
   // Ticket states
   const [showTicket, setShowTicket] = useState(false);
   const [participantData, setParticipantData] = useState(null);
   const [ticketType, setTicketType] = useState('unverified');
+  
+  // Seat selector UI states (MOVED TO MAIN COMPONENT LEVEL - FIXES HOOKS ERROR)
+  const [currentRow, setCurrentRow] = useState(0);
+  const seatGridRef = useRef(null);
 
   useEffect(() => {
     return () => {
@@ -154,75 +228,6 @@ export default function MerkatoVip() {
       }
     } catch (error) {
       console.error('Error fetching taken seats:', error);
-    }
-  };
-
-  const vipPools = {
-    daily: {
-      name: "ዕለታዊ ሚሊየነር | Daily Millionaire",
-      tier: "መርካቶ ለሁሉም | Merkato for All",
-      frequency: "Daily",
-      contribution: "500",
-      contributionFormatted: "500 ETB",
-      prize: "1,000,000 ETB",
-      prizeNumber: 1000000,
-      winnerCount: 1,
-      totalSeats: 2400,
-      seatsPerRow: 20,
-      rows: 120,
-      time: "Every Day at 8:00 PM",
-      color: "from-gray-700 to-gray-900",
-      icon: "⭐",
-      slogan: "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው",
-      sloganEn: "Let's make one participant a millionaire today, this week and this month",
-      description: "Start your day with a chance to become an instant millionaire!",
-      listedDate: "January 1, 2024",
-      drawDate: "Every Day at 8:00 PM",
-      nextDraw: "Today at 8:00 PM"
-    },
-    weekly: {
-      name: "ሳምንታዊ ግዙፍ አሸናፊ | Weekly Mega Winner",
-      tier: "VIP 2",
-      frequency: "Weekly",
-      contribution: "2500",
-      contributionFormatted: "2,500 ETB",
-      prize: "10,000,000 ETB",
-      prizeNumber: 10000000,
-      winnerCount: 1,
-      totalSeats: 4800,
-      seatsPerRow: 20,
-      rows: 240,
-      time: "Every Sunday at 6:00 PM",
-      color: "from-gray-700 to-gray-900",
-      icon: "🏆",
-      slogan: "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው",
-      sloganEn: "Let's make one participant a millionaire today, this week and this month",
-      description: "Ten MILLION Birr changes everything!",
-      listedDate: "January 1, 2024",
-      drawDate: "Every Sunday at 6:00 PM",
-      nextDraw: getNextSunday()
-    },
-    monthly: {
-      name: "ወርሃዊ አሸናፊ | Monthly Winner",
-      tier: "VIP 1",
-      frequency: "Monthly",
-      contribution: "5000",
-      contributionFormatted: "5,000 ETB",
-      prize: "40,000,000 ETB",
-      prizeNumber: 40000000,
-      winnerCount: 1,
-      totalSeats: 9600,
-      seatsPerRow: 20,
-      rows: 480,
-      time: "Last Day of Month at 8:00 PM",
-      color: "from-gray-700 to-gray-900",
-      icon: "👑",
-      slogan: "ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው",
-      sloganEn: "Let's make one participant a millionaire today, this week and this month",
-      description: "The ULTIMATE Merkato prize pool!",
-      listedDate: "January 1, 2024",
-      drawDate: "Last Day of Month at 8:00 PM",
-      nextDraw: getNextMonthEnd()
     }
   };
   
@@ -314,7 +319,7 @@ export default function MerkatoVip() {
     }
   };
 
-  // MOBILE-OPTIMIZED SEAT SELECTOR with Light Grey Background and Green Buttons
+  // FIXED: MOBILE-OPTIMIZED SEAT SELECTOR - HOOKS MOVED TO MAIN COMPONENT
   const renderSeatSelector = () => {
     if (!selectedPoolType) return null;
     
@@ -324,9 +329,6 @@ export default function MerkatoVip() {
     const seatsPerRow = pool.seatsPerRow || 20;
     const rows = Math.ceil(totalSeatsCount / seatsPerRow);
     const rowLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-    
-    const [currentRow, setCurrentRow] = useState(0);
-    const seatGridRef = useRef(null);
     
     const scrollToRow = (rowIndex) => {
       setCurrentRow(rowIndex);
@@ -488,7 +490,7 @@ export default function MerkatoVip() {
                       const isTaken = takenSeats.includes(seatNum);
                       const isSelected = selectedSeats.includes(seatNum);
                       
-                      let bgColor = 'bg-gray-200 border border-gray-400'; // Available - Light Grey
+                      let bgColor = 'bg-gray-200 border border-gray-400';
                       let textColor = 'text-gray-700';
                       let hoverClass = 'hover:bg-green-100 hover:border-green-400';
                       
@@ -641,6 +643,17 @@ export default function MerkatoVip() {
               <p className="text-sm text-gray-600 mt-2">Account Name: Negassa Hundessa</p>
             </div>
             
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Reference Number/Transaction ID *</label>
+              <input
+                type="text"
+                placeholder="Enter transaction ID or reference number"
+                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+              />
+            </div>
+            
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-green-500 transition">
               <input
                 type="file"
@@ -669,7 +682,7 @@ export default function MerkatoVip() {
             
             <button
               onClick={handlePaymentSubmit}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !reference.trim()}
               className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition mt-4 disabled:opacity-50"
             >
               {isSubmitting ? (
@@ -1057,7 +1070,7 @@ export default function MerkatoVip() {
           </div>
 
           {/* CTA Banner */}
-          <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-16 animate-pulse-slow">
+          <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-16">
             <div className="container mx-auto px-4 text-center">
               <h2 className="text-3xl font-bold mb-4 animate-bounce">ዛሬውኑ ይቀላቀሉ!</h2>
               <p className="text-xl mb-6">Join Today and Become Merkato&apos;s Next Millionaire!</p>
