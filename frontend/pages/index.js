@@ -1,4 +1,4 @@
-// pages/index.js - COMPLETE BEAUTIFIED HOMEPAGE
+// pages/index.js - UPDATED WITH COLLAPSIBLE MENU
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -43,6 +43,7 @@ export default function Home() {
   const [showCityDropdown, setShowCityDropdown] = useState(false);
   const [citySearchTerm, setCitySearchTerm] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [programsDropdownOpen, setProgramsDropdownOpen] = useState(false);
   
   // Refs for scrolling
   const merkatoRef = useRef(null);
@@ -50,7 +51,7 @@ export default function Home() {
   const regularPoolsRef = useRef(null);
 
   // ============================================
-  // ALL ETHIOPIAN CITIES - COMPLETE LIST (80+ CITIES)
+  // ALL ETHIOPIAN CITIES - COMPLETE LIST
   // ============================================
   const allCityVipPrograms = [
     { id: 'addis-ababa', name: 'አዲስ አበባ', nameEn: 'Addis Ababa', region: 'Central', icon: '🏙️', descriptionAm: 'የኢትዮጵያ የንግድ እና ዲፕሎማሲ ልብ', descriptionEn: 'Heart of Ethiopian Commerce & Diplomacy' },
@@ -168,6 +169,7 @@ export default function Home() {
       ref.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     setMobileMenuOpen(false);
+    setProgramsDropdownOpen(false);
   };
 
   const getFilteredPools = () => {
@@ -210,7 +212,7 @@ export default function Home() {
       </Head>
 
       <div className="min-h-screen bg-white w-full">
-        {/* STICKY NAVBAR WITH MODERN MENU */}
+        {/* STICKY NAVBAR WITH COLLAPSIBLE PROGRAMS MENU */}
         <nav className="sticky top-0 z-50 bg-gray-900 shadow-lg border-b border-gray-700">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-between h-16">
@@ -223,20 +225,59 @@ export default function Home() {
                 </div>
               </Link>
 
-              {/* Desktop Menu - Scrollable tabs */}
-              <div className="hidden md:flex items-center gap-1 overflow-x-auto max-w-xl px-2">
-                <button onClick={() => scrollToSection(merkatoRef)} className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition whitespace-nowrap text-sm font-medium">
-                  🏪 Merkato VIP
-                </button>
-                <button onClick={() => scrollToSection(cityVipRef)} className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition whitespace-nowrap text-sm font-medium">
-                  🏙️ City VIP
-                </button>
-                <button onClick={() => scrollToSection(regularPoolsRef)} className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition whitespace-nowrap text-sm font-medium">
-                  🏊 Regular Pool
-                </button>
-                <Link href="/dashboard" className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition whitespace-nowrap text-sm font-medium">
-                  📊 Dashboard
-                </Link>
+              {/* Desktop Menu */}
+              <div className="hidden md:flex items-center gap-1">
+                {/* Programs Dropdown - Collapsible Menu */}
+                <div className="relative">
+                  <button
+                    onClick={() => setProgramsDropdownOpen(!programsDropdownOpen)}
+                    className="flex items-center gap-2 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition text-sm font-medium"
+                  >
+                    <span>📋</span>
+                    Programs
+                    <svg className={`w-4 h-4 transition-transform ${programsDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {programsDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setProgramsDropdownOpen(false)} />
+                      <div className="absolute top-full left-0 mt-2 w-64 bg-gray-800 rounded-xl shadow-2xl border border-gray-700 z-50 overflow-hidden">
+                        <button onClick={() => scrollToSection(merkatoRef)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3">
+                          <span className="text-xl">🏪</span>
+                          <div>
+                            <div className="font-medium">Merkato VIP</div>
+                            <div className="text-xs text-gray-400">Win up to 40M ETB</div>
+                          </div>
+                        </button>
+                        <button onClick={() => scrollToSection(cityVipRef)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-t border-gray-700">
+                          <span className="text-xl">🏙️</span>
+                          <div>
+                            <div className="font-medium">City VIP</div>
+                            <div className="text-xs text-gray-400">80+ Ethiopian cities</div>
+                          </div>
+                        </button>
+                        <button onClick={() => scrollToSection(regularPoolsRef)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-t border-gray-700">
+                          <span className="text-xl">🏊</span>
+                          <div>
+                            <div className="font-medium">Regular Pools</div>
+                            <div className="text-xs text-gray-400">Cars, houses & more</div>
+                          </div>
+                        </button>
+                        <Link href="/dashboard" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-t border-gray-700">
+                          <span className="text-xl">📊</span>
+                          <div>
+                            <div className="font-medium">Dashboard</div>
+                            <div className="text-xs text-gray-400">Track your tickets</div>
+                          </div>
+                        </Link>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* About, Contact outside dropdown */}
                 <Link href="/about" className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition whitespace-nowrap text-sm font-medium">
                   ℹ️ About
                 </Link>
@@ -274,32 +315,72 @@ export default function Home() {
             {/* Mobile Menu Dropdown */}
             {mobileMenuOpen && (
               <div className="md:hidden py-4 border-t border-gray-700 space-y-2">
-                <button onClick={() => scrollToSection(merkatoRef)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-2">
-                  <span>🏪</span> Merkato VIP
-                </button>
-                <button onClick={() => scrollToSection(cityVipRef)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-2">
-                  <span>🏙️</span> City VIP
-                </button>
-                <button onClick={() => scrollToSection(regularPoolsRef)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-2">
-                  <span>🏊</span> Regular Pool
-                </button>
-                <Link href="/dashboard" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-2">
-                  <span>📊</span> Dashboard
-                </Link>
-                <Link href="/about" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-2">
-                  <span>ℹ️</span> About
-                </Link>
-                <Link href="/contact" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-2">
-                  <span>📞</span> Contact
-                </Link>
-                <div className="pt-2 border-t border-gray-700">
-                  <Link href="/login" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-2">
-                    <span>🔐</span> Login
-                  </Link>
-                  <Link href="/register" className="w-full text-left px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition flex items-center gap-2 mt-2">
-                    <span>📝</span> Register
-                  </Link>
+                {/* Programs Section on Mobile */}
+                <div className="space-y-1">
+                  <div className="px-4 py-2 text-gray-400 text-xs font-semibold uppercase tracking-wider">Programs</div>
+                  <button onClick={() => scrollToSection(merkatoRef)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
+                    <span className="text-xl">🏪</span>
+                    <div>
+                      <div>Merkato VIP</div>
+                      <div className="text-xs text-gray-400">Win up to 40M ETB</div>
+                    </div>
+                  </button>
+                  <button onClick={() => scrollToSection(cityVipRef)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
+                    <span className="text-xl">🏙️</span>
+                    <div>
+                      <div>City VIP</div>
+                      <div className="text-xs text-gray-400">80+ Ethiopian cities</div>
+                    </div>
+                  </button>
+                  <button onClick={() => scrollToSection(regularPoolsRef)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
+                    <span className="text-xl">🏊</span>
+                    <div>
+                      <div>Regular Pools</div>
+                      <div className="text-xs text-gray-400">Cars, houses & more</div>
+                    </div>
+                  </button>
                 </div>
+                
+                <div className="h-px bg-gray-700 my-2"></div>
+                
+                <Link href="/dashboard" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
+                  <span className="text-xl">📊</span>
+                  <div>
+                    <div>Dashboard</div>
+                    <div className="text-xs text-gray-400">Track your tickets</div>
+                  </div>
+                </Link>
+                <Link href="/about" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
+                  <span className="text-xl">ℹ️</span>
+                  <div>
+                    <div>About</div>
+                    <div className="text-xs text-gray-400">Learn about us</div>
+                  </div>
+                </Link>
+                <Link href="/contact" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
+                  <span className="text-xl">📞</span>
+                  <div>
+                    <div>Contact</div>
+                    <div className="text-xs text-gray-400">Get in touch</div>
+                  </div>
+                </Link>
+                
+                <div className="h-px bg-gray-700 my-2"></div>
+                
+                <Link href="/login" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
+                  <span className="text-xl">🔐</span>
+                  <div>
+                    <div>Login</div>
+                    <div className="text-xs text-gray-400">Existing user</div>
+                  </div>
+                </Link>
+                <Link href="/register" className="w-full text-left px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition flex items-center gap-3 mt-2">
+                  <span className="text-xl">📝</span>
+                  <div>
+                    <div>Register</div>
+                    <div className="text-xs text-green-200">New account</div>
+                  </div>
+                </Link>
                 <div className="pt-2">
                   <TopCitySelector />
                 </div>
@@ -506,7 +587,6 @@ export default function Home() {
                     </svg>
                   </button>
                   
-                  {/* DROPDOWN LIST */}
                   {showCityDropdown && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setShowCityDropdown(false)} />
@@ -588,7 +668,6 @@ export default function Home() {
 
           {/* REGULAR POOLS SECTION */}
           <div ref={regularPoolsRef} className="mb-12 scroll-mt-20">
-            {/* Main Grey Button - Always Visible with Winner Text (NO YELLOW BACKGROUND) */}
             <button
               onClick={() => setShowRegularPools(!showRegularPools)}
               className="w-full bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white rounded-2xl p-6 transition-all duration-300 shadow-lg group"
@@ -610,7 +689,6 @@ export default function Home() {
                   </div>
                 </div>
                 
-                {/* Winner Prize Text - Beautiful and visible on grey background (No yellow background) */}
                 <div className="mt-3 pt-3 border-t border-gray-600 w-full">
                   <div className="rounded-lg p-2">
                     <p className="text-sm md:text-base font-bold text-yellow-300">
@@ -643,10 +721,8 @@ export default function Home() {
               </div>
             </button>
 
-            {/* Regular Pools Content - Shows ONLY when clicked */}
             {showRegularPools && (
               <div className="mt-6 animate-fade-in">
-                {/* Filter Buttons - ONLY visible when expanded */}
                 <div className="flex justify-end items-center flex-wrap gap-2 mb-6">
                   <button
                     onClick={() => setRegularPoolFilter('all')}
