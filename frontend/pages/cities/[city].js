@@ -1,4 +1,4 @@
-// pages/cities/[city].js - COMPLETE WITH ALL 80+ ETHIOPIAN CITIES (NO DELETIONS)
+// pages/cities/[city].js - COMPLETE WITH ALL 80+ ETHIOPIAN CITIES
 import { useRouter } from 'next/router';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -25,7 +25,7 @@ const getNextMonthEnd = () => {
 };
 
 // ============================================
-// COMPLETE CITY DATA - ALL ETHIOPIAN CITIES (80+ CITIES - FULL LIST)
+// COMPLETE CITY DATA - ALL 80+ ETHIOPIAN CITIES
 // ============================================
 const cityData = {
   // ===================== CENTRAL & MAJOR CITIES =====================
@@ -286,7 +286,7 @@ const cityData = {
     region: 'Amhara'
   },
 
-  // ===================== OROMIA REGION - PART 1 =====================
+  // ===================== OROMIA REGION =====================
   'adama': {
     name: 'አዳማ | Adama',
     slogan: 'የመኪና እና የኢንዱስትሪ ከተማ',
@@ -896,6 +896,7 @@ const validateFile = (file) => {
   
   return true;
 };
+
 export default function CityVip() {
   const router = useRouter();
   const { city, name } = router.query;
@@ -947,7 +948,7 @@ export default function CityVip() {
     checkUser();
   }, [city, name]);
 
-  // Check for redirect parameters on page load (after login)
+  // Check for redirect parameters on page load
   useEffect(() => {
     const { type, showSeats } = router.query;
     
@@ -956,8 +957,6 @@ export default function CityVip() {
       setSelectedSeats([]);
       fetchTakenSeats(city, type);
       setShowSeatSelector(true);
-      
-      // Clean up URL parameters
       router.replace(`/cities/${city}`, undefined, { shallow: true });
     }
   }, [router.query, city, showSeatSelector, showPayment, showTicket]);
@@ -967,7 +966,6 @@ export default function CityVip() {
     setUser(user);
   };
 
-  // Fetch taken seats for the selected city and pool type
   const fetchTakenSeats = async (cityName, poolType) => {
     if (!cityName || !poolType) return;
     try {
@@ -1140,7 +1138,7 @@ export default function CityVip() {
     }
   };
 
-  // MOBILE-OPTIMIZED SEAT SELECTOR with Light Grey Background and Green Buttons
+  // MOBILE-OPTIMIZED SEAT SELECTOR
   const renderSeatSelector = () => {
     if (!selectedPoolType) return null;
     
@@ -1239,7 +1237,7 @@ export default function CityVip() {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-2">
         <div className="bg-gray-100 rounded-2xl shadow-xl max-w-full w-full max-h-[98vh] overflow-hidden flex flex-col">
-          {/* Header - Light Grey */}
+          {/* Header */}
           <div className="sticky top-0 bg-gray-100 border-b border-gray-200 p-4 z-10">
             <div className="flex justify-between items-center flex-wrap gap-2">
               <div className="flex-1">
@@ -1302,7 +1300,7 @@ export default function CityVip() {
               <div className="w-full h-px bg-gray-300 mt-2"></div>
             </div>
             
-            {/* Seat Grid - Optimized for mobile scroll */}
+            {/* Seat Grid */}
             <div ref={seatGridRef} className="space-y-2">
               {seatRows.map((rowSeats, rowIndex) => (
                 <div key={rowIndex} id={`row-${rowIndex}`} className="flex flex-wrap items-center gap-1">
@@ -1788,7 +1786,7 @@ export default function CityVip() {
                     <th className="px-6 py-4 text-left">ክፍያ | Entry</th>
                     <th className="px-6 py-4 text-left">ሽልማት | Prize</th>
                     <th className="px-6 py-4 text-left">ጊዜ | When</th>
-                  <tr>
+                  </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   <tr className="hover:bg-gray-50 transition">
