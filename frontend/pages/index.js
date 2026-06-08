@@ -1,4 +1,4 @@
-// pages/index.js - COMPLETE WITH 94 CITIES, PROPER TRANSLATIONS & REGISTRATION MODAL
+// pages/index.js - COMPLETE WITH YOUR EXISTING FOOTER
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -11,6 +11,7 @@ import CountUp from 'react-countup';
 import { useInView } from 'react-intersection-observer';
 import TopCitySelector from '../components/TopCitySelector';
 import PoolCard from '../components/PoolCard';
+import Footer from '../components/Footer';
 import toast from 'react-hot-toast';
 
 // Dynamic imports
@@ -423,7 +424,7 @@ export default function Home() {
         <meta name="description" content="Win amazing prizes. Join Merkato VIP, City VIP across 94 Ethiopian cities, or Regular Pools. 2% supports kidney & heart disease patients." />
       </Head>
 
-      <div className="min-h-screen bg-white w-full">
+      <div className="min-h-screen bg-white w-full flex flex-col">
         {/* STICKY NAVBAR WITH COLLAPSIBLE PROGRAMS MENU */}
         <nav className="sticky top-0 z-50 bg-gray-900 shadow-lg border-b border-gray-700">
           <div className="max-w-7xl mx-auto px-4">
@@ -895,7 +896,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* REGULAR POOLS - Updated Translation */}
+          {/* REGULAR POOLS */}
           <div ref={regularPoolsRef} className="mb-12 scroll-mt-20">
             <button
               onClick={() => setShowRegularPools(!showRegularPools)}
@@ -1058,6 +1059,9 @@ export default function Home() {
           </div>
         </div>
         <div className="border-t border-gray-800"></div>
+
+        {/* FOOTER - Your existing footer component */}
+        <Footer />
 
         {showCitySelector && (
           <CitySelector onClose={() => setShowCitySelector(false)} />
