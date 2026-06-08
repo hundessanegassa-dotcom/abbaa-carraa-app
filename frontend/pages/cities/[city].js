@@ -1,4 +1,4 @@
-// pages/cities/[city].js - COMPLETE WITH ALL 80+ ETHIOPIAN CITIES
+// pages/cities/[city].js - COMPLETE WITH ALL 80+ ETHIOPIAN CITIES (FIXED HOOKS ERROR)
 import { useRouter } from 'next/router';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -924,6 +924,10 @@ export default function CityVip() {
   const [showTicket, setShowTicket] = useState(false);
   const [participantData, setParticipantData] = useState(null);
   const [ticketType, setTicketType] = useState('unverified');
+  
+  // Seat selector UI states (MOVED TO MAIN COMPONENT LEVEL - FIXES THE HOOKS ERROR)
+  const [currentRow, setCurrentRow] = useState(0);
+  const seatGridRef = useRef(null);
 
   useEffect(() => {
     if (city) {
@@ -985,7 +989,7 @@ export default function CityVip() {
     }
   };
 
-  const vipPools = {
+  const vipPoolsConfig = {
     daily: {
       name: "ዕለታዊ ሚሊየነር | Daily Millionaire",
       tier: "ለሁሉም ኢትዮጵያዊ | For Every Ethiopian",
@@ -1138,19 +1142,16 @@ export default function CityVip() {
     }
   };
 
-  // MOBILE-OPTIMIZED SEAT SELECTOR
+  // FIXED: MOBILE-OPTIMIZED SEAT SELECTOR WITH HOOKS MOVED TO MAIN COMPONENT
   const renderSeatSelector = () => {
     if (!selectedPoolType) return null;
     
-    const pool = vipPools[selectedPoolType];
+    const pool = vipPoolsConfig[selectedPoolType];
     const entryFeeAmount = parseInt(pool.contribution);
     const totalSeatsCount = pool.totalSeats;
     const seatsPerRow = pool.seatsPerRow || 20;
     const rows = Math.ceil(totalSeatsCount / seatsPerRow);
     const rowLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-    
-    const [currentRow, setCurrentRow] = useState(0);
-    const seatGridRef = useRef(null);
     
     const scrollToRow = (rowIndex) => {
       setCurrentRow(rowIndex);
@@ -1392,7 +1393,7 @@ export default function CityVip() {
   const renderPayment = () => {
     if (!showPayment || !participantId || !selectedPoolType) return null;
     
-    const pool = vipPools[selectedPoolType];
+    const pool = vipPoolsConfig[selectedPoolType];
     const totalAmount = selectedSeats.length * parseInt(pool.contribution);
     
     const handleFileSelect = async (e) => {
@@ -1529,7 +1530,7 @@ export default function CityVip() {
   const renderTicketModal = () => {
     if (!showTicket || !participantData) return null;
     
-    const pool = vipPools[participantData.pool_type];
+    const pool = vipPoolsConfig[participantData.pool_type];
     
     return (
       <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4 overflow-y-auto">
@@ -1771,7 +1772,7 @@ export default function CityVip() {
               <button onClick={() => setActiveTab('weekly')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'weekly' ? 'bg-green-600 text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>🏆 ሳምንታዊ | Weekly (10M)</button>
               <button onClick={() => setActiveTab('monthly')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'monthly' ? 'bg-green-600 text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>👑 ወርሃዊ | Monthly (40M)</button>
             </div>
-            <div className="max-w-4xl mx-auto"><PoolCard type={activeTab} pool={vipPools[activeTab]} /></div>
+            <div className="max-w-4xl mx-auto"><PoolCard type={activeTab} pool={vipPoolsConfig[activeTab]} /></div>
           </div>
 
           {/* Comparison Table */}
