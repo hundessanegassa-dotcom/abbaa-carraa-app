@@ -1,4 +1,4 @@
-// pages/cities/[city].js - COMPLETE WITH ALL ETHIOPIAN CITIES (FULL LIST - NO DELETIONS)
+// pages/cities/[city].js - COMPLETE WITH ALL 80+ ETHIOPIAN CITIES (NO DELETIONS)
 import { useRouter } from 'next/router';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -25,7 +25,7 @@ const getNextMonthEnd = () => {
 };
 
 // ============================================
-// COMPLETE CITY DATA - ALL ETHIOPIAN CITIES (FULL LIST - 80+ CITIES)
+// COMPLETE CITY DATA - ALL ETHIOPIAN CITIES (80+ CITIES - FULL LIST)
 // ============================================
 const cityData = {
   // ===================== CENTRAL & MAJOR CITIES =====================
@@ -286,7 +286,7 @@ const cityData = {
     region: 'Amhara'
   },
 
-  // ===================== OROMIA REGION =====================
+  // ===================== OROMIA REGION - PART 1 =====================
   'adama': {
     name: 'አዳማ | Adama',
     slogan: 'የመኪና እና የኢንዱስትሪ ከተማ',
@@ -839,22 +839,7 @@ const cityList = Object.keys(cityData).map(key => ({
   icon: cityData[key].icon
 }));
 
-// Optimized file upload utilities
-const validateFile = (file) => {
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-  const MAX_SIZE = 5 * 1024 * 1024;
-  
-  if (!allowedTypes.includes(file.type)) {
-    throw new Error('Please upload a valid image file (JPEG, PNG, WEBP)');
-  }
-  
-  if (file.size > MAX_SIZE) {
-    throw new Error('File size must be less than 5MB');
-  }
-  
-  return true;
-};
-
+// FIXED: compressImage without reject
 const compressImage = async (file) => {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -891,12 +876,26 @@ const compressImage = async (file) => {
           resolve(new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), { type: 'image/jpeg' }));
         }, 'image/jpeg', 0.7);
       };
-      img.onerror = reject;
+      img.onerror = () => resolve(file);
     };
-    reader.onerror = reject;
+    reader.onerror = () => resolve(file);
   });
 };
 
+const validateFile = (file) => {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+  const MAX_SIZE = 5 * 1024 * 1024;
+  
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error('Please upload a valid image file (JPEG, PNG, WEBP)');
+  }
+  
+  if (file.size > MAX_SIZE) {
+    throw new Error('File size must be less than 5MB');
+  }
+  
+  return true;
+};
 export default function CityVip() {
   const router = useRouter();
   const { city, name } = router.query;
@@ -918,6 +917,7 @@ export default function CityVip() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reference, setReference] = useState('');
   
   // Ticket states
   const [showTicket, setShowTicket] = useState(false);
@@ -947,6 +947,21 @@ export default function CityVip() {
     checkUser();
   }, [city, name]);
 
+  // Check for redirect parameters on page load (after login)
+  useEffect(() => {
+    const { type, showSeats } = router.query;
+    
+    if (type && showSeats === 'true' && city && !showSeatSelector && !showPayment && !showTicket) {
+      setSelectedPoolType(type);
+      setSelectedSeats([]);
+      fetchTakenSeats(city, type);
+      setShowSeatSelector(true);
+      
+      // Clean up URL parameters
+      router.replace(`/cities/${city}`, undefined, { shallow: true });
+    }
+  }, [router.query, city, showSeatSelector, showPayment, showTicket]);
+
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     setUser(user);
@@ -954,6 +969,7 @@ export default function CityVip() {
 
   // Fetch taken seats for the selected city and pool type
   const fetchTakenSeats = async (cityName, poolType) => {
+    if (!cityName || !poolType) return;
     try {
       const { data } = await supabase
         .from('city_vip_participants')
@@ -982,6 +998,8 @@ export default function CityVip() {
       prizeNumber: 1000000,
       winnerCount: 1,
       totalSeats: 2400,
+      seatsPerRow: 20,
+      rows: 120,
       time: "Every Day at 8:00 PM",
       color: "from-gray-700 to-gray-900",
       icon: "⭐",
@@ -1001,6 +1019,8 @@ export default function CityVip() {
       prizeNumber: 10000000,
       winnerCount: 1,
       totalSeats: 4800,
+      seatsPerRow: 20,
+      rows: 240,
       time: "Every Sunday at 6:00 PM",
       color: "from-gray-700 to-gray-900",
       icon: "🏆",
@@ -1020,6 +1040,8 @@ export default function CityVip() {
       prizeNumber: 40000000,
       winnerCount: 1,
       totalSeats: 9600,
+      seatsPerRow: 20,
+      rows: 480,
       time: "Last Day of Month at 8:00 PM",
       color: "from-gray-700 to-gray-900",
       icon: "👑",
@@ -1035,7 +1057,7 @@ export default function CityVip() {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      const redirectUrl = `/cities/${city}?type=${poolType}`;
+      const redirectUrl = `/cities/${city}?type=${poolType}&showSeats=true`;
       
       localStorage.setItem('abbaa_redirect_after_login', redirectUrl);
       localStorage.setItem('pendingRole', 'individual');
@@ -1059,12 +1081,10 @@ export default function CityVip() {
     setShowSeatSelector(true);
   };
 
-  // ========== UPDATED: submitPayment (No Reference Number) ==========
-  const submitPayment = async (participantId, file) => {
+  const submitPayment = async (participantId, reference, file) => {
     const loadingToast = toast.loading('Uploading payment screenshot...');
     
     try {
-      validateFile(file);
       const optimizedFile = await compressImage(file);
       
       const fileExt = optimizedFile.name.split('.').pop();
@@ -1089,6 +1109,7 @@ export default function CityVip() {
         .update({
           payment_status: 'pending_verification',
           payment_proof_url: publicUrl,
+          reference: reference,
           updated_at: new Date().toISOString(),
           payment_submitted_at: new Date().toISOString()
         })
@@ -1119,14 +1140,29 @@ export default function CityVip() {
     }
   };
 
-  // Seat selector with ALL seats visible and proper color coding
+  // MOBILE-OPTIMIZED SEAT SELECTOR with Light Grey Background and Green Buttons
   const renderSeatSelector = () => {
     if (!selectedPoolType) return null;
     
     const pool = vipPools[selectedPoolType];
     const entryFeeAmount = parseInt(pool.contribution);
     const totalSeatsCount = pool.totalSeats;
-    const seatNumbers = Array.from({ length: totalSeatsCount }, (_, i) => i + 1);
+    const seatsPerRow = pool.seatsPerRow || 20;
+    const rows = Math.ceil(totalSeatsCount / seatsPerRow);
+    const rowLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    
+    const [currentRow, setCurrentRow] = useState(0);
+    const seatGridRef = useRef(null);
+    
+    const scrollToRow = (rowIndex) => {
+      setCurrentRow(rowIndex);
+      if (seatGridRef.current) {
+        const rowElement = document.getElementById(`row-${rowIndex}`);
+        if (rowElement) {
+          rowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    };
     
     const toggleSeat = (seatNum) => {
       if (takenSeats.includes(seatNum)) {
@@ -1188,106 +1224,173 @@ export default function CityVip() {
       }
     };
     
+    // Create seat grid with rows
+    const seatRows = [];
+    for (let row = 0; row < rows; row++) {
+      const startSeat = row * seatsPerRow + 1;
+      const endSeat = Math.min(startSeat + seatsPerRow - 1, totalSeatsCount);
+      const rowSeats = [];
+      for (let seat = startSeat; seat <= endSeat; seat++) {
+        rowSeats.push(seat);
+      }
+      seatRows.push(rowSeats);
+    }
+    
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl shadow-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
-            <div>
-              <h2 className="text-xl font-bold">Select Your Seats</h2>
-              <p className="text-sm text-gray-500">{pool.name} • Max {maxSeats} seats • Total {totalSeatsCount.toLocaleString()} seats</p>
+      <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-2">
+        <div className="bg-gray-100 rounded-2xl shadow-xl max-w-full w-full max-h-[98vh] overflow-hidden flex flex-col">
+          {/* Header - Light Grey */}
+          <div className="sticky top-0 bg-gray-100 border-b border-gray-200 p-4 z-10">
+            <div className="flex justify-between items-center flex-wrap gap-2">
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-gray-800">Select Your Seats</h2>
+                <p className="text-xs text-gray-500">{pool.name} • Max {maxSeats} seats</p>
+              </div>
+              <button 
+                onClick={() => {
+                  setShowSeatSelector(false);
+                  setSelectedPoolType(null);
+                  setSelectedSeats([]);
+                }}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
             </div>
-            <button 
-              onClick={() => {
-                setShowSeatSelector(false);
-                setSelectedPoolType(null);
-                setSelectedSeats([]);
-              }}
-              className="text-gray-500 hover:text-gray-700 text-2xl"
-            >
-              ×
-            </button>
+            
+            {/* Quick Row Navigation */}
+            <div className="flex overflow-x-auto gap-1 mt-3 pb-2">
+              {Array.from({ length: Math.min(rows, 20) }).map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => scrollToRow(idx)}
+                  className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap transition ${
+                    currentRow === idx 
+                      ? 'bg-green-600 text-white' 
+                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Row {rowLetters[idx] || (idx + 1)}
+                </button>
+              ))}
+              {rows > 20 && (
+                <span className="px-2 py-1 text-xs text-gray-500">+{rows - 20} more</span>
+              )}
+            </div>
           </div>
           
-          <div className="p-6">
+          <div className="flex-1 overflow-y-auto p-4 bg-gray-100">
             {/* Seat Legend */}
-            <div className="flex flex-wrap justify-center gap-4 mb-4 pb-3 border-b">
+            <div className="flex flex-wrap justify-center gap-4 mb-4 pb-3 border-b border-gray-300">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-green-500 rounded"></div>
-                <span className="text-xs">Selected by You</span>
+                <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center text-white text-[10px] font-bold">✓</div>
+                <span className="text-xs text-gray-700">Selected by You</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-yellow-400 rounded"></div>
-                <span className="text-xs">Available</span>
+                <div className="w-6 h-6 bg-gray-200 border border-gray-400 rounded"></div>
+                <span className="text-xs text-gray-700">Available</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-gray-300 rounded"></div>
-                <span className="text-xs">Taken by Others</span>
+                <div className="w-6 h-6 bg-gray-400 rounded"></div>
+                <span className="text-xs text-gray-700">Taken by Others</span>
               </div>
             </div>
 
-            <div className="bg-gray-50 rounded-lg p-4 mb-4 text-center">
-              <p className="text-sm text-gray-600">Entry Fee: {pool.contributionFormatted} per seat</p>
-              <p className="text-xs text-gray-400">Total Seats Available: {totalSeatsCount.toLocaleString()}</p>
+            {/* Screen Indicator */}
+            <div className="text-center mb-4">
+              <div className="inline-block bg-gray-600 text-white text-[10px] px-4 py-1 rounded-full">🎬 SCREEN</div>
+              <div className="w-full h-px bg-gray-300 mt-2"></div>
             </div>
             
-            <div className="grid grid-cols-10 md:grid-cols-15 lg:grid-cols-20 gap-2 mb-6 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-xl">
-              {seatNumbers.map(seatNum => {
-                const isTaken = takenSeats.includes(seatNum);
-                const isSelected = selectedSeats.includes(seatNum);
-                
-                let bgColor = 'bg-yellow-400 hover:bg-yellow-500 text-gray-800';
-                if (isSelected) bgColor = 'bg-green-600 text-white';
-                if (isTaken) bgColor = 'bg-gray-400 text-white cursor-not-allowed';
-                
-                return (
-                  <button
-                    key={seatNum}
-                    onClick={() => !isTaken && toggleSeat(seatNum)}
-                    disabled={isTaken}
-                    className={`w-10 h-10 rounded-lg font-semibold transition ${bgColor} ${isTaken ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
-                    title={isTaken ? `Seat ${seatNum} is already taken` : `Select Seat ${seatNum}`}
-                  >
-                    {seatNum}
-                  </button>
-                );
-              })}
+            {/* Seat Grid - Optimized for mobile scroll */}
+            <div ref={seatGridRef} className="space-y-2">
+              {seatRows.map((rowSeats, rowIndex) => (
+                <div key={rowIndex} id={`row-${rowIndex}`} className="flex flex-wrap items-center gap-1">
+                  <div className="w-8 text-[11px] font-mono font-semibold text-gray-500">
+                    {rowLetters[rowIndex] || (rowIndex + 1)}
+                  </div>
+                  <div className="flex flex-wrap gap-1 flex-1">
+                    {rowSeats.map(seatNum => {
+                      const isTaken = takenSeats.includes(seatNum);
+                      const isSelected = selectedSeats.includes(seatNum);
+                      
+                      let bgColor = 'bg-gray-200 border border-gray-400';
+                      let textColor = 'text-gray-700';
+                      let hoverClass = 'hover:bg-green-100 hover:border-green-400';
+                      
+                      if (isSelected) {
+                        bgColor = 'bg-green-600 border-green-700';
+                        textColor = 'text-white';
+                        hoverClass = '';
+                      }
+                      if (isTaken) {
+                        bgColor = 'bg-gray-400 border-gray-500';
+                        textColor = 'text-gray-600';
+                        hoverClass = 'cursor-not-allowed';
+                      }
+                      
+                      return (
+                        <button
+                          key={seatNum}
+                          onClick={() => !isTaken && toggleSeat(seatNum)}
+                          disabled={isTaken}
+                          className={`w-8 h-8 rounded-lg text-xs font-semibold transition ${bgColor} ${textColor} ${hoverClass} ${isTaken ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                          title={isTaken ? `Seat ${seatNum} is already taken` : `Select Seat ${seatNum}`}
+                        >
+                          {seatNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
             
             {totalSeatsCount > 500 && (
-              <p className="text-xs text-gray-400 text-center mb-4">
+              <p className="text-xs text-gray-400 text-center mt-4">
                 Showing all {totalSeatsCount.toLocaleString()} seats (scroll to see more)
               </p>
             )}
-            
-            {selectedSeats.length > 0 && (
-              <div className="border-t pt-4">
-                <div className="flex justify-between items-center mb-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Selected Seats</p>
-                    <p className="font-bold text-lg">{selectedSeats.sort((a,b)=>a-b).join(', ')}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500">Total Amount</p>
-                    <p className="font-bold text-2xl text-green-600">ETB {totalAmount.toLocaleString()}</p>
-                    <p className="text-xs text-gray-400">({selectedSeats.length} seats × {pool.contributionFormatted})</p>
-                  </div>
-                </div>
-                <button
-                  onClick={confirmSeats}
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition disabled:opacity-50"
-                >
-                  {loading ? 'Processing...' : 'Confirm & Proceed to Payment'}
-                </button>
-              </div>
-            )}
           </div>
+          
+          {/* Footer with Green Button */}
+          {selectedSeats.length > 0 && (
+            <div className="sticky bottom-0 bg-gray-100 border-t border-gray-200 p-4">
+              <div className="flex justify-between items-center mb-3">
+                <div>
+                  <p className="text-xs text-gray-500">Selected Seats</p>
+                  <p className="font-bold text-gray-800">{selectedSeats.sort((a,b)=>a-b).join(', ')}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">Total Amount</p>
+                  <p className="font-bold text-xl text-green-600">ETB {totalAmount.toLocaleString()}</p>
+                  <p className="text-[10px] text-gray-400">({selectedSeats.length} seats × {pool.contributionFormatted})</p>
+                </div>
+              </div>
+              <button
+                onClick={confirmSeats}
+                disabled={loading}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition disabled:opacity-50"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Processing...
+                  </span>
+                ) : (
+                  'Confirm & Proceed to Payment'
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
   };
 
-  // ========== UPDATED: renderPayment (No Reference Number) ==========
   const renderPayment = () => {
     if (!showPayment || !participantId || !selectedPoolType) return null;
     
@@ -1314,6 +1417,22 @@ export default function CityVip() {
         e.target.value = '';
         setSelectedFile(null);
         setPreviewUrl(null);
+      }
+    };
+    
+    const handlePaymentSubmit = async () => {
+      if (!selectedFile) {
+        toast.error('Please upload payment screenshot');
+        return;
+      }
+      
+      setIsSubmitting(true);
+      try {
+        await submitPayment(participantId, reference, selectedFile);
+      } catch (error) {
+        console.error('Payment error:', error);
+      } finally {
+        setIsSubmitting(false);
       }
     };
     
@@ -1349,8 +1468,18 @@ export default function CityVip() {
               <p className="text-sm text-gray-600 mt-2">Account Name: Negassa Hundessa</p>
             </div>
             
-            {/* NO REFERENCE NUMBER FIELD - Only screenshot upload */}
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-500 transition">
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Reference Number/Transaction ID *</label>
+              <input
+                type="text"
+                placeholder="Enter transaction ID or reference number"
+                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+              />
+            </div>
+            
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-green-500 transition">
               <input
                 type="file"
                 accept="image/*"
@@ -1377,18 +1506,9 @@ export default function CityVip() {
             </div>
             
             <button
-              onClick={async () => {
-                if (!selectedFile) {
-                  toast.error('Please upload payment screenshot');
-                  return;
-                }
-                
-                setIsSubmitting(true);
-                await submitPayment(participantId, selectedFile);
-                setIsSubmitting(false);
-              }}
-              disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition mt-4 disabled:opacity-50"
+              onClick={handlePaymentSubmit}
+              disabled={isSubmitting || !reference.trim()}
+              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition mt-4 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <span className="flex items-center justify-center gap-2">
@@ -1495,7 +1615,7 @@ export default function CityVip() {
           <div className="flex items-center gap-3 text-gray-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg><span>💺 Total Seats: {pool.totalSeats.toLocaleString()}</span></div>
         </div>
         <p className="text-gray-600 text-sm mb-6">{pool.description}</p>
-        <button onClick={() => handleJoinPool(type)} className={`w-full bg-gradient-to-r ${pool.color} text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition transform hover:scale-105 flex items-center justify-center gap-2`}>🎯 Select Seat & Join {pool.frequency} Pool →</button>
+        <button onClick={() => handleJoinPool(type)} className={`w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition transform hover:scale-105 flex items-center justify-center gap-2`}>🎯 Select Seat & Join {pool.frequency} Pool →</button>
       </div>
     </div>
   );
@@ -1532,7 +1652,7 @@ export default function CityVip() {
           </div>
         </nav>
 
-        <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
+        <div className="min-h-screen bg-gray-100">
           {/* City Selector Dropdown */}
           <div className="container mx-auto px-4 pt-6">
             <div className="relative">
@@ -1649,9 +1769,9 @@ export default function CityVip() {
           {/* VIP Tabs */}
           <div className="container mx-auto px-4 py-8">
             <div className="flex flex-wrap justify-center gap-3 mb-8">
-              <button onClick={() => setActiveTab('daily')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'daily' ? 'bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-lg' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>⭐ ዕለታዊ | Daily (1M)</button>
-              <button onClick={() => setActiveTab('weekly')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'weekly' ? 'bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-lg' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>🏆 ሳምንታዊ | Weekly (10M)</button>
-              <button onClick={() => setActiveTab('monthly')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'monthly' ? 'bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-lg' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>👑 ወርሃዊ | Monthly (40M)</button>
+              <button onClick={() => setActiveTab('daily')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'daily' ? 'bg-green-600 text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>⭐ ዕለታዊ | Daily (1M)</button>
+              <button onClick={() => setActiveTab('weekly')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'weekly' ? 'bg-green-600 text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>🏆 ሳምንታዊ | Weekly (10M)</button>
+              <button onClick={() => setActiveTab('monthly')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'monthly' ? 'bg-green-600 text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>👑 ወርሃዊ | Monthly (40M)</button>
             </div>
             <div className="max-w-4xl mx-auto"><PoolCard type={activeTab} pool={vipPools[activeTab]} /></div>
           </div>
@@ -1668,7 +1788,7 @@ export default function CityVip() {
                     <th className="px-6 py-4 text-left">ክፍያ | Entry</th>
                     <th className="px-6 py-4 text-left">ሽልማት | Prize</th>
                     <th className="px-6 py-4 text-left">ጊዜ | When</th>
-                  </tr>
+                  <tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   <tr className="hover:bg-gray-50 transition">
