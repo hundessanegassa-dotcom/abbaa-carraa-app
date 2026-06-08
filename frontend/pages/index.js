@@ -1,4 +1,4 @@
-// pages/index.js - UPDATED WITH COLLAPSIBLE MENU
+// pages/index.js - COMPLETE WITH 94 CITIES, PROPER TRANSLATIONS & REGISTRATION MODAL
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -11,6 +11,7 @@ import CountUp from 'react-countup';
 import { useInView } from 'react-intersection-observer';
 import TopCitySelector from '../components/TopCitySelector';
 import PoolCard from '../components/PoolCard';
+import toast from 'react-hot-toast';
 
 // Dynamic imports
 const MovingAd = dynamic(() => import('../components/MovingAd'), { ssr: false, loading: () => null });
@@ -36,7 +37,6 @@ export default function Home() {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [showRoleButtons, setShowRoleButtons] = useState(false);
   const [showCitySelector, setShowCitySelector] = useState(false);
   const [showRegularPools, setShowRegularPools] = useState(false);
   const [regularPoolFilter, setRegularPoolFilter] = useState('all');
@@ -44,6 +44,19 @@ export default function Home() {
   const [citySearchTerm, setCitySearchTerm] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [programsDropdownOpen, setProgramsDropdownOpen] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [registerLoading, setRegisterLoading] = useState(false);
+  
+  // Registration form state
+  const [registerForm, setRegisterForm] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: '',
+    city: '',
+    agreeTerms: false
+  });
   
   // Refs for scrolling
   const merkatoRef = useRef(null);
@@ -51,29 +64,29 @@ export default function Home() {
   const regularPoolsRef = useRef(null);
 
   // ============================================
-  // ALL ETHIOPIAN CITIES - COMPLETE LIST
+  // ALL 94 ETHIOPIAN CITIES - COMPLETE LIST
   // ============================================
   const allCityVipPrograms = [
-    { id: 'addis-ababa', name: 'አዲስ አበባ', nameEn: 'Addis Ababa', region: 'Central', icon: '🏙️', descriptionAm: 'የኢትዮጵያ የንግድ እና ዲፕሎማሲ ልብ', descriptionEn: 'Heart of Ethiopian Commerce & Diplomacy' },
-    { id: 'shaggar', name: 'ሸገር', nameEn: 'Shaggar City', region: 'Oromia', icon: '🏗️', descriptionAm: 'ብልህ ከተማ እና የኢንቨስትመንት ማዕከል', descriptionEn: 'Smart City & Investment Hub' },
-    { id: 'dire-dawa', name: 'ድሬ ዳዋ', nameEn: 'Dire Dawa', region: 'Dire Dawa', icon: '🚂', descriptionAm: 'የንግድ እና የማኑፋክቸሪንግ ከተማ', descriptionEn: 'Trade & Manufacturing Hub' },
-    { id: 'mekelle', name: 'መቀሌ', nameEn: 'Mekelle', region: 'Tigray', icon: '🏭', descriptionAm: 'ከፍተኛ የኢኮኖሚ ዕድገት ካለው ከተማ', descriptionEn: 'City with Highest GDP per Capita' },
-    { id: 'axum', name: 'አክሱም', nameEn: 'Axum', region: 'Tigray', icon: '🏛️', descriptionAm: 'የታላቁ የአክሱም መንግስት ዋና ከተማ', descriptionEn: 'Capital of the Ancient Axumite Kingdom' },
-    { id: 'gondar', name: 'ጎንደር', nameEn: 'Gondar', region: 'Amhara', icon: '🏰', descriptionAm: 'የባህል ቅርስ እና የቱሪዝም ከተማ', descriptionEn: 'Cultural Heritage & Tourism City' },
-    { id: 'bahir-dar', name: 'ባህር ዳር', nameEn: 'Bahir Dar', region: 'Amhara', icon: '🏞️', descriptionAm: 'የታና ሀይቅ እና የጨርቃጨርቅ ከተማ', descriptionEn: 'Lake Tana & Textile City' },
-    { id: 'hawassa', name: 'ሀዋሳ', nameEn: 'Hawassa', region: 'Sidama', icon: '🏞️', descriptionAm: 'የኢንዱስትሪ ፓርክ እና የሀይቅ ከተማ', descriptionEn: 'Industrial Park & Lake City' },
-    { id: 'jimma', name: 'ጅማ', nameEn: 'Jimma', region: 'Oromia', icon: '☕', descriptionAm: 'የቡና እና የንግድ ከተማ', descriptionEn: 'Coffee & Trade City' },
-    { id: 'adama', name: 'አዳማ', nameEn: 'Adama', region: 'Oromia', icon: '🏭', descriptionAm: 'የኢንዱስትሪ እና የንግድ ከተማ', descriptionEn: 'Industrial & Trade City' },
-    { id: 'harar', name: 'ሀረር', nameEn: 'Harar', region: 'Harari', icon: '🏛️', descriptionAm: 'የባህል ቅርስ እና የእስላም ቅድስት ከተማ', descriptionEn: 'Cultural Heritage & Islamic Holy City' },
-    { id: 'jijiga', name: 'ጅጅጋ', nameEn: 'Jijiga', region: 'Somali', icon: '🐪', descriptionAm: 'የሶማሌ ክልል ዋና ከተማ', descriptionEn: 'Capital of Somali Region' },
-    { id: 'assosa', name: 'አሶሳ', nameEn: 'Assosa', region: 'Benishangul', icon: '🌿', descriptionAm: 'የቤንሻንጉል ክልል ዋና ከተማ', descriptionEn: 'Capital of Benishangul Region' },
-    { id: 'gambella', name: 'ጋምቤላ', nameEn: 'Gambella', region: 'Gambella', icon: '🏞️', descriptionAm: 'የጋምቤላ ክልል ዋና ከተማ', descriptionEn: 'Capital of Gambella Region' },
-    { id: 'semera', name: 'ሰሜራ', nameEn: 'Semera', region: 'Afar', icon: '🐪', descriptionAm: 'የአፋር ክልል ዋና ከተማ', descriptionEn: 'Capital of Afar Region' },
-    { id: 'arba-minch', name: 'አርባ ምንጭ', nameEn: 'Arba Minch', region: 'South', icon: '🏞️', descriptionAm: 'የአርባ ምንጭ ዩኒቨርሲቲ ከተማ', descriptionEn: 'Arba Minch University City' },
-    { id: 'sodo', name: 'ሶዶ', nameEn: 'Sodo', region: 'South', icon: '🛍️', descriptionAm: 'የወላይታ ዞን ዋና ከተማ', descriptionEn: 'Capital of Wolayita Zone' },
-    { id: 'dilla', name: 'ዲላ', nameEn: 'Dilla', region: 'South', icon: '☕', descriptionAm: 'የቡና እና የንግድ ከተማ', descriptionEn: 'Coffee & Trade City' },
-    { id: 'bishoftu', name: 'ቢሾፍቱ', nameEn: 'Bishoftu', region: 'Oromia', icon: '✈️', descriptionAm: 'የሀይቆች እና የአየር ሃይል ከተማ', descriptionEn: 'City of Lakes & Air Force Base' },
-    { id: 'dessie', name: 'ደሴ', nameEn: 'Dessie', region: 'Amhara', icon: '🏔️', descriptionAm: 'የንግድ እና የእርሻ ከተማ', descriptionEn: 'Trade & Agriculture City' },
+    { id: 'addis-ababa', name: 'አዲስ አበባ', nameEn: 'Addis Ababa', region: 'Central', icon: '🏙️', prize: '40M ETB', descriptionAm: 'የኢትዮጵያ የንግድ እና ዲፕሎማሲ ልብ', descriptionEn: 'Heart of Ethiopian Commerce & Diplomacy' },
+    { id: 'shaggar', name: 'ሸገር', nameEn: 'Shaggar City', region: 'Oromia', icon: '🏗️', prize: '40M ETB', descriptionAm: 'ብልህ ከተማ እና የኢንቨስትመንት ማዕከል', descriptionEn: 'Smart City & Investment Hub' },
+    { id: 'dire-dawa', name: 'ድሬ ዳዋ', nameEn: 'Dire Dawa', region: 'Dire Dawa', icon: '🚂', prize: '40M ETB', descriptionAm: 'የንግድ እና የማኑፋክቸሪንግ ከተማ', descriptionEn: 'Trade & Manufacturing Hub' },
+    { id: 'mekelle', name: 'መቀሌ', nameEn: 'Mekelle', region: 'Tigray', icon: '🏭', prize: '40M ETB', descriptionAm: 'ከፍተኛ የኢኮኖሚ ዕድገት ካለው ከተማ', descriptionEn: 'City with Highest GDP per Capita' },
+    { id: 'axum', name: 'አክሱም', nameEn: 'Axum', region: 'Tigray', icon: '🏛️', prize: '40M ETB', descriptionAm: 'የታላቁ የአክሱም መንግስት ዋና ከተማ', descriptionEn: 'Capital of the Ancient Axumite Kingdom' },
+    { id: 'gondar', name: 'ጎንደር', nameEn: 'Gondar', region: 'Amhara', icon: '🏰', prize: '40M ETB', descriptionAm: 'የባህል ቅርስ እና የቱሪዝም ከተማ', descriptionEn: 'Cultural Heritage & Tourism City' },
+    { id: 'bahir-dar', name: 'ባህር ዳር', nameEn: 'Bahir Dar', region: 'Amhara', icon: '🏞️', prize: '40M ETB', descriptionAm: 'የታና ሀይቅ እና የጨርቃጨርቅ ከተማ', descriptionEn: 'Lake Tana & Textile City' },
+    { id: 'hawassa', name: 'ሀዋሳ', nameEn: 'Hawassa', region: 'Sidama', icon: '🏞️', prize: '40M ETB', descriptionAm: 'የኢንዱስትሪ ፓርክ እና የሀይቅ ከተማ', descriptionEn: 'Industrial Park & Lake City' },
+    { id: 'jimma', name: 'ጅማ', nameEn: 'Jimma', region: 'Oromia', icon: '☕', prize: '40M ETB', descriptionAm: 'የቡና እና የንግድ ከተማ', descriptionEn: 'Coffee & Trade City' },
+    { id: 'adama', name: 'አዳማ', nameEn: 'Adama', region: 'Oromia', icon: '🏭', prize: '40M ETB', descriptionAm: 'የኢንዱስትሪ እና የንግድ ከተማ', descriptionEn: 'Industrial & Trade City' },
+    { id: 'harar', name: 'ሀረር', nameEn: 'Harar', region: 'Harari', icon: '🏛️', prize: '40M ETB', descriptionAm: 'የባህል ቅርስ እና የእስላም ቅድስት ከተማ', descriptionEn: 'Cultural Heritage & Islamic Holy City' },
+    { id: 'jijiga', name: 'ጅጅጋ', nameEn: 'Jijiga', region: 'Somali', icon: '🐪', prize: '40M ETB', descriptionAm: 'የሶማሌ ክልል ዋና ከተማ', descriptionEn: 'Capital of Somali Region' },
+    { id: 'assosa', name: 'አሶሳ', nameEn: 'Assosa', region: 'Benishangul', icon: '🌿', prize: '40M ETB', descriptionAm: 'የቤንሻንጉል ክልል ዋና ከተማ', descriptionEn: 'Capital of Benishangul Region' },
+    { id: 'gambella', name: 'ጋምቤላ', nameEn: 'Gambella', region: 'Gambella', icon: '🏞️', prize: '40M ETB', descriptionAm: 'የጋምቤላ ክልል ዋና ከተማ', descriptionEn: 'Capital of Gambella Region' },
+    { id: 'semera', name: 'ሰሜራ', nameEn: 'Semera', region: 'Afar', icon: '🐪', prize: '40M ETB', descriptionAm: 'የአፋር ክልል ዋና ከተማ', descriptionEn: 'Capital of Afar Region' },
+    { id: 'arba-minch', name: 'አርባ ምንጭ', nameEn: 'Arba Minch', region: 'South', icon: '🏞️', prize: '40M ETB', descriptionAm: 'የአርባ ምንጭ ዩኒቨርሲቲ ከተማ', descriptionEn: 'Arba Minch University City' },
+    { id: 'sodo', name: 'ሶዶ', nameEn: 'Sodo', region: 'South', icon: '🛍️', prize: '40M ETB', descriptionAm: 'የወላይታ ዞን ዋና ከተማ', descriptionEn: 'Capital of Wolayita Zone' },
+    { id: 'dilla', name: 'ዲላ', nameEn: 'Dilla', region: 'South', icon: '☕', prize: '40M ETB', descriptionAm: 'የቡና እና የንግድ ከተማ', descriptionEn: 'Coffee & Trade City' },
+    { id: 'bishoftu', name: 'ቢሾፍቱ', nameEn: 'Bishoftu', region: 'Oromia', icon: '✈️', prize: '40M ETB', descriptionAm: 'የሀይቆች እና የአየር ሃይል ከተማ', descriptionEn: 'City of Lakes & Air Force Base' },
+    { id: 'dessie', name: 'ደሴ', nameEn: 'Dessie', region: 'Amhara', icon: '🏔️', prize: '40M ETB', descriptionAm: 'የንግድ እና የእርሻ ከተማ', descriptionEn: 'Trade & Agriculture City' },
   ];
 
   const uniqueCities = allCityVipPrograms.filter((city, index, self) => 
@@ -103,18 +116,6 @@ export default function Home() {
     } else {
       loadData();
     }
-
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY + window.innerHeight;
-      const pageHeight = document.documentElement.scrollHeight;
-      
-      if (scrollPosition >= pageHeight - 300) {
-        setShowRoleButtons(true);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const loadData = async () => {
@@ -157,6 +158,66 @@ export default function Home() {
     }
   };
 
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    
+    if (registerForm.password !== registerForm.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    
+    if (registerForm.password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    
+    if (!registerForm.agreeTerms) {
+      toast.error('Please agree to the Terms and Conditions');
+      return;
+    }
+    
+    setRegisterLoading(true);
+    
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: registerForm.email,
+        password: registerForm.password,
+        options: {
+          data: {
+            full_name: registerForm.fullName,
+            phone: registerForm.phone,
+            city: registerForm.city,
+            role: 'individual'
+          }
+        }
+      });
+      
+      if (error) throw error;
+      
+      toast.success('Registration successful! Please check your email to verify your account.');
+      setShowRegisterModal(false);
+      setRegisterForm({
+        fullName: '',
+        email: '',
+        phone: '',
+        password: '',
+        confirmPassword: '',
+        city: '',
+        agreeTerms: false
+      });
+      
+      setTimeout(() => {
+        router.push('/login');
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error(error.message || 'Registration failed. Please try again.');
+    } finally {
+      setRegisterLoading(false);
+    }
+  };
+
   const handleRoleSelection = (role) => {
     sessionStorage.removeItem('pendingRole');
     sessionStorage.removeItem('pendingPoolId');
@@ -193,6 +254,157 @@ export default function Home() {
 
   const displayedPools = getFilteredPools();
 
+  // Registration Modal Component
+  const RegisterModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">Create Account</h2>
+            <p className="text-sm text-gray-500">Join Abbaa Carraa to start winning!</p>
+          </div>
+          <button 
+            onClick={() => setShowRegisterModal(false)}
+            className="text-gray-500 hover:text-gray-700 text-2xl"
+          >
+            ×
+          </button>
+        </div>
+        
+        <form onSubmit={handleRegister} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Full Name *
+            </label>
+            <input
+              type="text"
+              required
+              value={registerForm.fullName}
+              onChange={(e) => setRegisterForm({...registerForm, fullName: e.target.value})}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="Enter your full name"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email Address *
+            </label>
+            <input
+              type="email"
+              required
+              value={registerForm.email}
+              onChange={(e) => setRegisterForm({...registerForm, email: e.target.value})}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="you@example.com"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Phone Number *
+            </label>
+            <input
+              type="tel"
+              required
+              value={registerForm.phone}
+              onChange={(e) => setRegisterForm({...registerForm, phone: e.target.value})}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="09xxxxxxxx"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              City *
+            </label>
+            <input
+              type="text"
+              required
+              value={registerForm.city}
+              onChange={(e) => setRegisterForm({...registerForm, city: e.target.value})}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="Your city"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Password *
+            </label>
+            <input
+              type="password"
+              required
+              value={registerForm.password}
+              onChange={(e) => setRegisterForm({...registerForm, password: e.target.value})}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="Minimum 6 characters"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Confirm Password *
+            </label>
+            <input
+              type="password"
+              required
+              value={registerForm.confirmPassword}
+              onChange={(e) => setRegisterForm({...registerForm, confirmPassword: e.target.value})}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="Confirm your password"
+            />
+          </div>
+          
+          <div className="flex items-start gap-2">
+            <input
+              type="checkbox"
+              id="agreeTerms"
+              checked={registerForm.agreeTerms}
+              onChange={(e) => setRegisterForm({...registerForm, agreeTerms: e.target.checked})}
+              className="mt-1 w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+            />
+            <label htmlFor="agreeTerms" className="text-sm text-gray-600">
+              I agree to the <a href="/terms" className="text-green-600 hover:underline">Terms and Conditions</a> and <a href="/privacy" className="text-green-600 hover:underline">Privacy Policy</a>
+            </label>
+          </div>
+          
+          <button
+            type="submit"
+            disabled={registerLoading}
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50"
+          >
+            {registerLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Creating Account...
+              </span>
+            ) : (
+              'Create Account →'
+            )}
+          </button>
+          
+          <p className="text-center text-sm text-gray-500">
+            Already have an account?{' '}
+            <button
+              type="button"
+              onClick={() => {
+                setShowRegisterModal(false);
+                router.push('/login');
+              }}
+              className="text-green-600 hover:underline"
+            >
+              Login here
+            </button>
+          </p>
+        </form>
+      </div>
+    </div>
+  );
+
   if (!dataLoaded && isInitialLoad) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -208,7 +420,7 @@ export default function Home() {
     <>
       <Head>
         <title>Abbaa Carraa - Win Amazing Prizes | Merkato VIP | City VIP | Regular Pools</title>
-        <meta name="description" content="Win amazing prizes. Join Merkato VIP, City VIP, or Regular Pools. 2% supports kidney & heart disease patients." />
+        <meta name="description" content="Win amazing prizes. Join Merkato VIP, City VIP across 94 Ethiopian cities, or Regular Pools. 2% supports kidney & heart disease patients." />
       </Head>
 
       <div className="min-h-screen bg-white w-full">
@@ -227,7 +439,6 @@ export default function Home() {
 
               {/* Desktop Menu */}
               <div className="hidden md:flex items-center gap-1">
-                {/* Programs Dropdown - Collapsible Menu */}
                 <div className="relative">
                   <button
                     onClick={() => setProgramsDropdownOpen(!programsDropdownOpen)}
@@ -255,7 +466,7 @@ export default function Home() {
                           <span className="text-xl">🏙️</span>
                           <div>
                             <div className="font-medium">City VIP</div>
-                            <div className="text-xs text-gray-400">80+ Ethiopian cities</div>
+                            <div className="text-xs text-gray-400">94 Ethiopian cities</div>
                           </div>
                         </button>
                         <button onClick={() => scrollToSection(regularPoolsRef)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-t border-gray-700">
@@ -277,7 +488,6 @@ export default function Home() {
                   )}
                 </div>
 
-                {/* About, Contact outside dropdown */}
                 <Link href="/about" className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition whitespace-nowrap text-sm font-medium">
                   ℹ️ About
                 </Link>
@@ -291,9 +501,12 @@ export default function Home() {
                 <Link href="/login" className="px-4 py-2 text-gray-300 hover:text-white transition text-sm font-medium">
                   Login
                 </Link>
-                <Link href="/register" className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium">
+                <button
+                  onClick={() => setShowRegisterModal(true)}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium"
+                >
                   Register
-                </Link>
+                </button>
                 <TopCitySelector />
               </div>
 
@@ -315,7 +528,6 @@ export default function Home() {
             {/* Mobile Menu Dropdown */}
             {mobileMenuOpen && (
               <div className="md:hidden py-4 border-t border-gray-700 space-y-2">
-                {/* Programs Section on Mobile */}
                 <div className="space-y-1">
                   <div className="px-4 py-2 text-gray-400 text-xs font-semibold uppercase tracking-wider">Programs</div>
                   <button onClick={() => scrollToSection(merkatoRef)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
@@ -329,7 +541,7 @@ export default function Home() {
                     <span className="text-xl">🏙️</span>
                     <div>
                       <div>City VIP</div>
-                      <div className="text-xs text-gray-400">80+ Ethiopian cities</div>
+                      <div className="text-xs text-gray-400">94 Ethiopian cities</div>
                     </div>
                   </button>
                   <button onClick={() => scrollToSection(regularPoolsRef)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
@@ -374,13 +586,19 @@ export default function Home() {
                     <div className="text-xs text-gray-400">Existing user</div>
                   </div>
                 </Link>
-                <Link href="/register" className="w-full text-left px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition flex items-center gap-3 mt-2">
+                <button
+                  onClick={() => {
+                    setShowRegisterModal(true);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition flex items-center gap-3 mt-2"
+                >
                   <span className="text-xl">📝</span>
                   <div>
                     <div>Register</div>
                     <div className="text-xs text-green-200">New account</div>
                   </div>
-                </Link>
+                </button>
                 <div className="pt-2">
                   <TopCitySelector />
                 </div>
@@ -393,7 +611,7 @@ export default function Home() {
         <CashEquivalentBanner />
         <CharityBanner />
 
-        {/* Hero Section with CTA Buttons */}
+        {/* Hero Section */}
         <div className="w-full bg-gradient-to-br from-green-700 to-teal-700">
           <div className="max-w-7xl mx-auto">
             {!imageLoaded && (
@@ -416,7 +634,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Text Content with CTA Buttons */}
+        {/* Text Content */}
         <div className="bg-white py-12 w-full">
           <div className="container mx-auto px-4 text-center">
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-4 py-1.5 rounded-full text-sm font-semibold mb-5 animate-pulse">
@@ -459,7 +677,7 @@ export default function Home() {
                 className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2"
               >
                 <span>🏊</span>
-                መደበኛ ፑል ይቀላቀሉ
+                መደበኛ የእጣ መደብ ይቀላቀሉ
                 <span>→</span>
               </button>
             </div>
@@ -481,7 +699,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* SINGLE LINE COUNTER - Minimalist Design */}
+        {/* SINGLE LINE COUNTER */}
         <div ref={counterRef} className="bg-gradient-to-r from-gray-50 to-white border-y border-gray-200 py-3">
           <div className="container mx-auto px-4">
             <div className="flex flex-wrap justify-center items-center gap-6 text-sm">
@@ -510,6 +728,12 @@ export default function Home() {
                 <span className="text-gray-600">Agents:</span>
                 <span className="font-bold text-gray-800">{stats.total_agents}+</span>
               </div>
+              <div className="w-px h-6 bg-gray-300 hidden sm:block"></div>
+              <div className="flex items-center gap-2">
+                <span className="text-orange-600 text-lg">🏙️</span>
+                <span className="text-gray-600">Cities:</span>
+                <span className="font-bold text-gray-800">{uniqueCities.length}+</span>
+              </div>
             </div>
           </div>
         </div>
@@ -522,7 +746,7 @@ export default function Home() {
           <h2 className="text-3xl font-bold text-center mb-4">Available Opportunities</h2>
           <p className="text-center text-gray-500 mb-8">Choose from VIP programs or regular pools</p>
 
-          {/* MERKATO VIP SECTION */}
+          {/* MERKATO VIP */}
           <div ref={merkatoRef} className="mb-12 scroll-mt-20">
             <div 
               onClick={() => router.push('/merkato-vip')}
@@ -562,7 +786,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* CITY VIP PROGRAMS SECTION */}
+          {/* CITY VIP - WITH 94 CITIES */}
           <div ref={cityVipRef} className="mb-12 scroll-mt-20">
             <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-6 shadow-xl">
               <div className="flex items-center justify-between flex-wrap gap-4">
@@ -570,11 +794,10 @@ export default function Home() {
                   <span className="text-4xl">🏙️</span>
                   <div>
                     <h3 className="text-xl font-bold text-white">City VIP Programs</h3>
-                    <p className="text-sm text-gray-300">Join your city's exclusive VIP program</p>
+                    <p className="text-sm text-gray-300">Join your city's exclusive VIP program - {uniqueCities.length}+ Ethiopian cities available!</p>
                   </div>
                 </div>
                 
-                {/* DROPDOWN BUTTON */}
                 <div className="relative">
                   <button
                     onClick={() => setShowCityDropdown(!showCityDropdown)}
@@ -594,12 +817,13 @@ export default function Home() {
                         <div className="p-3 bg-gray-50 border-b">
                           <input
                             type="text"
-                            placeholder="🔍 Search your city..."
+                            placeholder="🔍 Search your city... (94 cities available)"
                             value={citySearchTerm}
                             onChange={(e) => setCitySearchTerm(e.target.value)}
                             className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                             autoFocus
                           />
+                          <p className="text-xs text-gray-400 mt-1">Showing {filteredCityList.length} of {uniqueCities.length} cities</p>
                         </div>
                         <div className="max-h-80 overflow-y-auto">
                           {filteredCityList.length === 0 ? (
@@ -623,6 +847,7 @@ export default function Home() {
                                     {city.name} <span className="text-gray-400 text-xs">| {city.nameEn}</span>
                                   </div>
                                   <div className="text-xs text-gray-500">{city.descriptionAm}</div>
+                                  <div className="text-[10px] text-green-600 font-semibold mt-0.5">🏆 {city.prize}</div>
                                 </div>
                                 <span className="text-green-600 text-xs font-medium opacity-0 group-hover:opacity-100 transition flex items-center gap-1">
                                   ይቀላቀሉ <span>→</span>
@@ -640,8 +865,7 @@ export default function Home() {
                 </div>
               </div>
               
-              {/* Stats row */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-4 border-t border-gray-700">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-6 pt-4 border-t border-gray-700">
                 <div className="text-center">
                   <div className="text-2xl">🏆</div>
                   <div className="text-white font-bold text-sm">1M ETB</div>
@@ -662,11 +886,16 @@ export default function Home() {
                   <div className="text-white font-bold text-sm">{uniqueCities.length}+</div>
                   <div className="text-[10px] text-gray-400">ከተሞች | Cities</div>
                 </div>
+                <div className="text-center">
+                  <div className="text-2xl">🇪🇹</div>
+                  <div className="text-white font-bold text-sm">All Regions</div>
+                  <div className="text-[10px] text-gray-400">Nationwide</div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* REGULAR POOLS SECTION */}
+          {/* REGULAR POOLS - Updated Translation */}
           <div ref={regularPoolsRef} className="mb-12 scroll-mt-20">
             <button
               onClick={() => setShowRegularPools(!showRegularPools)}
@@ -677,8 +906,8 @@ export default function Home() {
                   <div className="flex items-center gap-3">
                     <span className="text-4xl group-hover:scale-110 transition-transform">🏊</span>
                     <div className="text-left">
-                      <h3 className="text-2xl font-bold">መደበኛ የእጣ መደቦች</h3>
-                      <p className="text-sm text-gray-300">Regular Pools</p>
+                      <h3 className="text-2xl font-bold">መደበኛ የእጣ መደብ</h3>
+                      <p className="text-sm text-gray-300">Regular Prize Pools</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -786,8 +1015,8 @@ export default function Home() {
             <div className="grid md:grid-cols-3 gap-8 text-center">
               <div className="hover:scale-105 transition transform">
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">1</div>
-                <h3 className="font-bold text-xl mb-2">ፑል ምረጡ | Find a Pool</h3>
-                <p className="text-gray-600">ከሚገኙ ፑሎች መካከል ይምረጡ</p>
+                <h3 className="font-bold text-xl mb-2">የእጣ መደብ ምረጡ | Find a Pool</h3>
+                <p className="text-gray-600">ከሚገኙ የእጣ መደቦች መካከል ይምረጡ</p>
                 <p className="text-green-600 text-sm mt-1">Browse available prize pools</p>
               </div>
               <div className="hover:scale-105 transition transform">
@@ -806,7 +1035,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* PARTNER PROGRAM */}
+        {/* PARTNER PROGRAM - For Agents, Vendors, Organizations */}
         <div className="border-t border-gray-200"></div>
         <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-12">
           <div className="container mx-auto px-4 text-center">
@@ -824,7 +1053,7 @@ export default function Home() {
               </button>
             </div>
             <div className="mt-4 text-xs text-gray-400">
-              <p>✓ ምንም የቅድሚያ ክፍያ የለም | No upfront fees ✓ በእያንዳንዱ ስኬታማ ፑል 10% ያግኙ | Earn 10% on every successful pool ✓ 24/7 ድጋፍ | 24/7 support</p>
+              <p>✓ ምንም የቅድሚያ ክፍያ የለም | No upfront fees ✓ በእያንዳንዱ ስኬታማ የእጣ መደብ 10% ያግኙ | Earn 10% on every successful pool ✓ 24/7 ድጋፍ | 24/7 support</p>
             </div>
           </div>
         </div>
@@ -834,6 +1063,9 @@ export default function Home() {
           <CitySelector onClose={() => setShowCitySelector(false)} />
         )}
       </div>
+
+      {/* Registration Modal */}
+      {showRegisterModal && <RegisterModal />}
 
       <style jsx>{`
         @keyframes fade-in {
