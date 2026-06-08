@@ -1,4 +1,4 @@
-// pages/merkato-vip.js - COMPLETE FIXED VERSION
+// pages/merkato-vip.js - COMPLETE OPTIMIZED FOR MOBILE (Light Grey Background, Green Buttons)
 import Head from 'next/head';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
@@ -24,7 +24,7 @@ const getNextMonthEnd = () => {
   return lastDay.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 };
 
-// FIXED: compressImage without reject (returns file even on error)
+// FIXED: compressImage without reject
 const compressImage = async (file) => {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -117,6 +117,19 @@ export default function MerkatoVip() {
     checkUser();
   }, []);
 
+  // Check for redirect parameters on page load
+  useEffect(() => {
+    const { type, showSeats } = router.query;
+    
+    if (type && showSeats === 'true' && !showSeatSelector && !showPayment && !showTicket) {
+      setSelectedPoolType(type);
+      setSelectedSeats([]);
+      fetchTakenSeats(type);
+      setShowSeatSelector(true);
+      router.replace('/merkato-vip', undefined, { shallow: true });
+    }
+  }, [router.query, showSeatSelector, showPayment, showTicket]);
+
   const checkUser = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -126,8 +139,8 @@ export default function MerkatoVip() {
     }
   };
 
-  // Fetch taken seats
   const fetchTakenSeats = async (poolType) => {
+    if (!poolType) return;
     try {
       const { data } = await supabase
         .from('merkato_vip_participants')
@@ -155,8 +168,8 @@ export default function MerkatoVip() {
       prizeNumber: 1000000,
       winnerCount: 1,
       totalSeats: 2400,
-      seatsPerRow: 40,
-      rows: 60,
+      seatsPerRow: 20,
+      rows: 120,
       time: "Every Day at 8:00 PM",
       color: "from-gray-700 to-gray-900",
       icon: "⭐",
@@ -177,8 +190,8 @@ export default function MerkatoVip() {
       prizeNumber: 10000000,
       winnerCount: 1,
       totalSeats: 4800,
-      seatsPerRow: 48,
-      rows: 100,
+      seatsPerRow: 20,
+      rows: 240,
       time: "Every Sunday at 6:00 PM",
       color: "from-gray-700 to-gray-900",
       icon: "🏆",
@@ -199,8 +212,8 @@ export default function MerkatoVip() {
       prizeNumber: 40000000,
       winnerCount: 1,
       totalSeats: 9600,
-      seatsPerRow: 60,
-      rows: 160,
+      seatsPerRow: 20,
+      rows: 480,
       time: "Last Day of Month at 8:00 PM",
       color: "from-gray-700 to-gray-900",
       icon: "👑",
@@ -217,13 +230,15 @@ export default function MerkatoVip() {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      const redirectUrl = `/merkato-vip?type=${poolType}`;
+      const redirectUrl = `/merkato-vip?type=${poolType}&showSeats=true`;
       
       localStorage.setItem('abbaa_redirect_after_login', redirectUrl);
       localStorage.setItem('pendingRole', 'individual');
+      localStorage.setItem('pendingMerkatoPoolType', poolType);
       
       sessionStorage.setItem('redirectAfterLogin', redirectUrl);
       sessionStorage.setItem('pendingRole', 'individual');
+      sessionStorage.setItem('pendingMerkatoPoolType', poolType);
       
       localStorage.removeItem('isPartner');
       sessionStorage.removeItem('isPartner');
@@ -239,7 +254,6 @@ export default function MerkatoVip() {
     setShowSeatSelector(true);
   };
 
-  // FIXED: submitPayment that properly completes
   const submitPayment = async (participantId, file) => {
     const loadingToast = toast.loading('Uploading payment screenshot...');
     
@@ -275,7 +289,6 @@ export default function MerkatoVip() {
       
       if (updateError) throw new Error(`Update failed: ${updateError.message}`);
       
-      // Fetch updated participant
       const { data: updatedParticipant, error: fetchError } = await supabase
         .from('merkato_vip_participants')
         .select('*')
@@ -301,15 +314,29 @@ export default function MerkatoVip() {
     }
   };
 
-  // THEATER-STYLE SEAT SELECTOR with rows and columns
+  // MOBILE-OPTIMIZED SEAT SELECTOR with Light Grey Background and Green Buttons
   const renderSeatSelector = () => {
     if (!selectedPoolType) return null;
     
     const pool = vipPools[selectedPoolType];
     const entryFeeAmount = parseInt(pool.contribution);
     const totalSeatsCount = pool.totalSeats;
-    const seatsPerRow = pool.seatsPerRow || 40;
+    const seatsPerRow = pool.seatsPerRow || 20;
     const rows = Math.ceil(totalSeatsCount / seatsPerRow);
+    const rowLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    
+    const [currentRow, setCurrentRow] = useState(0);
+    const seatGridRef = useRef(null);
+    
+    const scrollToRow = (rowIndex) => {
+      setCurrentRow(rowIndex);
+      if (seatGridRef.current) {
+        const rowElement = document.getElementById(`row-${rowIndex}`);
+        if (rowElement) {
+          rowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    };
     
     const toggleSeat = (seatNum) => {
       if (takenSeats.includes(seatNum)) {
@@ -384,119 +411,160 @@ export default function MerkatoVip() {
     }
     
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
-            <div>
-              <h2 className="text-xl font-bold">Select Your Seats</h2>
-              <p className="text-sm text-gray-500">{pool.name} • Max {maxSeats} seats • Total {totalSeatsCount.toLocaleString()} seats</p>
+      <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-2">
+        <div className="bg-gray-100 rounded-2xl shadow-xl max-w-full w-full max-h-[98vh] overflow-hidden flex flex-col">
+          {/* Header - Light Grey */}
+          <div className="sticky top-0 bg-gray-100 border-b border-gray-200 p-4 z-10">
+            <div className="flex justify-between items-center flex-wrap gap-2">
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-gray-800">Select Your Seats</h2>
+                <p className="text-xs text-gray-500">{pool.name} • Max {maxSeats} seats</p>
+              </div>
+              <button 
+                onClick={() => {
+                  setShowSeatSelector(false);
+                  setSelectedPoolType(null);
+                  setSelectedSeats([]);
+                }}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
             </div>
-            <button 
-              onClick={() => {
-                setShowSeatSelector(false);
-                setSelectedPoolType(null);
-                setSelectedSeats([]);
-              }}
-              className="text-gray-500 hover:text-gray-700 text-2xl"
-            >
-              ×
-            </button>
+            
+            {/* Quick Row Navigation */}
+            <div className="flex overflow-x-auto gap-1 mt-3 pb-2">
+              {Array.from({ length: Math.min(rows, 20) }).map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => scrollToRow(idx)}
+                  className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap transition ${
+                    currentRow === idx 
+                      ? 'bg-green-600 text-white' 
+                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Row {rowLetters[idx] || (idx + 1)}
+                </button>
+              ))}
+              {rows > 20 && (
+                <span className="px-2 py-1 text-xs text-gray-500">+{rows - 20} more</span>
+              )}
+            </div>
           </div>
           
-          <div className="p-6">
+          <div className="flex-1 overflow-y-auto p-4 bg-gray-100">
             {/* Seat Legend */}
-            <div className="flex flex-wrap justify-center gap-4 mb-4 pb-3 border-b">
+            <div className="flex flex-wrap justify-center gap-4 mb-4 pb-3 border-b border-gray-300">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-green-500 rounded"></div>
-                <span className="text-xs">Selected by You</span>
+                <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center text-white text-[10px] font-bold">✓</div>
+                <span className="text-xs text-gray-700">Selected by You</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-yellow-400 rounded"></div>
-                <span className="text-xs">Available</span>
+                <div className="w-6 h-6 bg-gray-200 border border-gray-400 rounded"></div>
+                <span className="text-xs text-gray-700">Available</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-gray-300 rounded"></div>
-                <span className="text-xs">Taken by Others</span>
+                <div className="w-6 h-6 bg-gray-400 rounded"></div>
+                <span className="text-xs text-gray-700">Taken by Others</span>
               </div>
             </div>
 
-            <div className="bg-gray-50 rounded-lg p-4 mb-4 text-center">
-              <p className="text-sm text-gray-600">Entry Fee: {pool.contributionFormatted} per seat</p>
-              <p className="text-xs text-gray-400">Total Seats Available: {totalSeatsCount.toLocaleString()}</p>
+            {/* Screen Indicator */}
+            <div className="text-center mb-4">
+              <div className="inline-block bg-gray-600 text-white text-[10px] px-4 py-1 rounded-full">🎬 SCREEN</div>
+              <div className="w-full h-px bg-gray-300 mt-2"></div>
             </div>
             
-            {/* Theater-style seat grid */}
-            <div className="mb-6 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-xl">
-              {/* Screen indicator */}
-              <div className="text-center mb-4">
-                <div className="inline-block bg-gray-800 text-white text-xs px-4 py-1 rounded-full">SCREEN</div>
-                <div className="w-full h-1 bg-gray-300 mt-2"></div>
-              </div>
-              
+            {/* Seat Grid - Optimized for mobile scroll */}
+            <div ref={seatGridRef} className="space-y-2">
               {seatRows.map((rowSeats, rowIndex) => (
-                <div key={rowIndex} className="mb-3 flex justify-center gap-1 flex-wrap">
-                  <div className="w-8 text-xs text-gray-400 text-right pr-2 font-mono">
-                    {String.fromCharCode(65 + rowIndex)}
+                <div key={rowIndex} id={`row-${rowIndex}`} className="flex flex-wrap items-center gap-1">
+                  <div className="w-8 text-[11px] font-mono font-semibold text-gray-500">
+                    {rowLetters[rowIndex] || (rowIndex + 1)}
                   </div>
-                  {rowSeats.map(seatNum => {
-                    const isTaken = takenSeats.includes(seatNum);
-                    const isSelected = selectedSeats.includes(seatNum);
-                    
-                    let bgColor = 'bg-yellow-400 hover:bg-yellow-500 text-gray-800';
-                    if (isSelected) bgColor = 'bg-green-600 text-white';
-                    if (isTaken) bgColor = 'bg-gray-400 text-white cursor-not-allowed';
-                    
-                    return (
-                      <button
-                        key={seatNum}
-                        onClick={() => !isTaken && toggleSeat(seatNum)}
-                        disabled={isTaken}
-                        className={`w-10 h-10 rounded-lg font-semibold transition ${bgColor} ${isTaken ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
-                        title={isTaken ? `Seat ${seatNum} is already taken` : `Select Seat ${seatNum}`}
-                      >
-                        {seatNum}
-                      </button>
-                    );
-                  })}
+                  <div className="flex flex-wrap gap-1 flex-1">
+                    {rowSeats.map(seatNum => {
+                      const isTaken = takenSeats.includes(seatNum);
+                      const isSelected = selectedSeats.includes(seatNum);
+                      
+                      let bgColor = 'bg-gray-200 border border-gray-400'; // Available - Light Grey
+                      let textColor = 'text-gray-700';
+                      let hoverClass = 'hover:bg-green-100 hover:border-green-400';
+                      
+                      if (isSelected) {
+                        bgColor = 'bg-green-600 border-green-700';
+                        textColor = 'text-white';
+                        hoverClass = '';
+                      }
+                      if (isTaken) {
+                        bgColor = 'bg-gray-400 border-gray-500';
+                        textColor = 'text-gray-600';
+                        hoverClass = 'cursor-not-allowed';
+                      }
+                      
+                      return (
+                        <button
+                          key={seatNum}
+                          onClick={() => !isTaken && toggleSeat(seatNum)}
+                          disabled={isTaken}
+                          className={`w-8 h-8 rounded-lg text-xs font-semibold transition ${bgColor} ${textColor} ${hoverClass} ${isTaken ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                          title={isTaken ? `Seat ${seatNum} is already taken` : `Select Seat ${seatNum}`}
+                        >
+                          {seatNum}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               ))}
             </div>
             
             {totalSeatsCount > 500 && (
-              <p className="text-xs text-gray-400 text-center mb-4">
+              <p className="text-xs text-gray-400 text-center mt-4">
                 Showing all {totalSeatsCount.toLocaleString()} seats (scroll to see more)
               </p>
             )}
-            
-            {selectedSeats.length > 0 && (
-              <div className="border-t pt-4">
-                <div className="flex justify-between items-center mb-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Selected Seats</p>
-                    <p className="font-bold text-lg">{selectedSeats.sort((a,b)=>a-b).join(', ')}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500">Total Amount</p>
-                    <p className="font-bold text-2xl text-green-600">ETB {totalAmount.toLocaleString()}</p>
-                    <p className="text-xs text-gray-400">({selectedSeats.length} seats × {pool.contributionFormatted})</p>
-                  </div>
-                </div>
-                <button
-                  onClick={confirmSeats}
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition disabled:opacity-50"
-                >
-                  {loading ? 'Processing...' : 'Confirm & Proceed to Payment'}
-                </button>
-              </div>
-            )}
           </div>
+          
+          {/* Footer with Green Button */}
+          {selectedSeats.length > 0 && (
+            <div className="sticky bottom-0 bg-gray-100 border-t border-gray-200 p-4">
+              <div className="flex justify-between items-center mb-3">
+                <div>
+                  <p className="text-xs text-gray-500">Selected Seats</p>
+                  <p className="font-bold text-gray-800">{selectedSeats.sort((a,b)=>a-b).join(', ')}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">Total Amount</p>
+                  <p className="font-bold text-xl text-green-600">ETB {totalAmount.toLocaleString()}</p>
+                  <p className="text-[10px] text-gray-400">({selectedSeats.length} seats × {pool.contributionFormatted})</p>
+                </div>
+              </div>
+              <button
+                onClick={confirmSeats}
+                disabled={loading}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition disabled:opacity-50"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Processing...
+                  </span>
+                ) : (
+                  'Confirm & Proceed to Payment'
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
   };
 
-  // FIXED: renderPayment that properly handles submission
   const renderPayment = () => {
     if (!showPayment || !participantId || !selectedPoolType) return null;
     
@@ -573,7 +641,7 @@ export default function MerkatoVip() {
               <p className="text-sm text-gray-600 mt-2">Account Name: Negassa Hundessa</p>
             </div>
             
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-500 transition">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-green-500 transition">
               <input
                 type="file"
                 accept="image/*"
@@ -602,7 +670,7 @@ export default function MerkatoVip() {
             <button
               onClick={handlePaymentSubmit}
               disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition mt-4 disabled:opacity-50"
+              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition mt-4 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <span className="flex items-center justify-center gap-2">
@@ -724,7 +792,7 @@ export default function MerkatoVip() {
         
         <button
           onClick={() => handleJoinPool(type)}
-          className={`w-full bg-gradient-to-r ${pool.color} text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition transform hover:scale-105 flex items-center justify-center gap-2`}
+          className={`w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition transform hover:scale-105 flex items-center justify-center gap-2`}
         >
           <span>🎯</span> ይቀላቀሉ | Select Seat & Join
           <span className="group-hover:translate-x-1 transition">→</span>
@@ -757,7 +825,7 @@ export default function MerkatoVip() {
           </div>
         </nav>
 
-        <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
+        <div className="min-h-screen bg-gray-100">
           {/* Hero Section */}
           <div className="relative bg-gradient-to-r from-gray-800 via-gray-900 to-gray-800 text-white overflow-hidden">
             <div className="absolute inset-0 opacity-10">
@@ -865,9 +933,9 @@ export default function MerkatoVip() {
           {/* VIP Tabs */}
           <div className="container mx-auto px-4 py-8">
             <div className="flex flex-wrap justify-center gap-3 mb-8">
-              <button onClick={() => setActiveTab('daily')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'daily' ? 'bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-lg' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>⭐ ዕለታዊ | Daily (1M)</button>
-              <button onClick={() => setActiveTab('weekly')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'weekly' ? 'bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-lg' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>🏆 ሳምንታዊ | Weekly (10M)</button>
-              <button onClick={() => setActiveTab('monthly')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'monthly' ? 'bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-lg' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>👑 ወርሃዊ | Monthly (40M)</button>
+              <button onClick={() => setActiveTab('daily')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'daily' ? 'bg-green-600 text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>⭐ ዕለታዊ | Daily (1M)</button>
+              <button onClick={() => setActiveTab('weekly')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'weekly' ? 'bg-green-600 text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>🏆 ሳምንታዊ | Weekly (10M)</button>
+              <button onClick={() => setActiveTab('monthly')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'monthly' ? 'bg-green-600 text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>👑 ወርሃዊ | Monthly (40M)</button>
             </div>
             <div className="max-w-4xl mx-auto"><PoolCard type={activeTab} pool={vipPools[activeTab]} /></div>
           </div>
