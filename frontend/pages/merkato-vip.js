@@ -1,4 +1,4 @@
-// pages/merkato-vip.js - COMPLETE FIXED WITH PAYMENT SCREENSHOT ONLY
+// pages/merkato-vip.js - COMPLETE FIXED VERSION
 import Head from 'next/head';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
@@ -24,22 +24,7 @@ const getNextMonthEnd = () => {
   return lastDay.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 };
 
-// Optimized file upload utilities
-const validateFile = (file) => {
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-  const MAX_SIZE = 5 * 1024 * 1024;
-  
-  if (!allowedTypes.includes(file.type)) {
-    throw new Error('Please upload a valid image file (JPEG, PNG, WEBP)');
-  }
-  
-  if (file.size > MAX_SIZE) {
-    throw new Error('File size must be less than 5MB');
-  }
-  
-  return true;
-};
-
+// FIXED: compressImage without reject (returns file even on error)
 const compressImage = async (file) => {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -76,10 +61,25 @@ const compressImage = async (file) => {
           resolve(new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), { type: 'image/jpeg' }));
         }, 'image/jpeg', 0.7);
       };
-      img.onerror = reject;
+      img.onerror = () => resolve(file);
     };
-    reader.onerror = reject;
+    reader.onerror = () => resolve(file);
   });
+};
+
+const validateFile = (file) => {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+  const MAX_SIZE = 5 * 1024 * 1024;
+  
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error('Please upload a valid image file (JPEG, PNG, WEBP)');
+  }
+  
+  if (file.size > MAX_SIZE) {
+    throw new Error('File size must be less than 5MB');
+  }
+  
+  return true;
 };
 
 export default function MerkatoVip() {
@@ -126,7 +126,7 @@ export default function MerkatoVip() {
     }
   };
 
-  // Fetch taken seats for the selected pool type
+  // Fetch taken seats
   const fetchTakenSeats = async (poolType) => {
     try {
       const { data } = await supabase
@@ -144,7 +144,6 @@ export default function MerkatoVip() {
     }
   };
 
-  // VIP Pool Data
   const vipPools = {
     daily: {
       name: "ዕለታዊ ሚሊየነር | Daily Millionaire",
@@ -156,6 +155,8 @@ export default function MerkatoVip() {
       prizeNumber: 1000000,
       winnerCount: 1,
       totalSeats: 2400,
+      seatsPerRow: 40,
+      rows: 60,
       time: "Every Day at 8:00 PM",
       color: "from-gray-700 to-gray-900",
       icon: "⭐",
@@ -176,6 +177,8 @@ export default function MerkatoVip() {
       prizeNumber: 10000000,
       winnerCount: 1,
       totalSeats: 4800,
+      seatsPerRow: 48,
+      rows: 100,
       time: "Every Sunday at 6:00 PM",
       color: "from-gray-700 to-gray-900",
       icon: "🏆",
@@ -196,6 +199,8 @@ export default function MerkatoVip() {
       prizeNumber: 40000000,
       winnerCount: 1,
       totalSeats: 9600,
+      seatsPerRow: 60,
+      rows: 160,
       time: "Last Day of Month at 8:00 PM",
       color: "from-gray-700 to-gray-900",
       icon: "👑",
@@ -234,7 +239,7 @@ export default function MerkatoVip() {
     setShowSeatSelector(true);
   };
 
-  // ========== UPDATED: submitPayment (No Reference Number) ==========
+  // FIXED: submitPayment that properly completes
   const submitPayment = async (participantId, file) => {
     const loadingToast = toast.loading('Uploading payment screenshot...');
     
@@ -270,6 +275,7 @@ export default function MerkatoVip() {
       
       if (updateError) throw new Error(`Update failed: ${updateError.message}`);
       
+      // Fetch updated participant
       const { data: updatedParticipant, error: fetchError } = await supabase
         .from('merkato_vip_participants')
         .select('*')
@@ -278,11 +284,13 @@ export default function MerkatoVip() {
       
       if (fetchError) throw new Error(`Fetch failed: ${fetchError.message}`);
       
-      setParticipantData(updatedParticipant);
-      setTicketType('unverified');
-      setShowTicket(true);
-      setShowPayment(false);
-      setShowSeatSelector(false);
+      if (isMounted.current) {
+        setParticipantData(updatedParticipant);
+        setTicketType('unverified');
+        setShowTicket(true);
+        setShowPayment(false);
+        setShowSeatSelector(false);
+      }
       
       toast.success('Payment submitted! Your unverified ticket is ready', { id: loadingToast });
       
@@ -293,14 +301,15 @@ export default function MerkatoVip() {
     }
   };
 
-  // Updated Seat selector with ALL seats visible and proper color coding
+  // THEATER-STYLE SEAT SELECTOR with rows and columns
   const renderSeatSelector = () => {
     if (!selectedPoolType) return null;
     
     const pool = vipPools[selectedPoolType];
     const entryFeeAmount = parseInt(pool.contribution);
     const totalSeatsCount = pool.totalSeats;
-    const seatNumbers = Array.from({ length: totalSeatsCount }, (_, i) => i + 1);
+    const seatsPerRow = pool.seatsPerRow || 40;
+    const rows = Math.ceil(totalSeatsCount / seatsPerRow);
     
     const toggleSeat = (seatNum) => {
       if (takenSeats.includes(seatNum)) {
@@ -362,9 +371,21 @@ export default function MerkatoVip() {
       }
     };
     
+    // Create seat grid with rows
+    const seatRows = [];
+    for (let row = 0; row < rows; row++) {
+      const startSeat = row * seatsPerRow + 1;
+      const endSeat = Math.min(startSeat + seatsPerRow - 1, totalSeatsCount);
+      const rowSeats = [];
+      for (let seat = startSeat; seat <= endSeat; seat++) {
+        rowSeats.push(seat);
+      }
+      seatRows.push(rowSeats);
+    }
+    
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl shadow-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="bg-white rounded-2xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
           <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
             <div>
               <h2 className="text-xl font-bold">Select Your Seats</h2>
@@ -404,27 +425,41 @@ export default function MerkatoVip() {
               <p className="text-xs text-gray-400">Total Seats Available: {totalSeatsCount.toLocaleString()}</p>
             </div>
             
-            <div className="grid grid-cols-10 md:grid-cols-15 lg:grid-cols-20 gap-2 mb-6 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-xl">
-              {seatNumbers.map(seatNum => {
-                const isTaken = takenSeats.includes(seatNum);
-                const isSelected = selectedSeats.includes(seatNum);
-                
-                let bgColor = 'bg-yellow-400 hover:bg-yellow-500 text-gray-800';
-                if (isSelected) bgColor = 'bg-green-600 text-white';
-                if (isTaken) bgColor = 'bg-gray-400 text-white cursor-not-allowed';
-                
-                return (
-                  <button
-                    key={seatNum}
-                    onClick={() => !isTaken && toggleSeat(seatNum)}
-                    disabled={isTaken}
-                    className={`w-10 h-10 rounded-lg font-semibold transition ${bgColor} ${isTaken ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
-                    title={isTaken ? `Seat ${seatNum} is already taken` : `Select Seat ${seatNum}`}
-                  >
-                    {seatNum}
-                  </button>
-                );
-              })}
+            {/* Theater-style seat grid */}
+            <div className="mb-6 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-xl">
+              {/* Screen indicator */}
+              <div className="text-center mb-4">
+                <div className="inline-block bg-gray-800 text-white text-xs px-4 py-1 rounded-full">SCREEN</div>
+                <div className="w-full h-1 bg-gray-300 mt-2"></div>
+              </div>
+              
+              {seatRows.map((rowSeats, rowIndex) => (
+                <div key={rowIndex} className="mb-3 flex justify-center gap-1 flex-wrap">
+                  <div className="w-8 text-xs text-gray-400 text-right pr-2 font-mono">
+                    {String.fromCharCode(65 + rowIndex)}
+                  </div>
+                  {rowSeats.map(seatNum => {
+                    const isTaken = takenSeats.includes(seatNum);
+                    const isSelected = selectedSeats.includes(seatNum);
+                    
+                    let bgColor = 'bg-yellow-400 hover:bg-yellow-500 text-gray-800';
+                    if (isSelected) bgColor = 'bg-green-600 text-white';
+                    if (isTaken) bgColor = 'bg-gray-400 text-white cursor-not-allowed';
+                    
+                    return (
+                      <button
+                        key={seatNum}
+                        onClick={() => !isTaken && toggleSeat(seatNum)}
+                        disabled={isTaken}
+                        className={`w-10 h-10 rounded-lg font-semibold transition ${bgColor} ${isTaken ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                        title={isTaken ? `Seat ${seatNum} is already taken` : `Select Seat ${seatNum}`}
+                      >
+                        {seatNum}
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
             
             {totalSeatsCount > 500 && (
@@ -461,7 +496,7 @@ export default function MerkatoVip() {
     );
   };
 
-  // ========== UPDATED: renderPayment (No Reference Number) ==========
+  // FIXED: renderPayment that properly handles submission
   const renderPayment = () => {
     if (!showPayment || !participantId || !selectedPoolType) return null;
     
@@ -488,6 +523,22 @@ export default function MerkatoVip() {
         e.target.value = '';
         setSelectedFile(null);
         setPreviewUrl(null);
+      }
+    };
+    
+    const handlePaymentSubmit = async () => {
+      if (!selectedFile) {
+        toast.error('Please upload payment screenshot');
+        return;
+      }
+      
+      setIsSubmitting(true);
+      try {
+        await submitPayment(participantId, selectedFile);
+      } catch (error) {
+        console.error('Payment error:', error);
+      } finally {
+        setIsSubmitting(false);
       }
     };
     
@@ -522,7 +573,6 @@ export default function MerkatoVip() {
               <p className="text-sm text-gray-600 mt-2">Account Name: Negassa Hundessa</p>
             </div>
             
-            {/* NO REFERENCE NUMBER FIELD - Only screenshot upload */}
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-500 transition">
               <input
                 type="file"
@@ -550,16 +600,7 @@ export default function MerkatoVip() {
             </div>
             
             <button
-              onClick={async () => {
-                if (!selectedFile) {
-                  toast.error('Please upload payment screenshot');
-                  return;
-                }
-                
-                setIsSubmitting(true);
-                await submitPayment(participantId, selectedFile);
-                setIsSubmitting(false);
-              }}
+              onClick={handlePaymentSubmit}
               disabled={isSubmitting}
               className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition mt-4 disabled:opacity-50"
             >
@@ -859,14 +900,14 @@ export default function MerkatoVip() {
                     <td className="px-6 py-4 font-bold">2,500 ብር</td>
                     <td className="px-6 py-4 font-bold text-purple-600">10,000,000 ብር</td>
                     <td className="px-6 py-4">Every Sunday at 6 PM</td>
-                   </tr>
+                  </tr>
                   <tr className="hover:bg-gray-50 transition">
                     <td className="px-6 py-4 font-semibold">👑 Monthly Winner</td>
                     <td className="px-6 py-4"><span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">VIP 1</span></td>
                     <td className="px-6 py-4 font-bold">5,000 ብር</td>
                     <td className="px-6 py-4 font-bold text-green-600">40,000,000 ብር</td>
                     <td className="px-6 py-4">Last Day of Month at 8 PM</td>
-                   </tr>
+                  </tr>
                 </tbody>
               </table>
             </div>
