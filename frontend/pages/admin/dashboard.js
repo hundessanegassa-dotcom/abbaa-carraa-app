@@ -1,14 +1,16 @@
 // pages/admin/dashboard.js - COMPLETE 1900+ LINE ADMIN DASHBOARD
 // FULLY INTERLINKED WITH ALL ABBAA CARRAA PLATFORM
+// UPDATED WITH UNIFIED MODALS (CREATE, EDIT, DELETE)
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import BackButton from '../../components/BackButton';
-import CreateCityVipModal from '../../components/admin/CreateCityVipModal';
-import EditCityVipModal from '../../components/admin/EditCityVipModal';
-import CreateRegularPoolModal from '../../components/admin/CreateRegularPoolModal';
+// IMPORT UNIFIED MODALS - REPLACES THE THREE OLD MODALS
+import CityVipModal from '../../components/admin/CityVipModal';
+import MerkatoVipModal from '../../components/admin/MerkatoVipModal';
+import RegularPoolModal from '../../components/admin/RegularPoolModal';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -42,7 +44,15 @@ export default function AdminDashboard() {
   const [selectedCityPool, setSelectedCityPool] = useState(null);
   const [cityVipConfigs, setCityVipConfigs] = useState([]);
   
-  // Modal States
+  // UNIFIED MODAL STATES - REPLACES THE THREE OLD MODAL STATES
+  const [cityModalMode, setCityModalMode] = useState(null); // 'create', 'edit', 'delete'
+  const [selectedCityData, setSelectedCityData] = useState(null);
+  const [merkatoModalMode, setMerkatoModalMode] = useState(null); // 'create', 'edit', 'delete'
+  const [selectedMerkatoData, setSelectedMerkatoData] = useState(null);
+  const [regularModalMode, setRegularModalMode] = useState(null); // 'create', 'edit', 'delete'
+  const [selectedRegularData, setSelectedRegularData] = useState(null);
+  
+  // KEEP THESE FOR BACKWARD COMPATIBILITY WITH EXISTING BUTTONS
   const [showCreateCityModal, setShowCreateCityModal] = useState(false);
   const [showEditCityModal, setShowEditCityModal] = useState(false);
   const [selectedCityForEdit, setSelectedCityForEdit] = useState(null);
@@ -90,7 +100,7 @@ export default function AdminDashboard() {
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [newAnnouncement, setNewAnnouncement] = useState({ title: '', content: '', target_audience: 'all' });
   
-  // Pool creation modal
+  // Pool creation modal (KEPT for backward compatibility)
   const [showPoolModal, setShowPoolModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [newPool, setNewPool] = useState({
@@ -1264,7 +1274,7 @@ export default function AdminDashboard() {
                 )}
               </div>
               <Link href="/admin/draw" className="bg-white text-red-600 px-4 py-2 rounded-full font-semibold text-sm">🎲 Draw Management</Link>
-              <button onClick={() => setShowPoolModal(true)} className="bg-white text-red-600 px-4 py-2 rounded-full font-semibold text-sm">+ Create Pool (20%)</button>
+              <button onClick={() => setRegularModalMode('create')} className="bg-white text-red-600 px-4 py-2 rounded-full font-semibold text-sm">+ Create Pool (20%)</button>
               <button onClick={() => setShowMerkatoModal(true)} className="bg-yellow-500 text-gray-900 px-4 py-2 rounded-full font-semibold text-sm">🏪 Create Merkato VIP Pool</button>
               <Link href="/dashboard" className="bg-white/20 px-4 py-2 rounded-full text-sm">Home</Link>
             </div>
@@ -1287,7 +1297,7 @@ export default function AdminDashboard() {
       {/* Quick Actions */}
       <div className="container mx-auto px-4 mt-6">
         <div className="grid grid-cols-2 md:grid-cols-10 gap-3">
-          <button onClick={() => setShowPoolModal(true)} className="bg-gradient-to-r from-red-600 to-rose-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
+          <button onClick={() => setRegularModalMode('create')} className="bg-gradient-to-r from-red-600 to-rose-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
             <div className="text-2xl mb-1">➕</div>
             <p className="font-semibold text-xs">Create Pool</p>
             <p className="text-xs opacity-80">20%</p>
@@ -1427,13 +1437,13 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
               <h2 className="font-bold text-lg">💰 My Personal Pools (20% Commission)</h2>
-              <button onClick={() => setShowPoolModal(true)} className="bg-red-600 text-white px-4 py-1 rounded-full text-sm">+ Create</button>
+              <button onClick={() => setRegularModalMode('create')} className="bg-red-600 text-white px-4 py-1 rounded-full text-sm">+ Create</button>
             </div>
             <div className="p-6">
               {myPools.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-gray-400">No pools created yet</p>
-                  <button onClick={() => setShowPoolModal(true)} className="mt-2 text-red-600">Create your first pool →</button>
+                  <button onClick={() => setRegularModalMode('create')} className="mt-2 text-red-600">Create your first pool →</button>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -1507,7 +1517,7 @@ export default function AdminDashboard() {
                               <div><p className="text-xs opacity-75">Total Seats</p><p className="font-bold">{Math.floor((pool.prize_amount * 1.2) / pool.contribution_amount).toLocaleString()}</p></div>
                             </div>
                             <div className="flex gap-2">
-                              <button onClick={() => openEditMerkatoModal(pool)} className="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-lg text-sm transition">✏️ Edit</button>
+                              <button onClick={() => { setSelectedMerkatoData(pool); setMerkatoModalMode('edit'); }} className="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-lg text-sm transition">✏️ Edit</button>
                               <Link href={`/admin/draw-winner?pool=${pool.id}`} className="bg-purple-600 text-white px-3 py-1 rounded text-sm">Draw Winner</Link>
                             </div>
                           </div>
@@ -1543,7 +1553,7 @@ export default function AdminDashboard() {
                   ))}
                 </select>
               </div>
-              <button onClick={() => setShowCreateCityModal(true)} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition">➕ Create New City VIP</button>
+              <button onClick={() => setCityModalMode('create')} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition">➕ Create New City VIP</button>
             </div>
 
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
@@ -1604,16 +1614,10 @@ export default function AdminDashboard() {
                         <p className="text-xs text-gray-500">City VIP Program</p>
                       </div>
                     </div>
-                    <button 
-                      onClick={() => { 
-                        const cityConfig = cityVipConfigs.find(c => c.city_id === pool.city.toLowerCase().replace(/\s/g, '-')); 
-                        setSelectedCityForEdit(cityConfig || pool); 
-                        setShowEditCityModal(true); 
-                      }} 
-                      className="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700"
-                    >
-                      ✏️ Edit
-                    </button>
+                    <div className="flex gap-2">
+                      <button onClick={() => { const cityConfig = cityVipConfigs.find(c => c.city_id === pool.city.toLowerCase().replace(/\s/g, '-')); setSelectedCityData(cityConfig || pool); setCityModalMode('edit'); }} className="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700">✏️ Edit</button>
+                      <button onClick={() => { const cityConfig = cityVipConfigs.find(c => c.city_id === pool.city.toLowerCase().replace(/\s/g, '-')); setSelectedCityData(cityConfig || pool); setCityModalMode('delete'); }} className="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700">🗑️ Delete</button>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm"><span className="text-gray-500">Participants:</span><span className="font-semibold">{pool.total_participants}</span></div>
@@ -1635,7 +1639,6 @@ export default function AdminDashboard() {
         {/* Approvals Tab */}
         {activeTab === 'approvals' && (
           <div className="space-y-6">
-            {/* Pending Agents */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-bold text-lg">🤝 Pending Agent Applications ({pendingAgents.length})</h3>
@@ -1683,7 +1686,6 @@ export default function AdminDashboard() {
               )}
             </div>
 
-            {/* Pending Vendors */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-bold text-lg">🏪 Pending Vendor Applications ({pendingVendors.length})</h3>
@@ -1726,7 +1728,6 @@ export default function AdminDashboard() {
               )}
             </div>
 
-            {/* Pending Organizations */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-bold text-lg">🏢 Pending Organization Applications ({pendingOrganizations.length})</h3>
@@ -2024,6 +2025,47 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {/* UNIFIED MODALS - REPLACES THE THREE OLD MODALS */}
+      
+      {/* City VIP Modal - Unified (Create, Edit, Delete) */}
+      <CityVipModal
+        isOpen={cityModalMode !== null}
+        onClose={() => { setCityModalMode(null); setSelectedCityData(null); }}
+        onSuccess={() => { loadCityVipData(); loadCityVipConfigs(); loadStats(); }}
+        mode={cityModalMode}
+        cityData={selectedCityData}
+        userId={user?.id}
+      />
+
+      {/* Merkato VIP Modal - Unified (Create, Edit, Delete) */}
+      <MerkatoVipModal
+        isOpen={merkatoModalMode !== null}
+        onClose={() => { setMerkatoModalMode(null); setSelectedMerkatoData(null); }}
+        onSuccess={() => { loadMerkatoData(); loadStats(); }}
+        mode={merkatoModalMode}
+        poolData={selectedMerkatoData}
+        userId={user?.id}
+      />
+
+      {/* Regular Pool Modal - Unified (Create, Edit, Delete) */}
+      <RegularPoolModal
+        isOpen={regularModalMode !== null}
+        onClose={() => { setRegularModalMode(null); setSelectedRegularData(null); }}
+        onSuccess={() => { loadAllPools(); loadFeaturedPools(); loadStats(); loadMyPools(); }}
+        mode={regularModalMode}
+        poolData={selectedRegularData}
+        userId={user?.id}
+      />
+
+      {/* Keep these for backward compatibility with existing code that might still use them */}
+      {/* These are hidden - the unified modals above handle everything */}
+      <div style={{ display: 'none' }}>
+        <CreateCityVipModal isOpen={false} />
+        <EditCityVipModal isOpen={false} />
+        <CreateRegularPoolModal isOpen={false} />
+      </div>
+      
+      {/* Keep existing modals that are still needed */}
       {showPoolModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -2128,25 +2170,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-
-      <CreateCityVipModal 
-        isOpen={showCreateCityModal} 
-        onClose={() => setShowCreateCityModal(false)} 
-        onSuccess={() => { loadCityVipData(); loadCityVipConfigs(); }} 
-      />
-      
-      <EditCityVipModal 
-        isOpen={showEditCityModal} 
-        onClose={() => { setShowEditCityModal(false); setSelectedCityForEdit(null); }} 
-        onSuccess={() => { loadCityVipData(); loadCityVipConfigs(); }} 
-        cityData={selectedCityForEdit} 
-      />
-      
-      <CreateRegularPoolModal 
-        isOpen={showPoolModal} 
-        onClose={() => setShowPoolModal(false)} 
-        onSuccess={() => { loadAllPools(); loadFeaturedPools(); loadStats(); loadMyPools(); }} 
-      />
     </div>
   );
 }
