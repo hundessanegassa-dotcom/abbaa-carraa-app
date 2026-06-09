@@ -1,4 +1,4 @@
-// pages/cities/[city].js - COMPLETE WITH ALL 80+ ETHIOPIAN CITIES (FIXED HOOKS ERROR)
+// pages/cities/[city].js - COMPLETE WITH ALL 80+ ETHIOPIAN CITIES (NO REFERENCE NUMBER)
 import { useRouter } from 'next/router';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -839,7 +839,7 @@ const cityList = Object.keys(cityData).map(key => ({
   icon: cityData[key].icon
 }));
 
-// FIXED: compressImage without reject
+// compressImage function
 const compressImage = async (file) => {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -918,7 +918,6 @@ export default function CityVip() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [reference, setReference] = useState('');
   
   // Ticket states
   const [showTicket, setShowTicket] = useState(false);
@@ -1083,7 +1082,7 @@ export default function CityVip() {
     setShowSeatSelector(true);
   };
 
-  const submitPayment = async (participantId, reference, file) => {
+  const submitPayment = async (participantId, file) => {
     const loadingToast = toast.loading('Uploading payment screenshot...');
     
     try {
@@ -1111,7 +1110,6 @@ export default function CityVip() {
         .update({
           payment_status: 'pending_verification',
           payment_proof_url: publicUrl,
-          reference: reference,
           updated_at: new Date().toISOString(),
           payment_submitted_at: new Date().toISOString()
         })
@@ -1427,7 +1425,7 @@ export default function CityVip() {
       
       setIsSubmitting(true);
       try {
-        await submitPayment(participantId, reference, selectedFile);
+        await submitPayment(participantId, selectedFile);
       } catch (error) {
         console.error('Payment error:', error);
       } finally {
@@ -1467,17 +1465,7 @@ export default function CityVip() {
               <p className="text-sm text-gray-600 mt-2">Account Name: Negassa Hundessa</p>
             </div>
             
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">Reference Number/Transaction ID *</label>
-              <input
-                type="text"
-                placeholder="Enter transaction ID or reference number"
-                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
-                value={reference}
-                onChange={(e) => setReference(e.target.value)}
-              />
-            </div>
-            
+            {/* NO REFERENCE NUMBER FIELD - Removed */}
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-green-500 transition">
               <input
                 type="file"
@@ -1506,7 +1494,7 @@ export default function CityVip() {
             
             <button
               onClick={handlePaymentSubmit}
-              disabled={isSubmitting || !reference.trim()}
+              disabled={isSubmitting}
               className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition mt-4 disabled:opacity-50"
             >
               {isSubmitting ? (
