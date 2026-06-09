@@ -1,4 +1,4 @@
-// pages/merkato-vip.js - COMPLETE FIXED VERSION (No Hooks Errors)
+// pages/merkato-vip.js - COMPLETE FIXED VERSION (No Hooks Errors, No Reference Number)
 import Head from 'next/head';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
@@ -8,7 +8,7 @@ import NoSSR from '../components/NoSSR';
 import TopCitySelector from '../components/TopCitySelector';
 import Link from 'next/link';
 import UnifiedAgentApplication from '../components/UnifiedAgentApplication';
-import Ticket from '../components/Ticket';
+import Ticket from '../../components/Ticket';
 
 // Helper function for next draw dates
 const getNextSunday = () => {
@@ -170,7 +170,6 @@ export default function MerkatoVip() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [reference, setReference] = useState('');
   
   // Ticket states
   const [showTicket, setShowTicket] = useState(false);
@@ -288,7 +287,8 @@ export default function MerkatoVip() {
         .update({
           payment_status: 'pending_verification',
           payment_proof_url: publicUrl,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          payment_submitted_at: new Date().toISOString()
         })
         .eq('id', participantId);
       
@@ -415,7 +415,6 @@ export default function MerkatoVip() {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-2">
         <div className="bg-gray-100 rounded-2xl shadow-xl max-w-full w-full max-h-[98vh] overflow-hidden flex flex-col">
-          {/* Header - Light Grey */}
           <div className="sticky top-0 bg-gray-100 border-b border-gray-200 p-4 z-10">
             <div className="flex justify-between items-center flex-wrap gap-2">
               <div className="flex-1">
@@ -434,7 +433,6 @@ export default function MerkatoVip() {
               </button>
             </div>
             
-            {/* Quick Row Navigation */}
             <div className="flex overflow-x-auto gap-1 mt-3 pb-2">
               {Array.from({ length: Math.min(rows, 20) }).map((_, idx) => (
                 <button
@@ -456,7 +454,6 @@ export default function MerkatoVip() {
           </div>
           
           <div className="flex-1 overflow-y-auto p-4 bg-gray-100">
-            {/* Seat Legend */}
             <div className="flex flex-wrap justify-center gap-4 mb-4 pb-3 border-b border-gray-300">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center text-white text-[10px] font-bold">✓</div>
@@ -472,13 +469,11 @@ export default function MerkatoVip() {
               </div>
             </div>
 
-            {/* Screen Indicator */}
             <div className="text-center mb-4">
               <div className="inline-block bg-gray-600 text-white text-[10px] px-4 py-1 rounded-full">🎬 SCREEN</div>
               <div className="w-full h-px bg-gray-300 mt-2"></div>
             </div>
             
-            {/* Seat Grid - Optimized for mobile scroll */}
             <div ref={seatGridRef} className="space-y-2">
               {seatRows.map((rowSeats, rowIndex) => (
                 <div key={rowIndex} id={`row-${rowIndex}`} className="flex flex-wrap items-center gap-1">
@@ -529,7 +524,6 @@ export default function MerkatoVip() {
             )}
           </div>
           
-          {/* Footer with Green Button */}
           {selectedSeats.length > 0 && (
             <div className="sticky bottom-0 bg-gray-100 border-t border-gray-200 p-4">
               <div className="flex justify-between items-center mb-3">
@@ -643,17 +637,7 @@ export default function MerkatoVip() {
               <p className="text-sm text-gray-600 mt-2">Account Name: Negassa Hundessa</p>
             </div>
             
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">Reference Number/Transaction ID *</label>
-              <input
-                type="text"
-                placeholder="Enter transaction ID or reference number"
-                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
-                value={reference}
-                onChange={(e) => setReference(e.target.value)}
-              />
-            </div>
-            
+            {/* NO REFERENCE NUMBER FIELD */}
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-green-500 transition">
               <input
                 type="file"
@@ -682,7 +666,7 @@ export default function MerkatoVip() {
             
             <button
               onClick={handlePaymentSubmit}
-              disabled={isSubmitting || !reference.trim()}
+              disabled={isSubmitting}
               className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition mt-4 disabled:opacity-50"
             >
               {isSubmitting ? (
@@ -822,7 +806,6 @@ export default function MerkatoVip() {
           <meta name="description" content="ልዩ የመርካቶ ነጋዴዎች የሽልማት ፕሮግራም፦ በየቀኑ 1ሚሊዮን ብር፣ በየሳምንቱ 10ሚሊዮን ብር፣ በየወሩ 40ሚሊዮን ብር ያሸንፉ!" />
         </Head>
 
-        {/* Top Navbar with City Selector */}
         <nav className="sticky top-0 z-50 bg-gray-900 shadow-lg border-b border-gray-700">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-between h-16">
@@ -1083,12 +1066,10 @@ export default function MerkatoVip() {
           </div>
         </div>
 
-        {/* Modals */}
         {renderSeatSelector()}
         {renderPayment()}
         {renderTicketModal()}
 
-        {/* Agent Application Modal */}
         {showAgentApplication && (
           <UnifiedAgentApplication 
             onClose={() => setShowAgentApplication(false)} 
