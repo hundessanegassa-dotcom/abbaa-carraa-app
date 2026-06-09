@@ -8,7 +8,7 @@ import NoSSR from '../components/NoSSR';
 import TopCitySelector from '../components/TopCitySelector';
 import Link from 'next/link';
 import UnifiedAgentApplication from '../components/UnifiedAgentApplication';
-import Ticket from '../../components/Ticket';
+import Ticket from '../components/Ticket';
 
 // Helper function for next draw dates
 const getNextSunday = () => {
