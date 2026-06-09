@@ -1,3 +1,4 @@
+// lib/supabase.js - COMPLETE WITH ALL HELPER FUNCTIONS
 import { createClient } from '@supabase/supabase-js';
 
 // Environment variables with fallbacks for development
@@ -34,6 +35,76 @@ export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '', {
     },
   },
 });
+
+// ============================================
+// IMAGE OPTIMIZATION FUNCTIONS
+// ============================================
+
+// Compress image before upload
+export const compressImage = async (file, maxWidth = 1024, maxHeight = 1024, quality = 0.7) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        // Calculate new dimensions while maintaining aspect ratio
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob(
+          (blob) => {
+            const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      img.onerror = reject;
+    };
+    reader.onerror = reject;
+  });
+};
+
+// Optimize image URL for display
+export const optimizeImage = (url, options = {}) => {
+  if (!url) return null;
+  const { width = 800, quality = 80, format = 'webp' } = options;
+  
+  // If using Supabase storage, add transformation params
+  if (url.includes('supabase.co')) {
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}width=${width}&quality=${quality}&format=${format}`;
+  }
+  return url;
+};
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
 
 // Helper function to check connection status
 export async function checkSupabaseConnection() {
@@ -161,6 +232,10 @@ export async function getPoolsPaginated(page = 0, pageSize = 12, filters = {}) {
   }
 }
 
+// ============================================
+// FORMATTING FUNCTIONS
+// ============================================
+
 // Helper function to format currency
 export function formatCurrency(amount) {
   if (!amount) return 'ETB 0';
@@ -187,3 +262,102 @@ export function calculateCommission(targetAmount) {
   const totalCollection = targetAmount * 1.2;
   return totalCollection * 0.2;
 }
+
+// ============================================
+// RETRY FUNCTION FOR FAILED REQUESTS
+// ============================================
+
+export async function withRetry(fn, retries = 3, delay = 1000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      if (error.message?.includes('timeout') || error.message?.includes('connect') || error.message?.includes('network')) {
+        await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
+// ============================================
+// ADMIN SPECIFIC FUNCTIONS
+// ============================================
+
+// Check if user is admin
+export async function isUserAdmin(userId) {
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single();
+    
+    if (profile?.role === 'admin') return true;
+    
+    const { data: adminRecord } = await supabase
+      .from('admins')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .single();
+    
+    return !!adminRecord;
+  } catch (error) {
+    console.error('Error checking admin status:', error);
+    return false;
+  }
+}
+
+// Get platform stats for admin dashboard
+export async function getPlatformStats() {
+  try {
+    const [
+      { count: totalUsers },
+      { data: agents },
+      { data: vendors },
+      { data: organizations },
+      { data: pools },
+      { data: contributions },
+      { data: commissions }
+    ] = await Promise.all([
+      supabase.from('profiles').select('*', { count: 'exact', head: true }),
+      supabase.from('agents').select('*'),
+      supabase.from('vendors').select('*'),
+      supabase.from('organizations').select('*'),
+      supabase.from('pools').select('*'),
+      supabase.from('contributions').select('amount, status'),
+      supabase.from('commissions').select('amount, status')
+    ]);
+    
+    const totalVolume = contributions?.filter(c => c.status === 'completed').reduce((sum, c) => sum + (c.amount || 0), 0) || 0;
+    const totalCommissionPaid = commissions?.filter(c => c.status === 'paid').reduce((sum, c) => sum + c.amount, 0) || 0;
+    const pendingCommission = commissions?.filter(c => c.status === 'pending').reduce((sum, c) => sum + c.amount, 0) || 0;
+    
+    return {
+      totalUsers: totalUsers || 0,
+      totalAgents: agents?.length || 0,
+      totalVendors: vendors?.length || 0,
+      totalOrganizations: organizations?.length || 0,
+      totalPools: pools?.length || 0,
+      activePools: pools?.filter(p => p.status === 'active').length || 0,
+      completedPools: pools?.filter(p => p.status === 'completed').length || 0,
+      totalVolume,
+      totalCommissionPaid,
+      pendingCommission,
+      platformRevenue: totalVolume * 0.10,
+      charityFund: totalVolume * 0.02
+    };
+  } catch (error) {
+    console.error('Error fetching platform stats:', error);
+    return null;
+  }
+}
+
+// ============================================
+// EXPORT DEFAULT
+// ============================================
+
+export default supabase;
