@@ -1,21 +1,29 @@
-// components/admin/CreateRegularPoolModal.js
+// components/admin/CreateCityVipModal.js
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
-export default function CreateRegularPoolModal({ isOpen, onClose, onSuccess, userId }) {
+export default function CreateCityVipModal({ isOpen, onClose, onSuccess, userId }) {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
-    prize_name: '',
+    city_id: '',
+    city_name: '',
+    city_name_am: '',
+    region: '',
+    icon: '🏙️',
     description: '',
-    target_amount: '',
-    entry_fee: '10',
-    ticket_price: '5',
-    start_date: new Date().toISOString().slice(0, 16),
-    end_date: '',
     image_url: '',
-    is_featured: true
+    is_active: true,
+    daily_pool_enabled: true,
+    weekly_pool_enabled: true,
+    monthly_pool_enabled: true,
+    daily_prize: 1000000,
+    weekly_prize: 10000000,
+    monthly_prize: 40000000,
+    daily_entry: 500,
+    weekly_entry: 2500,
+    monthly_entry: 5000
   });
 
   const handleImageUpload = async (e) => {
@@ -32,11 +40,11 @@ export default function CreateRegularPoolModal({ isOpen, onClose, onSuccess, use
     
     setUploading(true);
     const fileExt = file.name.split('.').pop();
-    const fileName = `pool-${Date.now()}.${fileExt}`;
-    const filePath = `pools/${fileName}`;
+    const fileName = `city-${Date.now()}.${fileExt}`;
+    const filePath = `city-images/${fileName}`;
     
     const { error } = await supabase.storage
-      .from('pool-images')
+      .from('city-images')
       .upload(filePath, file);
     
     if (error) {
@@ -46,130 +54,134 @@ export default function CreateRegularPoolModal({ isOpen, onClose, onSuccess, use
     }
     
     const { data: { publicUrl } } = supabase.storage
-      .from('pool-images')
+      .from('city-images')
       .getPublicUrl(filePath);
     
     setFormData({ ...formData, image_url: publicUrl });
     setUploading(false);
-    toast.success('Image uploaded');
+    toast.success('City image uploaded');
   };
+
+  if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.prize_name || !formData.target_amount || !formData.end_date) {
-      toast.error('Please fill all required fields');
-      return;
-    }
-    
     setLoading(true);
     try {
       const { error } = await supabase
-        .from('pools')
-        .insert({
-          prize_name: formData.prize_name,
-          description: formData.description,
-          target_amount: parseFloat(formData.target_amount),
-          entry_fee: parseFloat(formData.entry_fee) || 10,
-          ticket_price: parseFloat(formData.ticket_price) || 5,
-          current_amount: 0,
-          status: 'active',
-          is_featured: formData.is_featured,
-          image_url: formData.image_url,
+        .from('city_vip_config')
+        .insert([{
+          ...formData,
+          city_id: formData.city_id.toLowerCase().replace(/\s/g, '-'),
           created_by: userId,
-          start_date: formData.start_date,
-          end_date: formData.end_date,
-          admin_commission_rate: 20
-        });
+          created_at: new Date(),
+          updated_at: new Date()
+        }]);
       
       if (error) throw error;
-      
-      toast.success(`Pool "${formData.prize_name}" created! You'll earn 20% commission.`);
-      onSuccess?.();
+      toast.success(`City VIP program for ${formData.city_name} created successfully!`);
+      onSuccess();
       onClose();
-      setFormData({
-        prize_name: '',
-        description: '',
-        target_amount: '',
-        entry_fee: '10',
-        ticket_price: '5',
-        start_date: new Date().toISOString().slice(0, 16),
-        end_date: '',
-        image_url: '',
-        is_featured: true
-      });
     } catch (error) {
-      console.error('Error creating pool:', error);
-      toast.error('Failed to create pool');
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  if (!isOpen) return null;
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
-          <h2 className="text-xl font-bold">✨ Create Regular Pool (20% Commission)</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+        <div className="sticky top-0 bg-white border-b p-5 flex justify-between">
+          <h2 className="text-2xl font-bold">Create City VIP Program</h2>
+          <button onClick={onClose} className="text-gray-500 text-2xl">×</button>
         </div>
-        
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          <div>
-            <label className="block text-sm font-medium mb-1">Prize Name *</label>
-            <input type="text" value={formData.prize_name} onChange={(e) => setFormData({...formData, prize_name: e.target.value})} placeholder="e.g., iPhone 15 Pro Max" className="w-full border rounded-lg p-2" required />
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">City Name (English) *</label>
+              <input type="text" required value={formData.city_name} onChange={(e) => setFormData({...formData, city_name: e.target.value, city_id: e.target.value})} className="w-full border rounded-lg p-2" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">City Name (Amharic)</label>
+              <input type="text" value={formData.city_name_am} onChange={(e) => setFormData({...formData, city_name_am: e.target.value})} className="w-full border rounded-lg p-2" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Region</label>
+              <input type="text" value={formData.region} onChange={(e) => setFormData({...formData, region: e.target.value})} className="w-full border rounded-lg p-2" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Icon (emoji)</label>
+              <input type="text" value={formData.icon} onChange={(e) => setFormData({...formData, icon: e.target.value})} className="w-full border rounded-lg p-2" placeholder="🏙️" />
+            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-1">Description</label>
-            <textarea rows="3" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} placeholder="Describe the prize and pool rules..." className="w-full border rounded-lg p-2" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Target Amount (ETB) *</label>
-              <input type="number" value={formData.target_amount} onChange={(e) => setFormData({...formData, target_amount: e.target.value})} placeholder="10000" className="w-full border rounded-lg p-2" required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Entry Fee (ETB)</label>
-              <input type="number" value={formData.entry_fee} onChange={(e) => setFormData({...formData, entry_fee: e.target.value})} placeholder="10" className="w-full border rounded-lg p-2" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Start Date</label>
-              <input type="datetime-local" value={formData.start_date} onChange={(e) => setFormData({...formData, start_date: e.target.value})} className="w-full border rounded-lg p-2" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">End Date *</label>
-              <input type="datetime-local" value={formData.end_date} onChange={(e) => setFormData({...formData, end_date: e.target.value})} className="w-full border rounded-lg p-2" required />
-            </div>
+            <textarea rows="2" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full border rounded-lg p-2" placeholder="Describe the City VIP program..." />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Pool Image</label>
+            <label className="block text-sm font-medium mb-1">City Image</label>
             <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="w-full border rounded-lg p-2" />
             {uploading && <p className="text-sm text-gray-500 mt-1">Uploading...</p>}
-            {formData.image_url && <img src={formData.image_url} alt="Preview" className="w-32 h-32 object-cover rounded-lg mt-2" />}
+            {formData.image_url && <img src={formData.image_url} alt="City" className="w-32 h-32 object-cover rounded-lg mt-2" />}
           </div>
 
-          <div className="flex items-center gap-3">
-            <input type="checkbox" id="is_featured" checked={formData.is_featured} onChange={(e) => setFormData({...formData, is_featured: e.target.checked})} className="w-5 h-5" />
-            <label htmlFor="is_featured" className="text-sm font-medium">⭐ Feature this pool on homepage</label>
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="font-bold mb-2">Prize Configuration</h3>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="text-xs block">Daily Prize (ETB)</label>
+                <input type="number" value={formData.daily_prize} onChange={(e) => setFormData({...formData, daily_prize: parseInt(e.target.value)})} className="w-full border rounded p-1 text-sm" />
+              </div>
+              <div>
+                <label className="text-xs block">Weekly Prize (ETB)</label>
+                <input type="number" value={formData.weekly_prize} onChange={(e) => setFormData({...formData, weekly_prize: parseInt(e.target.value)})} className="w-full border rounded p-1 text-sm" />
+              </div>
+              <div>
+                <label className="text-xs block">Monthly Prize (ETB)</label>
+                <input type="number" value={formData.monthly_prize} onChange={(e) => setFormData({...formData, monthly_prize: parseInt(e.target.value)})} className="w-full border rounded p-1 text-sm" />
+              </div>
+              <div>
+                <label className="text-xs block">Daily Entry (ETB)</label>
+                <input type="number" value={formData.daily_entry} onChange={(e) => setFormData({...formData, daily_entry: parseInt(e.target.value)})} className="w-full border rounded p-1 text-sm" />
+              </div>
+              <div>
+                <label className="text-xs block">Weekly Entry (ETB)</label>
+                <input type="number" value={formData.weekly_entry} onChange={(e) => setFormData({...formData, weekly_entry: parseInt(e.target.value)})} className="w-full border rounded p-1 text-sm" />
+              </div>
+              <div>
+                <label className="text-xs block">Monthly Entry (ETB)</label>
+                <input type="number" value={formData.monthly_entry} onChange={(e) => setFormData({...formData, monthly_entry: parseInt(e.target.value)})} className="w-full border rounded p-1 text-sm" />
+              </div>
+            </div>
           </div>
 
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm">
-            <p className="font-semibold text-yellow-800">💰 Admin Commission: 20%</p>
-            <p className="text-yellow-700 text-xs mt-1">When this pool reaches target, you earn 20% of the total amount.</p>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={formData.is_active} onChange={(e) => setFormData({...formData, is_active: e.target.checked})} className="w-4 h-4" />
+              <span className="text-sm">Active</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={formData.daily_pool_enabled} onChange={(e) => setFormData({...formData, daily_pool_enabled: e.target.checked})} className="w-4 h-4" />
+              <span className="text-sm">Daily Pool</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={formData.weekly_pool_enabled} onChange={(e) => setFormData({...formData, weekly_pool_enabled: e.target.checked})} className="w-4 h-4" />
+              <span className="text-sm">Weekly Pool</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={formData.monthly_pool_enabled} onChange={(e) => setFormData({...formData, monthly_pool_enabled: e.target.checked})} className="w-4 h-4" />
+              <span className="text-sm">Monthly Pool</span>
+            </label>
           </div>
 
           <div className="flex gap-3 pt-4">
-            <button type="submit" disabled={loading || uploading} className="flex-1 bg-gradient-to-r from-red-600 to-rose-600 text-white py-2 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50">
-              {loading ? 'Creating...' : '✨ Create Pool'}
+            <button type="submit" disabled={loading || uploading} className="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50">
+              {loading ? 'Creating...' : '✨ Create City VIP'}
             </button>
-            <button type="button" onClick={onClose} className="flex-1 border border-gray-300 py-2 rounded-lg hover:bg-gray-50 transition">Cancel</button>
+            <button type="button" onClick={onClose} className="flex-1 bg-gray-200 py-2 rounded-lg hover:bg-gray-300 transition">Cancel</button>
           </div>
         </form>
       </div>
