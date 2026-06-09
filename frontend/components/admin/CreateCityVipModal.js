@@ -1,195 +1,195 @@
 // components/admin/CreateCityVipModal.js
 import { useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase, compressImage } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
-export default function CreateCityVipModal({ isOpen, onClose, onSuccess }) {
+export default function CreateCityVipModal({ isOpen, onClose, onSuccess, userId }) {
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
+    city_id: '',
     city_name: '',
-    city_display_name: '',
-    slogan: '',
-    description: '',
+    city_name_am: '',
+    region: '',
     icon: '🏙️',
+    description: '',
+    image_url: '',
     is_active: true,
+    daily_pool_enabled: true,
+    weekly_pool_enabled: true,
+    monthly_pool_enabled: true,
     daily_prize: 1000000,
     weekly_prize: 10000000,
     monthly_prize: 40000000,
-    daily_entry_fee: 500,
-    weekly_entry_fee: 2500,
-    monthly_entry_fee: 5000
+    daily_entry: 500,
+    weekly_entry: 2500,
+    monthly_entry: 5000
   });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.city_name || !formData.city_display_name) {
-      toast.error('Please fill city name');
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
       return;
     }
-
-    setLoading(true);
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be less than 5MB');
+      return;
+    }
+    
+    setUploading(true);
     try {
-      const { error } = await supabase
-        .from('city_vip_config')
-        .insert({
-          city_id: formData.city_name.toLowerCase().replace(/\s/g, '-'),
-          city_name: formData.city_display_name,
-          slogan: formData.slogan,
-          description: formData.description,
-          icon: formData.icon,
-          is_active: formData.is_active,
-          daily_prize: formData.daily_prize,
-          weekly_prize: formData.weekly_prize,
-          monthly_prize: formData.monthly_prize,
-          daily_entry_fee: formData.daily_entry_fee,
-          weekly_entry_fee: formData.weekly_entry_fee,
-          monthly_entry_fee: formData.monthly_entry_fee,
-          created_at: new Date().toISOString()
-        });
-
+      // Compress image before upload
+      const compressedFile = await compressImage(file, 1200, 800, 0.8);
+      const fileExt = compressedFile.name.split('.').pop();
+      const fileName = `city-${Date.now()}.${fileExt}`;
+      const filePath = `city-images/${fileName}`;
+      
+      const { error } = await supabase.storage
+        .from('city-images')
+        .upload(filePath, compressedFile);
+      
       if (error) throw error;
       
-      toast.success(`City VIP program created for ${formData.city_display_name}!`);
-      onSuccess?.();
-      onClose();
-      setFormData({
-        city_name: '',
-        city_display_name: '',
-        slogan: '',
-        description: '',
-        icon: '🏙️',
-        is_active: true,
-        daily_prize: 1000000,
-        weekly_prize: 10000000,
-        monthly_prize: 40000000,
-        daily_entry_fee: 500,
-        weekly_entry_fee: 2500,
-        monthly_entry_fee: 5000
-      });
+      const { data: { publicUrl } } = supabase.storage
+        .from('city-images')
+        .getPublicUrl(filePath);
+      
+      setFormData({ ...formData, image_url: publicUrl });
+      toast.success('City image uploaded');
     } catch (error) {
-      console.error('Error creating city VIP:', error);
-      toast.error('Failed to create city VIP program');
+      console.error('Upload error:', error);
+      toast.error('Upload failed');
     } finally {
-      setLoading(false);
+      setUploading(false);
     }
   };
 
   if (!isOpen) return null;
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const cityId = formData.city_id.toLowerCase().replace(/\s/g, '-');
+      
+      const { error } = await supabase
+        .from('city_vip_config')
+        .insert([{
+          ...formData,
+          city_id: cityId,
+          created_by: userId,
+          created_at: new Date(),
+          updated_at: new Date()
+        }]);
+      
+      if (error) throw error;
+      
+      toast.success(`City VIP program for ${formData.city_name} created successfully!`);
+      onSuccess();
+      onClose();
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
-          <h2 className="text-xl font-bold">🏙️ Create New City VIP Program</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+        <div className="sticky top-0 bg-white border-b p-5 flex justify-between">
+          <h2 className="text-2xl font-bold">Create City VIP Program</h2>
+          <button onClick={onClose} className="text-gray-500 text-2xl hover:text-gray-700">×</button>
         </div>
         
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">City ID (URL slug) *</label>
-              <input
-                type="text"
-                value={formData.city_name}
-                onChange={(e) => setFormData({...formData, city_name: e.target.value})}
-                placeholder="addis-ababa"
-                className="w-full border rounded-lg p-2"
-                required
-              />
-              <p className="text-xs text-gray-400 mt-1">Example: addis-ababa, dire-dawa</p>
+              <label className="block text-sm font-medium mb-1">City Name (English) *</label>
+              <input type="text" required value={formData.city_name} onChange={(e) => setFormData({...formData, city_name: e.target.value, city_id: e.target.value})} className="w-full border rounded-lg p-2" placeholder="e.g., Addis Ababa" />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">City Display Name *</label>
-              <input
-                type="text"
-                value={formData.city_display_name}
-                onChange={(e) => setFormData({...formData, city_display_name: e.target.value})}
-                placeholder="Addis Ababa | አዲስ አበባ"
-                className="w-full border rounded-lg p-2"
-                required
-              />
+              <label className="block text-sm font-medium mb-1">City Name (Amharic)</label>
+              <input type="text" value={formData.city_name_am} onChange={(e) => setFormData({...formData, city_name_am: e.target.value})} className="w-full border rounded-lg p-2" placeholder="አዲስ አበባ" />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Icon (Emoji)</label>
-            <input
-              type="text"
-              value={formData.icon}
-              onChange={(e) => setFormData({...formData, icon: e.target.value})}
-              placeholder="🏙️"
-              className="w-full border rounded-lg p-2"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Slogan</label>
-            <input
-              type="text"
-              value={formData.slogan}
-              onChange={(e) => setFormData({...formData, slogan: e.target.value})}
-              placeholder="የኢትዮጵያ የንግድ እና የዲፕሎማሲ ልብ"
-              className="w-full border rounded-lg p-2"
-            />
+            <div>
+              <label className="block text-sm font-medium mb-1">Region</label>
+              <input type="text" value={formData.region} onChange={(e) => setFormData({...formData, region: e.target.value})} className="w-full border rounded-lg p-2" placeholder="e.g., Central" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Icon (emoji)</label>
+              <input type="text" value={formData.icon} onChange={(e) => setFormData({...formData, icon: e.target.value})} className="w-full border rounded-lg p-2" placeholder="🏙️" />
+            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-1">Description</label>
-            <textarea
-              rows="3"
-              value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
-              placeholder="Describe the city and its VIP program..."
-              className="w-full border rounded-lg p-2"
-            />
+            <textarea rows="2" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full border rounded-lg p-2" placeholder="Describe the City VIP program..." />
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="font-semibold mb-3">💰 Prize & Entry Fee Configuration</h3>
-            <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">City Image</label>
+            <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="w-full border rounded-lg p-2" />
+            {uploading && <p className="text-sm text-gray-500 mt-1">Uploading and compressing...</p>}
+            {formData.image_url && <img src={formData.image_url} alt="City" className="w-32 h-32 object-cover rounded-lg mt-2" />}
+          </div>
+
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="font-bold mb-2">Prize Configuration</h3>
+            <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-medium mb-1">Daily Prize (ETB)</label>
-                <input type="number" value={formData.daily_prize} onChange={(e) => setFormData({...formData, daily_prize: parseInt(e.target.value)})} className="w-full border rounded-lg p-2" />
+                <label className="text-xs block">Daily Prize (ETB)</label>
+                <input type="number" value={formData.daily_prize} onChange={(e) => setFormData({...formData, daily_prize: parseInt(e.target.value)})} className="w-full border rounded p-1 text-sm" />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Daily Entry Fee (ETB)</label>
-                <input type="number" value={formData.daily_entry_fee} onChange={(e) => setFormData({...formData, daily_entry_fee: parseInt(e.target.value)})} className="w-full border rounded-lg p-2" />
+                <label className="text-xs block">Weekly Prize (ETB)</label>
+                <input type="number" value={formData.weekly_prize} onChange={(e) => setFormData({...formData, weekly_prize: parseInt(e.target.value)})} className="w-full border rounded p-1 text-sm" />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Weekly Prize (ETB)</label>
-                <input type="number" value={formData.weekly_prize} onChange={(e) => setFormData({...formData, weekly_prize: parseInt(e.target.value)})} className="w-full border rounded-lg p-2" />
+                <label className="text-xs block">Monthly Prize (ETB)</label>
+                <input type="number" value={formData.monthly_prize} onChange={(e) => setFormData({...formData, monthly_prize: parseInt(e.target.value)})} className="w-full border rounded p-1 text-sm" />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Weekly Entry Fee (ETB)</label>
-                <input type="number" value={formData.weekly_entry_fee} onChange={(e) => setFormData({...formData, weekly_entry_fee: parseInt(e.target.value)})} className="w-full border rounded-lg p-2" />
+                <label className="text-xs block">Daily Entry (ETB)</label>
+                <input type="number" value={formData.daily_entry} onChange={(e) => setFormData({...formData, daily_entry: parseInt(e.target.value)})} className="w-full border rounded p-1 text-sm" />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Monthly Prize (ETB)</label>
-                <input type="number" value={formData.monthly_prize} onChange={(e) => setFormData({...formData, monthly_prize: parseInt(e.target.value)})} className="w-full border rounded-lg p-2" />
+                <label className="text-xs block">Weekly Entry (ETB)</label>
+                <input type="number" value={formData.weekly_entry} onChange={(e) => setFormData({...formData, weekly_entry: parseInt(e.target.value)})} className="w-full border rounded p-1 text-sm" />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Monthly Entry Fee (ETB)</label>
-                <input type="number" value={formData.monthly_entry_fee} onChange={(e) => setFormData({...formData, monthly_entry_fee: parseInt(e.target.value)})} className="w-full border rounded-lg p-2" />
+                <label className="text-xs block">Monthly Entry (ETB)</label>
+                <input type="number" value={formData.monthly_entry} onChange={(e) => setFormData({...formData, monthly_entry: parseInt(e.target.value)})} className="w-full border rounded p-1 text-sm" />
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="is_active"
-              checked={formData.is_active}
-              onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
-              className="w-5 h-5"
-            />
-            <label htmlFor="is_active" className="text-sm font-medium">Active (visible to users)</label>
+          <div className="flex gap-4 flex-wrap">
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={formData.is_active} onChange={(e) => setFormData({...formData, is_active: e.target.checked})} className="w-4 h-4" />
+              <span className="text-sm">Active</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={formData.daily_pool_enabled} onChange={(e) => setFormData({...formData, daily_pool_enabled: e.target.checked})} className="w-4 h-4" />
+              <span className="text-sm">Daily Pool</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={formData.weekly_pool_enabled} onChange={(e) => setFormData({...formData, weekly_pool_enabled: e.target.checked})} className="w-4 h-4" />
+              <span className="text-sm">Weekly Pool</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={formData.monthly_pool_enabled} onChange={(e) => setFormData({...formData, monthly_pool_enabled: e.target.checked})} className="w-4 h-4" />
+              <span className="text-sm">Monthly Pool</span>
+            </label>
           </div>
 
           <div className="flex gap-3 pt-4">
-            <button type="submit" disabled={loading} className="flex-1 bg-gradient-to-r from-gray-700 to-gray-900 text-white py-2 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50">
-              {loading ? 'Creating...' : '🏙️ Create City VIP Program'}
+            <button type="submit" disabled={loading || uploading} className="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50">
+              {loading ? 'Creating...' : '✨ Create City VIP'}
             </button>
-            <button type="button" onClick={onClose} className="flex-1 border border-gray-300 py-2 rounded-lg hover:bg-gray-50 transition">Cancel</button>
+            <button type="button" onClick={onClose} className="flex-1 bg-gray-200 py-2 rounded-lg hover:bg-gray-300 transition">Cancel</button>
           </div>
         </form>
       </div>
