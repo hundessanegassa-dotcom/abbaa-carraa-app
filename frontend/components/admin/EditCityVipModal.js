@@ -1,6 +1,7 @@
+
 // components/admin/EditCityVipModal.js
 import { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase, compressImage } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
 export default function EditCityVipModal({ isOpen, onClose, onSuccess, cityData, userId }) {
@@ -61,27 +62,30 @@ export default function EditCityVipModal({ isOpen, onClose, onSuccess, cityData,
     }
     
     setUploading(true);
-    const fileExt = file.name.split('.').pop();
-    const fileName = `city-${Date.now()}.${fileExt}`;
-    const filePath = `city-images/${fileName}`;
-    
-    const { error } = await supabase.storage
-      .from('city-images')
-      .upload(filePath, file);
-    
-    if (error) {
+    try {
+      const compressedFile = await compressImage(file, 1200, 800, 0.8);
+      const fileExt = compressedFile.name.split('.').pop();
+      const fileName = `city-${Date.now()}.${fileExt}`;
+      const filePath = `city-images/${fileName}`;
+      
+      const { error } = await supabase.storage
+        .from('city-images')
+        .upload(filePath, compressedFile);
+      
+      if (error) throw error;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('city-images')
+        .getPublicUrl(filePath);
+      
+      setFormData({ ...formData, image_url: publicUrl });
+      toast.success('City image updated');
+    } catch (error) {
+      console.error('Upload error:', error);
       toast.error('Upload failed');
+    } finally {
       setUploading(false);
-      return;
     }
-    
-    const { data: { publicUrl } } = supabase.storage
-      .from('city-images')
-      .getPublicUrl(filePath);
-    
-    setFormData({ ...formData, image_url: publicUrl });
-    setUploading(false);
-    toast.success('City image updated');
   };
 
   if (!isOpen) return null;
@@ -100,6 +104,7 @@ export default function EditCityVipModal({ isOpen, onClose, onSuccess, cityData,
         .eq('city_id', cityData.city_id);
       
       if (error) throw error;
+      
       toast.success(`City VIP program for ${formData.city_name} updated successfully!`);
       onSuccess();
       onClose();
@@ -115,8 +120,9 @@ export default function EditCityVipModal({ isOpen, onClose, onSuccess, cityData,
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b p-5 flex justify-between">
           <h2 className="text-2xl font-bold">Edit City VIP Program - {cityData?.city_name}</h2>
-          <button onClick={onClose} className="text-gray-500 text-2xl">×</button>
+          <button onClick={onClose} className="text-gray-500 text-2xl hover:text-gray-700">×</button>
         </div>
+        
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -145,7 +151,7 @@ export default function EditCityVipModal({ isOpen, onClose, onSuccess, cityData,
           <div>
             <label className="block text-sm font-medium mb-1">City Image</label>
             <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="w-full border rounded-lg p-2" />
-            {uploading && <p className="text-sm text-gray-500 mt-1">Uploading...</p>}
+            {uploading && <p className="text-sm text-gray-500 mt-1">Uploading and compressing...</p>}
             {formData.image_url && <img src={formData.image_url} alt="City" className="w-32 h-32 object-cover rounded-lg mt-2" />}
           </div>
 
