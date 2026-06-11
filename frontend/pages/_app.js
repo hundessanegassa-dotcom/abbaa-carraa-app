@@ -2,7 +2,7 @@
 import '../styles/globals.css';
 import { useState, useEffect, useTransition } from 'react';
 import dynamic from 'next/dynamic';
-import { useRouter } 'next/router';
+import { useRouter } from 'next/router';
 import { Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
