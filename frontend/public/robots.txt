@@ -1,45 +1,11 @@
-# robots.txt for Abbaa Carraa
-# https://abbaa-carraa-ethiopia.vercel.app/robots.txt
-
+# robots.txt
 User-agent: *
 Allow: /
-Allow: /listings
-Allow: /winners
-Allow: /merkato-vip
-Allow: /cities
-Allow: /pools
-Allow: /about
-Allow: /faq
-Allow: /contact
-Allow: /how-it-works
-
 Disallow: /api/
 Disallow: /admin/
 Disallow: /dashboard/
 Disallow: /login/
 Disallow: /register/
 Disallow: /auth/
-Disallow: /profile/
-Disallow: /settings/
-Disallow: /agent/
-Disallow: /vendor/
-Disallow: /organization/
 
-# Sitemap location
 Sitemap: https://abbaa-carraa-ethiopia.vercel.app/sitemap.xml
-
-# Crawl delay to be friendly to servers
-Crawl-delay: 1
-
-# Host
-Host: https://abbaa-carraa-ethiopia.vercel.app
-
-# Googlebot
-User-agent: Googlebot
-Allow: /
-Crawl-delay: 1
-
-# Bingbot
-User-agent: Bingbot
-Allow: /
-Crawl-delay: 1
