@@ -1,4 +1,4 @@
-// pages/admin/newsletter.js - View and manage subscribers
+// pages/admin/newsletter.js - CORRECTED with 'subscribed_from' column
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import BackButton from '../../components/BackButton';
@@ -47,7 +47,7 @@ export default function AdminNewsletter() {
     try {
       const { error } = await supabase
         .from('newsletter_subscribers')
-        .update({ is_active: false, unsubscribed_at: new Date().toISOString() })
+        .update({ is_active: false })
         .eq('id', id);
       
       if (error) throw error;
@@ -86,7 +86,7 @@ export default function AdminNewsletter() {
         s.name || '',
         new Date(s.subscribed_at).toLocaleString(),
         s.is_active ? 'Active' : 'Unsubscribed',
-        s.source || 'website'
+        s.subscribed_from || 'website'
       ]);
     });
     
@@ -177,7 +177,7 @@ export default function AdminNewsletter() {
                           <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">Unsubscribed</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-sm">{sub.source || 'website'}</td>
+                      <td className="px-4 py-3 text-sm">{sub.subscribed_from || 'website'}</td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2">
                           {sub.is_active && (
