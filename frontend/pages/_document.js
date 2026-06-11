@@ -43,6 +43,9 @@ export default function Document() {
         {/* Security headers via meta tags */}
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
         <meta httpEquiv="X-Frame-Options" content="DENY" />
+
+        {/* Google Search Console Verification */}
+        <meta name="google-site-verification" content="googlee2a2a3b3338581aa" />
       </Head>
       <body>
         <Main />
