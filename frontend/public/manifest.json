@@ -78,6 +78,13 @@
       "icons": [{ "src": "/images/icon-96x96.png", "sizes": "96x96" }]
     },
     {
+      "name": "City VIP",
+      "short_name": "City VIP",
+      "description": "Join your city's VIP program",
+      "url": "/cities",
+      "icons": [{ "src": "/images/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
       "name": "My Dashboard",
       "short_name": "Dashboard",
       "description": "View your tickets and winnings",
