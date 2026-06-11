@@ -1,4 +1,4 @@
-// components/NewsletterSubscribe.js - FULLY WORKING
+// components/NewsletterSubscribe.js - CORRECTED VERSION
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -49,7 +49,6 @@ export default function NewsletterSubscribe() {
             .from('newsletter_subscribers')
             .update({ 
               is_active: true, 
-              unsubscribed_at: null,
               subscribed_at: new Date().toISOString()
             })
             .eq('email', email);
@@ -62,16 +61,16 @@ export default function NewsletterSubscribe() {
         }
       }
       
-      // Insert new subscriber
+      // Insert new subscriber - using 'subscribed_from' instead of 'source'
       const { error: insertError } = await supabase
         .from('newsletter_subscribers')
         .insert({
           email: email,
           name: name || null,
-          source: 'newsletter_widget',
+          subscribed_from: 'newsletter_widget',
           subscribed_at: new Date().toISOString(),
           is_active: true,
-          user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null
+          user_agent: typeof navigator !== 'undefined' ? navigator.userAgent.substring(0, 500) : null
         });
       
       if (insertError) throw insertError;
@@ -80,17 +79,6 @@ export default function NewsletterSubscribe() {
       setEmail('');
       setName('');
       setSubscribed(true);
-      
-      // Optional: Send welcome email via your backend API
-      try {
-        await fetch('/api/newsletter/welcome', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, name })
-        });
-      } catch (apiError) {
-        console.log('Welcome email service not configured yet');
-      }
       
     } catch (error) {
       console.error('Newsletter subscription error:', error);
