@@ -1,14 +1,17 @@
 {
   "name": "Abbaa Carraa",
   "short_name": "Abbaa Carraa",
-  "description": "Community-driven prize and contribution platform for Ethiopia",
+  "description": "Win amazing prizes through community savings! Join Merkato VIP, City VIP, or Regular Pools to win up to 40 Million ETB.",
   "start_url": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone"],
   "theme_color": "#10b981",
-  "background_color": "#10b981",
+  "background_color": "#ffffff",
   "orientation": "portrait",
   "scope": "/",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["finance", "lottery", "games", "entertainment"],
   "icons": [
     {
       "src": "/images/icon-72x72.png",
@@ -57,6 +60,29 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Pools",
+      "short_name": "Pools",
+      "description": "View all available prize pools",
+      "url": "/listings",
+      "icons": [{ "src": "/images/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Merkato VIP",
+      "short_name": "Merkato",
+      "description": "Join Merkato VIP - Win up to 40M ETB",
+      "url": "/merkato-vip",
+      "icons": [{ "src": "/images/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "My Dashboard",
+      "short_name": "Dashboard",
+      "description": "View your tickets and winnings",
+      "url": "/dashboard",
+      "icons": [{ "src": "/images/icon-96x96.png", "sizes": "96x96" }]
     }
   ]
 }
