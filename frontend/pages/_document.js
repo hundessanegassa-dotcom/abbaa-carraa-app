@@ -44,8 +44,8 @@ export default function Document() {
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
         <meta httpEquiv="X-Frame-Options" content="DENY" />
 
-        {/* Google Search Console Verification - Meta Tag Method */}
-        <meta name="google-site-verification" content="googlee2a2a3b3338581aa" />
+        {/* Google Search Console Verification */}
+        <meta name="google-site-verification" content="R7_wK0rVZIH3R1tBPRkZQiiFDz9TC04m5NdAmmRuVbk" />
       </Head>
       <body>
         <Main />
