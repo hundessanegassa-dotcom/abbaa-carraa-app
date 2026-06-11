@@ -52,11 +52,6 @@ export default function AdminDashboard() {
   const [regularModalMode, setRegularModalMode] = useState(null); // 'create', 'edit', 'delete'
   const [selectedRegularData, setSelectedRegularData] = useState(null);
   
-  // KEEP THESE FOR BACKWARD COMPATIBILITY WITH EXISTING BUTTONS
-  const [showCreateCityModal, setShowCreateCityModal] = useState(false);
-  const [showEditCityModal, setShowEditCityModal] = useState(false);
-  const [selectedCityForEdit, setSelectedCityForEdit] = useState(null);
-  
   // Admin's personal pools
   const [myPools, setMyPools] = useState([]);
   const [myStats, setMyStats] = useState({
@@ -2059,12 +2054,7 @@ export default function AdminDashboard() {
 
       {/* Keep these for backward compatibility with existing code that might still use them */}
       {/* These are hidden - the unified modals above handle everything */}
-      <div style={{ display: 'none' }}>
-        <CreateCityVipModal isOpen={false} />
-        <EditCityVipModal isOpen={false} />
-        <CreateRegularPoolModal isOpen={false} />
-      </div>
-      
+     
       {/* Keep existing modals that are still needed */}
       {showPoolModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
