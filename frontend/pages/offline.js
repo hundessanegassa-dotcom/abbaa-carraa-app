@@ -1,4 +1,4 @@
-// pages/offline.js - Offline fallback page
+// pages/offline.js - Offline fallback page (MUST be in pages folder)
 import Link from 'next/link';
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
