@@ -1272,6 +1272,11 @@ export default function AdminDashboard() {
               <button onClick={() => setRegularModalMode('create')} className="bg-white text-red-600 px-4 py-2 rounded-full font-semibold text-sm">+ Create Pool (20%)</button>
               <button onClick={() => setShowMerkatoModal(true)} className="bg-yellow-500 text-gray-900 px-4 py-2 rounded-full font-semibold text-sm">🏪 Create Merkato VIP Pool</button>
               <Link href="/dashboard" className="bg-white/20 px-4 py-2 rounded-full text-sm">Home</Link>
+                  <Link href="/admin/newsletter" className="bg-pink-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
+  <div className="text-2xl mb-1">📧</div>
+  <p className="font-semibold text-xs">Newsletter</p>
+  <p className="text-xs opacity-80">Manage</p>
+</Link>
             </div>
           </div>
         </div>
