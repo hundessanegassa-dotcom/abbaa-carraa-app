@@ -1,4 +1,4 @@
-// pages/auth/callback.js - COMPLETELY FIXED VERSION
+// pages/auth/callback.js - COMPLETE FIXED VERSION
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
@@ -10,10 +10,8 @@ export default function AuthCallback() {
   const router = useRouter();
   const [showAgreement, setShowAgreement] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState(null);
   const [error, setError] = useState(null);
-  const [pendingRedirect, setPendingRedirect] = useState(null);
-  const [isPoolVipRedirect, setIsPoolVipRedirect] = useState(false);
+  const [processingComplete, setProcessingComplete] = useState(false);
 
   // Get stored redirect URL
   const getStoredRedirectUrl = () => {
@@ -54,9 +52,9 @@ export default function AuthCallback() {
     sessionStorage.removeItem('pendingCity');
   };
 
-  // Handle the final redirect after everything is done
-  const handleFinalRedirect = useCallback(async (finalRole, redirectUrl, isPoolVip) => {
-    console.log('🔴 Final redirect - Role:', finalRole, 'URL:', redirectUrl, 'IsPoolVip:', isPoolVip);
+  // Handle the final redirect
+  const handleFinalRedirect = useCallback(async (redirectUrl, isPoolVip) => {
+    console.log('🔴 Final redirect - URL:', redirectUrl, 'IsPoolVip:', isPoolVip);
     
     clearStoredData();
     
@@ -67,18 +65,88 @@ export default function AuthCallback() {
       return;
     }
     
-    // For partners (agents/vendors/orgs), go to their application form
-    if (finalRole !== 'individual') {
-      router.push(`/become-${finalRole}`);
-      return;
-    }
-    
-    // Default for individuals
+    // Default for individuals - go to listings
     router.push('/listings');
   }, [router]);
 
-  // Handle agreement acceptance (ONLY for partners)
+  // Create or update user profile
+  const createOrUpdateProfile = useCallback(async (session, role) => {
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id, role, agreement_accepted')
+      .eq('id', session.user.id)
+      .maybeSingle();
+    
+    if (existingProfile) {
+      // Update existing profile if needed
+      if (!existingProfile.agreement_accepted) {
+        await supabase
+          .from('profiles')
+          .update({
+            agreement_accepted: true,
+            agreement_accepted_at: new Date().toISOString(),
+            agreement_version: '1.0',
+            role: role,
+            user_type: role,
+            status: role === 'individual' ? 'active' : 'pending_approval',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', session.user.id);
+      }
+      return existingProfile;
+    } else {
+      // Create new profile
+      const { data: newProfile, error } = await supabase
+        .from('profiles')
+        .insert({
+          id: session.user.id,
+          email: session.user.email,
+          full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+          role: role,
+          user_type: role,
+          agreement_accepted: role === 'individual' ? true : false, // Individuals auto-accept
+          agreement_accepted_at: role === 'individual' ? new Date().toISOString() : null,
+          agreement_version: role === 'individual' ? '1.0' : null,
+          status: role === 'individual' ? 'active' : 'pending_approval',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return newProfile;
+    }
+  }, []);
+
+  // Process individual user (no agreement needed)
+  const processIndividualUser = useCallback(async (session, redirectUrl, isPoolVip) => {
+    console.log('👤 Processing INDIVIDUAL user - No agreement needed');
+    
+    // Create/update profile with individual role
+    await createOrUpdateProfile(session, 'individual');
+    
+    toast.success('Welcome to Abbaa Carraa!');
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    await handleFinalRedirect(redirectUrl, isPoolVip);
+  }, [createOrUpdateProfile, handleFinalRedirect]);
+
+  // Process partner user (needs agreement)
+  const processPartnerUser = useCallback(async (session, role, redirectUrl) => {
+    console.log('🤝 Processing PARTNER user - Role:', role);
+    
+    // Create profile first (without agreement accepted)
+    await createOrUpdateProfile(session, role);
+    
+    // Show agreement modal
+    setShowAgreement(true);
+    setLoading(false);
+  }, [createOrUpdateProfile]);
+
+  // Handle agreement acceptance for partners
   const handleAcceptAgreement = useCallback(async () => {
+    setLoading(true);
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
@@ -87,62 +155,37 @@ export default function AuthCallback() {
       
       const pendingRole = localStorage.getItem('pendingRole') || sessionStorage.getItem('pendingRole') || 'individual';
       const redirectUrl = getStoredRedirectUrl();
-      const isPoolVip = isPoolOrVipRedirect(redirectUrl);
       
-      // Final role determination
-      const finalRole = isPoolVip ? 'individual' : pendingRole;
-      
-      // Check if profile exists
-      const { data: existingProfile } = await supabase
+      // Update profile with agreement accepted
+      await supabase
         .from('profiles')
-        .select('id')
-        .eq('id', session.user.id)
-        .maybeSingle();
-      
-      if (existingProfile) {
-        await supabase
-          .from('profiles')
-          .update({
-            agreement_accepted: true,
-            agreement_accepted_at: new Date().toISOString(),
-            agreement_version: '1.0',
-            role: finalRole,
-            user_type: finalRole,
-            status: finalRole === 'individual' ? 'active' : 'pending_approval',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', session.user.id);
-      } else {
-        await supabase
-          .from('profiles')
-          .insert({
-            id: session.user.id,
-            email: session.user.email,
-            full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
-            role: finalRole,
-            user_type: finalRole,
-            agreement_accepted: true,
-            agreement_accepted_at: new Date().toISOString(),
-            agreement_version: '1.0',
-            status: finalRole === 'individual' ? 'active' : 'pending_approval',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-      }
+        .update({
+          agreement_accepted: true,
+          agreement_accepted_at: new Date().toISOString(),
+          agreement_version: '1.0',
+          status: 'pending_approval',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', session.user.id);
       
       toast.success('Welcome to Abbaa Carraa!');
-      
       await new Promise(resolve => setTimeout(resolve, 500));
-      handleFinalRedirect(finalRole, redirectUrl, isPoolVip);
+      
+      clearStoredData();
+      
+      // Redirect to partner application form
+      router.push(`/become-${pendingRole}`);
       
     } catch (err) {
       console.error('Accept agreement error:', err);
       toast.error('Failed to save agreement: ' + err.message);
       router.push('/login');
+    } finally {
+      setLoading(false);
     }
-  }, [handleFinalRedirect, router]);
+  }, [router]);
 
-  const handleClose = useCallback(() => {
+  const handleCloseAgreement = useCallback(() => {
     clearStoredData();
     supabase.auth.signOut();
     router.push('/login');
@@ -159,9 +202,6 @@ export default function AuthCallback() {
         
         console.log('🟢 Callback - Redirect URL:', redirectUrl);
         console.log('🟢 Callback - Is Pool/VIP redirect:', isPoolVip);
-        
-        setPendingRedirect(redirectUrl);
-        setIsPoolVipRedirect(isPoolVip);
 
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
@@ -173,18 +213,27 @@ export default function AuthCallback() {
           return;
         }
 
-        // Check if user already has a profile with agreement accepted
-        const { data: profile, error: profileError } = await supabase
+        // Get pending role (default to individual)
+        let pendingRole = localStorage.getItem('pendingRole') || sessionStorage.getItem('pendingRole') || 'individual';
+        
+        // If this is a pool/VIP redirect, force role to INDIVIDUAL
+        if (isPoolVip) {
+          pendingRole = 'individual';
+          console.log('🎯 Pool/VIP redirect - Forcing role to individual');
+        }
+        
+        // Check if user already has a profile
+        const { data: existingProfile } = await supabase
           .from('profiles')
-          .select('role, user_type, agreement_accepted, agreement_version, id, status')
+          .select('role, agreement_accepted')
           .eq('id', session.user.id)
           .maybeSingle();
 
-        // If user has a profile with agreement accepted
-        if (profile?.agreement_accepted === true) {
-          console.log('✅ User already has agreement accepted');
+        // If user already exists and has agreement accepted
+        if (existingProfile?.agreement_accepted === true) {
+          console.log('✅ Existing user with agreement accepted');
           
-          // CRITICAL: Check for redirect URL FIRST - even for existing users
+          // Check for redirect URL FIRST
           if (redirectUrl) {
             console.log('🎯 Existing user - Redirecting to pool/VIP:', redirectUrl);
             clearStoredData();
@@ -195,8 +244,8 @@ export default function AuthCallback() {
           clearStoredData();
           
           // Partners go to their dashboard
-          if (profile.role !== 'individual') {
-            router.push(`/${profile.role}/dashboard`);
+          if (existingProfile.role !== 'individual') {
+            router.push(`/${existingProfile.role}/dashboard`);
             return;
           }
           
@@ -205,32 +254,19 @@ export default function AuthCallback() {
           return;
         }
 
-        // NEW USER - Determine role
-        let pendingRole = localStorage.getItem('pendingRole') || sessionStorage.getItem('pendingRole') || 'individual';
-        
-        // If this is a pool/VIP redirect, force role to INDIVIDUAL (NO AGREEMENT NEEDED)
-        if (isPoolVip) {
-          pendingRole = 'individual';
-          // Clear any partner role storage
-          localStorage.removeItem('pendingRole');
-          sessionStorage.removeItem('pendingRole');
-          console.log('🎯 Pool/VIP redirect - Forcing role to individual, NO agreement');
+        // NEW USER or USER WITHOUT AGREEMENT
+        if (isMounted) {
+          if (pendingRole === 'individual') {
+            // INDIVIDUAL - No agreement needed, process immediately
+            await processIndividualUser(session, redirectUrl, isPoolVip);
+          } else {
+            // PARTNER - Needs agreement
+            await processPartnerUser(session, pendingRole, redirectUrl);
+          }
         }
         
         if (isMounted) {
-          setUserRole(pendingRole);
-          
-          // ONLY show agreement for partners (agents/vendors/orgs)
-          // Individuals (including pool/VIP joiners) should NEVER see agreement
-          const needsAgreement = pendingRole !== 'individual';
-          setShowAgreement(needsAgreement);
-          setLoading(false);
-          
-          // If individual (no agreement needed), immediately process
-          if (!needsAgreement) {
-            console.log('👤 Individual user - No agreement needed, proceeding directly');
-            await handleAcceptAgreement();
-          }
+          setProcessingComplete(true);
         }
         
       } catch (err) {
@@ -240,6 +276,10 @@ export default function AuthCallback() {
           toast.error('Authentication failed');
         }
         setTimeout(() => router.push('/login'), 3000);
+      } finally {
+        if (isMounted && !processingComplete) {
+          setLoading(false);
+        }
       }
     };
 
@@ -248,7 +288,7 @@ export default function AuthCallback() {
     return () => {
       isMounted = false;
     };
-  }, [router, handleAcceptAgreement]);
+  }, [router, processIndividualUser, processPartnerUser, processingComplete]);
 
   if (error) {
     return (
@@ -273,13 +313,14 @@ export default function AuthCallback() {
   }
 
   // Show agreement ONLY for partners (agents/vendors/organizations)
-  if (showAgreement && userRole && userRole !== 'individual') {
+  if (showAgreement) {
+    const pendingRole = localStorage.getItem('pendingRole') || sessionStorage.getItem('pendingRole') || 'individual';
     return (
       <AgreementModal
         isOpen={true}
-        onClose={handleClose}
+        onClose={handleCloseAgreement}
         onAccept={handleAcceptAgreement}
-        userRole={userRole}
+        userRole={pendingRole}
       />
     );
   }
