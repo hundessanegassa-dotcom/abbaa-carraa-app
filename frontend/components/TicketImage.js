@@ -1,4 +1,4 @@
-// frontend/components/TicketImage.js - PNG/JPEG Ticket Download
+// components/TicketImage.js - Make sure this file exists and exports properly
 import { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import toast from 'react-hot-toast';
@@ -93,7 +93,6 @@ export default function TicketImage({
         className="bg-white rounded-2xl shadow-2xl overflow-hidden"
         style={{ width: '100%', maxWidth: '500px', margin: '0 auto' }}
       >
-        {/* Header */}
         <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-5 text-center">
           <div className="text-5xl mb-2">🎫</div>
           <h2 className="text-2xl font-bold">ABBAA CARRAA</h2>
@@ -111,7 +110,7 @@ export default function TicketImage({
           <div className="bg-amber-50 rounded-xl p-3 text-center">
             <p className="text-xs text-amber-600">🏆 YOU COULD WIN</p>
             <p className="font-bold text-2xl text-amber-700">
-              ETB {(pool?.prize_amount || pool?.target_amount || 0).toLocaleString()}
+              ETB {(pool?.prize_amount || pool?.target_amount || pool?.prize || 0).toLocaleString()}
             </p>
           </div>
           
