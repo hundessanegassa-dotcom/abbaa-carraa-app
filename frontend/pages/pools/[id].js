@@ -1,13 +1,10 @@
-// pages/pools/[id].js - FULL CORRECTED CODE
+// pages/pools/[id].js - UPDATED TO MATCH MERKATO/CITY VIP SEAT SELECTION STYLE
 import { useRouter } from 'next/router';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import Head from 'next/head';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { QRCodeSVG } from 'qrcode.react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import Ticket from '../../components/Ticket';
 
 // Optimized file upload utilities
@@ -74,28 +71,54 @@ export default function PoolDetails() {
   const [maxSeats, setMaxSeats] = useState(5);
   const [participantId, setParticipantId] = useState(null);
   const [participantData, setParticipantData] = useState(null);
-  const [ticketType, setTicketType] = useState('unverified');
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [availableSeats, setAvailableSeats] = useState(0);
-  const [takenSeats, setTakenSeats] = useState([]);
-  const [reference, setReference] = useState('');
+  const [bookedSeats, setBookedSeats] = useState([]);
+  const [reservedSeats, setReservedSeats] = useState([]);
+  const [reservationTimer, setReservationTimer] = useState(null);
+  const [availableSeatsCount, setAvailableSeatsCount] = useState(0);
+
+  // Pool calculations
+  const winnerPrize = pool?.target_amount || 0;
+  const entryFee = pool?.entry_fee || pool?.ticket_price || 10;
+  const totalCollection = winnerPrize * 1.2;
+  const totalSeats = Math.floor(totalCollection / entryFee);
+  const currentAmount = pool?.current_amount || 0;
+  const progress = (currentAmount / totalCollection) * 100;
+  const maxSeatsPerUser = Math.min(5, Math.floor((totalSeats - bookedSeats.length) / 2) || 5);
 
   useEffect(() => {
     return () => {
       isMounted.current = false;
+      if (reservationTimer) clearTimeout(reservationTimer);
+      if (reservedSeats.length > 0 && user) {
+        releaseSeats(reservedSeats);
+      }
     };
-  }, []);
+  }, [reservedSeats, user]);
 
   useEffect(() => {
     if (id) {
       fetchPool();
       getCurrentUser();
-      fetchAvailableSeats();
-      fetchTakenSeats();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (user && pool) {
+      fetchBookedSeats();
+      fetchUserReservations();
+      
+      // Refresh seat status every 30 seconds
+      const interval = setInterval(() => {
+        fetchBookedSeats();
+        fetchUserReservations();
+      }, 30000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [user, pool]);
 
   useEffect(() => {
     if (user) {
@@ -126,29 +149,100 @@ export default function PoolDetails() {
     setLoading(false);
   }
 
-  async function fetchAvailableSeats() {
-    const { count } = await supabase
-      .from('pool_seats')
-      .select('*', { count: 'exact', head: true })
-      .eq('pool_id', id)
-      .eq('status', 'available');
-    if (isMounted.current) setAvailableSeats(count || 0);
-  }
-
-  async function fetchTakenSeats() {
-    const { data } = await supabase
-      .from('pool_seats')
-      .select('seat_number')
-      .eq('pool_id', id)
-      .eq('status', 'taken');
-    
-    if (data) {
-      setTakenSeats(data.map(s => s.seat_number));
+  async function fetchBookedSeats() {
+    try {
+      const { data, error } = await supabase
+        .from('pool_seats')
+        .select('seat_number, status')
+        .eq('pool_id', id)
+        .in('status', ['taken', 'reserved']);
+      
+      if (error) throw error;
+      
+      // Get taken seats (permanently booked)
+      const takenSeats = (data || [])
+        .filter(seat => seat.status === 'taken')
+        .map(seat => seat.seat_number);
+      
+      // Get reserved seats (temporarily reserved by others)
+      const reservedByOthers = (data || [])
+        .filter(seat => seat.status === 'reserved' && seat.reserved_by !== user?.id)
+        .map(seat => seat.seat_number);
+      
+      // Combined - seats that are not available
+      const allUnavailable = [...new Set([...takenSeats, ...reservedByOthers])];
+      setBookedSeats(allUnavailable);
+      
+      const availableCount = totalSeats - allUnavailable.length;
+      setAvailableSeatsCount(availableCount);
+    } catch (err) {
+      console.error('Error fetching booked seats:', err);
     }
   }
 
+  async function fetchUserReservations() {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('pool_seats')
+        .select('seat_number, reserved_until')
+        .eq('pool_id', id)
+        .eq('reserved_by', user.id)
+        .eq('status', 'reserved')
+        .gte('reserved_until', new Date().toISOString());
+      
+      if (!error && data && data.length > 0) {
+        const reservedSeatNumbers = data.map(r => r.seat_number);
+        setReservedSeats(reservedSeatNumbers);
+        setSelectedSeats(reservedSeatNumbers);
+      }
+    } catch (err) {
+      console.error('Error fetching reservations:', err);
+    }
+  }
+
+  async function reserveSeatsInDB(seatNumbers) {
+    if (!user) return false;
+    
+    const expiryTime = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    
+    const updates = seatNumbers.map(seatNumber => ({
+      pool_id: id,
+      seat_number: seatNumber,
+      user_id: user.id,
+      reserved_by: user.id,
+      status: 'reserved',
+      reserved_until: expiryTime,
+      reserved_at: new Date().toISOString()
+    }));
+    
+    // Use upsert to handle conflicts
+    for (const update of updates) {
+      const { error } = await supabase
+        .from('pool_seats')
+        .upsert(update, { onConflict: 'pool_id, seat_number' });
+      
+      if (error) {
+        console.error('Reserve error:', error);
+        return false;
+      }
+    }
+    
+    // Set timer to release reservation after 10 minutes
+    if (reservationTimer) clearTimeout(reservationTimer);
+    const timer = setTimeout(() => {
+      releaseUserReservations();
+      toast.warning('Your seat reservation has expired. Please reselect seats.', { duration: 5000 });
+      window.location.reload();
+    }, 10 * 60 * 1000);
+    setReservationTimer(timer);
+    
+    return true;
+  }
+
   async function releaseSeats(seatNumbers) {
-    if (!seatNumbers || seatNumbers.length === 0) return;
+    if (!seatNumbers || seatNumbers.length === 0 || !user) return;
     
     await supabase
       .from('pool_seats')
@@ -161,23 +255,28 @@ export default function PoolDetails() {
       })
       .in('seat_number', seatNumbers)
       .eq('pool_id', id)
-      .eq('status', 'reserved');
+      .eq('reserved_by', user.id);
   }
 
-  async function releaseUserPreviousReservations() {
+  async function releaseUserReservations() {
     if (!user) return;
     
-    const { data: userReservations } = await supabase
+    await supabase
       .from('pool_seats')
-      .select('seat_number')
+      .update({
+        status: 'available',
+        user_id: null,
+        reserved_by: null,
+        reserved_at: null,
+        reserved_until: null
+      })
       .eq('pool_id', id)
       .eq('reserved_by', user.id)
       .eq('status', 'reserved');
     
-    if (userReservations && userReservations.length > 0) {
-      const seatNumbers = userReservations.map(s => s.seat_number);
-      await releaseSeats(seatNumbers);
-    }
+    setReservedSeats([]);
+    setSelectedSeats([]);
+    await fetchBookedSeats();
   }
 
   const handleJoinNow = () => {
@@ -195,7 +294,95 @@ export default function PoolDetails() {
     setShowSeatSelector(true);
   };
 
-  // ========== UPDATED: handlePaymentSubmit (Fixed) ==========
+  const toggleSeat = async (seatNum) => {
+    if (bookedSeats.includes(seatNum)) {
+      toast.error(`Seat ${seatNum} is already taken. Please select another seat.`);
+      return;
+    }
+
+    const isSelected = selectedSeats.includes(seatNum);
+
+    if (isSelected) {
+      await releaseSeats([seatNum]);
+      setSelectedSeats(selectedSeats.filter(s => s !== seatNum));
+      setReservedSeats(reservedSeats.filter(s => s !== seatNum));
+      toast.success(`Seat ${seatNum} released`);
+      await fetchBookedSeats();
+    } else {
+      if (selectedSeats.length >= maxSeatsPerUser) {
+        toast.error(`You can only select up to ${maxSeatsPerUser} seats at a time`);
+        return;
+      }
+      
+      if (bookedSeats.includes(seatNum)) {
+        toast.error(`Seat ${seatNum} is no longer available`);
+        await fetchBookedSeats();
+        return;
+      }
+      
+      const success = await reserveSeatsInDB([seatNum]);
+      if (success) {
+        setSelectedSeats([...selectedSeats, seatNum]);
+        setReservedSeats([...reservedSeats, seatNum]);
+        toast.success(`Seat ${seatNum} reserved for 10 minutes`);
+        await fetchBookedSeats();
+      } else {
+        toast.error(`Seat ${seatNum} is no longer available`);
+        await fetchBookedSeats();
+      }
+    }
+  };
+
+  const confirmSeats = async () => {
+    if (selectedSeats.length === 0) { 
+      toast.error('Select at least one seat'); 
+      return; 
+    }
+    
+    const stillAvailable = selectedSeats.every(seat => !bookedSeats.includes(seat));
+    if (!stillAvailable) {
+      toast.error('Some of your selected seats are no longer available. Please reselect.');
+      await fetchBookedSeats();
+      setSelectedSeats([]);
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const ticketNumber = `POOL-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+      const totalAmount = selectedSeats.length * entryFee;
+      
+      const { data: participant, error } = await supabase
+        .from('regular_pool_participants')
+        .insert({
+          user_id: user.id,
+          user_email: user.email,
+          user_name: user.user_metadata?.full_name || user.email.split('@')[0],
+          pool_id: pool.id,
+          pool_name: pool.prize_name,
+          seat_numbers: selectedSeats,
+          contribution_amount: totalAmount,
+          prize_amount: pool.target_amount,
+          payment_status: 'pending',
+          ticket_number: ticketNumber,
+          status: 'active',
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      setParticipantId(participant.id);
+      setShowSeatSelector(false);
+      setShowPayment(true);
+    } catch (error) { 
+      toast.error('Failed to reserve seats: ' + error.message); 
+    } finally { 
+      setLoading(false); 
+    }
+  };
+
   const handlePaymentSubmit = async () => {
     if (!selectedFile) { 
       toast.error('Please upload payment screenshot'); 
@@ -209,8 +396,7 @@ export default function PoolDetails() {
       validateFile(selectedFile);
       const compressedFile = await compressImage(selectedFile);
       
-      const fileExt = compressedFile.name.split('.').pop();
-      const fileName = `regular-payments/${participantId}/${Date.now()}.${fileExt}`;
+      const fileName = `regular-payments/${participantId}/${Date.now()}.jpg`;
       
       const { error: uploadError } = await supabase.storage
         .from('payment-proofs')
@@ -237,13 +423,20 @@ export default function PoolDetails() {
       
       if (updateError) throw new Error(`Update failed: ${updateError.message}`);
       
-      const { error: seatError } = await supabase
+      // Mark seats as taken after successful payment
+      await supabase
         .from('pool_seats')
-        .update({ status: 'taken', user_id: user.id })
+        .update({ 
+          status: 'taken', 
+          user_id: user.id,
+          reserved_by: null,
+          reserved_until: null
+        })
         .in('seat_number', selectedSeats)
         .eq('pool_id', pool.id);
       
-      if (seatError) console.error('Seat update warning:', seatError);
+      // Clear any remaining reservations
+      await releaseUserReservations();
       
       const { data: updatedParticipant, error: fetchError } = await supabase
         .from('regular_pool_participants')
@@ -267,94 +460,11 @@ export default function PoolDetails() {
     }
   };
 
-  const handlePaymentSuccess = async () => {
-    const { data: participant } = await supabase
-      .from('regular_pool_participants')
-      .select('*')
-      .eq('id', participantId)
-      .single();
-    
-    setParticipantData(participant);
-    setShowPayment(false);
-    setShowTicket(true);
-    toast.success('Payment submitted! Your unverified ticket is ready');
-  };
-
-  const handleSeatsSelected = async (seatData) => {
-    await releaseUserPreviousReservations();
-
-    const { data: seats, error: seatCheckError } = await supabase
-      .from('pool_seats')
-      .select('seat_number, status, reserved_by')
-      .in('seat_number', seatData.seats)
-      .eq('pool_id', pool.id);
-
-    if (seatCheckError) {
-      toast.error('Error checking seats');
-      setShowSeatSelector(true);
-      return;
-    }
-
-    const unavailableSeats = seats.filter(s => s.status !== 'available' && s.reserved_by !== user?.id);
-    
-    if (unavailableSeats.length > 0) {
-      toast.error(`Seats ${unavailableSeats.map(s => s.seat_number).join(', ')} are not available`);
-      await fetchAvailableSeats();
-      await fetchTakenSeats();
-      setShowSeatSelector(true);
-      return;
-    }
-
-    const expiryTime = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-    const availableSeatNumbers = seats.filter(s => s.status === 'available').map(s => s.seat_number);
-    
-    if (availableSeatNumbers.length > 0) {
-      await supabase
-        .from('pool_seats')
-        .update({
-          status: 'reserved',
-          user_id: user.id,
-          reserved_by: user.id,
-          reserved_until: expiryTime
-        })
-        .in('seat_number', availableSeatNumbers)
-        .eq('pool_id', pool.id)
-        .eq('status', 'available');
-    }
-
-    setSelectedSeats(seatData.seats);
-    
-    const ticketNumber = `POOL-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-    const { data: participant, error } = await supabase
-      .from('regular_pool_participants')
-      .insert({
-        user_id: user.id,
-        user_email: user.email,
-        user_name: user.user_metadata?.full_name || user.email.split('@')[0],
-        pool_id: pool.id,
-        pool_name: pool.prize_name,
-        seat_numbers: seatData.seats,
-        contribution_amount: seatData.totalAmount,
-        prize_amount: pool.target_amount,
-        payment_status: 'pending',
-        ticket_number: ticketNumber,
-        created_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-    
-    if (error) throw error;
-    
-    setParticipantId(participant.id);
-    setShowSeatSelector(false);
-    setShowPayment(true);
-    toast.success(`✅ Seats ${seatData.seats.join(', ')} reserved!`);
-  };
-
   const handleCancelSeatSelection = async () => {
     if (selectedSeats.length > 0) {
       await releaseSeats(selectedSeats);
       setSelectedSeats([]);
+      setReservedSeats([]);
     }
     setShowSeatSelector(false);
   };
@@ -368,6 +478,19 @@ export default function PoolDetails() {
     setShowSeatSelector(true);
   };
 
+  const getSeatColor = (seatNum) => {
+    if (bookedSeats.includes(seatNum)) {
+      return 'bg-red-400 cursor-not-allowed opacity-70';
+    }
+    if (selectedSeats.includes(seatNum)) {
+      return 'bg-green-600 text-white shadow-lg transform scale-105';
+    }
+    if (reservedSeats.includes(seatNum)) {
+      return 'bg-yellow-400 animate-pulse cursor-not-allowed';
+    }
+    return 'bg-gray-200 hover:bg-gray-300 cursor-pointer transition-all hover:transform hover:scale-105';
+  };
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div></div>;
   }
@@ -376,37 +499,16 @@ export default function PoolDetails() {
     return <div className="min-h-screen flex items-center justify-center"><div className="text-center"><h1 className="text-2xl font-bold">Pool not found</h1><Link href="/listings" className="text-green-600 mt-4 inline-block">Back to listings</Link></div></div>;
   }
 
-  const winnerPrize = pool.target_amount || 0;
-  const entryFee = pool.entry_fee || pool.ticket_price || 10;
-  const totalCollection = winnerPrize * 1.2;
-  const totalSeats = Math.floor(totalCollection / entryFee);
-  const currentAmount = pool.current_amount || 0;
-  const currentSeatsFilled = Math.floor(currentAmount / entryFee);
-  const availableSeatsCount = totalSeats - currentSeatsFilled;
-  const progress = (currentAmount / totalCollection) * 100;
-  const maxSeatsPerUser = Math.min(5, Math.floor(availableSeatsCount / 2) || 5);
+  const seatNumbers = Array.from({ length: Math.min(totalSeats, 500) }, (_, i) => i + 1);
+  const takenCount = bookedSeats.length;
+  const availableCount = totalSeats - takenCount;
+  const totalAmount = selectedSeats.length * entryFee;
 
-  // Seat selector with ALL seats visible and color coding
+  // Seat selector component (inline, consistent with VIP style)
   const renderSeatSelector = () => {
-    const seatNumbers = Array.from({ length: totalSeats }, (_, i) => i + 1);
-    const toggleSeat = (seatNum) => {
-      if (takenSeats.includes(seatNum)) {
-        toast.error(`Seat ${seatNum} is already taken`);
-        return;
-      }
-      if (selectedSeats.includes(seatNum)) {
-        setSelectedSeats(selectedSeats.filter(s => s !== seatNum));
-      } else if (selectedSeats.length < maxSeatsPerUser) {
-        setSelectedSeats([...selectedSeats, seatNum]);
-      } else {
-        toast.error(`You can only select up to ${maxSeatsPerUser} seats`);
-      }
-    };
-    const totalAmount = selectedSeats.length * entryFee;
-
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl shadow-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="bg-white rounded-2xl shadow-xl max-w-7xl w-full max-h-[90vh] overflow-y-auto">
           <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
             <div>
               <h2 className="text-xl font-bold">Select Your Seats</h2>
@@ -419,37 +521,57 @@ export default function PoolDetails() {
             {/* Seat Legend */}
             <div className="flex flex-wrap justify-center gap-4 mb-4 pb-3 border-b">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-green-500 rounded"></div>
-                <span className="text-xs">Selected by You</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-yellow-400 rounded"></div>
+                <div className="w-5 h-5 bg-gray-200 border border-gray-300 rounded"></div>
                 <span className="text-xs">Available</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-gray-300 rounded"></div>
-                <span className="text-xs">Taken by Others</span>
+                <div className="w-5 h-5 bg-green-600 rounded"></div>
+                <span className="text-xs">Your Selection</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 bg-red-400 rounded"></div>
+                <span className="text-xs">Taken/Booked</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 bg-yellow-400 rounded animate-pulse"></div>
+                <span className="text-xs">Reserved for You (10 min)</span>
               </div>
             </div>
 
+            {/* Seat Statistics */}
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              <div className="bg-green-50 rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold text-green-600">{availableCount.toLocaleString()}</p>
+                <p className="text-xs text-gray-500">Available Seats</p>
+              </div>
+              <div className="bg-yellow-50 rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold text-yellow-600">{selectedSeats.length}</p>
+                <p className="text-xs text-gray-500">Your Selected</p>
+              </div>
+              <div className="bg-red-50 rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold text-red-600">{takenCount.toLocaleString()}</p>
+                <p className="text-xs text-gray-500">Booked/Taken</p>
+              </div>
+            </div>
+
+            {/* Seat Grid */}
             <div className="grid grid-cols-10 md:grid-cols-15 lg:grid-cols-20 gap-2 mb-6 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-xl">
               {seatNumbers.map(seatNum => {
-                const isTaken = takenSeats.includes(seatNum);
+                const isDisabled = bookedSeats.includes(seatNum);
+                const seatColor = getSeatColor(seatNum);
                 const isSelected = selectedSeats.includes(seatNum);
-                
-                let bgColor = 'bg-yellow-400 hover:bg-yellow-500 text-gray-800';
-                if (isSelected) bgColor = 'bg-green-600 text-white';
-                if (isTaken) bgColor = 'bg-gray-400 text-white cursor-not-allowed';
+                const isReserved = reservedSeats.includes(seatNum);
                 
                 return (
                   <button
                     key={seatNum}
-                    onClick={() => !isTaken && toggleSeat(seatNum)}
-                    disabled={isTaken}
-                    className={`w-10 h-10 rounded-lg font-semibold transition ${bgColor} ${isTaken ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
-                    title={isTaken ? `Seat ${seatNum} is already taken` : `Select Seat ${seatNum}`}
+                    onClick={() => toggleSeat(seatNum)}
+                    disabled={isDisabled || isReserved}
+                    className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center text-xs font-semibold transition-all duration-200 ${seatColor} ${isSelected ? 'ring-2 ring-green-300 ring-offset-2' : ''} ${isReserved && !isSelected ? 'bg-yellow-400 animate-pulse' : ''}`}
+                    title={`Seat ${seatNum}${isDisabled ? ' - Taken' : isSelected ? ' - Selected by you' : isReserved ? ' - Reserved by you' : ' - Available'}`}
                   >
-                    {seatNum}
+                    <span className="text-sm">{seatNum}</span>
+                    <span className="text-[8px] mt-0.5">{isDisabled ? '🔒' : isSelected ? '✓' : isReserved ? '⏳' : '🟢'}</span>
                   </button>
                 );
               })}
@@ -457,13 +579,13 @@ export default function PoolDetails() {
             
             {totalSeats > 500 && (
               <p className="text-xs text-gray-400 text-center mb-4">
-                Showing all {totalSeats.toLocaleString()} seats (scroll to see more)
+                Showing first 500 of {totalSeats.toLocaleString()} seats (scroll to see more)
               </p>
             )}
             
             {selectedSeats.length > 0 && (
               <div className="border-t pt-4">
-                <div className="flex justify-between items-center mb-4">
+                <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                   <div>
                     <p className="text-sm text-gray-500">Selected Seats</p>
                     <p className="font-bold text-lg">{selectedSeats.sort((a,b)=>a-b).join(', ')}</p>
@@ -475,11 +597,13 @@ export default function PoolDetails() {
                   </div>
                 </div>
                 <button
-                  onClick={() => handleSeatsSelected({ seats: selectedSeats, totalAmount })}
-                  className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition"
+                  onClick={confirmSeats}
+                  disabled={loading}
+                  className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition disabled:opacity-50"
                 >
-                  Confirm & Proceed to Payment
+                  {loading ? 'Processing...' : `Confirm ${selectedSeats.length} Seat${selectedSeats.length !== 1 ? 's' : ''} & Proceed to Payment`}
                 </button>
+                <p className="text-xs text-gray-400 text-center mt-3">⏰ Your selected seats are reserved for 10 minutes</p>
               </div>
             )}
           </div>
@@ -488,7 +612,6 @@ export default function PoolDetails() {
     );
   };
 
-  // ========== UPDATED: renderPayment (No Reference Number) ==========
   const renderPayment = () => {
     const totalAmount = selectedSeats.length * entryFee;
     
@@ -549,7 +672,7 @@ export default function PoolDetails() {
             <button 
               onClick={handlePaymentSubmit} 
               disabled={isSubmitting || !selectedFile} 
-              className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50"
+              className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:opacity-50"
             >
               {isSubmitting ? 'Processing...' : 'Submit Payment & Get Ticket'}
             </button>
@@ -563,15 +686,18 @@ export default function PoolDetails() {
     <>
       <Head><title>{pool.prize_name} - Abbaa Carraa</title></Head>
       <div className="min-h-screen bg-gray-50 py-8">
-        <div className="container mx-auto px-4 max-w-5xl">
-          <Link href="/listings" className="text-green-600 hover:underline mb-4 inline-block">← Back to listings</Link>
+        <div className="container mx-auto px-4 max-w-7xl">
+          <Link href="/listings" className="text-gray-600 hover:text-gray-800 mb-4 inline-flex items-center gap-1">
+            ← Back to listings
+          </Link>
           
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          {/* Pool Header */}
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-6">
             <div className="w-full h-64 md:h-80 bg-gray-200 relative">
               {pool.image_url ? (
                 <img src={pool.image_url} alt={pool.prize_name} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center">
+                <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
                   <span className="text-6xl">🎁</span>
                 </div>
               )}
@@ -580,69 +706,107 @@ export default function PoolDetails() {
             </div>
 
             <div className="p-6">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">{pool.prize_name}</h1>
-              <p className="text-gray-600 mb-6">{pool.description || 'Join this amazing pool for a chance to win big!'}</p>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                <div className="bg-green-50 rounded-xl p-3 text-center border border-green-100"><p className="text-gray-500 text-xs">🏆 Winner Gets</p><p className="text-lg font-bold text-green-600">ETB {winnerPrize.toLocaleString()}</p></div>
-                <div className="bg-blue-50 rounded-xl p-3 text-center border border-blue-100"><p className="text-gray-500 text-xs">🎫 Entry Fee</p><p className="text-lg font-bold text-blue-600">ETB {entryFee.toLocaleString()}</p></div>
-                <div className="bg-purple-50 rounded-xl p-3 text-center border border-purple-100"><p className="text-gray-500 text-xs">💺 Total Seats</p><p className="text-lg font-bold text-purple-600">{totalSeats.toLocaleString()}</p></div>
-                <div className="bg-orange-50 rounded-xl p-3 text-center border border-orange-100"><p className="text-gray-500 text-xs">📊 Available Seats</p><p className="text-lg font-bold text-orange-600">{Math.max(0, availableSeatsCount).toLocaleString()}</p></div>
+              <div className="flex justify-between items-start flex-wrap gap-4 mb-4">
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold text-gray-800">{pool.prize_name}</h1>
+                  <p className="text-gray-500 mt-1">{pool.description || 'Join this amazing pool for a chance to win big!'}</p>
+                </div>
               </div>
 
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-green-50 rounded-xl p-3 text-center">
+                  <p className="text-gray-500 text-xs">🏆 Winner Gets</p>
+                  <p className="text-lg font-bold text-green-600">ETB {winnerPrize.toLocaleString()}</p>
+                </div>
+                <div className="bg-blue-50 rounded-xl p-3 text-center">
+                  <p className="text-gray-500 text-xs">🎫 Entry Fee</p>
+                  <p className="text-lg font-bold text-blue-600">ETB {entryFee.toLocaleString()}</p>
+                </div>
+                <div className="bg-purple-50 rounded-xl p-3 text-center">
+                  <p className="text-gray-500 text-xs">💺 Total Seats</p>
+                  <p className="text-lg font-bold text-purple-600">{totalSeats.toLocaleString()}</p>
+                </div>
+                <div className="bg-orange-50 rounded-xl p-3 text-center">
+                  <p className="text-gray-500 text-xs">📊 Available Seats</p>
+                  <p className="text-lg font-bold text-orange-600">{Math.max(0, availableSeatsCount).toLocaleString()}</p>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
               <div className="mb-6">
-                <div className="flex justify-between text-sm text-gray-600 mb-1"><span>Pool Progress</span><span>{Math.min(Math.round(progress), 100)}%</span></div>
-                <div className="w-full bg-gray-200 rounded-full h-3"><div className="bg-green-600 h-3 rounded-full transition-all duration-300" style={{ width: `${Math.min(progress, 100)}%` }} /></div>
-                <div className="flex justify-between text-xs text-gray-400 mt-1"><span>ETB {currentAmount.toLocaleString()} raised</span><span>Target: ETB {totalCollection.toLocaleString()}</span></div>
+                <div className="flex justify-between text-sm text-gray-600 mb-1">
+                  <span>Pool Progress</span>
+                  <span>{Math.min(Math.round(progress), 100)}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div className="bg-green-600 h-3 rounded-full transition-all duration-300" style={{ width: `${Math.min(progress, 100)}%` }} />
+                </div>
+                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <span>ETB {currentAmount.toLocaleString()} raised</span>
+                  <span>Target: ETB {totalCollection.toLocaleString()}</span>
+                </div>
               </div>
 
+              {/* Commission Breakdown */}
               <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 mb-6">
-                <div className="flex justify-between items-center mb-2"><span className="text-gray-600 text-sm">💰 Total Collection (Prize + 20% Commission):</span><span className="font-bold text-gray-800">ETB {totalCollection.toLocaleString()}</span></div>
-                <div className="flex justify-between items-center mb-2"><span className="text-gray-600 text-sm">👑 Platform/Agent Commission (20% of collection):</span><span className="font-bold text-orange-600">ETB {(totalCollection * 0.2).toLocaleString()}</span></div>
-                <div className="flex justify-between items-center"><span className="text-gray-600 text-sm">🎯 Winner Receives:</span><span className="font-bold text-green-600">ETB {winnerPrize.toLocaleString()}</span></div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-600 text-sm">💰 Total Collection (Prize + 20% Commission):</span>
+                  <span className="font-bold text-gray-800">ETB {totalCollection.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-600 text-sm">👑 Platform/Agent Commission (20% of collection):</span>
+                  <span className="font-bold text-orange-600">ETB {(totalCollection * 0.2).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 text-sm">🎯 Winner Receives:</span>
+                  <span className="font-bold text-green-600">ETB {winnerPrize.toLocaleString()}</span>
+                </div>
               </div>
 
               {pool.status === 'active' && !showSeatSelector && !showPayment && !showTicket && (
-                <div className="border-t pt-6">
-                  <button onClick={handleJoinNow} disabled={availableSeatsCount === 0} className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg transition disabled:opacity-50">
-                    {availableSeatsCount === 0 ? 'No Seats Available' : `🎯 Select Seat & Join Pool (ETB ${entryFee.toLocaleString()} per seat)`}
-                  </button>
-                </div>
-              )}
-
-              {showSeatSelector && renderSeatSelector()}
-              {showPayment && renderPayment()}
-              {showTicket && participantData && (
-                <div className="bg-white rounded-2xl shadow-xl p-6">
-                  <Ticket 
-                    participant={{
-                      user_name: participantData.user_name,
-                      user_email: participantData.user_email,
-                      ticket_number: participantData.ticket_number,
-                      created_at: participantData.created_at,
-                      contribution_amount: participantData.contribution_amount
-                    }}
-                    pool={{
-                      prize_name: pool.prize_name,
-                      target_amount: pool.target_amount,
-                      end_date: pool.end_date,
-                      created_at: pool.created_at
-                    }}
-                    isVerified={false}
-                    seatNumbers={participantData.seat_numbers}
-                    ticketNumber={participantData.ticket_number}
-                    amount={participantData.contribution_amount}
-                    createdAt={participantData.created_at}
-                  />
-                  <div className="text-center mt-6">
-                    <button onClick={() => router.push('/dashboard')} className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition">
-                      Go to Dashboard
-                    </button>
-                  </div>
-                </div>
+                <button 
+                  onClick={handleJoinNow} 
+                  disabled={availableSeatsCount === 0} 
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-semibold text-lg transition disabled:opacity-50"
+                >
+                  {availableSeatsCount === 0 ? 'No Seats Available' : `🎯 Select Seat & Join Pool (ETB ${entryFee.toLocaleString()} per seat)`}
+                </button>
               )}
             </div>
           </div>
+
+          {showSeatSelector && renderSeatSelector()}
+          {showPayment && renderPayment()}
+          
+          {showTicket && participantData && (
+            <div className="bg-white rounded-2xl shadow-xl p-6">
+              <Ticket 
+                participant={{
+                  user_name: participantData.user_name,
+                  user_email: participantData.user_email,
+                  ticket_number: participantData.ticket_number,
+                  created_at: participantData.created_at,
+                  contribution_amount: participantData.contribution_amount
+                }}
+                pool={{
+                  prize_name: pool.prize_name,
+                  target_amount: pool.target_amount,
+                  end_date: pool.end_date,
+                  created_at: pool.created_at
+                }}
+                isVerified={false}
+                seatNumbers={participantData.seat_numbers}
+                ticketNumber={participantData.ticket_number}
+                amount={participantData.contribution_amount}
+                createdAt={participantData.created_at}
+              />
+              <div className="text-center mt-6">
+                <button onClick={() => router.push('/dashboard')} className="bg-gray-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-700 transition">
+                  Go to Dashboard
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>
