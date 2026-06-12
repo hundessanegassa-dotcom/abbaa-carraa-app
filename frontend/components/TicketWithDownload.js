@@ -1,4 +1,4 @@
-// frontend/components/TicketDownload.js - PNG/JPEG Download
+// frontend/components/TicketDownload.js - PNG/JPEG Ticket Download
 import { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import toast from 'react-hot-toast';
@@ -11,7 +11,7 @@ export default function TicketDownload({
   ticketNumber,
   amount,
   createdAt,
-  poolType = 'regular' // 'regular', 'merkato', 'city'
+  poolType = 'regular'
 }) {
   const ticketRef = useRef(null);
   const [isDownloading, setIsDownloading] = useState(false);
