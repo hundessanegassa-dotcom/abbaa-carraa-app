@@ -1,10 +1,10 @@
-// pages/merkato-seat.js - FULLY CORRECTED
+// pages/merkato-seat.js - COMPLETE FIXED VERSION
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
 import Head from 'next/head';
 import toast from 'react-hot-toast';
-import TicketImage from '../components/TicketImage'; // ✅ FIXED: correct path (../ not ../../)
+import TicketImage from '../components/TicketImage';
 
 export default function MerkatoSeat() {
   const router = useRouter();
@@ -24,7 +24,7 @@ export default function MerkatoSeat() {
   const [bookedSeats, setBookedSeats] = useState([]);
   const [reservedSeats, setReservedSeats] = useState([]);
   const [reservationTimer, setReservationTimer] = useState(null);
-  const [showSeatSelector, setShowSeatSelector] = useState(true); // Add this missing state
+  const [manualSeatInput, setManualSeatInput] = useState('');
 
   const vipPools = {
     daily: { name: "Daily Millionaire", entryFee: 500, prize: 1000000, totalSeats: 2400, frequency: "Daily", drawDate: "Every Day at 8:00 PM", color: "from-gray-700 to-gray-900" },
@@ -43,12 +43,13 @@ export default function MerkatoSeat() {
 
   useEffect(() => {
     if (type) {
-      checkUser();
-      if (vipPools[type]) setPoolInfo(vipPools[type]);
-      else { 
+      if (vipPools[type]) {
+        setPoolInfo(vipPools[type]);
+      } else { 
         toast.error('Invalid pool type'); 
         router.push('/merkato-vip'); 
       }
+      checkUser();
     }
   }, [type]);
 
@@ -70,6 +71,7 @@ export default function MerkatoSeat() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        // Store full URL including query params for redirect
         const currentUrl = `/merkato-seat?type=${type}`;
         localStorage.setItem('abbaa_redirect_after_login', currentUrl);
         sessionStorage.setItem('redirectAfterLogin', currentUrl);
@@ -81,11 +83,15 @@ export default function MerkatoSeat() {
       }
       setUser(user);
       setLoading(false);
+      // AFTER LOGIN - Automatically show seat selector
+      setShowSeatSelector(true);
     } catch (error) {
       console.error('Error checking user:', error);
       router.push('/login');
     }
   };
+
+  const [showSeatSelector, setShowSeatSelector] = useState(false);
 
   async function fetchBookedSeats() {
     try {
@@ -299,6 +305,43 @@ export default function MerkatoSeat() {
     }
   };
 
+  // Manual seat input handler
+  const handleManualSeatAdd = async () => {
+    const seatNum = parseInt(manualSeatInput);
+    if (isNaN(seatNum)) {
+      toast.error('Please enter a valid seat number');
+      return;
+    }
+    if (seatNum < 1 || seatNum > poolInfo.totalSeats) {
+      toast.error(`Seat number must be between 1 and ${poolInfo.totalSeats}`);
+      return;
+    }
+    if (bookedSeats.includes(seatNum)) {
+      toast.error(`Seat ${seatNum} is already taken. Please select another seat.`);
+      return;
+    }
+    if (selectedSeats.includes(seatNum)) {
+      toast.error(`Seat ${seatNum} is already selected`);
+      return;
+    }
+    if (selectedSeats.length >= maxSeats) {
+      toast.error(`You can only select up to ${maxSeats} seats`);
+      return;
+    }
+    
+    const success = await reserveSeatsInDB([seatNum]);
+    if (success) {
+      setSelectedSeats([...selectedSeats, seatNum]);
+      setReservedSeats([...reservedSeats, seatNum]);
+      toast.success(`Seat ${seatNum} reserved for 10 minutes`);
+      await fetchBookedSeats();
+      setManualSeatInput('');
+    } else {
+      toast.error(`Seat ${seatNum} is no longer available`);
+      await fetchBookedSeats();
+    }
+  };
+
   const toggleSeat = async (seatNum) => {
     if (bookedSeats.includes(seatNum)) {
       toast.error(`Seat ${seatNum} is already taken.`);
@@ -425,7 +468,7 @@ export default function MerkatoSeat() {
   return (
     <>
       <Head><title>Select Seats - {poolInfo.name} | Abbaa Carraa</title></Head>
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-gray-50 py-8 pb-32">
         <div className="container mx-auto px-4 max-w-7xl">
           <button onClick={() => router.back()} className="text-gray-600 mb-4 inline-flex items-center gap-1">← Back to Merkato VIP</button>
           
@@ -447,8 +490,28 @@ export default function MerkatoSeat() {
           </div>
 
           {!showPayment && !showTicket && (
-            <div className="bg-white rounded-2xl shadow-xl p-6">
+            <div className="bg-white rounded-2xl shadow-xl p-6 pb-32">
               <h3 className="text-xl font-bold mb-4">Select Your Seats (Max {maxSeats})</h3>
+              
+              {/* Manual Seat Input */}
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm font-semibold text-blue-700 mb-2">🎯 Or enter seat number manually:</p>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    value={manualSeatInput}
+                    onChange={(e) => setManualSeatInput(e.target.value)}
+                    placeholder={`Enter seat number (1-${poolInfo.totalSeats})`}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500"
+                  />
+                  <button
+                    onClick={handleManualSeatAdd}
+                    className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-700"
+                  >
+                    Add Seat
+                  </button>
+                </div>
+              </div>
               
               <div className="flex flex-wrap gap-4 mb-6 text-sm">
                 <div className="flex items-center gap-2"><div className="w-5 h-5 bg-gray-200 border border-gray-300 rounded"></div><span>Available</span></div>
@@ -491,7 +554,7 @@ export default function MerkatoSeat() {
                     <div><p className="text-sm text-gray-500">Selected Seats</p><p className="font-bold text-lg">{selectedSeats.sort((a,b)=>a-b).join(', ')}</p></div>
                     <div className="text-right"><p className="text-sm text-gray-500">Total Amount</p><p className="font-bold text-2xl text-green-600">ETB {totalAmount.toLocaleString()}</p><p className="text-xs text-gray-400">({selectedSeats.length} seats × ETB {poolInfo.entryFee.toLocaleString()})</p></div>
                   </div>
-                  <button onClick={confirmSeats} disabled={loading} className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition">
+                  <button onClick={confirmSeats} disabled={loading} className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition mb-16">
                     {loading ? 'Processing...' : `Confirm ${selectedSeats.length} Seat${selectedSeats.length !== 1 ? 's' : ''} & Proceed to Payment`}
                   </button>
                   <p className="text-xs text-gray-400 text-center mt-3">⏰ Your selected seats are reserved for 10 minutes</p>
@@ -563,7 +626,6 @@ export default function MerkatoSeat() {
             </div>
           )}
 
-          {/* ✅ FIXED: Using TicketImage component (not TicketDownload) */}
           {showTicket && participantData && (
             <div className="bg-white rounded-2xl shadow-xl p-6">
               <TicketImage 
