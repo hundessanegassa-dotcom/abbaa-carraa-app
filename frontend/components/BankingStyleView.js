@@ -1,4 +1,4 @@
-// frontend/components/BankingStyleView.js - WITH VISIBLE BLACK BORDERS
+// frontend/components/BankingStyleView.js - UPDATED WITH ALL CHANGES
 import { useState } from 'react';
 import Link from 'next/link';
 import BankingBottomNav from './BankingBottomNav';
@@ -51,14 +51,21 @@ export default function BankingStyleView({
   return (
     <div className="bg-gray-100 min-h-screen pb-24">
       
-      {/* Hero Section - With Border */}
-      <div id="hero" className="bg-white text-gray-800 pt-6 pb-10 px-4 m-3 rounded-2xl shadow-sm border border-gray-300">
-        <div className="text-center">
-          <div className="inline-flex items-center gap-2 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm border border-gray-300 mb-4">
+      {/* Hero Section - With Background Image */}
+      <div 
+        id="hero" 
+        className="relative bg-cover bg-center text-white pt-6 pb-10 px-4 m-3 rounded-2xl shadow-sm overflow-hidden"
+        style={{ backgroundImage: "url('/images/abbaa-carraa-bg.png')", backgroundColor: 'rgba(0,0,0,0.5)', backgroundBlend: 'overlay' }}
+      >
+        {/* Dark Overlay for text readability */}
+        <div className="absolute inset-0 bg-black bg-opacity-50 rounded-2xl"></div>
+        
+        <div className="relative z-10 text-center">
+          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-sm border border-white/30 mb-4">
             🔥 Ethiopia's #1 Prize Platform 🏆
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-gray-900">Abbaa Carraa</h1>
-          <p className="text-gray-600 text-sm px-4 mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Abbaa Carraa</h1>
+          <p className="text-white/90 text-sm px-4 mb-6">
             {language === 'am' 
               ? 'መኪናዎችን፣ ቤቶችን እና ሌሎችንም በማህበረሰብ ቁጠባ ያሸንፉ!'
               : 'Win cars, houses, and more through community savings!'}
@@ -66,19 +73,19 @@ export default function BankingStyleView({
           <div className="flex flex-wrap justify-center gap-3">
             <button 
               onClick={() => document.getElementById('merkato-vip')?.scrollIntoView({ behavior: 'smooth' })}
-              className="bg-gray-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold shadow-md border border-gray-600 active:scale-95 transition-transform"
+              className="bg-emerald-600 text-white px-5 py-2.5 rounded-full text-sm font-semibold shadow-md border border-emerald-500 active:scale-95 transition-transform"
             >
-              🏪 {language === 'am' ? 'መርካቶ ቪአይፒ' : 'Merkato VIP'}
+              🏪 {language === 'am' ? 'መርካቶ VIP' : 'Merkato VIP'}
             </button>
             <button 
               onClick={() => document.getElementById('city-vip')?.scrollIntoView({ behavior: 'smooth' })}
-              className="bg-gray-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold shadow-md border border-gray-600 active:scale-95 transition-transform"
+              className="bg-emerald-600 text-white px-5 py-2.5 rounded-full text-sm font-semibold shadow-md border border-emerald-500 active:scale-95 transition-transform"
             >
-              🏙️ {language === 'am' ? 'የከተማ ቪአይፒ' : 'City VIP'}
+              🏙️ {language === 'am' ? 'የከተማ VIP' : 'City VIP'}
             </button>
             <button 
               onClick={() => document.getElementById('regular-pools')?.scrollIntoView({ behavior: 'smooth' })}
-              className="bg-gray-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold shadow-md border border-gray-600 active:scale-95 transition-transform"
+              className="bg-emerald-600 text-white px-5 py-2.5 rounded-full text-sm font-semibold shadow-md border border-emerald-500 active:scale-95 transition-transform"
             >
               🏊 {language === 'am' ? 'መደበኛ የእጣ መደብ' : 'Regular Pools'}
             </button>
@@ -86,35 +93,44 @@ export default function BankingStyleView({
         </div>
 
         {/* Stats Row - With Borders */}
-        <div className="grid grid-cols-4 gap-2 mt-8">
-          <div className="bg-white rounded-xl p-2 text-center shadow-sm border border-gray-300">
+        <div className="relative z-10 grid grid-cols-4 gap-2 mt-8">
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2 text-center shadow-sm border border-white/30">
             <div className="text-lg">💰</div>
-            <div className="font-bold text-gray-800 text-xs sm:text-sm">{Math.floor(stats.total_raised / 1000)}+K</div>
-            <div className="text-[9px] sm:text-[10px] text-gray-500">{language === 'am' ? 'ተሰብስቧል' : 'Raised'}</div>
+            <div className="font-bold text-white text-xs sm:text-sm">{Math.floor(stats.total_raised / 1000)}+K</div>
+            <div className="text-[9px] sm:text-[10px] text-white/80 font-bold">{language === 'am' ? 'ተሰብስቧል' : 'Raised'}</div>
           </div>
-          <div className="bg-white rounded-xl p-2 text-center shadow-sm border border-gray-300">
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2 text-center shadow-sm border border-white/30">
             <div className="text-lg">🏆</div>
-            <div className="font-bold text-gray-800 text-xs sm:text-sm">{stats.total_winners}+</div>
-            <div className="text-[9px] sm:text-[10px] text-gray-500">{language === 'am' ? 'አሸናፊዎች' : 'Winners'}</div>
+            <div className="font-bold text-white text-xs sm:text-sm">{stats.total_winners}+</div>
+            <div className="text-[9px] sm:text-[10px] text-white/80 font-bold">{language === 'am' ? 'አሸናፊዎች' : 'Winners'}</div>
           </div>
-          <div className="bg-white rounded-xl p-2 text-center shadow-sm border border-gray-300">
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2 text-center shadow-sm border border-white/30">
             <div className="text-lg">🎯</div>
-            <div className="font-bold text-gray-800 text-xs sm:text-sm">{stats.total_pools}+</div>
-            <div className="text-[9px] sm:text-[10px] text-gray-500">{language === 'am' ? 'ንቁ' : 'Active'}</div>
+            <div className="font-bold text-white text-xs sm:text-sm">{stats.total_pools}+</div>
+            <div className="text-[9px] sm:text-[10px] text-white/80 font-bold">{language === 'am' ? 'ንቁ' : 'Active'}</div>
           </div>
-          <div className="bg-white rounded-xl p-2 text-center shadow-sm border border-gray-300">
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2 text-center shadow-sm border border-white/30">
             <div className="text-lg">🏙️</div>
-            <div className="font-bold text-gray-800 text-xs sm:text-sm">{uniqueCities.length}</div>
-            <div className="text-[9px] sm:text-[10px] text-gray-500">{language === 'am' ? 'ከተሞች' : 'Cities'}</div>
+            <div className="font-bold text-white text-xs sm:text-sm">{uniqueCities.length}</div>
+            <div className="text-[9px] sm:text-[10px] text-white/80 font-bold">{language === 'am' ? 'ከተሞች' : 'Cities'}</div>
           </div>
         </div>
 
         {/* Health Support Banner - With Border */}
-        <div className="mt-4 text-center">
-          <div className="inline-flex items-center gap-2 bg-white rounded-full px-3 py-1.5 text-xs text-gray-600 shadow-sm border border-gray-300">
+        <div className="relative z-10 mt-4 text-center">
+          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1.5 text-xs text-white shadow-sm border border-white/30">
             <span>💚</span>
-            <span className="text-[10px] sm:text-xs">{language === 'am' ? '2% የኩላሊት እና የልብ ህመም ታማሚዎችን ይደግፋል' : '2% supports kidney & heart disease patients'}</span>
+            <span className="text-[10px] sm:text-xs font-bold">{language === 'am' ? '2% የኩላሊት እና የልብ ህመም ታማሚዎችን ይደግፋል' : '2% supports kidney & heart disease patients'}</span>
           </div>
+        </div>
+
+        {/* Description under Hero - BOLD */}
+        <div className="relative z-10 mt-6 text-center border-t border-white/30 pt-4">
+          <p className="text-xs font-bold text-white">
+            {language === 'am' 
+              ? '✨ በAbbaa Carraa የማህበረሰብ ቁጠባ መድረክ ሽልማቶችን ያሸንፉ! እስከ 40 ሚሊዮን ብር የሚደርሱ ሽልማቶች ይጠብቁዎታል ✨'
+              : '✨ Win amazing prizes through community savings! Prizes up to 40 Million ETB await you ✨'}
+          </p>
         </div>
       </div>
 
@@ -124,12 +140,11 @@ export default function BankingStyleView({
           onClick={() => window.location.href = '/merkato-vip'}
           className="relative bg-white rounded-xl p-4 text-gray-800 shadow-md border-2 border-gray-300 overflow-hidden cursor-pointer transform transition active:scale-[0.98]"
         >
-          <div className="absolute -top-5 -left-5 text-6xl opacity-10">🏪</div>
           <div className="relative z-10">
             <div className="flex justify-between items-center flex-wrap gap-2">
               <div>
                 <h2 className="text-lg font-bold text-gray-900">Merkato VIP</h2>
-                <p className="text-[10px] text-gray-500">የመርካቶ ቪአይፒ ፕሮግራም</p>
+                <p className="text-[10px] text-gray-500 font-bold">የመርካቶ VIP ፕሮግራም</p>
               </div>
               <div className="flex gap-1">
                 <span className="bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded text-[9px] font-bold border border-yellow-300">⭐ 1M</span>
@@ -137,7 +152,7 @@ export default function BankingStyleView({
                 <span className="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded text-[9px] font-bold border border-emerald-300">👑 40M</span>
               </div>
             </div>
-            <p className="text-xs mt-2 font-semibold text-center text-gray-700">
+            <p className="text-xs mt-2 font-bold text-center text-gray-700">
               {language === 'am' 
                 ? '"ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው"'
                 : '"Today, this week, and this month - let\'s make one participant a millionaire"'}
@@ -147,6 +162,12 @@ export default function BankingStyleView({
                 {language === 'am' ? 'ይቀላቀሉ →' : 'Join Now →'}
               </span>
             </div>
+            {/* Description - Light Yellow Background */}
+            <p className="text-[10px] font-bold text-center text-gray-800 mt-3 pt-2 border-t border-gray-200 bg-yellow-50 p-2 rounded-lg">
+              {language === 'am' 
+                ? '🏆 በየቀኑ፣ በየሳምንቱ እና በየወሩ አንድ እድለኛ ተሳታፊ ሚሊየነር ይሆናል!'
+                : '🏆 Every day, week, and month - one lucky participant becomes a millionaire!'}
+            </p>
           </div>
         </div>
       </div>
@@ -157,11 +178,7 @@ export default function BankingStyleView({
           <div className="flex justify-between items-center flex-wrap gap-3">
             <div className="flex-1">
               <h2 className="text-lg font-bold text-gray-900">City VIP Programs</h2>
-              <p className="text-[10px] text-gray-500">
-                {language === 'am' 
-                  ? `${uniqueCities.length}+ የኢትዮጵያ ከተሞች`
-                  : `${uniqueCities.length}+ Ethiopian cities`}
-              </p>
+              <p className="text-[10px] text-gray-500 font-bold">የከተማ VIP ፕሮግራም</p>
             </div>
             <div className="relative">
               <button 
@@ -205,10 +222,10 @@ export default function BankingStyleView({
                           >
                             <span className="text-xl">{city.icon}</span>
                             <div className="flex-1">
-                              <div className="font-medium text-gray-800 text-sm">
+                              <div className="font-bold text-gray-800 text-sm">
                                 {getCityDisplayName(city)}
                               </div>
-                              <div className="text-[10px] text-gray-400">{city.prize}</div>
+                              <div className="text-[10px] text-gray-400 font-bold">{city.prize}</div>
                             </div>
                             <span className="text-gray-400 text-xs">→</span>
                           </a>
@@ -225,30 +242,37 @@ export default function BankingStyleView({
           <div className="grid grid-cols-5 gap-1 mt-4 pt-3 border-t-2 border-gray-200">
             <div className="text-center bg-gray-50 rounded-lg p-1 border border-gray-200">
               <div className="text-lg">🏆</div>
-              <div className="text-gray-800 font-bold text-[10px]">1M</div>
-              <div className="text-[8px] text-gray-400">{language === 'am' ? 'ዕለታዊ' : 'Daily'}</div>
+              <div className="text-gray-800 font-bold text-[10px]">1M ETB</div>
+              <div className="text-[8px] text-gray-400 font-bold">{language === 'am' ? 'ዕለታዊ' : 'Daily'}</div>
             </div>
             <div className="text-center bg-gray-50 rounded-lg p-1 border border-gray-200">
               <div className="text-lg">⭐</div>
-              <div className="text-gray-800 font-bold text-[10px]">10M</div>
-              <div className="text-[8px] text-gray-400">{language === 'am' ? 'ሳምንታዊ' : 'Weekly'}</div>
+              <div className="text-gray-800 font-bold text-[10px]">10M ETB</div>
+              <div className="text-[8px] text-gray-400 font-bold">{language === 'am' ? 'ሳምንታዊ' : 'Weekly'}</div>
             </div>
             <div className="text-center bg-gray-50 rounded-lg p-1 border border-gray-200">
               <div className="text-lg">👑</div>
-              <div className="text-gray-800 font-bold text-[10px]">40M</div>
-              <div className="text-[8px] text-gray-400">{language === 'am' ? 'ወርሃዊ' : 'Monthly'}</div>
+              <div className="text-gray-800 font-bold text-[10px]">40M ETB</div>
+              <div className="text-[8px] text-gray-400 font-bold">{language === 'am' ? 'ወርሃዊ' : 'Monthly'}</div>
             </div>
             <div className="text-center bg-gray-50 rounded-lg p-1 border border-gray-200">
               <div className="text-lg">📍</div>
               <div className="text-gray-800 font-bold text-[10px]">{uniqueCities.length}</div>
-              <div className="text-[8px] text-gray-400">{language === 'am' ? 'ከተሞች' : 'Cities'}</div>
+              <div className="text-[8px] text-gray-400 font-bold">{language === 'am' ? 'ከተሞች' : 'Cities'}</div>
             </div>
             <div className="text-center bg-gray-50 rounded-lg p-1 border border-gray-200">
               <div className="text-lg">🇪🇹</div>
               <div className="text-gray-800 font-bold text-[10px]">{language === 'am' ? 'ሁሉም' : 'All'}</div>
-              <div className="text-[8px] text-gray-400">{language === 'am' ? 'ክልሎች' : 'Regions'}</div>
+              <div className="text-[8px] text-gray-400 font-bold">{language === 'am' ? 'ክልሎች' : 'Regions'}</div>
             </div>
           </div>
+
+          {/* Description - Light Yellow Background */}
+          <p className="text-[10px] font-bold text-center text-gray-800 mt-3 pt-2 border-t border-gray-200 bg-yellow-50 p-2 rounded-lg">
+            {language === 'am' 
+              ? '🏙️ ዛሬ የከተማችንን ተሳታፊ ሚሊየነር እናድርገው! ይቀላቀሉ እና እስከ 40 ሚሊዮን ብር ያሸንፉ!'
+              : '🏙️ Let\'s make our city participant a millionaire today! Join and win up to 40 Million ETB!'}
+          </p>
         </div>
       </div>
 
@@ -263,7 +287,7 @@ export default function BankingStyleView({
               <span className="text-2xl">🏊</span>
               <div className="text-left">
                 <h3 className="font-bold text-sm">{language === 'am' ? 'መደበኛ የእጣ መደብ' : 'Regular Prize Pools'}</h3>
-                <p className="text-[10px] text-gray-500">{language === 'am' ? 'መኪናዎች፣ ቤቶች፣ ኤሌክትሮኒክስ' : 'Cars, Houses, Electronics'}</p>
+                <p className="text-[10px] text-gray-500 font-bold">{language === 'am' ? 'መኪናዎች፣ ቤቶች፣ ኤሌክትሮኒክስ እና ሌሎች' : 'Cars, Houses, Electronics & More'}</p>
               </div>
             </div>
             <svg className={`w-4 h-4 transition-transform ${showRegularPools ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -296,7 +320,7 @@ export default function BankingStyleView({
               </div>
 
               {/* Results Count */}
-              <div className="text-[10px] text-gray-500 mb-3">
+              <div className="text-[10px] text-gray-500 font-bold mb-3">
                 {language === 'am' ? `${displayedPools.length} ንቁ የእጣ መደቦች` : `${displayedPools.length} active pools`}
               </div>
 
@@ -304,7 +328,7 @@ export default function BankingStyleView({
               {displayedPools.length === 0 ? (
                 <div className="text-center py-8 bg-gray-50 rounded-xl border border-gray-300">
                   <div className="text-4xl mb-2">🏊</div>
-                  <p className="text-gray-500 text-xs">{language === 'am' ? 'ምንም ንቁ የእጣ መደቦች የሉም' : 'No active pools'}</p>
+                  <p className="text-gray-500 text-xs font-bold">{language === 'am' ? 'ምንም ንቁ የእጣ መደቦች የሉም' : 'No active pools'}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -312,41 +336,52 @@ export default function BankingStyleView({
                     <div key={pool.id} className="bg-gray-50 rounded-xl p-3 shadow-sm border border-gray-300 active:scale-[0.98] transition-transform">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <h4 className="font-semibold text-gray-800 text-sm">{pool.prize_name}</h4>
-                          <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-2">
+                          <h4 className="font-bold text-gray-800 text-sm">{pool.prize_name}</h4>
+                          <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-2 font-bold">
                             {pool.description?.slice(0, 60)}...
                           </p>
                           <div className="flex flex-wrap gap-1 mt-1.5">
                             {pool.target_amount >= 1000000 && (
-                              <span className="bg-yellow-100 text-yellow-800 text-[9px] px-1.5 py-0.5 rounded border border-yellow-300">💰 High Value</span>
+                              <span className="bg-yellow-100 text-yellow-800 text-[9px] px-1.5 py-0.5 rounded font-bold border border-yellow-300">💰 High Value</span>
                             )}
                             {pool.is_featured && (
-                              <span className="bg-purple-100 text-purple-800 text-[9px] px-1.5 py-0.5 rounded border border-purple-300">⭐ Featured</span>
+                              <span className="bg-purple-100 text-purple-800 text-[9px] px-1.5 py-0.5 rounded font-bold border border-purple-300">⭐ Featured</span>
                             )}
                           </div>
                         </div>
                         {pool.is_featured && (
-                          <span className="bg-yellow-400 text-gray-900 text-[9px] px-1.5 py-0.5 rounded-full ml-1 border border-yellow-500">⭐</span>
+                          <span className="bg-yellow-400 text-gray-900 text-[9px] px-1.5 py-0.5 rounded-full ml-1 border border-yellow-500 font-bold">⭐</span>
                         )}
                       </div>
                       <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-200">
                         <div>
                           <span className="text-gray-800 font-bold text-sm">ETB {(pool.entry_fee || 10).toLocaleString()}</span>
-                          <span className="text-[9px] text-gray-400 ml-0.5">{language === 'am' ? 'በአንድ መቀመጫ' : '/seat'}</span>
+                          <span className="text-[9px] text-gray-400 ml-0.5 font-bold">{language === 'am' ? 'በአንድ መቀመጫ' : '/seat'}</span>
                         </div>
-                        <Link href={`/pools/${pool.id}`} className="bg-gray-800 text-white px-3 py-1.5 rounded-lg text-[10px] font-semibold active:scale-95 transition-transform border border-gray-600">
-                          {language === 'am' ? 'ይቀላቀሉ' : 'Join'} →
-                        </Link>
+                        <div className="text-right">
+                          <p className="text-[10px] font-bold text-emerald-600">
+                            {language === 'am' 
+                              ? `እስከ ${(pool.target_amount || 0).toLocaleString()} ብር ያሸንፉ!`
+                              : `Win up to ${(pool.target_amount || 0).toLocaleString()} ETB!`}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
               {displayedPools.length > 10 && (
-                <p className="text-center text-[10px] text-gray-400 mt-3">
+                <p className="text-center text-[10px] text-gray-400 font-bold mt-3">
                   +{displayedPools.length - 10} more pools available
                 </p>
               )}
+
+              {/* Description - Light Yellow Background */}
+              <p className="text-[10px] font-bold text-center text-gray-800 mt-4 pt-3 border-t border-gray-200 bg-yellow-50 p-2 rounded-lg">
+                {language === 'am' 
+                  ? '🎁 መኪናዎችን፣ ቤቶችን፣ ማሽኖችን እና ሌሎችንም ያሸንፉ! ዛሬ ይሳተፉ!'
+                  : '🎁 Win cars, houses, machinery, and more! Join today!'}
+              </p>
             </div>
           )}
         </div>
@@ -360,41 +395,47 @@ export default function BankingStyleView({
         <div className="grid grid-cols-3 gap-3 text-center">
           <div className="bg-gray-50 rounded-xl p-2 border border-gray-200">
             <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2 text-base font-bold text-gray-600 border border-gray-300">1</div>
-            <h3 className="font-semibold text-xs mb-0.5 text-gray-700">{language === 'am' ? 'የእጣ መደብ ምረጡ' : 'Find a Pool'}</h3>
-            <p className="text-[9px] text-gray-500">{language === 'am' ? 'ይምረጡ' : 'Browse'}</p>
+            <h3 className="font-bold text-xs mb-0.5 text-gray-700">{language === 'am' ? 'የእጣ መደብ ምረጡ' : 'Find a Pool'}</h3>
+            <p className="text-[9px] text-gray-500 font-bold">{language === 'am' ? 'ይምረጡ' : 'Browse pools'}</p>
           </div>
           <div className="bg-gray-50 rounded-xl p-2 border border-gray-200">
             <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2 text-base font-bold text-gray-600 border border-gray-300">2</div>
-            <h3 className="font-semibold text-xs mb-0.5 text-gray-700">{language === 'am' ? 'ክፍያ ይክፈሉ' : 'Contribute'}</h3>
-            <p className="text-[9px] text-gray-500">{language === 'am' ? 'በአስተማማኝ ሁኔታ' : 'Securely'}</p>
+            <h3 className="font-bold text-xs mb-0.5 text-gray-700">{language === 'am' ? 'ክፍያ ይክፈሉ' : 'Contribute'}</h3>
+            <p className="text-[9px] text-gray-500 font-bold">{language === 'am' ? 'በአስተማማኝ ሁኔታ' : 'Pay securely'}</p>
           </div>
           <div className="bg-gray-50 rounded-xl p-2 border border-gray-200">
             <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2 text-base font-bold text-gray-600 border border-gray-300">3</div>
-            <h3 className="font-semibold text-xs mb-0.5 text-gray-700">{language === 'am' ? 'ያሸንፉ' : 'Win!'}</h3>
-            <p className="text-[9px] text-gray-500">{language === 'am' ? 'ሽልማት ያግኙ' : 'Win prizes'}</p>
+            <h3 className="font-bold text-xs mb-0.5 text-gray-700">{language === 'am' ? 'ያሸንፉ' : 'Win!'}</h3>
+            <p className="text-[9px] text-gray-500 font-bold">{language === 'am' ? 'ሽልማት ያግኙ' : 'Get prizes'}</p>
           </div>
         </div>
       </div>
 
-      {/* Partner Program Section - Dark (kept as is) */}
-      <div className="bg-gray-800 text-white py-6 px-4 mt-2 mx-3 rounded-xl border border-gray-600">
+      {/* Partner Program Section - Light Yellow Background */}
+      <div className="bg-yellow-50 text-gray-800 py-5 px-4 mt-2 mx-3 rounded-xl border border-yellow-300">
         <div className="text-center">
           <h2 className="text-base font-bold mb-1">{language === 'am' ? 'ተባባሪ ፕሮግራም' : 'Partner Program'}</h2>
-          <p className="text-gray-300 text-[10px] mb-3 px-4">{language === 'am' ? 'የአጋርነት ፕሮግራማችንን ይቀላቀሉ' : 'Join our partner program'}</p>
+          <p className="text-gray-600 text-[10px] mb-3 px-4 font-bold">{language === 'am' ? 'የአጋርነት ፕሮግራማችንን ይቀላቀሉ' : 'Join our partner program'}</p>
           <div className="flex flex-wrap justify-center gap-2">
-            <button onClick={() => window.location.href = '/become-agent'} className="bg-gray-700 text-white px-3 py-1.5 rounded-full text-[10px] font-semibold flex items-center gap-1 active:scale-95 transition-transform border border-gray-500">
+            <button onClick={() => window.location.href = '/become-agent'} className="bg-gray-800 text-white px-3 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-1 active:scale-95 transition-transform border border-gray-600">
               🤝 {language === 'am' ? 'ወኪል ይሁኑ' : 'Agent'}
             </button>
-            <button onClick={() => window.location.href = '/become-vendor'} className="bg-gray-700 text-white px-3 py-1.5 rounded-full text-[10px] font-semibold flex items-center gap-1 active:scale-95 transition-transform border border-gray-500">
+            <button onClick={() => window.location.href = '/become-vendor'} className="bg-gray-800 text-white px-3 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-1 active:scale-95 transition-transform border border-gray-600">
               🏪 {language === 'am' ? 'ነጋዴ ይሁኑ' : 'Vendor'}
             </button>
-            <button onClick={() => window.location.href = '/become-organization'} className="bg-gray-700 text-white px-3 py-1.5 rounded-full text-[10px] font-semibold flex items-center gap-1 active:scale-95 transition-transform border border-gray-500">
+            <button onClick={() => window.location.href = '/become-organization'} className="bg-gray-800 text-white px-3 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-1 active:scale-95 transition-transform border border-gray-600">
               🏢 {language === 'am' ? 'ድርጅት ይሁኑ' : 'Org'}
             </button>
           </div>
-          <div className="mt-3 text-[8px] text-gray-400">
+          <div className="mt-3 text-[8px] text-gray-600 font-bold">
             <p>✓ No fees ✓ Earn 10% ✓ 24/7 support</p>
           </div>
+          {/* Description - BOLD */}
+          <p className="text-[9px] font-bold text-gray-700 mt-3 pt-2 border-t border-yellow-200">
+            {language === 'am' 
+              ? '💼 ወኪሎች፣ ነጋዴዎች እና ድርጅቶች ተቀላቀሉ እና ኮሚሽን ያግኙ!'
+              : '💼 Agents, vendors, and organizations - join and earn commission!'}
+          </p>
         </div>
       </div>
 
