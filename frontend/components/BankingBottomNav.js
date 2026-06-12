@@ -1,5 +1,4 @@
-// frontend/components/BankingBottomNav.js - WITH SCROLL SUPPORT
-import Link from 'next/link';
+// frontend/components/BankingBottomNav.js
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
