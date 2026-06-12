@@ -1,11 +1,10 @@
-
-// pages/cities/seat.js - FULLY CORRECTED with redirect storage
+// pages/cities/seat.js - FULLY CORRECTED WITH PNG/JPEG DOWNLOAD
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
 import Head from 'next/head';
 import toast from 'react-hot-toast';
-import Ticket from '../../components/Ticket';
+import TicketDownload from '../../components/TicketDownload';
 
 export default function CitySeat() {
   const router = useRouter();
@@ -44,8 +43,8 @@ export default function CitySeat() {
   useEffect(() => {
     if (city && type) {
       checkUser();
-      if (type && vipPools[type]) setPoolInfo(vipPools[type]);
-      else if (type && !vipPools[type]) { 
+      if (vipPools[type]) setPoolInfo(vipPools[type]);
+      else { 
         toast.error('Invalid pool type'); 
         router.push(`/cities/${city}`); 
       }
@@ -70,14 +69,12 @@ export default function CitySeat() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        // Store redirect URL for after login
         const currentUrl = `/cities/seat?city=${city}&type=${type}`;
         localStorage.setItem('abbaa_redirect_after_login', currentUrl);
         sessionStorage.setItem('redirectAfterLogin', currentUrl);
         localStorage.setItem('pendingRole', 'individual');
         sessionStorage.setItem('pendingRole', 'individual');
         
-        console.log('🔵 City VIP - Stored redirect URL:', currentUrl);
         router.push('/login');
         return;
       }
@@ -245,29 +242,58 @@ export default function CitySeat() {
     }
     
     setUploading(true);
+    const loadingToast = toast.loading('Uploading payment screenshot...');
+    
     try {
       validateFile(selectedFile);
       const compressedFile = await compressImage(selectedFile);
-      const fileName = `city-payments/${participantId}/${Date.now()}.jpg`;
-      const { error: uploadError } = await supabase.storage.from('payment-proofs').upload(fileName, compressedFile);
-      if (uploadError) throw uploadError;
-      const { data: { publicUrl } } = supabase.storage.from('payment-proofs').getPublicUrl(fileName);
       
-      await supabase.from('city_vip_participants').update({
-        payment_status: 'pending_verification',
-        payment_proof_url: publicUrl,
-        payment_submitted_at: new Date().toISOString()
-      }).eq('id', participantId);
+      const fileName = `${user.id}/${Date.now()}_city_${city}_${type}.jpg`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('payment-proofs')
+        .upload(fileName, compressedFile, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: 'image/jpeg'
+        });
+      
+      if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('payment-proofs')
+        .getPublicUrl(fileName);
+      
+      const { error: updateError } = await supabase
+        .from('city_vip_participants')
+        .update({
+          payment_status: 'pending_verification',
+          payment_proof_url: publicUrl,
+          payment_submitted_at: new Date().toISOString()
+        })
+        .eq('id', participantId);
+      
+      if (updateError) throw new Error(`Update failed: ${updateError.message}`);
       
       await releaseUserReservations();
       
-      const { data: updatedParticipant } = await supabase.from('city_vip_participants').select('*').eq('id', participantId).single();
+      const { data: updatedParticipant, error: fetchError } = await supabase
+        .from('city_vip_participants')
+        .select('*')
+        .eq('id', participantId)
+        .single();
+      
+      if (fetchError) throw new Error(`Fetch failed: ${fetchError.message}`);
+      
       setParticipantData(updatedParticipant);
       setShowPayment(false);
       setShowTicket(true);
-      toast.success('Payment submitted! Your unverified ticket is ready');
+      
+      toast.success('Payment submitted! Your unverified ticket is ready', { id: loadingToast });
+      
     } catch (error) {
-      toast.error(error.message || 'Failed to submit payment');
+      console.error('Payment submission error:', error);
+      toast.error(error.message || 'Failed to submit payment. Please try again.', { id: loadingToast });
     } finally {
       setUploading(false);
     }
@@ -275,7 +301,7 @@ export default function CitySeat() {
 
   const toggleSeat = async (seatNum) => {
     if (bookedSeats.includes(seatNum)) {
-      toast.error(`Seat ${seatNum} is already taken. Please select another seat.`);
+      toast.error(`Seat ${seatNum} is already taken.`);
       return;
     }
 
@@ -288,17 +314,11 @@ export default function CitySeat() {
       setReservedSeats(reservedSeats.filter(s => s !== seatNum));
       toast.success(`Seat ${seatNum} released`);
     } else if (isReservedByYou) {
-      // Already reserved, just select it
       setSelectedSeats([...selectedSeats, seatNum]);
       toast.success(`Seat ${seatNum} selected`);
     } else {
       if (selectedSeats.length >= maxSeats) {
-        toast.error(`You can only select up to ${maxSeats} seats at a time`);
-        return;
-      }
-      
-      if (bookedSeats.includes(seatNum)) {
-        toast.error(`Seat ${seatNum} is no longer available`);
+        toast.error(`You can only select up to ${maxSeats} seats`);
         return;
       }
       
@@ -316,41 +336,62 @@ export default function CitySeat() {
   };
 
   const confirmSeats = async () => {
-    if (selectedSeats.length === 0) { toast.error('Select at least one seat'); return; }
-    
-    const stillAvailable = selectedSeats.every(seat => !bookedSeats.includes(seat));
-    if (!stillAvailable) {
-      toast.error('Some of your selected seats are no longer available. Please reselect.');
-      await fetchBookedSeats();
-      setSelectedSeats([]);
-      return;
+    if (selectedSeats.length === 0) { 
+      toast.error('Select at least one seat'); 
+      return; 
     }
     
     setLoading(true);
+    const checkingToast = toast.loading('Verifying seat availability...');
+    
     try {
+      await fetchBookedSeats();
+      
+      const stillAvailable = selectedSeats.every(seat => !bookedSeats.includes(seat));
+      if (!stillAvailable) {
+        const unavailableSeats = selectedSeats.filter(seat => bookedSeats.includes(seat));
+        toast.error(`Seats ${unavailableSeats.join(', ')} are no longer available.`, { id: checkingToast });
+        await fetchBookedSeats();
+        setSelectedSeats([]);
+        setLoading(false);
+        return;
+      }
+      
       const ticketNumber = `CITY-${type.toUpperCase()}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
       const totalAmount = selectedSeats.length * poolInfo.entryFee;
-      const { data: participant, error } = await supabase.from('city_vip_participants').insert({
-        user_id: user.id, 
-        user_email: user.email, 
-        user_name: user.user_metadata?.full_name || user.email.split('@')[0],
-        pool_type: type, 
-        city: city, 
-        seat_numbers: selectedSeats,
-        contribution_amount: totalAmount, 
-        prize_amount: poolInfo.prize, 
-        payment_status: 'pending',
-        ticket_number: ticketNumber, 
-        status: 'active', 
-        created_at: new Date().toISOString()
-      }).select().single();
+      
+      toast.loading('Reserving your seats...', { id: checkingToast });
+      
+      const { data: participant, error } = await supabase
+        .from('city_vip_participants')
+        .insert({
+          user_id: user.id,
+          user_email: user.email,
+          user_name: user.user_metadata?.full_name || user.email.split('@')[0],
+          pool_type: type,
+          city: city,
+          seat_numbers: selectedSeats,
+          contribution_amount: totalAmount,
+          prize_amount: poolInfo.prize,
+          payment_status: 'pending',
+          ticket_number: ticketNumber,
+          status: 'active',
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
       
       if (error) throw error;
       
       setParticipantId(participant.id);
+      setShowSeatSelector(false);
       setShowPayment(true);
+      
+      toast.success('Seats reserved! Please complete payment.', { id: checkingToast });
+      
     } catch (error) { 
-      toast.error('Failed: ' + error.message); 
+      console.error('Confirmation error:', error);
+      toast.error('Failed to reserve seats: ' + error.message, { id: checkingToast });
     } finally { 
       setLoading(false); 
     }
@@ -369,13 +410,15 @@ export default function CitySeat() {
     return 'bg-gray-200 hover:bg-gray-300 cursor-pointer transition-all hover:transform hover:scale-105';
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600"></div></div>;
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600"></div></div>;
+  }
+
   if (!poolInfo) return null;
 
   const totalAmount = selectedSeats.length * poolInfo.entryFee;
   const totalSeatsCount = poolInfo.totalSeats;
   const seatNumbers = Array.from({ length: Math.min(totalSeatsCount, 500) }, (_, i) => i + 1);
-  
   const availableCount = seatNumbers.filter(s => !bookedSeats.includes(s) && !selectedSeats.includes(s) && !reservedSeats.includes(s)).length;
   const takenCount = bookedSeats.length;
 
@@ -384,11 +427,8 @@ export default function CitySeat() {
       <Head><title>Select Seats - {city} {poolInfo.name} | Abbaa Carraa</title></Head>
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="container mx-auto px-4 max-w-7xl">
-          <button onClick={() => router.back()} className="text-gray-600 mb-4 inline-flex items-center gap-1">
-            ← Back to {city} VIP
-          </button>
+          <button onClick={() => router.back()} className="text-gray-600 mb-4 inline-flex items-center gap-1">← Back to {city} VIP</button>
           
-          {/* Pool Header */}
           <div className={`bg-gradient-to-r ${poolInfo.color} rounded-2xl p-6 text-white mb-6`}>
             <h1 className="text-2xl font-bold">{city} - {poolInfo.name}</h1>
             <p>Entry Fee: ETB {poolInfo.entryFee.toLocaleString()} | Prize: ETB {poolInfo.prize.toLocaleString()}</p>
@@ -433,10 +473,6 @@ export default function CitySeat() {
                 })}
               </div>
               
-              {totalSeatsCount > 500 && (
-                <p className="text-xs text-gray-400 text-center mb-4">Showing first 500 of {totalSeatsCount.toLocaleString()} seats (scroll to see more)</p>
-              )}
-              
               {selectedSeats.length > 0 && (
                 <div className="border-t pt-4">
                   <div className="flex justify-between mb-4 flex-wrap gap-4">
@@ -452,7 +488,6 @@ export default function CitySeat() {
             </div>
           )}
 
-          {/* Payment Modal - NO REFERENCE NUMBER */}
           {showPayment && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -472,7 +507,6 @@ export default function CitySeat() {
                     <p className="text-sm">Account Name: Negassa Hundessa</p>
                   </div>
                   
-                  {/* Upload Section - NO REFERENCE NUMBER INPUT */}
                   <div className="border-2 border-dashed rounded-lg p-4 text-center mb-4 hover:border-green-500 transition">
                     <input 
                       type="file" 
@@ -499,7 +533,7 @@ export default function CitySeat() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                           <p className="text-gray-500 mt-2">Click to upload payment screenshot</p>
-                          <p className="text-xs text-gray-400">JPEG, PNG (Max 5MB) - Will be auto-compressed</p>
+                          <p className="text-xs text-gray-400">JPEG, PNG (Max 5MB) - Auto-compressed</p>
                         </div>
                       )}
                     </label>
@@ -517,14 +551,17 @@ export default function CitySeat() {
             </div>
           )}
 
-          {/* Unverified Ticket Display */}
           {showTicket && participantData && (
             <div className="bg-white rounded-2xl shadow-xl p-6">
-              <Ticket 
-                participant={participantData} 
-                pool={poolInfo} 
-                isVerified={false} 
-                seatNumbers={selectedSeats} 
+              <TicketDownload 
+                participant={participantData}
+                pool={poolInfo}
+                isVerified={false}
+                seatNumbers={selectedSeats}
+                ticketNumber={participantData.ticket_number}
+                amount={participantData.contribution_amount}
+                createdAt={participantData.created_at}
+                poolType="city"
               />
               <div className="text-center mt-6">
                 <button onClick={() => router.push('/dashboard')} className="bg-gray-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-700 transition">
