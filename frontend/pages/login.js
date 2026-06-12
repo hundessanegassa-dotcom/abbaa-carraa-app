@@ -1,4 +1,4 @@
-// pages/login.js - FIXED VERSION
+// pages/login.js - COMPLETE FIXED VERSION
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
@@ -21,23 +21,10 @@ export default function Login() {
         console.log('🔵 Stored redirect URL:', redirect);
       }
       
-      // For individuals (pool participation), set role to individual
-      // This ensures they don't get partner flow
-      const isPoolRedirect = redirect && (
-        redirect.includes('/merkato-seat') || 
-        redirect.includes('/cities/seat') || 
-        redirect.includes('/pools/')
-      );
-      
-      if (isPoolRedirect) {
-        localStorage.setItem('pendingRole', 'individual');
-        sessionStorage.setItem('pendingRole', 'individual');
-        console.log('🔵 Pool participation - Setting role to individual');
-      } else {
-        // For regular login, default to individual
-        localStorage.setItem('pendingRole', 'individual');
-        sessionStorage.setItem('pendingRole', 'individual');
-      }
+      // ALWAYS set role to individual for login
+      // Partner registration happens separately via become-* pages
+      localStorage.setItem('pendingRole', 'individual');
+      sessionStorage.setItem('pendingRole', 'individual');
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
