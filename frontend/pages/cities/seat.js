@@ -1,4 +1,5 @@
-// pages/cities/seat.js
+
+// pages/cities/seat.js - FULLY CORRECTED with redirect storage
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
@@ -41,9 +42,14 @@ export default function CitySeat() {
   }, [reservedSeats, user]);
 
   useEffect(() => {
-    checkUser();
-    if (type && vipPools[type]) setPoolInfo(vipPools[type]);
-    else if (type && !vipPools[type]) { toast.error('Invalid pool type'); router.push(`/cities/${city}`); }
+    if (city && type) {
+      checkUser();
+      if (type && vipPools[type]) setPoolInfo(vipPools[type]);
+      else if (type && !vipPools[type]) { 
+        toast.error('Invalid pool type'); 
+        router.push(`/cities/${city}`); 
+      }
+    }
   }, [type, city]);
 
   useEffect(() => {
@@ -64,9 +70,14 @@ export default function CitySeat() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        const redirectUrl = `/cities/seat?city=${city}&type=${type}`;
-        localStorage.setItem('abbaa_redirect_after_login', redirectUrl);
-        sessionStorage.setItem('redirectAfterLogin', redirectUrl);
+        // Store redirect URL for after login
+        const currentUrl = `/cities/seat?city=${city}&type=${type}`;
+        localStorage.setItem('abbaa_redirect_after_login', currentUrl);
+        sessionStorage.setItem('redirectAfterLogin', currentUrl);
+        localStorage.setItem('pendingRole', 'individual');
+        sessionStorage.setItem('pendingRole', 'individual');
+        
+        console.log('🔵 City VIP - Stored redirect URL:', currentUrl);
         router.push('/login');
         return;
       }
@@ -242,14 +253,12 @@ export default function CitySeat() {
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('payment-proofs').getPublicUrl(fileName);
       
-      // Update participant with payment info (NO reference number)
       await supabase.from('city_vip_participants').update({
         payment_status: 'pending_verification',
         payment_proof_url: publicUrl,
         payment_submitted_at: new Date().toISOString()
       }).eq('id', participantId);
       
-      // Clear seat reservations after successful payment
       await releaseUserReservations();
       
       const { data: updatedParticipant } = await supabase.from('city_vip_participants').select('*').eq('id', participantId).single();
@@ -271,12 +280,17 @@ export default function CitySeat() {
     }
 
     const isSelected = selectedSeats.includes(seatNum);
+    const isReservedByYou = reservedSeats.includes(seatNum);
 
     if (isSelected) {
       await releaseSeats([seatNum]);
       setSelectedSeats(selectedSeats.filter(s => s !== seatNum));
       setReservedSeats(reservedSeats.filter(s => s !== seatNum));
       toast.success(`Seat ${seatNum} released`);
+    } else if (isReservedByYou) {
+      // Already reserved, just select it
+      setSelectedSeats([...selectedSeats, seatNum]);
+      toast.success(`Seat ${seatNum} selected`);
     } else {
       if (selectedSeats.length >= maxSeats) {
         toast.error(`You can only select up to ${maxSeats} seats at a time`);
@@ -349,6 +363,9 @@ export default function CitySeat() {
     if (selectedSeats.includes(seatNum)) {
       return 'bg-green-600 text-white shadow-lg transform scale-105';
     }
+    if (reservedSeats.includes(seatNum)) {
+      return 'bg-yellow-400 animate-pulse';
+    }
     return 'bg-gray-200 hover:bg-gray-300 cursor-pointer transition-all hover:transform hover:scale-105';
   };
 
@@ -357,9 +374,9 @@ export default function CitySeat() {
 
   const totalAmount = selectedSeats.length * poolInfo.entryFee;
   const totalSeatsCount = poolInfo.totalSeats;
-  const seatNumbers = Array.from({ length: totalSeatsCount }, (_, i) => i + 1);
+  const seatNumbers = Array.from({ length: Math.min(totalSeatsCount, 500) }, (_, i) => i + 1);
   
-  const availableCount = seatNumbers.filter(s => !bookedSeats.includes(s) && !selectedSeats.includes(s)).length;
+  const availableCount = seatNumbers.filter(s => !bookedSeats.includes(s) && !selectedSeats.includes(s) && !reservedSeats.includes(s)).length;
   const takenCount = bookedSeats.length;
 
   return (
@@ -405,24 +422,24 @@ export default function CitySeat() {
                     <button
                       key={seatNum}
                       onClick={() => toggleSeat(seatNum)}
-                      disabled={isDisabled}
-                      className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center text-xs font-semibold transition-all duration-200 ${seatColor} ${isSelected ? 'ring-2 ring-green-300 ring-offset-2' : ''} ${isReserved && !isSelected ? 'bg-yellow-400 animate-pulse' : ''}`}
-                      title={`Seat ${seatNum}${isDisabled ? ' - Taken' : isSelected ? ' - Selected by you' : ' - Available'}`}
+                      disabled={isDisabled || (isReserved && !isSelected)}
+                      className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center text-xs font-semibold transition-all duration-200 ${seatColor} ${isSelected ? 'ring-2 ring-green-300 ring-offset-2' : ''}`}
+                      title={`Seat ${seatNum}${isDisabled ? ' - Taken' : isSelected ? ' - Selected by you' : isReserved ? ' - Reserved by you' : ' - Available'}`}
                     >
                       <span className="text-sm">{seatNum}</span>
-                      <span className="text-[8px] mt-0.5">{isDisabled ? '🔒' : isSelected ? '✓' : '🟢'}</span>
+                      <span className="text-[8px] mt-0.5">{isDisabled ? '🔒' : isSelected ? '✓' : isReserved ? '⏳' : '🟢'}</span>
                     </button>
                   );
                 })}
               </div>
               
               {totalSeatsCount > 500 && (
-                <p className="text-xs text-gray-400 text-center mb-4">Showing all {totalSeatsCount.toLocaleString()} seats (scroll to see more)</p>
+                <p className="text-xs text-gray-400 text-center mb-4">Showing first 500 of {totalSeatsCount.toLocaleString()} seats (scroll to see more)</p>
               )}
               
               {selectedSeats.length > 0 && (
                 <div className="border-t pt-4">
-                  <div className="flex justify-between mb-4">
+                  <div className="flex justify-between mb-4 flex-wrap gap-4">
                     <div><p className="text-sm text-gray-500">Selected Seats</p><p className="font-bold text-lg">{selectedSeats.sort((a,b)=>a-b).join(', ')}</p></div>
                     <div className="text-right"><p className="text-sm text-gray-500">Total Amount</p><p className="font-bold text-2xl text-green-600">ETB {totalAmount.toLocaleString()}</p><p className="text-xs text-gray-400">({selectedSeats.length} seats × ETB {poolInfo.entryFee.toLocaleString()})</p></div>
                   </div>
