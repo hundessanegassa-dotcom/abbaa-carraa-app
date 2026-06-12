@@ -1,4 +1,3 @@
-// pages/index.js - COMPLETE WITH BOTH UI MODES, LANGUAGE TOGGLE, AND FIXED SCROLLING
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
