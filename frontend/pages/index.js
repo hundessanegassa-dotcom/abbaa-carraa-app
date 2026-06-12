@@ -1,3 +1,4 @@
+// pages/index.js - COMPLETE WITH BOTH UI MODES AND LANGUAGE TOGGLE
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -362,18 +363,19 @@ export default function Home() {
           <meta name="description" content="Win amazing prizes. Join Merkato VIP, City VIP across 94 Ethiopian cities, or Regular Pools. 2% supports kidney & heart disease patients." />
         </Head>
         
-        <div className="fixed top-4 right-4 z-50 flex gap-2">
+        {/* UPDATED: Smaller language toggle buttons */}
+        <div className="fixed top-4 right-4 z-50 flex gap-1">
           <button
             onClick={toggleLanguage}
-            className="bg-gray-800 text-white px-3 py-2 rounded-full shadow-lg text-xs flex items-center gap-1"
+            className="bg-gray-800 text-white px-2 py-1 rounded-full shadow-lg text-[10px] flex items-center gap-0.5"
           >
-            {language === 'am' ? '🇬🇧 English' : '🇪🇹 አማርኛ'}
+            {language === 'am' ? '🇬🇧 EN' : '🇪🇹 አማ'}
           </button>
           <button
             onClick={toggleMode}
-            className="bg-emerald-600 text-white px-3 py-2 rounded-full shadow-lg text-xs flex items-center gap-1"
+            className="bg-emerald-600 text-white px-2 py-1 rounded-full shadow-lg text-[10px] flex items-center gap-0.5"
           >
-            🔄 Switch to Classic
+            🔄 {language === 'am' ? 'ክላሲክ' : 'Classic'}
           </button>
         </div>
         
