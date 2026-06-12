@@ -1,4 +1,6 @@
 // pages/index.js - COMPLETE WITH ALL 94 CITIES, NO DUPLICATE FOOTER
+import { useUIMode } from '../hooks/useUIMode';
+import BankingStyleView from '../components/BankingStyleView';
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
