@@ -23,16 +23,16 @@ export default function Document() {
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Abbaa Carraa" />
         
-        {/* Icons - Multiple sizes for different devices */}
+        {/* Icons - Multiple sizes for different devices - FIXED PATHS to /images/ */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32x32.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16x16.png" />
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180x180.png" />
-        <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/images/icon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/images/icon-16x16.png" />
+        <link rel="apple-touch-icon" href="/images/icon-192x192.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/images/icon-180x180.png" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/images/icon-152x152.png" />
         
         {/* Maskable icon for Android */}
-        <link rel="mask-icon" href="/icons/icon-512x512.png" color="#10b981" />
+        <link rel="mask-icon" href="/images/icon-512x512.png" color="#10b981" />
         
         {/* Viewport - Already in _app.js, but included for completeness */}
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -40,11 +40,11 @@ export default function Document() {
         {/* SEO - Basic meta tags */}
         <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
         
-        {/* Security headers via meta tags */}
+        {/* Security headers via meta tags - KEPT ALL */}
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
         <meta httpEquiv="X-Frame-Options" content="DENY" />
 
-        {/* Google Search Console Verification */}
+        {/* Google Search Console Verification - KEPT */}
         <meta name="google-site-verification" content="R7_wK0rVZIH3R1tBPRkZQiiFDz9TC04m5NdAmmRuVbk" />
       </Head>
       <body>
