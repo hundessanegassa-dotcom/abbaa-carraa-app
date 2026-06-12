@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase';
 import Head from 'next/head';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import TicketImage from '../components/TicketImage';
+import TicketImage from '../../components/TicketImage'; // ✅ FIXED: correct path (../../ not ../)
 
 // Optimized file upload utilities
 const validateFile = (file) => {
@@ -701,9 +701,10 @@ export default function PoolDetails() {
           {showSeatSelector && renderSeatSelector()}
           {showPayment && renderPayment()}
           
+          {/* ✅ FIXED: Using TicketImage component (not TicketDownload) */}
           {showTicket && participantData && (
             <div className="bg-white rounded-2xl shadow-xl p-6">
-              <TicketDownload 
+              <TicketImage 
                 participant={participantData}
                 pool={pool}
                 isVerified={false}
