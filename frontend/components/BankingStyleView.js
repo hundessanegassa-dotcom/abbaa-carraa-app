@@ -1,7 +1,11 @@
-// frontend/components/BankingStyleView.js - SEPARATE BACKGROUND IMAGE (NOT OVERLAY)
+// frontend/components/BankingStyleView.js - WITH MOVING AD BELOW BACKGROUND IMAGE
 import { useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import BankingBottomNav from './BankingBottomNav';
+
+// Dynamic import for MovingAd (no SSR to avoid hydration issues)
+const MovingAd = dynamic(() => import('./MovingAd'), { ssr: false, loading: () => null });
 
 export default function BankingStyleView({ 
   pools, 
@@ -52,7 +56,6 @@ export default function BankingStyleView({
     <div className="bg-gray-100 min-h-screen pb-24">
       
       {/* ========== SEPARATE BACKGROUND IMAGE BANNER ========== */}
-      {/* This is just an image banner - no text on top */}
       <div className="w-full overflow-hidden">
         <img 
           src="/images/abbaa-carraa-bg.png" 
@@ -62,7 +65,10 @@ export default function BankingStyleView({
         />
       </div>
 
-      {/* ========== HERO CONTENT SECTION (Clean white/light background) ========== */}
+      {/* ========== MOVING AD BELOW BACKGROUND IMAGE ========== */}
+      <MovingAd />
+
+      {/* ========== HERO CONTENT SECTION ========== */}
       <div id="hero" className="bg-white text-gray-800 pt-6 pb-8 px-4 m-3 rounded-2xl shadow-sm border border-gray-200">
         <div className="text-center">
           <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm border border-emerald-200 mb-4">
@@ -241,7 +247,6 @@ export default function BankingStyleView({
             </div>
           </div>
           
-          {/* Prize Tiers */}
           <div className="grid grid-cols-5 gap-1 mt-4 pt-3 border-t-2 border-gray-200">
             <div className="text-center bg-gray-50 rounded-lg p-1 border border-gray-200">
               <div className="text-lg">🏆</div>
@@ -326,7 +331,7 @@ export default function BankingStyleView({
                 {language === 'am' ? `${displayedPools.length} ንቁ የእጣ መደቦች` : `${displayedPools.length} active pools`}
               </div>
 
-              {/* Pools Grid */}
+              {/* Pools Grid - FULLY CLICKABLE CARDS */}
               {displayedPools.length === 0 ? (
                 <div className="text-center py-8 bg-gray-50 rounded-xl border border-gray-300">
                   <div className="text-4xl mb-2">🏊</div>
@@ -335,40 +340,46 @@ export default function BankingStyleView({
               ) : (
                 <div className="space-y-3">
                   {displayedPools.slice(0, 10).map(pool => (
-                    <div key={pool.id} className="bg-gray-50 rounded-xl p-3 shadow-sm border border-gray-300 active:scale-[0.98] transition-transform">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h4 className="font-bold text-gray-800 text-sm">{pool.prize_name}</h4>
-                          <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-2 font-bold">
-                            {pool.description?.slice(0, 60)}...
-                          </p>
-                          <div className="flex flex-wrap gap-1 mt-1.5">
-                            {pool.target_amount >= 1000000 && (
-                              <span className="bg-yellow-100 text-yellow-800 text-[9px] px-1.5 py-0.5 rounded font-bold border border-yellow-300">💰 High Value</span>
-                            )}
-                            {pool.is_featured && (
-                              <span className="bg-purple-100 text-purple-800 text-[9px] px-1.5 py-0.5 rounded font-bold border border-purple-300">⭐ Featured</span>
-                            )}
+                    <Link 
+                      key={pool.id} 
+                      href={`/pools/${pool.id}`}
+                      className="block bg-gray-50 rounded-xl p-3 shadow-sm border border-gray-300 active:scale-[0.98] transition-transform cursor-pointer hover:bg-gray-100"
+                    >
+                      <div>
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h4 className="font-bold text-gray-800 text-sm">{pool.prize_name}</h4>
+                            <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-2 font-bold">
+                              {pool.description?.slice(0, 60)}...
+                            </p>
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              {pool.target_amount >= 1000000 && (
+                                <span className="bg-yellow-100 text-yellow-800 text-[9px] px-1.5 py-0.5 rounded font-bold border border-yellow-300">💰 High Value</span>
+                              )}
+                              {pool.is_featured && (
+                                <span className="bg-purple-100 text-purple-800 text-[9px] px-1.5 py-0.5 rounded font-bold border border-purple-300">⭐ Featured</span>
+                              )}
+                            </div>
+                          </div>
+                          {pool.is_featured && (
+                            <span className="bg-yellow-400 text-gray-900 text-[9px] px-1.5 py-0.5 rounded-full ml-1 border border-yellow-500 font-bold">⭐</span>
+                          )}
+                        </div>
+                        <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-200">
+                          <div>
+                            <span className="text-gray-800 font-bold text-sm">ETB {(pool.entry_fee || 10).toLocaleString()}</span>
+                            <span className="text-[9px] text-gray-400 ml-0.5 font-bold">{language === 'am' ? 'በአንድ መቀመጫ' : '/seat'}</span>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[10px] font-bold text-emerald-600">
+                              {language === 'am' 
+                                ? `እስከ ${(pool.target_amount || 0).toLocaleString()} ብር ያሸንፉ!`
+                                : `Win up to ${(pool.target_amount || 0).toLocaleString()} ETB!`}
+                            </p>
                           </div>
                         </div>
-                        {pool.is_featured && (
-                          <span className="bg-yellow-400 text-gray-900 text-[9px] px-1.5 py-0.5 rounded-full ml-1 border border-yellow-500 font-bold">⭐</span>
-                        )}
                       </div>
-                      <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-200">
-                        <div>
-                          <span className="text-gray-800 font-bold text-sm">ETB {(pool.entry_fee || 10).toLocaleString()}</span>
-                          <span className="text-[9px] text-gray-400 ml-0.5 font-bold">{language === 'am' ? 'በአንድ መቀመጫ' : '/seat'}</span>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[10px] font-bold text-emerald-600">
-                            {language === 'am' 
-                              ? `እስከ ${(pool.target_amount || 0).toLocaleString()} ብር ያሸንፉ!`
-                              : `Win up to ${(pool.target_amount || 0).toLocaleString()} ETB!`}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}
