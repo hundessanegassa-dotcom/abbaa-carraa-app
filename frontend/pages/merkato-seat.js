@@ -1,4 +1,4 @@
-// pages/merkato-seat.js
+// pages/merkato-seat.js - FULLY CORRECTED
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
@@ -67,9 +67,14 @@ export default function MerkatoSeat() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        const redirectUrl = `/merkato-seat?type=${type}`;
-        localStorage.setItem('abbaa_redirect_after_login', redirectUrl);
-        sessionStorage.setItem('redirectAfterLogin', redirectUrl);
+        // Store redirect URL for after login
+        const currentUrl = `/merkato-seat?type=${type}`;
+        localStorage.setItem('abbaa_redirect_after_login', currentUrl);
+        sessionStorage.setItem('redirectAfterLogin', currentUrl);
+        localStorage.setItem('pendingRole', 'individual');
+        sessionStorage.setItem('pendingRole', 'individual');
+        
+        console.log('🔵 Merkato - Stored redirect URL:', currentUrl);
         router.push('/login');
         return;
       }
@@ -83,7 +88,6 @@ export default function MerkatoSeat() {
 
   async function fetchBookedSeats() {
     try {
-      // Fetch participants with verified or pending verification payments
       const { data, error } = await supabase
         .from('merkato_vip_participants')
         .select('seat_numbers, payment_status')
@@ -102,7 +106,6 @@ export default function MerkatoSeat() {
       }
       
       setBookedSeats([...new Set(allBookedSeats)]);
-      console.log('Booked seats:', allBookedSeats);
     } catch (err) {
       console.error('Error fetching booked seats:', err);
     }
@@ -246,14 +249,12 @@ export default function MerkatoSeat() {
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('payment-proofs').getPublicUrl(fileName);
       
-      // Update participant with payment info (no reference number)
       await supabase.from('merkato_vip_participants').update({
         payment_status: 'pending_verification',
         payment_proof_url: publicUrl,
         payment_submitted_at: new Date().toISOString()
       }).eq('id', participantId);
       
-      // Clear seat reservations after successful payment
       await releaseUserReservations();
       
       const { data: updatedParticipant } = await supabase.from('merkato_vip_participants').select('*').eq('id', participantId).single();
@@ -269,19 +270,23 @@ export default function MerkatoSeat() {
   };
 
   const toggleSeat = async (seatNum) => {
-    // Check if seat is already booked/taken
     if (bookedSeats.includes(seatNum)) {
       toast.error(`Seat ${seatNum} is already taken. Please select another seat.`);
       return;
     }
 
     const isSelected = selectedSeats.includes(seatNum);
+    const isReservedByYou = reservedSeats.includes(seatNum);
 
     if (isSelected) {
       await releaseSeats([seatNum]);
       setSelectedSeats(selectedSeats.filter(s => s !== seatNum));
       setReservedSeats(reservedSeats.filter(s => s !== seatNum));
       toast.success(`Seat ${seatNum} released`);
+    } else if (isReservedByYou) {
+      // Already reserved, just select it
+      setSelectedSeats([...selectedSeats, seatNum]);
+      toast.success(`Seat ${seatNum} selected`);
     } else {
       if (selectedSeats.length >= maxSeats) {
         toast.error(`You can only select up to ${maxSeats} seats at a time`);
@@ -362,6 +367,9 @@ export default function MerkatoSeat() {
     if (selectedSeats.includes(seatNum)) {
       return 'bg-green-600 text-white shadow-lg transform scale-105';
     }
+    if (reservedSeats.includes(seatNum)) {
+      return 'bg-yellow-400 animate-pulse';
+    }
     return 'bg-gray-200 hover:bg-gray-300 cursor-pointer transition-all hover:transform hover:scale-105';
   };
 
@@ -378,7 +386,7 @@ export default function MerkatoSeat() {
   const totalAmount = selectedSeats.length * poolInfo.entryFee;
   const totalSeatsCount = poolInfo.totalSeats;
   const seatNumbers = Array.from({ length: Math.min(totalSeatsCount, 500) }, (_, i) => i + 1);
-  const availableCount = seatNumbers.filter(s => !bookedSeats.includes(s) && !selectedSeats.includes(s)).length;
+  const availableCount = seatNumbers.filter(s => !bookedSeats.includes(s) && !selectedSeats.includes(s) && !reservedSeats.includes(s)).length;
   const takenCount = bookedSeats.length;
 
   return (
@@ -437,12 +445,12 @@ export default function MerkatoSeat() {
                     <button
                       key={seatNum}
                       onClick={() => toggleSeat(seatNum)}
-                      disabled={isDisabled}
-                      className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center text-xs font-semibold transition-all duration-200 ${seatColor} ${isSelected ? 'ring-2 ring-green-300 ring-offset-2' : ''} ${isReserved && !isSelected ? 'bg-yellow-400 animate-pulse' : ''}`}
-                      title={`Seat ${seatNum}${isDisabled ? ' - Taken' : isSelected ? ' - Selected by you' : ' - Available'}`}
+                      disabled={isDisabled || (isReserved && !isSelected)}
+                      className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center text-xs font-semibold transition-all duration-200 ${seatColor} ${isSelected ? 'ring-2 ring-green-300 ring-offset-2' : ''}`}
+                      title={`Seat ${seatNum}${isDisabled ? ' - Taken' : isSelected ? ' - Selected by you' : isReserved ? ' - Reserved by you' : ' - Available'}`}
                     >
                       <span className="text-sm">{seatNum}</span>
-                      <span className="text-[8px] mt-0.5">{isDisabled ? '🔒' : isSelected ? '✓' : '🟢'}</span>
+                      <span className="text-[8px] mt-0.5">{isDisabled ? '🔒' : isSelected ? '✓' : isReserved ? '⏳' : '🟢'}</span>
                     </button>
                   );
                 })}
@@ -450,7 +458,7 @@ export default function MerkatoSeat() {
               
               {selectedSeats.length > 0 && (
                 <div className="border-t pt-4">
-                  <div className="flex justify-between mb-4">
+                  <div className="flex justify-between mb-4 flex-wrap gap-4">
                     <div><p className="text-sm text-gray-500">Selected Seats</p><p className="font-bold text-lg">{selectedSeats.sort((a,b)=>a-b).join(', ')}</p></div>
                     <div className="text-right"><p className="text-sm text-gray-500">Total Amount</p><p className="font-bold text-2xl text-green-600">ETB {totalAmount.toLocaleString()}</p><p className="text-xs text-gray-400">({selectedSeats.length} seats × ETB {poolInfo.entryFee.toLocaleString()})</p></div>
                   </div>
@@ -463,7 +471,7 @@ export default function MerkatoSeat() {
             </div>
           )}
 
-          {/* Payment Modal - NO REFERENCE NUMBER */}
+          {/* Payment Modal */}
           {showPayment && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -483,7 +491,6 @@ export default function MerkatoSeat() {
                     <p className="text-sm text-gray-600 mt-2">Account Name: Negassa Hundessa</p>
                   </div>
                   
-                  {/* Upload Section - NO REFERENCE NUMBER INPUT */}
                   <div className="border-2 border-dashed rounded-lg p-4 text-center mb-4 hover:border-green-500 transition">
                     <input 
                       type="file" 
@@ -528,7 +535,6 @@ export default function MerkatoSeat() {
             </div>
           )}
 
-          {/* Unverified Ticket Display */}
           {showTicket && participantData && (
             <div className="bg-white rounded-2xl shadow-xl p-6">
               <Ticket participant={participantData} pool={poolInfo} isVerified={false} seatNumbers={selectedSeats} />
