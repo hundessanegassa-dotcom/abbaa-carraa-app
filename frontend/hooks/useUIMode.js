@@ -1,3 +1,4 @@
+// frontend/hooks/useUIMode.js
 import { useState, useEffect } from 'react';
 
 export function useUIMode() {
