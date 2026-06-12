@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase';
 import Head from 'next/head';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import TicketDownload from '../../components/TicketDownload';
+import TicketImage from '../../components/TicketImage';
 
 // Optimized file upload utilities
 const validateFile = (file) => {
