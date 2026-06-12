@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
 import Head from 'next/head';
 import toast from 'react-hot-toast';
-import TicketImage from '../../components/TicketImage';
+import TicketImage from '../../components/TicketImage'; // ✅ CORRECT IMPORT
 
 export default function CitySeat() {
   const router = useRouter();
@@ -24,6 +24,7 @@ export default function CitySeat() {
   const [bookedSeats, setBookedSeats] = useState([]);
   const [reservedSeats, setReservedSeats] = useState([]);
   const [reservationTimer, setReservationTimer] = useState(null);
+  const [showSeatSelector, setShowSeatSelector] = useState(true);
 
   const vipPools = {
     daily: { name: "Daily Millionaire", entryFee: 500, prize: 1000000, totalSeats: 2400, drawDate: "Every Day at 8:00 PM", color: "from-gray-700 to-gray-900" },
@@ -551,9 +552,10 @@ export default function CitySeat() {
             </div>
           )}
 
+          {/* ✅ FIXED: Using TicketImage component (NOT TicketDownload) */}
           {showTicket && participantData && (
             <div className="bg-white rounded-2xl shadow-xl p-6">
-              <TicketDownload 
+              <TicketImage 
                 participant={participantData}
                 pool={poolInfo}
                 isVerified={false}
