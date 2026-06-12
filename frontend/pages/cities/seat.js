@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
 import Head from 'next/head';
 import toast from 'react-hot-toast';
-import TicketImage from '../components/TicketImage';
+import TicketImage from '../../components/TicketImage';
 
 export default function CitySeat() {
   const router = useRouter();
