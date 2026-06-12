@@ -12,9 +12,6 @@ export default function Document() {
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         
-        {/* Preload critical assets - Only load critical images */}
-        {/* <link rel="preload" href="/images/abbaa-carraa-bg.png" as="image" /> - Remove or use only on homepage */}
-        
         {/* PWA Manifest and Icons */}
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#10b981" />
@@ -23,7 +20,7 @@ export default function Document() {
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Abbaa Carraa" />
         
-        {/* Icons - Multiple sizes for different devices - FIXED: using /images/ instead of /icons/ */}
+        {/* Icons - Multiple sizes for different devices - FIXED: using /images/ */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" type="image/png" sizes="32x32" href="/images/icon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/images/icon-16x16.png" />
@@ -34,7 +31,7 @@ export default function Document() {
         {/* Maskable icon for Android */}
         <link rel="mask-icon" href="/images/icon-512x512.png" color="#10b981" />
         
-        {/* Viewport - Already in _app.js, but included for completeness */}
+        {/* Viewport */}
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         
         {/* SEO - Basic meta tags */}
