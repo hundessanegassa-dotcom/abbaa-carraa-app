@@ -1,4 +1,4 @@
-// frontend/components/BankingStyleView.js - COMPLETE WITH SEPARATE BACKGROUND IMAGE
+// frontend/components/BankingStyleView.js - SEPARATE BACKGROUND IMAGE (NOT OVERLAY)
 import { useState } from 'react';
 import Link from 'next/link';
 import BankingBottomNav from './BankingBottomNav';
@@ -51,24 +51,25 @@ export default function BankingStyleView({
   return (
     <div className="bg-gray-100 min-h-screen pb-24">
       
-      {/* Hero Section - With Separate Background Image (No Overlay) */}
-      <div 
-        id="hero" 
-        className="relative text-white pt-6 pb-10 px-4 m-3 rounded-2xl shadow-sm overflow-hidden"
-        style={{ 
-          backgroundImage: "url('/images/abbaa-carraa-bg.png')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundColor: '#1a3c34'
-        }}
-      >
-        {/* Content without overlay - text directly on background */}
-        <div className="relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-sm border border-white/30 mb-4">
+      {/* ========== SEPARATE BACKGROUND IMAGE BANNER ========== */}
+      {/* This is just an image banner - no text on top */}
+      <div className="w-full overflow-hidden">
+        <img 
+          src="/images/abbaa-carraa-bg.png" 
+          alt="Abbaa Carraa Background" 
+          className="w-full h-auto object-cover"
+          style={{ maxHeight: '200px', objectPosition: 'center' }}
+        />
+      </div>
+
+      {/* ========== HERO CONTENT SECTION (Clean white/light background) ========== */}
+      <div id="hero" className="bg-white text-gray-800 pt-6 pb-8 px-4 m-3 rounded-2xl shadow-sm border border-gray-200">
+        <div className="text-center">
+          <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm border border-emerald-200 mb-4">
             🔥 Ethiopia's #1 Prize Platform 🏆
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2 drop-shadow-lg">Abbaa Carraa</h1>
-          <p className="text-white/95 text-sm px-4 mb-6 drop-shadow">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-gray-900">Abbaa Carraa</h1>
+          <p className="text-gray-600 text-sm px-4 mb-6">
             {language === 'am' 
               ? 'መኪናዎችን፣ ቤቶችን እና ሌሎችንም በማህበረሰብ ቁጠባ ያሸንፉ!'
               : 'Win cars, houses, and more through community savings!'}
@@ -96,40 +97,40 @@ export default function BankingStyleView({
         </div>
 
         {/* Stats Row */}
-        <div className="relative z-10 grid grid-cols-4 gap-2 mt-8">
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2 text-center shadow-sm border border-white/30">
+        <div className="grid grid-cols-4 gap-2 mt-8">
+          <div className="bg-gray-50 rounded-xl p-2 text-center shadow-sm border border-gray-200">
             <div className="text-lg">💰</div>
-            <div className="font-bold text-white text-xs sm:text-sm">{Math.floor(stats.total_raised / 1000)}+K</div>
-            <div className="text-[9px] sm:text-[10px] text-white/90 font-bold">{language === 'am' ? 'ተሰብስቧል' : 'Raised'}</div>
+            <div className="font-bold text-gray-800 text-xs sm:text-sm">{Math.floor(stats.total_raised / 1000)}+K</div>
+            <div className="text-[9px] sm:text-[10px] text-gray-500 font-bold">{language === 'am' ? 'ተሰብስቧል' : 'Raised'}</div>
           </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2 text-center shadow-sm border border-white/30">
+          <div className="bg-gray-50 rounded-xl p-2 text-center shadow-sm border border-gray-200">
             <div className="text-lg">🏆</div>
-            <div className="font-bold text-white text-xs sm:text-sm">{stats.total_winners}+</div>
-            <div className="text-[9px] sm:text-[10px] text-white/90 font-bold">{language === 'am' ? 'አሸናፊዎች' : 'Winners'}</div>
+            <div className="font-bold text-gray-800 text-xs sm:text-sm">{stats.total_winners}+</div>
+            <div className="text-[9px] sm:text-[10px] text-gray-500 font-bold">{language === 'am' ? 'አሸናፊዎች' : 'Winners'}</div>
           </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2 text-center shadow-sm border border-white/30">
+          <div className="bg-gray-50 rounded-xl p-2 text-center shadow-sm border border-gray-200">
             <div className="text-lg">🎯</div>
-            <div className="font-bold text-white text-xs sm:text-sm">{stats.total_pools}+</div>
-            <div className="text-[9px] sm:text-[10px] text-white/90 font-bold">{language === 'am' ? 'ንቁ' : 'Active'}</div>
+            <div className="font-bold text-gray-800 text-xs sm:text-sm">{stats.total_pools}+</div>
+            <div className="text-[9px] sm:text-[10px] text-gray-500 font-bold">{language === 'am' ? 'ንቁ' : 'Active'}</div>
           </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2 text-center shadow-sm border border-white/30">
+          <div className="bg-gray-50 rounded-xl p-2 text-center shadow-sm border border-gray-200">
             <div className="text-lg">🏙️</div>
-            <div className="font-bold text-white text-xs sm:text-sm">{uniqueCities.length}</div>
-            <div className="text-[9px] sm:text-[10px] text-white/90 font-bold">{language === 'am' ? 'ከተሞች' : 'Cities'}</div>
+            <div className="font-bold text-gray-800 text-xs sm:text-sm">{uniqueCities.length}</div>
+            <div className="text-[9px] sm:text-[10px] text-gray-500 font-bold">{language === 'am' ? 'ከተሞች' : 'Cities'}</div>
           </div>
         </div>
 
         {/* Health Support Banner */}
-        <div className="relative z-10 mt-4 text-center">
-          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1.5 text-xs text-white shadow-sm border border-white/30">
+        <div className="mt-4 text-center">
+          <div className="inline-flex items-center gap-2 bg-emerald-50 rounded-full px-3 py-1.5 text-xs text-emerald-700 shadow-sm border border-emerald-200">
             <span>💚</span>
             <span className="text-[10px] sm:text-xs font-bold">{language === 'am' ? '2% የኩላሊት እና የልብ ህመም ታማሚዎችን ይደግፋል' : '2% supports kidney & heart disease patients'}</span>
           </div>
         </div>
 
         {/* Description under Hero */}
-        <div className="relative z-10 mt-6 text-center border-t border-white/30 pt-4">
-          <p className="text-xs font-bold text-white drop-shadow">
+        <div className="mt-6 text-center border-t border-gray-200 pt-4">
+          <p className="text-xs font-bold text-gray-700">
             {language === 'am' 
               ? '✨ በAbbaa Carraa የማህበረሰብ ቁጠባ መድረክ ሽልማቶችን ያሸንፉ! እስከ 40 ሚሊዮን ብር የሚደርሱ ሽልማቶች ይጠብቁዎታል ✨'
               : '✨ Win amazing prizes through community savings! Prizes up to 40 Million ETB await you ✨'}
