@@ -257,6 +257,33 @@ html {
 }
 
 /* ========================================
+   HIDE SCROLLBAR FOR HORIZONTAL SCROLL
+   ======================================== */
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ========================================
+   SMOOTH SCROLL OFFSET FOR FIXED HEADER
+   ======================================== */
+
+.scroll-mt-20 {
+  scroll-margin-top: 80px;
+}
+
+@media (max-width: 768px) {
+  .scroll-mt-20 {
+    scroll-margin-top: 70px;
+  }
+}
+
+/* ========================================
    UTILITY CLASSES
    ======================================== */
 
