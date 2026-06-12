@@ -1,4 +1,4 @@
-// pages/login.js
+// pages/login.js - FIXED VERSION
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
@@ -16,11 +16,28 @@ export default function Login() {
     try {
       // Store the intended redirect URL if provided
       if (redirect) {
+        localStorage.setItem('abbaa_redirect_after_login', redirect);
         sessionStorage.setItem('redirectAfterLogin', redirect);
+        console.log('🔵 Stored redirect URL:', redirect);
       }
       
-      // For individuals, we don't need role selection
-      sessionStorage.setItem('pendingRole', 'individual');
+      // For individuals (pool participation), set role to individual
+      // This ensures they don't get partner flow
+      const isPoolRedirect = redirect && (
+        redirect.includes('/merkato-seat') || 
+        redirect.includes('/cities/seat') || 
+        redirect.includes('/pools/')
+      );
+      
+      if (isPoolRedirect) {
+        localStorage.setItem('pendingRole', 'individual');
+        sessionStorage.setItem('pendingRole', 'individual');
+        console.log('🔵 Pool participation - Setting role to individual');
+      } else {
+        // For regular login, default to individual
+        localStorage.setItem('pendingRole', 'individual');
+        sessionStorage.setItem('pendingRole', 'individual');
+      }
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
