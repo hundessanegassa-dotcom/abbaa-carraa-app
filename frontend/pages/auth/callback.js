@@ -1,4 +1,4 @@
-// pages/auth/callback.js - FIXED VERSION
+// pages/auth/callback.js - COMPLETELY FIXED VERSION
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
@@ -12,16 +12,18 @@ export default function AuthCallback() {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
   const [error, setError] = useState(null);
+  const [pendingRedirect, setPendingRedirect] = useState(null);
+  const [isPoolVipRedirect, setIsPoolVipRedirect] = useState(false);
 
-  // Get stored redirect URL - CRITICAL for pool/VIP joining
+  // Get stored redirect URL
   const getStoredRedirectUrl = () => {
-    // Try localStorage first (more reliable)
+    // Check localStorage first (set by pool pages)
     let redirectUrl = localStorage.getItem('abbaa_redirect_after_login');
     if (redirectUrl) {
       localStorage.removeItem('abbaa_redirect_after_login');
       return redirectUrl;
     }
-    // Fallback to sessionStorage
+    // Check sessionStorage
     redirectUrl = sessionStorage.getItem('redirectAfterLogin');
     if (redirectUrl) {
       sessionStorage.removeItem('redirectAfterLogin');
@@ -35,7 +37,7 @@ export default function AuthCallback() {
       url.includes('/merkato-seat') || 
       url.includes('/cities/seat') || 
       url.includes('/pools/') ||
-      url.includes('/cities/') && url.includes('?type=') ||
+      (url.includes('/cities/') && url.includes('?type=')) ||
       url.includes('/merkato-vip')
     );
   };
@@ -43,6 +45,7 @@ export default function AuthCallback() {
   const clearStoredData = () => {
     localStorage.removeItem('abbaa_redirect_after_login');
     localStorage.removeItem('abbaa_vip_pending');
+    localStorage.removeItem('pendingRole');
     sessionStorage.removeItem('redirectAfterLogin');
     sessionStorage.removeItem('pendingRole');
     sessionStorage.removeItem('isPartner');
@@ -51,6 +54,30 @@ export default function AuthCallback() {
     sessionStorage.removeItem('pendingCity');
   };
 
+  // Handle the final redirect after everything is done
+  const handleFinalRedirect = useCallback(async (finalRole, redirectUrl, isPoolVip) => {
+    console.log('🔴 Final redirect - Role:', finalRole, 'URL:', redirectUrl, 'IsPoolVip:', isPoolVip);
+    
+    clearStoredData();
+    
+    // CRITICAL: Pool/VIP redirect has HIGHEST priority
+    if (redirectUrl) {
+      console.log('🎯 Redirecting to pool/VIP:', redirectUrl);
+      window.location.href = redirectUrl;
+      return;
+    }
+    
+    // For partners (agents/vendors/orgs), go to their application form
+    if (finalRole !== 'individual') {
+      router.push(`/become-${finalRole}`);
+      return;
+    }
+    
+    // Default for individuals
+    router.push('/listings');
+  }, [router]);
+
+  // Handle agreement acceptance (ONLY for partners)
   const handleAcceptAgreement = useCallback(async () => {
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -60,10 +87,10 @@ export default function AuthCallback() {
       
       const pendingRole = localStorage.getItem('pendingRole') || sessionStorage.getItem('pendingRole') || 'individual';
       const redirectUrl = getStoredRedirectUrl();
-      const isPoolVipRedirect = isPoolOrVipRedirect(redirectUrl);
+      const isPoolVip = isPoolOrVipRedirect(redirectUrl);
       
-      // For pool/VIP joining, force role to individual
-      const finalRole = isPoolVipRedirect ? 'individual' : pendingRole;
+      // Final role determination
+      const finalRole = isPoolVip ? 'individual' : pendingRole;
       
       // Check if profile exists
       const { data: existingProfile } = await supabase
@@ -106,31 +133,14 @@ export default function AuthCallback() {
       toast.success('Welcome to Abbaa Carraa!');
       
       await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // CRITICAL: Pool/VIP redirect takes HIGHEST priority
-      if (redirectUrl) {
-        console.log('🎯 Redirecting to pool/VIP:', redirectUrl);
-        clearStoredData();
-        window.location.href = redirectUrl;
-        return;
-      }
-      
-      clearStoredData();
-      
-      // Redirect partners to their application form
-      if (finalRole !== 'individual') {
-        router.push(`/become-${finalRole}`);
-        return;
-      }
-      
-      // Default to listings
-      router.push('/listings');
+      handleFinalRedirect(finalRole, redirectUrl, isPoolVip);
       
     } catch (err) {
       console.error('Accept agreement error:', err);
       toast.error('Failed to save agreement: ' + err.message);
+      router.push('/login');
     }
-  }, [router]);
+  }, [handleFinalRedirect, router]);
 
   const handleClose = useCallback(() => {
     clearStoredData();
@@ -143,12 +153,15 @@ export default function AuthCallback() {
 
     const handleCallback = async () => {
       try {
-        // Get redirect URL from storage
+        // Get redirect URL from storage FIRST
         const redirectUrl = getStoredRedirectUrl();
         const isPoolVip = isPoolOrVipRedirect(redirectUrl);
         
         console.log('🟢 Callback - Redirect URL:', redirectUrl);
         console.log('🟢 Callback - Is Pool/VIP redirect:', isPoolVip);
+        
+        setPendingRedirect(redirectUrl);
+        setIsPoolVipRedirect(isPoolVip);
 
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
@@ -160,7 +173,7 @@ export default function AuthCallback() {
           return;
         }
 
-        // Check if user already has a profile
+        // Check if user already has a profile with agreement accepted
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('role, user_type, agreement_accepted, agreement_version, id, status')
@@ -169,6 +182,8 @@ export default function AuthCallback() {
 
         // If user has a profile with agreement accepted
         if (profile?.agreement_accepted === true) {
+          console.log('✅ User already has agreement accepted');
+          
           // CRITICAL: Check for redirect URL FIRST - even for existing users
           if (redirectUrl) {
             console.log('🎯 Existing user - Redirecting to pool/VIP:', redirectUrl);
@@ -190,22 +205,32 @@ export default function AuthCallback() {
           return;
         }
 
-        // New user - determine role
+        // NEW USER - Determine role
         let pendingRole = localStorage.getItem('pendingRole') || sessionStorage.getItem('pendingRole') || 'individual';
         
-        // If this is a pool/VIP redirect, force role to individual
+        // If this is a pool/VIP redirect, force role to INDIVIDUAL (NO AGREEMENT NEEDED)
         if (isPoolVip) {
           pendingRole = 'individual';
-          localStorage.setItem('pendingRole', 'individual');
-          sessionStorage.setItem('pendingRole', 'individual');
+          // Clear any partner role storage
+          localStorage.removeItem('pendingRole');
+          sessionStorage.removeItem('pendingRole');
+          console.log('🎯 Pool/VIP redirect - Forcing role to individual, NO agreement');
         }
         
         if (isMounted) {
           setUserRole(pendingRole);
-          // Only show agreement for partners (agents/vendors/orgs)
-          // Individuals (including pool/VIP joiners) skip agreement
-          setShowAgreement(pendingRole !== 'individual');
+          
+          // ONLY show agreement for partners (agents/vendors/orgs)
+          // Individuals (including pool/VIP joiners) should NEVER see agreement
+          const needsAgreement = pendingRole !== 'individual';
+          setShowAgreement(needsAgreement);
           setLoading(false);
+          
+          // If individual (no agreement needed), immediately process
+          if (!needsAgreement) {
+            console.log('👤 Individual user - No agreement needed, proceeding directly');
+            await handleAcceptAgreement();
+          }
         }
         
       } catch (err) {
@@ -215,8 +240,6 @@ export default function AuthCallback() {
           toast.error('Authentication failed');
         }
         setTimeout(() => router.push('/login'), 3000);
-      } finally {
-        if (isMounted) setLoading(false);
       }
     };
 
@@ -225,7 +248,7 @@ export default function AuthCallback() {
     return () => {
       isMounted = false;
     };
-  }, [router]);
+  }, [router, handleAcceptAgreement]);
 
   if (error) {
     return (
@@ -249,13 +272,7 @@ export default function AuthCallback() {
     return <LoadingSpinner fullPage message="Completing sign in..." />;
   }
 
-  // For individuals (including pool/VIP joiners), skip agreement and proceed directly
-  if (userRole === 'individual') {
-    handleAcceptAgreement();
-    return <LoadingSpinner fullPage message="Redirecting to your pool..." />;
-  }
-
-  // Only show agreement for partners (agents/vendors/organizations)
+  // Show agreement ONLY for partners (agents/vendors/organizations)
   if (showAgreement && userRole && userRole !== 'individual') {
     return (
       <AgreementModal
