@@ -23,7 +23,7 @@ export default function Document() {
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Abbaa Carraa" />
         
-        {/* Icons - Multiple sizes for different devices - FIXED PATHS to /images/ */}
+        {/* Icons - Multiple sizes for different devices - FIXED: using /images/ instead of /icons/ */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" type="image/png" sizes="32x32" href="/images/icon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/images/icon-16x16.png" />
@@ -40,7 +40,7 @@ export default function Document() {
         {/* SEO - Basic meta tags */}
         <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
         
-        {/* Security headers via meta tags - KEPT ALL */}
+        {/* Security headers via meta tags - ALL KEPT */}
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
         <meta httpEquiv="X-Frame-Options" content="DENY" />
 
