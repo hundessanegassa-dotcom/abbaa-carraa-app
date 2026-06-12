@@ -1,4 +1,4 @@
-// pages/index.js - COMPLETE WITH BOTH UI MODES AND LANGUAGE TOGGLE
+// pages/index.js - COMPLETE WITH BOTH UI MODES, LANGUAGE TOGGLE, AND FIXED SCROLLING
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -302,9 +302,11 @@ export default function Home() {
     router.push('/login');
   };
 
-  const scrollToSection = (ref) => {
-    if (ref.current) {
-      ref.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // FIXED SCROLL FUNCTION - Uses string IDs instead of refs
+  const scrollToSection = (sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     setMobileMenuOpen(false);
     setProgramsDropdownOpen(false);
@@ -390,7 +392,7 @@ export default function Home() {
     );
   }
 
-  // ========== CLASSIC MODE (Your existing UI) ==========
+  // ========== CLASSIC MODE (Your existing UI with fixed scrolling) ==========
   return (
     <>
       <Head>
@@ -406,7 +408,12 @@ export default function Home() {
               <div className="hidden md:flex items-center gap-1">
                 <div className="relative">
                   <button onClick={() => setProgramsDropdownOpen(!programsDropdownOpen)} className="flex items-center gap-2 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition text-sm font-medium"><span>📋</span> Programs<svg className={`w-4 h-4 transition-transform ${programsDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg></button>
-                  {programsDropdownOpen && (<><div className="fixed inset-0 z-40" onClick={() => setProgramsDropdownOpen(false)} /><div className="absolute top-full left-0 mt-2 w-64 bg-gray-800 rounded-xl shadow-2xl border border-gray-700 z-50 overflow-hidden"><button onClick={() => scrollToSection(merkatoRef)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3"><span className="text-xl">🏪</span><div><div className="font-medium">Merkato VIP</div><div className="text-xs text-gray-400">Win up to 40M ETB</div></div></button><button onClick={() => scrollToSection(cityVipRef)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-t border-gray-700"><span className="text-xl">🏙️</span><div><div className="font-medium">City VIP</div><div className="text-xs text-gray-400">94 Ethiopian cities</div></div></button><button onClick={() => scrollToSection(regularPoolsRef)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-t border-gray-700"><span className="text-xl">🏊</span><div><div className="font-medium">Regular Pools</div><div className="text-xs text-gray-400">Cars, houses & more</div></div></button><Link href="/dashboard" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-t border-gray-700"><span className="text-xl">📊</span><div><div className="font-medium">Dashboard</div><div className="text-xs text-gray-400">Track your tickets</div></div></Link></div></>)}
+                  {programsDropdownOpen && (<><div className="fixed inset-0 z-40" onClick={() => setProgramsDropdownOpen(false)} /><div className="absolute top-full left-0 mt-2 w-64 bg-gray-800 rounded-xl shadow-2xl border border-gray-700 z-50 overflow-hidden">
+                    <button onClick={() => scrollToSection('merkato-vip')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3"><span className="text-xl">🏪</span><div><div className="font-medium">Merkato VIP</div><div className="text-xs text-gray-400">Win up to 40M ETB</div></div></button>
+                    <button onClick={() => scrollToSection('city-vip')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-t border-gray-700"><span className="text-xl">🏙️</span><div><div className="font-medium">City VIP</div><div className="text-xs text-gray-400">94 Ethiopian cities</div></div></button>
+                    <button onClick={() => scrollToSection('regular-pools')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-t border-gray-700"><span className="text-xl">🏊</span><div><div className="font-medium">Regular Pools</div><div className="text-xs text-gray-400">Cars, houses & more</div></div></button>
+                    <Link href="/dashboard" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-t border-gray-700"><span className="text-xl">📊</span><div><div className="font-medium">Dashboard</div><div className="text-xs text-gray-400">Track your tickets</div></div></Link>
+                  </div></>)}
                 </div>
                 <Link href="/about" className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition whitespace-nowrap text-sm font-medium">ℹ️ About</Link>
                 <Link href="/contact" className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition whitespace-nowrap text-sm font-medium">📞 Contact</Link>
@@ -430,9 +437,9 @@ export default function Home() {
                 <button onClick={toggleMode} className="flex-1 px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs">🔄 Banking UI</button>
               </div>
               <div className="space-y-1">
-                <button onClick={() => scrollToSection(merkatoRef)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3"><span className="text-xl">🏪</span><div><div>Merkato VIP</div><div className="text-xs text-gray-400">Win up to 40M ETB</div></div></button>
-                <button onClick={() => scrollToSection(cityVipRef)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3"><span className="text-xl">🏙️</span><div><div>City VIP</div><div className="text-xs text-gray-400">94 Ethiopian cities</div></div></button>
-                <button onClick={() => scrollToSection(regularPoolsRef)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3"><span className="text-xl">🏊</span><div><div>Regular Pools</div><div className="text-xs text-gray-400">Cars, houses & more</div></div></button>
+                <button onClick={() => scrollToSection('merkato-vip')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3"><span className="text-xl">🏪</span><div><div>Merkato VIP</div><div className="text-xs text-gray-400">Win up to 40M ETB</div></div></button>
+                <button onClick={() => scrollToSection('city-vip')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3"><span className="text-xl">🏙️</span><div><div>City VIP</div><div className="text-xs text-gray-400">94 Ethiopian cities</div></div></button>
+                <button onClick={() => scrollToSection('regular-pools')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3"><span className="text-xl">🏊</span><div><div>Regular Pools</div><div className="text-xs text-gray-400">Cars, houses & more</div></div></button>
               </div>
               <div className="h-px bg-gray-700 my-2"></div>
               <Link href="/dashboard" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3"><span className="text-xl">📊</span><div><div>Dashboard</div><div className="text-xs text-gray-400">Track your tickets</div></div></Link>
@@ -462,7 +469,11 @@ export default function Home() {
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 animate-fade-in">Welcome to <span className="bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">Abbaa Carraa</span></h1>
             <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mt-4">Win cars, houses, machinery, electronics, and more through community savings!</p>
             <div className="mt-4 inline-flex items-center gap-2 bg-green-50 border border-green-200 px-4 py-2 rounded-full"><span className="text-green-600 text-lg">💚</span><span className="text-green-700 font-medium">2% supports kidney & heart disease patients</span></div>
-            <div className="flex flex-wrap justify-center gap-4 mt-8"><button onClick={() => scrollToSection(merkatoRef)} className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2"><span>🏪</span> Join Merkato VIP <span>→</span></button><button onClick={() => scrollToSection(cityVipRef)} className="bg-gradient-to-r from-gray-700 to-gray-900 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2"><span>🏙️</span> Join City VIP <span>→</span></button><button onClick={() => scrollToSection(regularPoolsRef)} className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2"><span>🏊</span> Join Regular Pools <span>→</span></button></div>
+            <div className="flex flex-wrap justify-center gap-4 mt-8">
+              <button onClick={() => scrollToSection('merkato-vip')} className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2"><span>🏪</span> Join Merkato VIP <span>→</span></button>
+              <button onClick={() => scrollToSection('city-vip')} className="bg-gradient-to-r from-gray-700 to-gray-900 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2"><span>🏙️</span> Join City VIP <span>→</span></button>
+              <button onClick={() => scrollToSection('regular-pools')} className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2"><span>🏊</span> Join Regular Pools <span>→</span></button>
+            </div>
           </div>
         </div>
 
@@ -489,14 +500,14 @@ export default function Home() {
           <h2 className="text-3xl font-bold text-center mb-4">Available Opportunities</h2>
           <p className="text-center text-gray-500 mb-8">Choose from VIP programs or regular pools</p>
 
-          <div ref={merkatoRef} id="merkato-vip" className="mb-12 scroll-mt-20">
+          <div id="merkato-vip" className="mb-12 scroll-mt-20">
             <div onClick={() => router.push('/merkato-vip')} className="relative bg-gradient-to-r from-yellow-500 via-orange-500 to-red-600 rounded-2xl p-6 md:p-8 text-white transform hover:scale-105 transition-all duration-500 shadow-2xl overflow-hidden group cursor-pointer">
               <div className="absolute inset-0 opacity-20"><div className="absolute -top-10 -left-10 text-8xl animate-bounce">🏪</div><div className="absolute -bottom-10 -right-10 text-8xl animate-pulse">💰</div></div>
               <div className="relative z-10"><div className="flex justify-between items-center flex-wrap gap-4"><div className="flex items-center gap-3"><div className="text-5xl md:text-6xl animate-bounce">🏪</div><div><div className="font-bold text-2xl md:text-3xl">መርካቶ VIP</div><div className="text-xs md:text-sm opacity-90">Merkato Special Program</div></div></div><div className="flex flex-wrap gap-2"><div className="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-xs md:text-sm font-bold shadow-lg">⭐ 1M ETB</div><div className="bg-purple-500 text-white px-3 py-1 rounded-full text-xs md:text-sm font-bold shadow-lg">🏆 10M ETB</div><div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs md:text-sm font-bold shadow-lg">👑 40M ETB</div></div><div className="bg-white text-gray-900 px-5 py-2 rounded-full font-bold hover:bg-gray-100 transition transform hover:scale-105 shadow-xl flex items-center gap-2 text-sm md:text-base"><span>🎯</span><span>Join Now</span><span>→</span></div></div><div className="mt-4 text-center"><p className="text-sm md:text-lg font-bold animate-pulse">"ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው"</p><p className="text-xs md:text-sm opacity-80 mt-1">"Today, this week, and this month - let's make one participant a millionaire"</p></div></div>
             </div>
           </div>
 
-          <div ref={cityVipRef} id="city-vip" className="mb-12 scroll-mt-20">
+          <div id="city-vip" className="mb-12 scroll-mt-20">
             <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-6 shadow-xl">
               <div className="flex items-center justify-between flex-wrap gap-4"><div className="flex items-center gap-3"><span className="text-4xl">🏙️</span><div><h3 className="text-xl font-bold text-white">City VIP Programs</h3><p className="text-sm text-gray-300">Join your city's exclusive VIP program - {uniqueCities.length}+ Ethiopian cities available!</p></div></div>
               <div className="relative"><button onClick={() => setShowCityDropdown(!showCityDropdown)} className="flex items-center gap-2 px-5 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition shadow-md"><span>🎯</span><span>Select City</span><svg className={`w-4 h-4 transition-transform ${showCityDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg></button>
@@ -505,7 +516,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div ref={regularPoolsRef} id="regular-pools" className="mb-12 scroll-mt-20">
+          <div id="regular-pools" className="mb-12 scroll-mt-20">
             <button onClick={() => setShowRegularPools(!showRegularPools)} className="w-full bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white rounded-2xl p-6 transition-all duration-300 shadow-lg group">
               <div className="flex flex-col items-center text-center"><div className="flex items-center justify-between w-full"><div className="flex items-center gap-3"><span className="text-4xl group-hover:scale-110 transition-transform">🏊</span><div className="text-left"><h3 className="text-2xl font-bold">Regular Prize Pools</h3><p className="text-sm text-gray-300">Cars, Houses, Electronics & More</p></div></div><div className="flex items-center gap-2"><span className="text-sm">{showRegularPools ? 'Close' : 'View'}</span><svg className={`w-5 h-5 transition-transform duration-300 ${showRegularPools ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg></div></div><div className="mt-3 pt-3 border-t border-gray-600 w-full"><div className="rounded-lg p-2"><p className="text-sm md:text-base font-bold text-yellow-300">🎯 Join and WIN!</p><p className="text-xs text-gray-300">ይሳተፉ እና ያሸንፉ!</p><div className="flex flex-wrap items-center justify-center gap-2 mt-2"><span className="text-lg">🚗</span><span className="text-xs font-semibold text-white">Car</span><span className="text-gray-400">•</span><span className="text-lg">🏭</span><span className="text-xs font-semibold text-white">Machinery</span><span className="text-gray-400">•</span><span className="text-lg">🏠</span><span className="text-xs font-semibold text-white">House</span><span className="text-gray-400">•</span><span className="text-lg">💻</span><span className="text-xs font-semibold text-white">Electronics</span><span className="text-gray-400">•</span><span className="text-lg">🎁</span><span className="text-xs font-semibold text-white">Much More</span></div></div></div></div>
             </button>
