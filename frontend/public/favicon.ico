@@ -1,1 +1,2 @@
-touch public/favicon.ico
+cd frontend/public
+cp images/icon-72x72.png favicon.ico
