@@ -1,3 +1,4 @@
+// frontend/components/BankingBottomNav.js - WITH SCROLL SUPPORT
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
