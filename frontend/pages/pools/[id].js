@@ -1,4 +1,3 @@
-// pages/pools/[id].js - UPDATED TO MATCH MERKATO/CITY VIP SEAT SELECTION STYLE
 import { useRouter } from 'next/router';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
