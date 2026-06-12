@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import NoSSR from '../../components/NoSSR';
 import TopCitySelector from '../../components/TopCitySelector';
 import UnifiedAgentApplication from '../../components/UnifiedAgentApplication';
-import Ticket from '../../components/Ticket';
+import TicketImage from '../../components/TicketImage';
 
 // Helper function for next draw dates
 const getNextSunday = () => {
