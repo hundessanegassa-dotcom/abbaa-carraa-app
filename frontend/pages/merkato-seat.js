@@ -1,4 +1,4 @@
-// pages/merkato-seat.js - COMPLETE SIMPLIFIED VERSION WITH 3 BUTTONS
+// pages/merkato-seat.js - SIMPLIFIED WITH 3 COLORED BUTTONS
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
@@ -25,7 +25,9 @@ export default function MerkatoSeat() {
   const [reservedSeats, setReservedSeats] = useState([]);
   const [reservationTimer, setReservationTimer] = useState(null);
   const [manualSeatInput, setManualSeatInput] = useState('');
+  const [showSeatSelector, setShowSeatSelector] = useState(true);
 
+  // 3 different colored pools
   const vipPools = {
     daily: { 
       name: "Daily", 
@@ -34,7 +36,9 @@ export default function MerkatoSeat() {
       prize: 1000000, 
       totalSeats: 2400,
       explanation: "Pay 500 ETB, win 1,000,000 ETB",
-      explanationAm: "500 ብር ከፍለው 1,000,000 ብር ያሸንፉ",
+      buttonColor: "bg-blue-500 hover:bg-blue-600",
+      activeColor: "border-blue-500 bg-blue-50",
+      textColor: "text-blue-600"
     },
     weekly: { 
       name: "Weekly", 
@@ -43,7 +47,9 @@ export default function MerkatoSeat() {
       prize: 10000000, 
       totalSeats: 4800,
       explanation: "Pay 2,500 ETB, win 10,000,000 ETB",
-      explanationAm: "2,500 ብር ከፍለው 10,000,000 ብር ያሸንፉ",
+      buttonColor: "bg-green-500 hover:bg-green-600",
+      activeColor: "border-green-500 bg-green-50",
+      textColor: "text-green-600"
     },
     monthly: { 
       name: "Monthly", 
@@ -52,7 +58,9 @@ export default function MerkatoSeat() {
       prize: 40000000, 
       totalSeats: 9600,
       explanation: "Pay 5,000 ETB, win 40,000,000 ETB",
-      explanationAm: "5,000 ብር ከፍለው 40,000,000 ብር ያሸንፉ",
+      buttonColor: "bg-orange-500 hover:bg-orange-600",
+      activeColor: "border-orange-500 bg-orange-50",
+      textColor: "text-orange-600"
     }
   };
 
@@ -214,15 +222,17 @@ export default function MerkatoSeat() {
       return;
     }
     if (seatNum < 1 || seatNum > poolInfo.totalSeats) {
-      toast.error(`Seat number must be between 1 and ${poolInfo.totalSeats}`);
+      toast.error(`Seat number must be between 1 and ${poolInfo.totalSeats.toLocaleString()}`);
       return;
     }
     if (bookedSeats.includes(seatNum)) {
-      toast.error(`Seat ${seatNum} is already taken`);
+      toast.error(`Seat ${seatNum} is already taken. Please select another seat.`);
+      setManualSeatInput('');
       return;
     }
     if (selectedSeats.includes(seatNum)) {
       toast.error(`Seat ${seatNum} is already selected`);
+      setManualSeatInput('');
       return;
     }
     if (selectedSeats.length >= 5) {
@@ -237,6 +247,9 @@ export default function MerkatoSeat() {
       toast.success(`Seat ${seatNum} reserved for 10 minutes`);
       await fetchBookedSeats();
       setManualSeatInput('');
+    } else {
+      toast.error(`Seat ${seatNum} is no longer available`);
+      await fetchBookedSeats();
     }
   };
 
@@ -261,6 +274,9 @@ export default function MerkatoSeat() {
         setSelectedSeats([...selectedSeats, seatNum]);
         setReservedSeats([...reservedSeats, seatNum]);
         toast.success(`Seat ${seatNum} reserved for 10 minutes`);
+        await fetchBookedSeats();
+      } else {
+        toast.error(`Seat ${seatNum} is no longer available`);
         await fetchBookedSeats();
       }
     }
@@ -408,7 +424,6 @@ export default function MerkatoSeat() {
     }
   };
 
-  const [showSeatSelector, setShowSeatSelector] = useState(true);
   const getSeatColor = (seatNum) => {
     if (bookedSeats.includes(seatNum)) return 'bg-red-100 border-red-300 cursor-not-allowed opacity-60';
     if (selectedSeats.includes(seatNum)) return 'bg-emerald-600 text-white shadow-md';
@@ -427,7 +442,7 @@ export default function MerkatoSeat() {
   if (!poolInfo) return null;
 
   const totalAmount = selectedSeats.length * poolInfo.entryFee;
-  const seatNumbers = Array.from({ length: Math.min(poolInfo.totalSeats, 500) }, (_, i) => i + 1);
+  const seatNumbers = Array.from({ length: poolInfo.totalSeats }, (_, i) => i + 1);
   const availableCount = seatNumbers.filter(s => !bookedSeats.includes(s) && !selectedSeats.includes(s) && !reservedSeats.includes(s)).length;
   const takenCount = bookedSeats.length;
 
@@ -438,23 +453,25 @@ export default function MerkatoSeat() {
       <div className="min-h-screen bg-gray-50 py-6 pb-32">
         <div className="container mx-auto px-4 max-w-6xl">
           
-          {/* Back Button */}
-          <button onClick={() => router.back()} className="text-gray-500 hover:text-gray-700 mb-5 inline-flex items-center gap-1 text-sm">
-            ← Back
-          </button>
+          {/* Header */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-5 mb-6 text-center">
+            <div className="text-5xl mb-2">🏪</div>
+            <h1 className="text-2xl font-bold text-gray-800">Merkato VIP</h1>
+            <p className="text-gray-500 text-sm mt-1">Select your seat to win up to 40 Million ETB</p>
+          </div>
 
-          {/* 3 Main Buttons */}
+          {/* 3 Main Buttons with different colors */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <button
               onClick={() => setSelectedType('daily')}
               className={`p-5 rounded-2xl border-2 text-left transition-all ${
                 selectedType === 'daily' 
-                  ? 'border-emerald-500 bg-emerald-50 shadow-md' 
-                  : 'border-gray-200 bg-white hover:border-gray-300'
+                  ? `${vipPools.daily.activeColor} shadow-md` 
+                  : 'border-gray-200 bg-white hover:border-blue-300'
               }`}
             >
               <div className="text-lg font-bold">⭐ Daily</div>
-              <div className="text-2xl font-bold text-emerald-600">ETB 500</div>
+              <div className={`text-2xl font-bold ${selectedType === 'daily' ? vipPools.daily.textColor : 'text-blue-500'}`}>ETB 500</div>
               <div className="text-xs text-gray-500 mt-1">Win 1,000,000 ETB</div>
             </button>
 
@@ -462,12 +479,12 @@ export default function MerkatoSeat() {
               onClick={() => setSelectedType('weekly')}
               className={`p-5 rounded-2xl border-2 text-left transition-all ${
                 selectedType === 'weekly' 
-                  ? 'border-emerald-500 bg-emerald-50 shadow-md' 
-                  : 'border-gray-200 bg-white hover:border-gray-300'
+                  ? `${vipPools.weekly.activeColor} shadow-md` 
+                  : 'border-gray-200 bg-white hover:border-green-300'
               }`}
             >
               <div className="text-lg font-bold">🏆 Weekly</div>
-              <div className="text-2xl font-bold text-emerald-600">ETB 2,500</div>
+              <div className={`text-2xl font-bold ${selectedType === 'weekly' ? vipPools.weekly.textColor : 'text-green-500'}`}>ETB 2,500</div>
               <div className="text-xs text-gray-500 mt-1">Win 10,000,000 ETB</div>
             </button>
 
@@ -475,12 +492,12 @@ export default function MerkatoSeat() {
               onClick={() => setSelectedType('monthly')}
               className={`p-5 rounded-2xl border-2 text-left transition-all ${
                 selectedType === 'monthly' 
-                  ? 'border-emerald-500 bg-emerald-50 shadow-md' 
-                  : 'border-gray-200 bg-white hover:border-gray-300'
+                  ? `${vipPools.monthly.activeColor} shadow-md` 
+                  : 'border-gray-200 bg-white hover:border-orange-300'
               }`}
             >
               <div className="text-lg font-bold">👑 Monthly</div>
-              <div className="text-2xl font-bold text-emerald-600">ETB 5,000</div>
+              <div className={`text-2xl font-bold ${selectedType === 'monthly' ? vipPools.monthly.textColor : 'text-orange-500'}`}>ETB 5,000</div>
               <div className="text-xs text-gray-500 mt-1">Win 40,000,000 ETB</div>
             </button>
           </div>
@@ -511,7 +528,7 @@ export default function MerkatoSeat() {
                     type="number"
                     value={manualSeatInput}
                     onChange={(e) => setManualSeatInput(e.target.value)}
-                    placeholder={`Seat number (1-${poolInfo.totalSeats.toLocaleString()})`}
+                    placeholder={`Enter seat number (1-${poolInfo.totalSeats.toLocaleString()})`}
                     className="flex-1 px-4 py-2 border rounded-xl text-sm focus:ring-2 focus:ring-emerald-500"
                   />
                   <button
@@ -521,6 +538,7 @@ export default function MerkatoSeat() {
                     Add Seat
                   </button>
                 </div>
+                <p className="text-xs text-gray-400 mt-2">⚠️ If seat is taken, you will be notified</p>
               </div>
               
               {/* Legend */}
@@ -549,34 +567,57 @@ export default function MerkatoSeat() {
 
               {/* Seat Grid */}
               <div className="grid grid-cols-10 md:grid-cols-15 lg:grid-cols-20 gap-2 mb-6 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-xl border">
-                {seatNumbers.map(seatNum => (
-                  <button
-                    key={seatNum}
-                    onClick={() => toggleSeat(seatNum)}
-                    disabled={bookedSeats.includes(seatNum) || (reservedSeats.includes(seatNum) && !selectedSeats.includes(seatNum))}
-                    className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center text-xs font-semibold transition-all border ${getSeatColor(seatNum)} ${selectedSeats.includes(seatNum) ? 'ring-2 ring-emerald-300' : ''}`}
-                  >
-                    <span>{seatNum}</span>
-                  </button>
-                ))}
+                {seatNumbers.slice(0, 500).map(seatNum => {
+                  const isTaken = bookedSeats.includes(seatNum);
+                  const isSelected = selectedSeats.includes(seatNum);
+                  const isReserved = reservedSeats.includes(seatNum);
+                  
+                  let bgColor = 'bg-white hover:bg-gray-50 border-gray-200 cursor-pointer';
+                  if (isSelected) bgColor = 'bg-emerald-600 text-white shadow-md';
+                  if (isTaken) bgColor = 'bg-red-100 border-red-300 cursor-not-allowed opacity-60';
+                  if (isReserved && !isSelected) bgColor = 'bg-amber-100 border-amber-300 animate-pulse';
+                  
+                  return (
+                    <button
+                      key={seatNum}
+                      onClick={() => toggleSeat(seatNum)}
+                      disabled={isTaken}
+                      className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center text-xs font-semibold transition-all border ${bgColor} ${isSelected ? 'ring-2 ring-emerald-300' : ''}`}
+                      title={isTaken ? `Seat ${seatNum} is already taken` : isSelected ? `Seat ${seatNum} selected by you` : `Select Seat ${seatNum}`}
+                    >
+                      <span>{seatNum}</span>
+                    </button>
+                  );
+                })}
               </div>
+              {poolInfo.totalSeats > 500 && (
+                <p className="text-xs text-gray-400 text-center mt-2">Showing first 500 of {poolInfo.totalSeats.toLocaleString()} total seats</p>
+              )}
               
+              {/* Sticky Confirm Button */}
               {selectedSeats.length > 0 && (
-                <div className="border-t pt-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Selected Seats</p>
-                      <p className="font-bold">{selectedSeats.sort((a,b)=>a-b).join(', ')}</p>
+                <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 p-4 shadow-lg z-50">
+                  <div className="container mx-auto max-w-6xl">
+                    <div className="flex justify-between items-center mb-3 flex-wrap gap-3">
+                      <div>
+                        <p className="text-sm text-gray-500">Selected Seats</p>
+                        <p className="font-bold text-lg">{selectedSeats.sort((a,b)=>a-b).join(', ')}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-500">Total Amount</p>
+                        <p className="font-bold text-2xl text-emerald-600">ETB {totalAmount.toLocaleString()}</p>
+                        <p className="text-xs text-gray-400">({selectedSeats.length} seats × ETB {poolInfo.entryFee.toLocaleString()})</p>
+                      </div>
+                      <button 
+                        onClick={confirmSeats} 
+                        disabled={loading} 
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl font-semibold text-base disabled:opacity-50"
+                      >
+                        {loading ? 'Processing...' : `Confirm ${selectedSeats.length} Seat${selectedSeats.length !== 1 ? 's' : ''} & Proceed to Payment`}
+                      </button>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm text-gray-500">Total Amount</p>
-                      <p className="font-bold text-2xl text-emerald-600">ETB {totalAmount.toLocaleString()}</p>
-                    </div>
+                    <p className="text-xs text-gray-400 text-center">⏰ Your selected seats are reserved for 10 minutes</p>
                   </div>
-                  <button onClick={confirmSeats} className="w-full bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 mb-4">
-                    Confirm & Proceed to Payment
-                  </button>
-                  <p className="text-xs text-gray-400 text-center">⏰ Seats reserved for 10 minutes</p>
                 </div>
               )}
             </div>
@@ -626,8 +667,19 @@ export default function MerkatoSeat() {
           {/* Ticket Display */}
           {showTicket && participantData && (
             <div className="bg-white rounded-2xl border p-6">
-              <TicketImage participant={participantData} pool={poolInfo} isVerified={false} seatNumbers={selectedSeats} ticketNumber={participantData.ticket_number} amount={participantData.contribution_amount} createdAt={participantData.created_at} poolType="merkato" />
-              <button onClick={() => router.push('/dashboard')} className="mt-6 w-full bg-gray-600 text-white py-2 rounded-xl">Go to Dashboard</button>
+              <TicketImage 
+                participant={participantData}
+                pool={poolInfo}
+                isVerified={false}
+                seatNumbers={selectedSeats}
+                ticketNumber={participantData.ticket_number}
+                amount={participantData.contribution_amount}
+                createdAt={participantData.created_at}
+                poolType="merkato"
+              />
+              <button onClick={() => router.push('/dashboard')} className="mt-6 w-full bg-gray-600 text-white py-2 rounded-xl">
+                Go to Dashboard
+              </button>
             </div>
           )}
         </div>
