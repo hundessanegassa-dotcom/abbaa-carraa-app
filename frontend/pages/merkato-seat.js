@@ -1,4 +1,4 @@
-// pages/merkato-seat.js - COMPLETE SIMPLIFIED VERSION
+// pages/merkato-seat.js - COMPLETE SIMPLIFIED VERSION WITH 3 BUTTONS
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
@@ -35,8 +35,6 @@ export default function MerkatoSeat() {
       totalSeats: 2400,
       explanation: "Pay 500 ETB, win 1,000,000 ETB",
       explanationAm: "500 ብር ከፍለው 1,000,000 ብር ያሸንፉ",
-      drawTime: "Every Day at 8:00 PM",
-      drawTimeAm: "የየቀኑ ምሽት 8 ሰዓት"
     },
     weekly: { 
       name: "Weekly", 
@@ -46,8 +44,6 @@ export default function MerkatoSeat() {
       totalSeats: 4800,
       explanation: "Pay 2,500 ETB, win 10,000,000 ETB",
       explanationAm: "2,500 ብር ከፍለው 10,000,000 ብር ያሸንፉ",
-      drawTime: "Every Sunday at 6:00 PM",
-      drawTimeAm: "እሁድ ከሰአት 6 ሰዓት"
     },
     monthly: { 
       name: "Monthly", 
@@ -57,8 +53,6 @@ export default function MerkatoSeat() {
       totalSeats: 9600,
       explanation: "Pay 5,000 ETB, win 40,000,000 ETB",
       explanationAm: "5,000 ብር ከፍለው 40,000,000 ብር ያሸንፉ",
-      drawTime: "Last Day of Month at 8:00 PM",
-      drawTimeAm: "የወሩ መጨረሻ ምሽት 8 ሰዓት"
     }
   };
 
@@ -462,7 +456,6 @@ export default function MerkatoSeat() {
               <div className="text-lg font-bold">⭐ Daily</div>
               <div className="text-2xl font-bold text-emerald-600">ETB 500</div>
               <div className="text-xs text-gray-500 mt-1">Win 1,000,000 ETB</div>
-              <div className="text-xs text-emerald-600 mt-2">Every Day at 8:00 PM</div>
             </button>
 
             <button
@@ -476,7 +469,6 @@ export default function MerkatoSeat() {
               <div className="text-lg font-bold">🏆 Weekly</div>
               <div className="text-2xl font-bold text-emerald-600">ETB 2,500</div>
               <div className="text-xs text-gray-500 mt-1">Win 10,000,000 ETB</div>
-              <div className="text-xs text-emerald-600 mt-2">Every Sunday at 6:00 PM</div>
             </button>
 
             <button
@@ -490,7 +482,6 @@ export default function MerkatoSeat() {
               <div className="text-lg font-bold">👑 Monthly</div>
               <div className="text-2xl font-bold text-emerald-600">ETB 5,000</div>
               <div className="text-xs text-gray-500 mt-1">Win 40,000,000 ETB</div>
-              <div className="text-xs text-emerald-600 mt-2">Last Day of Month</div>
             </button>
           </div>
 
