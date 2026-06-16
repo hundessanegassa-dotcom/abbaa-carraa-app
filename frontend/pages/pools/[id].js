@@ -1,4 +1,4 @@
-// pages/pools/[id].js - FULLY CORRECTED (ALL SEATS VISIBLE)
+// pages/pools/[id].js - FULLY CORRECTED (ALL SEATS VISIBLE) + 3D BANNER UPLOAD
 import { useRouter } from 'next/router';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -6,6 +6,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import TicketImage from '../../components/TicketImage';
+import ThreeDBannerUpload from '../../components/ThreeDBannerUpload';
 
 // Optimized file upload utilities
 const validateFile = (file) => {
@@ -63,6 +64,7 @@ export default function PoolDetails() {
   const isMounted = useRef(true);
   const [pool, setPool] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [user, setUser] = useState(null);
   const [showSeatSelector, setShowSeatSelector] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
@@ -79,7 +81,16 @@ export default function PoolDetails() {
   const [availableSeatsCount, setAvailableSeatsCount] = useState(0);
   const [manualSeatInput, setManualSeatInput] = useState('');
   const [seatsInitialized, setSeatsInitialized] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [bannerUrl, setBannerUrl] = useState(null);
+  const [language, setLanguage] = useState('am');
+
+  // Load language preference
+  useEffect(() => {
+    const savedLang = localStorage.getItem('appLanguage');
+    if (savedLang === 'am' || savedLang === 'en') {
+      setLanguage(savedLang);
+    }
+  }, []);
 
   // Pool calculations
   const winnerPrize = pool?.target_amount || 0;
@@ -89,6 +100,16 @@ export default function PoolDetails() {
   const currentAmount = pool?.current_amount || 0;
   const progress = (currentAmount / totalCollection) * 100;
   const maxSeatsPerUser = Math.min(5, Math.floor((totalSeats - bookedSeats.length) / 2) || 5);
+
+  // Load saved banner
+  useEffect(() => {
+    if (id) {
+      const savedBanner = localStorage.getItem(`pool_banner_${id}`);
+      if (savedBanner) {
+        setBannerUrl(savedBanner);
+      }
+    }
+  }, [id]);
 
   // Generate seats if they don't exist
   const generateSeatsIfNeeded = async () => {
@@ -134,12 +155,25 @@ export default function PoolDetails() {
   };
 
   const refreshSeats = async () => {
+    if (!id) return;
     setIsRefreshing(true);
-    await generateSeatsIfNeeded();
-    await fetchBookedSeats();
-    await fetchUserReservations();
-    toast.success('Seats refreshed successfully!');
-    setIsRefreshing(false);
+    try {
+      await generateSeatsIfNeeded();
+      await fetchBookedSeats();
+      await fetchUserReservations();
+      toast.success(language === 'am' ? 'መቀመጫዎች ታድሰዋል! ✅' : 'Seats refreshed! ✅');
+    } catch (error) {
+      toast.error(language === 'am' ? 'መቀመጫዎችን ማደስ አልተቻለም' : 'Failed to refresh seats');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleBannerUpload = (url) => {
+    setBannerUrl(url);
+    if (id) {
+      localStorage.setItem(`pool_banner_${id}`, url);
+    }
   };
 
   useEffect(() => {
@@ -633,7 +667,26 @@ export default function PoolDetails() {
               <h2 className="text-xl font-bold">Select Your Seats</h2>
               <p className="text-sm text-gray-500">{pool.prize_name} • Max {maxSeatsPerUser} seats • Total {totalSeats.toLocaleString()} seats</p>
             </div>
-            <button onClick={handleCancelSeatSelection} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+            <div className="flex gap-2">
+              <button 
+                onClick={refreshSeats} 
+                disabled={isRefreshing}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-xs transition disabled:opacity-50 flex items-center gap-1"
+              >
+                {isRefreshing ? (
+                  <>
+                    <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Refreshing...
+                  </>
+                ) : (
+                  '🔄 Refresh Seats'
+                )}
+              </button>
+              <button onClick={handleCancelSeatSelection} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+            </div>
           </div>
           
           <div className="p-6">
@@ -836,6 +889,20 @@ export default function PoolDetails() {
                 </button>
               )}
             </div>
+          </div>
+
+          {/* 3D Banner Upload Section */}
+          <div className="mb-6">
+            <ThreeDBannerUpload 
+              city={pool?.city || 'Pool'}
+              poolType="regular"
+              title={`${pool.prize_name || 'Pool'} Banner`}
+              existingBannerUrl={bannerUrl}
+              onBannerUploaded={handleBannerUpload}
+              autoRotate={true}
+              rotationSpeed={0.3}
+              maxFileSize={10}
+            />
           </div>
 
           {showSeatSelector && renderSeatSelector()}
