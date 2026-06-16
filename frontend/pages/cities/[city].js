@@ -1,4 +1,4 @@
-// pages/cities/[city].js - COMPLETE WITH ALL 94 CITIES, AMHARIC SUPPORT, ALL SEATS VISIBLE
+// pages/cities/[city].js - COMPLETE WITH ALL 94 CITIES, AMHARIC SUPPORT, ALL SEATS VISIBLE, REFRESH BUTTON, 3D BANNER UPLOAD
 import { useRouter } from 'next/router';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -9,6 +9,7 @@ import NoSSR from '../../components/NoSSR';
 import TopCitySelector from '../../components/TopCitySelector';
 import UnifiedAgentApplication from '../../components/UnifiedAgentApplication';
 import TicketImage from '../../components/TicketImage';
+import ThreeDBannerUpload from '../../components/ThreeDBannerUpload';
 
 // Helper function for next draw dates
 const getNextSunday = () => {
@@ -247,6 +248,7 @@ export default function CityVip() {
   const [activeTab, setActiveTab] = useState('daily');
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [cityInfo, setCityInfo] = useState(null);
   const [showCityDropdown, setShowCityDropdown] = useState(false);
   const [showAgentApplication, setShowAgentApplication] = useState(false);
@@ -264,6 +266,11 @@ export default function CityVip() {
   const [participantData, setParticipantData] = useState(null);
   const [ticketType, setTicketType] = useState('unverified');
   const [currentRow, setCurrentRow] = useState(0);
+  const [bannerUrls, setBannerUrls] = useState({
+    daily: null,
+    weekly: null,
+    monthly: null
+  });
   const seatGridRef = useRef(null);
 
   // Load language preference
@@ -287,6 +294,13 @@ export default function CityVip() {
       else setCityInfo({ name: city.replace(/-/g, ' '), slogan: 'አንድ ብሔር አንድ እድል', businesses: '1,000+', workers: '5,000+', color: 'from-gray-700 to-gray-900', icon: '🇪🇹', product: 'ማህበረሰብ እና ንግድ', description: 'የኢትዮጵያ ከተማ', population: 'N/A', region: 'Ethiopia' });
     }
     checkUser();
+    // Load saved banners from localStorage
+    const savedBanners = localStorage.getItem(`city_banners_${city}`);
+    if (savedBanners) {
+      try {
+        setBannerUrls(JSON.parse(savedBanners));
+      } catch (e) {}
+    }
   }, [city]);
 
   useEffect(() => {
@@ -311,6 +325,34 @@ export default function CityVip() {
       const { data } = await supabase.from('city_vip_participants').select('seat_numbers').eq('city', cityName).eq('pool_type', poolType).eq('payment_status', 'verified');
       if (data) setTakenSeats(data.flatMap(p => p.seat_numbers || []));
     } catch (error) { console.error('Error fetching taken seats:', error); }
+  };
+
+  const refreshSeats = async () => {
+    if (!city || !selectedPoolType) {
+      toast.error(language === 'am' ? 'እባክዎ መጀመሪያ የመቀመጫ ምርጫን ይክፈቱ' : 'Please open seat selection first');
+      return;
+    }
+    setIsRefreshing(true);
+    try {
+      await fetchTakenSeats(city, selectedPoolType);
+      toast.success(language === 'am' ? 'መቀመጫዎች ታድሰዋል! ✅' : 'Seats refreshed! ✅');
+    } catch (error) {
+      toast.error(language === 'am' ? 'መቀመጫዎችን ማደስ አልተቻለም' : 'Failed to refresh seats');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleBannerUpload = (poolType, url) => {
+    setBannerUrls(prev => ({
+      ...prev,
+      [poolType]: url
+    }));
+    // Save to localStorage
+    localStorage.setItem(`city_banners_${city}`, JSON.stringify({
+      ...bannerUrls,
+      [poolType]: url
+    }));
   };
 
   const handleJoinPool = async (poolType) => {
@@ -416,7 +458,31 @@ export default function CityVip() {
           <div className="sticky top-0 bg-gray-100 border-b border-gray-200 p-4">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-bold text-gray-800">{language === 'am' ? 'መቀመጫዎችን ይምረጡ' : 'Select Your Seats'} (Max {maxSeats})</h2>
-              <button onClick={() => { setShowSeatSelector(false); setSelectedPoolType(null); setSelectedSeats([]); }} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={refreshSeats} 
+                  disabled={isRefreshing}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-xs transition disabled:opacity-50 flex items-center gap-1"
+                >
+                  {isRefreshing ? (
+                    <>
+                      <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Refreshing...
+                    </>
+                  ) : (
+                    '🔄 Refresh Seats'
+                  )}
+                </button>
+                <button 
+                  onClick={() => { setShowSeatSelector(false); setSelectedPoolType(null); setSelectedSeats([]); }} 
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
             </div>
             <div className="flex overflow-x-auto gap-1 mt-3 pb-2">
               {Array.from({ length: Math.min(rows, 20) }).map((_, idx) => (
@@ -435,7 +501,7 @@ export default function CityVip() {
             <div ref={seatGridRef} className="space-y-2">
               {/* FIXED: Show ALL rows (removed slice(0, 25)) */}
               {seatRows.map((rowSeats, rowIndex) => (
-                <div key={rowIndex} className="flex flex-wrap items-center gap-1">
+                <div key={rowIndex} id={`row-${rowIndex}`} className="flex flex-wrap items-center gap-1">
                   <div className="w-8 text-[11px] font-mono font-semibold text-gray-500">{rowLetters[rowIndex] || (rowIndex + 1)}</div>
                   <div className="flex flex-wrap gap-1 flex-1">
                     {rowSeats.map(seatNum => {
@@ -632,6 +698,22 @@ export default function CityVip() {
                 : '✨ Let\'s make our city participant a millionaire today! ✨'}
             </div>
             <p className="text-gray-200 mt-2">{language === 'am' ? 'እስከ 40 ሚሊዮን ብር ለማሸነፍ መቀመጫዎን ይምረጡ' : 'Select your seat to win up to 40 Million ETB'}</p>
+          </div>
+
+          {/* 3D Banner Upload Section */}
+          <div className="container mx-auto px-4 py-8">
+            <div className="max-w-4xl mx-auto">
+              <ThreeDBannerUpload 
+                city={city}
+                poolType={activeTab}
+                title={`${cityInfo.name.split('|')[0]} VIP Banner`}
+                existingBannerUrl={bannerUrls[activeTab]}
+                onBannerUploaded={(url) => handleBannerUpload(activeTab, url)}
+                autoRotate={true}
+                rotationSpeed={0.3}
+                maxFileSize={10}
+              />
+            </div>
           </div>
 
           {/* 3 COLORED TABS */}
