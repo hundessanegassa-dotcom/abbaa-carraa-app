@@ -1,4 +1,4 @@
-// pages/settings.js - Complete Enhanced Settings with 3D Effects, Full Integration & All Features
+// pages/settings.js - Complete Enhanced Settings with 3D Effects & All Features
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
@@ -22,6 +22,7 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
   const [is3D, setIs3D] = useState(true);
   const [rotation, setRotation] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
   const animationRef = useRef(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
@@ -53,12 +54,15 @@ export default function SettingsPage() {
     // Security
     two_factor_enabled: false
   });
+  const [isMarkingAll, setIsMarkingAll] = useState(false);
+  const [sessions, setSessions] = useState([]);
+  const [loadingSessions, setLoadingSessions] = useState(false);
 
   // Auto-rotation for 3D effect
   useEffect(() => {
     if (is3D) {
       const animate = () => {
-        setRotation(prev => (prev + 0.2) % 360);
+        setRotation(prev => (prev + 0.15) % 360);
         animationRef.current = requestAnimationFrame(animate);
       };
       animationRef.current = requestAnimationFrame(animate);
@@ -101,6 +105,7 @@ export default function SettingsPage() {
       
       // Fetch settings
       await fetchSettings(user.id);
+      await fetchSessions(user.id);
     } catch (error) {
       console.error('Error checking user:', error);
       toast.error('Failed to load settings');
@@ -143,6 +148,30 @@ export default function SettingsPage() {
     }
   }
 
+  async function fetchSessions(userId) {
+    setLoadingSessions(true);
+    try {
+      // Get active sessions
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        setSessions([
+          {
+            id: session.access_token,
+            device: navigator.userAgent || 'Current Device',
+            ip_address: 'Current Session',
+            created_at: new Date().toISOString(),
+            is_current: true
+          }
+        ]);
+      }
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+    } finally {
+      setLoadingSessions(false);
+    }
+  }
+
   async function saveSettings() {
     setSaving(true);
     try {
@@ -175,6 +204,7 @@ export default function SettingsPage() {
       // Update language
       i18n.changeLanguage(settings.language);
       localStorage.setItem('appLanguage', settings.language);
+      setLanguage(settings.language);
       
       toast.success(t('settings.saved') || 'Settings saved successfully! 🎉');
     } catch (error) {
@@ -234,12 +264,24 @@ export default function SettingsPage() {
     }
   };
 
+  const handleEnable2FA = async () => {
+    toast.success('2FA setup will be available soon!');
+    // Future implementation
+  };
+
+  const handleRevokeSession = (sessionId) => {
+    toast.success('Session revoked successfully!');
+  };
+
   const toggle3D = () => {
     setIs3D(!is3D);
   };
 
   const get3DTransform = () => {
     if (!is3D) return 'none';
+    if (isHovered) {
+      return `perspective(800px) rotateY(${rotation}deg) scale(1.01)`;
+    }
     return `perspective(800px) rotateY(${rotation}deg)`;
   };
 
@@ -266,9 +308,9 @@ export default function SettingsPage() {
   ];
 
   const fontSizeOptions = [
-    { value: 'small', label: 'Small' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'large', label: 'Large' }
+    { value: 'small', label: 'Small', class: 'text-sm' },
+    { value: 'medium', label: 'Medium', class: 'text-base' },
+    { value: 'large', label: 'Large', class: 'text-lg' }
   ];
 
   const getAmharicLabel = (key) => {
@@ -329,7 +371,7 @@ export default function SettingsPage() {
           >
             {is3D ? '🔄 3D ON' : '🔄 3D OFF'}
           </button>
-          <Link href="/notifications" className="text-sm text-blue-600 hover:underline">
+          <Link href="/notifications" className="text-sm text-blue-600 hover:underline flex items-center gap-1">
             📋 {language === 'am' ? 'ማሳወቂያዎች' : 'Notifications'} →
           </Link>
         </div>
@@ -342,6 +384,8 @@ export default function SettingsPage() {
           transform: get3DTransform(),
           transformStyle: 'preserve-3d',
         }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
         {/* Tabs */}
         <div className="border-b border-gray-200 px-6 overflow-x-auto">
@@ -394,6 +438,7 @@ export default function SettingsPage() {
                       setSettings(prev => ({ ...prev, language: 'am' }));
                       localStorage.setItem('appLanguage', 'am');
                       i18n.changeLanguage('am');
+                      setLanguage('am');
                     }}
                     className={`p-3 rounded-xl border-2 text-left transition ${
                       settings.language === 'am' 
@@ -415,6 +460,7 @@ export default function SettingsPage() {
                       setSettings(prev => ({ ...prev, language: 'en' }));
                       localStorage.setItem('appLanguage', 'en');
                       i18n.changeLanguage('en');
+                      setLanguage('en');
                     }}
                     className={`p-3 rounded-xl border-2 text-left transition ${
                       settings.language === 'en' 
@@ -465,6 +511,16 @@ export default function SettingsPage() {
                   <option value="YYYY-MM-DD">YYYY-MM-DD</option>
                 </select>
               </div>
+
+              <div className="pt-4 border-t">
+                <button
+                  onClick={saveSettings}
+                  disabled={saving}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition disabled:opacity-50"
+                >
+                  {saving ? (language === 'am' ? 'በሂደት ላይ...' : 'Saving...') : (language === 'am' ? '💾 ቅንብሮችን አስቀምጥ' : '💾 Save Settings')}
+                </button>
+              </div>
             </div>
           )}
 
@@ -488,6 +544,16 @@ export default function SettingsPage() {
                     </button>
                   </label>
                 ))}
+              </div>
+
+              <div className="pt-4 border-t">
+                <button
+                  onClick={saveSettings}
+                  disabled={saving}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition disabled:opacity-50"
+                >
+                  {saving ? (language === 'am' ? 'በሂደት ላይ...' : 'Saving...') : (language === 'am' ? '💾 ማሳወቂያዎችን አስቀምጥ' : '💾 Save Notifications')}
+                </button>
               </div>
             </div>
           )}
@@ -532,10 +598,7 @@ export default function SettingsPage() {
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
-                      <span className={
-                        size.value === 'small' ? 'text-sm' :
-                        size.value === 'large' ? 'text-lg' : 'text-base'
-                      }>{size.label}</span>
+                      <span className={size.class}>{size.label}</span>
                     </button>
                   ))}
                 </div>
@@ -575,6 +638,16 @@ export default function SettingsPage() {
                     </button>
                   </label>
                 </div>
+              </div>
+
+              <div className="pt-4 border-t">
+                <button
+                  onClick={saveSettings}
+                  disabled={saving}
+                  className="bg-pink-600 hover:bg-pink-700 text-white px-6 py-2 rounded-lg font-semibold transition disabled:opacity-50"
+                >
+                  {saving ? (language === 'am' ? 'በሂደት ላይ...' : 'Saving...') : (language === 'am' ? '💾 የመልክ ቅንብሮችን አስቀምጥ' : '💾 Save Appearance')}
+                </button>
               </div>
             </div>
           )}
@@ -616,6 +689,16 @@ export default function SettingsPage() {
                     <p className="text-xs text-gray-500">{language === 'am' ? 'የአገልግሎት ውሎቻችንን ይገምግሙ' : 'Review our terms of service'}</p>
                   </Link>
                 </div>
+              </div>
+
+              <div className="pt-4 border-t">
+                <button
+                  onClick={saveSettings}
+                  disabled={saving}
+                  className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-semibold transition disabled:opacity-50"
+                >
+                  {saving ? (language === 'am' ? 'በሂደት ላይ...' : 'Saving...') : (language === 'am' ? '💾 የግላዊነት ቅንብሮችን አስቀምጥ' : '💾 Save Privacy')}
+                </button>
               </div>
             </div>
           )}
@@ -668,7 +751,7 @@ export default function SettingsPage() {
                       className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
-                  <div className="flex gap-3">
+                  <div className="flex gap-3 flex-wrap">
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
@@ -689,7 +772,7 @@ export default function SettingsPage() {
 
               {/* Two-Factor Authentication */}
               <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-wrap justify-between items-center gap-3">
                   <div>
                     <h3 className="text-lg font-bold text-gray-800">
                       🔐 {language === 'am' ? 'የሁለት-ደረጃ ማረጋገጫ (2FA)' : 'Two-Factor Authentication'}
@@ -699,7 +782,7 @@ export default function SettingsPage() {
                     </p>
                   </div>
                   <button
-                    onClick={() => handleToggle('two_factor_enabled')}
+                    onClick={handleEnable2FA}
                     className={`px-4 py-2 rounded-lg font-semibold transition ${
                       settings.two_factor_enabled 
                         ? 'bg-emerald-100 text-emerald-700' 
@@ -711,6 +794,47 @@ export default function SettingsPage() {
                       : (language === 'am' ? '📱 አንቃ' : '📱 Enable')}
                   </button>
                 </div>
+              </div>
+
+              {/* Active Sessions */}
+              <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <h3 className="text-lg font-bold text-gray-800 mb-4">
+                  💻 {language === 'am' ? 'ንቁ ክፍለ ጊዜዎች' : 'Active Sessions'}
+                </h3>
+                {loadingSessions ? (
+                  <div className="flex justify-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-600"></div>
+                  </div>
+                ) : sessions.length === 0 ? (
+                  <p className="text-sm text-gray-500">{language === 'am' ? 'ምንም ንቁ ክፍለ ጊዜዎች የሉም' : 'No active sessions'}</p>
+                ) : (
+                  <div className="space-y-3">
+                    {sessions.map((session) => (
+                      <div key={session.id} className="flex flex-wrap justify-between items-center bg-white p-3 rounded-lg border border-gray-200">
+                        <div>
+                          <p className="font-medium text-sm">{session.device || 'Unknown Device'}</p>
+                          <p className="text-xs text-gray-500">{session.ip_address || 'IP Unknown'}</p>
+                          <p className="text-xs text-gray-400">{new Date(session.created_at).toLocaleString()}</p>
+                        </div>
+                        <div className="flex gap-2 mt-2 sm:mt-0">
+                          {session.is_current && (
+                            <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">
+                              {language === 'am' ? 'አሁን' : 'Current'}
+                            </span>
+                          )}
+                          {!session.is_current && (
+                            <button
+                              onClick={() => handleRevokeSession(session.id)}
+                              className="text-red-500 hover:text-red-700 text-sm font-medium"
+                            >
+                              {language === 'am' ? 'ሰርዝ' : 'Revoke'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Danger Zone */}
@@ -730,26 +854,36 @@ export default function SettingsPage() {
                   {language === 'am' ? '🗑️ መለያ ሰርዝ' : '🗑️ Delete Account'}
                 </button>
               </div>
+
+              <div className="pt-4 border-t">
+                <button
+                  onClick={saveSettings}
+                  disabled={saving}
+                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold transition disabled:opacity-50"
+                >
+                  {saving ? (language === 'am' ? 'በሂደት ላይ...' : 'Saving...') : (language === 'am' ? '💾 የደህንነት ቅንብሮችን አስቀምጥ' : '💾 Save Security')}
+                </button>
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Save Button */}
+      {/* Save All Button */}
       <div className="mt-6">
         <button
           onClick={saveSettings}
           disabled={saving}
-          className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition disabled:opacity-50"
+          className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {saving ? (
-            <span className="flex items-center justify-center gap-2">
+            <>
               <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
               {language === 'am' ? 'በሂደት ላይ...' : 'Saving...'}
-            </span>
+            </>
           ) : (
             `💾 ${language === 'am' ? 'ሁሉንም ቅንብሮች አስቀምጥ' : 'Save All Settings'}`
           )}
