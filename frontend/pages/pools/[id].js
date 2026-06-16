@@ -362,7 +362,7 @@ export default function PoolDetails() {
       return;
     }
     if (seatNum < 1 || seatNum > totalSeats) {
-      toast.error(`Seat number must be between 1 and ${totalSeats}`);
+      toast.error(`Seat number must be between 1 and ${totalSeats.toLocaleString()}`);
       return;
     }
     if (bookedSeats.includes(seatNum)) {
