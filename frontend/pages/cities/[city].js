@@ -1,4 +1,4 @@
-// pages/cities/[city].js - COMPLETE WITH ALL 94 CITIES AND AMHARIC SUPPORT
+// pages/cities/[city].js - COMPLETE WITH ALL 94 CITIES, AMHARIC SUPPORT, ALL SEATS VISIBLE
 import { useRouter } from 'next/router';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -433,7 +433,8 @@ export default function CityVip() {
             </div>
             <div className="text-center mb-4"><div className="inline-block bg-gray-600 text-white text-[10px] px-4 py-1 rounded-full">🎬 SCREEN</div><div className="w-full h-px bg-gray-300 mt-2"></div></div>
             <div ref={seatGridRef} className="space-y-2">
-              {seatRows.slice(0, 25).map((rowSeats, rowIndex) => (
+              {/* FIXED: Show ALL rows (removed slice(0, 25)) */}
+              {seatRows.map((rowSeats, rowIndex) => (
                 <div key={rowIndex} className="flex flex-wrap items-center gap-1">
                   <div className="w-8 text-[11px] font-mono font-semibold text-gray-500">{rowLetters[rowIndex] || (rowIndex + 1)}</div>
                   <div className="flex flex-wrap gap-1 flex-1">
@@ -453,7 +454,7 @@ export default function CityVip() {
                 </div>
               ))}
             </div>
-            {rows > 25 && <p className="text-xs text-gray-400 text-center mt-4">{language === 'am' ? `ከ${totalSeatsCount.toLocaleString()} መቀመጫዎች የመጀመሪያዎቹ 25 ረድፎች እዚህ ይታያሉ` : `Showing first 25 rows of ${totalSeatsCount.toLocaleString()} seats`}</p>}
+            {rows > 25 && <p className="text-xs text-gray-400 text-center mt-4">{language === 'am' ? `ሁሉም ${totalSeatsCount.toLocaleString()} መቀመጫዎች እዚህ ይታያሉ` : `All ${totalSeatsCount.toLocaleString()} seats are shown here`}</p>}
           </div>
           {selectedSeats.length > 0 && (
             <div className="sticky bottom-0 bg-gray-100 border-t border-gray-200 p-4">
@@ -545,7 +546,6 @@ export default function CityVip() {
 
   const PoolCard = ({ type, pool }) => {
     const isActive = activeTab === type;
-    const isActiveTab = activeTab === type;
     return (
       <div className="bg-white rounded-2xl shadow-xl overflow-hidden transform transition hover:scale-105">
         <div className={`bg-gradient-to-r ${pool.color} p-6 text-white`}>
@@ -621,10 +621,16 @@ export default function CityVip() {
             </div>
           </div>
 
-          {/* Hero Section - SIMPLIFIED */}
+          {/* Hero Section - SIMPLIFIED WITH ATTRACTIVE TEXT */}
           <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-12 text-center mt-4 mx-4 rounded-2xl">
             <div className="text-6xl mb-3">{cityInfo.icon}</div>
             <h1 className="text-3xl md:text-4xl font-bold">{cityInfo.name.split('|')[0]} VIP</h1>
+            {/* ATTRACTIVE AMHARIC TEXT ADDED */}
+            <div className="text-emerald-300 font-bold text-lg mt-2">
+              {language === 'am' 
+                ? '✨ ዛሬ የከተማችንን ተሳታፊ ሚሊየነር እናድርገው! ✨'
+                : '✨ Let\'s make our city participant a millionaire today! ✨'}
+            </div>
             <p className="text-gray-200 mt-2">{language === 'am' ? 'እስከ 40 ሚሊዮን ብር ለማሸነፍ መቀመጫዎን ይምረጡ' : 'Select your seat to win up to 40 Million ETB'}</p>
           </div>
 
