@@ -1,4 +1,4 @@
-// pages/merkato-seat.js - COMPLETE WITH AMHARIC AND ENGLISH SUPPORT
+// pages/merkato-seat.js - COMPLETE WITH ALL SEATS VISIBLE + ATTRACTIVE TEXT
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
@@ -282,6 +282,7 @@ export default function MerkatoSeat() {
   if (!poolInfo) return null;
 
   const totalAmount = selectedSeats.length * poolInfo.entryFee;
+  // FIXED: Show ALL seats (not limited to 500)
   const seatNumbers = Array.from({ length: poolInfo.totalSeats }, (_, i) => i + 1);
   const availableCount = seatNumbers.filter(s => !bookedSeats.includes(s) && !selectedSeats.includes(s) && !reservedSeats.includes(s)).length;
   const takenCount = bookedSeats.length;
@@ -304,6 +305,12 @@ export default function MerkatoSeat() {
           <div className="bg-white rounded-2xl border border-gray-200 p-5 mb-6 text-center">
             <div className="text-5xl mb-2">🏪</div>
             <h1 className="text-2xl font-bold text-gray-800">Merkato VIP</h1>
+            {/* ATTRACTIVE AMHARIC TEXT ADDED */}
+            <p className="text-emerald-600 font-bold text-base mt-2">
+              {language === 'am' 
+                ? '✨ ዛሬ የመርካቶ ተሳታፊ ሚሊየነር እናድርገው! ✨'
+                : '✨ Let\'s make a Merkato participant a millionaire today! ✨'}
+            </p>
             <p className="text-gray-500 text-sm mt-1">{language === 'am' ? 'እስከ 40 ሚሊዮን ብር ለማሸነፍ መቀመጫዎን ይምረጡ' : 'Select your seat to win up to 40 Million ETB'}</p>
           </div>
 
@@ -366,8 +373,9 @@ export default function MerkatoSeat() {
                 <div className="bg-gray-50 rounded-xl p-3 text-center border"><div className="text-2xl font-bold text-red-500">{takenCount.toLocaleString()}</div><div className="text-xs text-gray-500">{language === 'am' ? 'የተያዙ' : 'Taken'}</div></div>
               </div>
 
+              {/* FIXED: Show ALL seats (removed slice(0, 500)) */}
               <div className="grid grid-cols-10 md:grid-cols-15 lg:grid-cols-20 gap-2 mb-6 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-xl border">
-                {seatNumbers.slice(0, 500).map(seatNum => {
+                {seatNumbers.map(seatNum => {
                   const isTaken = bookedSeats.includes(seatNum);
                   const isSelected = selectedSeats.includes(seatNum);
                   const isReserved = reservedSeats.includes(seatNum);
@@ -378,7 +386,6 @@ export default function MerkatoSeat() {
                   return <button key={seatNum} onClick={() => toggleSeat(seatNum)} disabled={isTaken} className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center text-xs font-semibold transition-all border ${bgColor} ${isSelected ? 'ring-2 ring-emerald-300' : ''}`}>{seatNum}</button>;
                 })}
               </div>
-              {poolInfo.totalSeats > 500 && <p className="text-xs text-gray-400 text-center mt-2">{language === 'am' ? `ከ${poolInfo.totalSeats.toLocaleString()} መቀመጫዎች የመጀመሪያዎቹ 500 እዚህ ይታያሉ` : `Showing first 500 of ${poolInfo.totalSeats.toLocaleString()} total seats`}</p>}
               
               {selectedSeats.length > 0 && (
                 <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 p-4 shadow-lg z-50">
