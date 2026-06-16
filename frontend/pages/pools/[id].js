@@ -1,4 +1,4 @@
-// pages/pools/[id].js - FULLY CORRECTED WITH MANUAL SEAT INPUT
+// pages/pools/[id].js - FULLY CORRECTED (ALL SEATS VISIBLE)
 import { useRouter } from 'next/router';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -77,21 +77,22 @@ export default function PoolDetails() {
   const [reservedSeats, setReservedSeats] = useState([]);
   const [reservationTimer, setReservationTimer] = useState(null);
   const [availableSeatsCount, setAvailableSeatsCount] = useState(0);
-  const [manualSeatInput, setManualSeatInput] = useState(''); // Manual seat input
-  const [seatsInitialized, setSeatsInitialized] = useState(false); // Track if seats were generated
+  const [manualSeatInput, setManualSeatInput] = useState('');
+  const [seatsInitialized, setSeatsInitialized] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Pool calculations
   const winnerPrize = pool?.target_amount || 0;
   const entryFee = pool?.entry_fee || pool?.ticket_price || 10;
   const totalCollection = winnerPrize * 1.2;
-  const totalSeats = Math.max(10, Math.floor(totalCollection / entryFee) || 10); // Minimum 10 seats
+  const totalSeats = Math.max(10, Math.floor(totalCollection / entryFee) || 10);
   const currentAmount = pool?.current_amount || 0;
   const progress = (currentAmount / totalCollection) * 100;
   const maxSeatsPerUser = Math.min(5, Math.floor((totalSeats - bookedSeats.length) / 2) || 5);
 
   // Generate seats if they don't exist
   const generateSeatsIfNeeded = async () => {
-    if (!pool || seatsInitialized) return;
+    if (!pool || seatsInitialized || !id) return;
     
     try {
       const { count, error: countError } = await supabase
@@ -112,7 +113,6 @@ export default function PoolDetails() {
           });
         }
         
-        // Insert in batches to avoid timeout
         const batchSize = 500;
         for (let i = 0; i < seatsToInsert.length; i += batchSize) {
           const batch = seatsToInsert.slice(i, i + batchSize);
@@ -122,10 +122,24 @@ export default function PoolDetails() {
           if (insertError) console.error('Batch insert error:', insertError);
         }
         setSeatsInitialized(true);
+        console.log(`Successfully generated ${totalSeats} seats`);
+        return true;
       }
+      setSeatsInitialized(true);
+      return true;
     } catch (err) {
       console.error('Error generating seats:', err);
+      return false;
     }
+  };
+
+  const refreshSeats = async () => {
+    setIsRefreshing(true);
+    await generateSeatsIfNeeded();
+    await fetchBookedSeats();
+    await fetchUserReservations();
+    toast.success('Seats refreshed successfully!');
+    setIsRefreshing(false);
   };
 
   useEffect(() => {
@@ -146,12 +160,13 @@ export default function PoolDetails() {
   }, [id]);
 
   useEffect(() => {
-    if (user && pool) {
-      // Generate seats if needed before fetching
-      generateSeatsIfNeeded().then(() => {
-        fetchBookedSeats();
-        fetchUserReservations();
-      });
+    if (user && pool && id) {
+      const initSeats = async () => {
+        await generateSeatsIfNeeded();
+        await fetchBookedSeats();
+        await fetchUserReservations();
+      };
+      initSeats();
       
       const interval = setInterval(() => {
         fetchBookedSeats();
@@ -160,7 +175,7 @@ export default function PoolDetails() {
       
       return () => clearInterval(interval);
     }
-  }, [user, pool]);
+  }, [user, pool, id]);
 
   async function getCurrentUser() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -169,18 +184,28 @@ export default function PoolDetails() {
 
   async function fetchPool() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('pools')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (error) {
-      router.push('/listings');
-    } else {
+    try {
+      const { data, error } = await supabase
+        .from('pools')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) {
+        console.error('Pool fetch error:', error);
+        toast.error('Could not load pool details. Please try again.');
+        setTimeout(() => router.push('/listings'), 2000);
+        return;
+      }
+      
       if (isMounted.current) setPool(data);
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      toast.error('An unexpected error occurred.');
+      setTimeout(() => router.push('/listings'), 2000);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   async function fetchBookedSeats() {
@@ -330,7 +355,6 @@ export default function PoolDetails() {
     setShowSeatSelector(true);
   };
 
-  // Manual seat input handler
   const handleManualSeatAdd = async () => {
     const seatNum = parseInt(manualSeatInput);
     if (isNaN(seatNum)) {
@@ -343,10 +367,12 @@ export default function PoolDetails() {
     }
     if (bookedSeats.includes(seatNum)) {
       toast.error(`Seat ${seatNum} is already taken. Please select another seat.`);
+      setManualSeatInput('');
       return;
     }
     if (selectedSeats.includes(seatNum)) {
       toast.error(`Seat ${seatNum} is already selected`);
+      setManualSeatInput('');
       return;
     }
     if (selectedSeats.length >= maxSeatsPerUser) {
@@ -581,10 +607,19 @@ export default function PoolDetails() {
   }
 
   if (!pool) {
-    return <div className="min-h-screen flex items-center justify-center"><div className="text-center"><h1 className="text-2xl font-bold">Pool not found</h1><Link href="/listings" className="text-green-600 mt-4 inline-block">Back to listings</Link></div></div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold">Pool not found</h1>
+          <p className="text-gray-500 mt-2">The pool you're looking for may have been removed.</p>
+          <Link href="/listings" className="text-green-600 hover:underline mt-4 inline-block">Back to listings</Link>
+        </div>
+      </div>
+    );
   }
 
-  const seatNumbers = Array.from({ length: Math.min(totalSeats, 500) }, (_, i) => i + 1);
+  // FIXED: Show ALL seats (not limited to 500)
+  const seatNumbers = Array.from({ length: totalSeats }, (_, i) => i + 1);
   const takenCount = bookedSeats.length;
   const availableCount = totalSeats - takenCount;
   const totalAmount = selectedSeats.length * entryFee;
@@ -610,7 +645,7 @@ export default function PoolDetails() {
                   type="number"
                   value={manualSeatInput}
                   onChange={(e) => setManualSeatInput(e.target.value)}
-                  placeholder={`Enter seat number (1-${totalSeats})`}
+                  placeholder={`Enter seat number (1-${totalSeats.toLocaleString()})`}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500"
                 />
                 <button
@@ -658,7 +693,7 @@ export default function PoolDetails() {
             </div>
             
             {totalSeats > 500 && (
-              <p className="text-xs text-gray-400 text-center mb-4">Showing first 500 of {totalSeats.toLocaleString()} seats (scroll to see more)</p>
+              <p className="text-xs text-gray-400 text-center mb-4">Showing all {totalSeats.toLocaleString()} seats (scroll to see more)</p>
             )}
             
             {selectedSeats.length > 0 && (
