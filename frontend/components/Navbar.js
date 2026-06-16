@@ -1,4 +1,4 @@
-// components/Navbar.js - UPDATED to hide on homepage
+// components/Navbar.js - UPDATED with NotificationCenter
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
@@ -6,7 +6,7 @@ import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import LanguageToggle from './LanguageToggle';
-import NotificationBell from './NotificationBell';
+import NotificationCenter from './NotificationCenter'; // ✅ FIXED: Changed from NotificationBell
 import TopCitySelector from './TopCitySelector';
 import { checkAdminStatus } from '../lib/adminCheck';
 
@@ -239,10 +239,21 @@ export default function Navbar() {
               )}
             </div>
             
-            {/* Right side icons - Added TopCitySelector */}
+            {/* Right side icons - Updated with NotificationCenter */}
             <div className="flex items-center gap-1 sm:gap-2">
               <TopCitySelector />
-              <NotificationBell />
+              
+              {/* ✅ UPDATED: NotificationCenter with userId prop */}
+              {user && (
+                <NotificationCenter 
+                  userId={user.id}
+                  maxDisplay={5}
+                  showSounds={true}
+                  autoHide={true}
+                  autoHideDuration={5000}
+                />
+              )}
+              
               <LanguageToggle />
               
               {user ? (
