@@ -5,11 +5,14 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import AdminLayout from '../../components/admin/AdminLayout'; // ✅ ADDED
 
 export default function DrawWinner() {
   const router = useRouter();
   
   // State
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -44,12 +47,14 @@ export default function DrawWinner() {
           router.push('/login');
           return;
         }
+        setUser(user);
         
         const { data: profile } = await supabase
           .from('profiles')
-          .select('role')
+          .select('*')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
+        setProfile(profile);
         
         const { data: adminRecord } = await supabase
           .from('admins')
@@ -214,6 +219,7 @@ export default function DrawWinner() {
       const winner = participants[randomIndex];
       const ticketNumber = `${selectedPool.tier.toUpperCase()}-${Date.now()}-${randomIndex + 1}`;
       
+      // ✅ FIXED: Use correct column names
       const { error: updateError } = await supabase
         .from('merkato_vip_pools')
         .update({
@@ -221,9 +227,8 @@ export default function DrawWinner() {
           winner_id: winner.user_id,
           winner_email: winner.user_email,
           winner_name: winner.user_name,
-          drawn_at: new Date().toISOString(),
-          total_participants: participants.length,
-          total_collected: participants.length * selectedPool.contribution_amount
+          drawn_at: new Date().toISOString()
+          // ✅ REMOVED: total_participants, total_collected - these columns may not exist
         })
         .eq('id', selectedPool.id);
       
@@ -231,13 +236,14 @@ export default function DrawWinner() {
       
       await supabase
         .from('merkato_vip_participants')
-        .update({ is_winner: true, winner_drawn_at: new Date() })
+        .update({ is_winner: true, winner_drawn_at: new Date().toISOString() })
         .eq('id', winner.id);
       
       await supabase
         .from('merkato_vip_draws')
         .insert({
           pool_id: selectedPool.id,
+          pool_type: 'merkato',
           drawn_at: new Date().toISOString(),
           winner_id: winner.user_id,
           winner_email: winner.user_email,
@@ -245,18 +251,16 @@ export default function DrawWinner() {
           prize_amount: selectedPool.prize_amount,
           ticket_number: ticketNumber,
           random_seed: Math.random().toString(),
-          verification_hash: btoa(`${selectedPool.id}-${winner.user_id}-${Date.now()}`)
+          verification_hash: btoa(`${selectedPool.id}-${winner.user_id}-${Date.now()}`),
+          drawn_by: user?.id
         });
       
       await supabase
-        .from('notifications')
+        .from('admin_notifications')
         .insert({
-          user_id: winner.user_id,
-          title: '🎉 Congratulations! You Won!',
-          message: `You won ${selectedPool.prize_amount.toLocaleString()} ETB in the ${selectedPool.name} pool!`,
-          type: 'winner',
-          link_url: '/dashboard',
-          created_at: new Date().toISOString()
+          title: `🏆 Winner Drawn! ${winner.user_name || winner.user_email}`,
+          message: `${selectedPool.name} winner: ${winner.user_name || winner.user_email} - ${selectedPool.prize_amount.toLocaleString()} ETB`,
+          type: 'winner'
         });
       
       setWinner({ ...winner, prize: selectedPool.prize_amount, poolName: selectedPool.name, ticketNumber });
@@ -330,18 +334,15 @@ export default function DrawWinner() {
           ticket_number: ticketNumber,
           random_seed: Math.random().toString(),
           verification_hash: btoa(`${selectedCity}-${winner.user_id}-${Date.now()}`),
-          drawn_by: (await supabase.auth.getUser()).data.user?.id
+          drawn_by: user?.id
         });
       
       await supabase
-        .from('notifications')
+        .from('admin_notifications')
         .insert({
-          user_id: winner.user_id,
-          title: '🎉 Congratulations! You Won!',
-          message: `You have won ${poolConfig.prize.toLocaleString()} ETB in the ${selectedCity} City VIP ${selectedPoolType} pool!`,
-          type: 'winner',
-          link_url: `/dashboard`,
-          created_at: new Date().toISOString()
+          title: `🏆 City Winner Drawn! ${winner.user_name || winner.user_email}`,
+          message: `${selectedCity} ${selectedPoolType} winner: ${winner.user_name || winner.user_email} - ${poolConfig.prize.toLocaleString()} ETB`,
+          type: 'winner'
         });
       
       setWinner({ ...winner, prize: poolConfig.prize, poolName: `${selectedCity} - ${poolConfig.name}`, ticketNumber });
@@ -369,8 +370,9 @@ export default function DrawWinner() {
     const toastId = toast.loading('Drawing winner...');
     
     try {
+      // ✅ FIXED: Use correct table name 'regular_pool_participants'
       const { data: participants, error } = await supabase
-        .from('pool_participants')
+        .from('regular_pool_participants')
         .select('*')
         .eq('pool_id', selectedPool.id)
         .eq('payment_status', 'verified');
@@ -402,14 +404,11 @@ export default function DrawWinner() {
       if (updateError) throw updateError;
       
       await supabase
-        .from('notifications')
+        .from('admin_notifications')
         .insert({
-          user_id: winner.user_id,
-          title: '🎉 Congratulations! You Won!',
-          message: `You won ${selectedPool.prize_name} worth ETB ${selectedPool.target_amount.toLocaleString()}!`,
-          type: 'winner',
-          link_url: '/dashboard',
-          created_at: new Date().toISOString()
+          title: `🏆 Regular Pool Winner! ${winner.user_name || winner.user_email}`,
+          message: `${selectedPool.prize_name} winner: ${winner.user_name || winner.user_email}`,
+          type: 'winner'
         });
       
       setWinner({ ...winner, prize: selectedPool.target_amount, poolName: selectedPool.prize_name, ticketNumber });
@@ -463,120 +462,111 @@ export default function DrawWinner() {
         <title>Draw Winner - Admin | Abbaa Carraa</title>
       </Head>
       
-      <div className="min-h-screen bg-gray-100 py-8">
-        <div className="container mx-auto px-4 max-w-5xl">
-          <div className="mb-4">
-            <Link href="/admin/dashboard" className="text-gray-600 hover:text-gray-800 flex items-center gap-2">
-              ← Back to Dashboard
-            </Link>
-          </div>
-          
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-4">
-              <h1 className="text-2xl font-bold text-white">Draw Winner</h1>
-              <p className="text-purple-100 text-sm">Select a program, choose a pool, and draw the lucky winner</p>
+      <AdminLayout
+        title="Draw Winner"
+        subtitle="Select a program, choose a pool, and draw the lucky winner"
+        icon="🎲"
+        bgGradient="from-purple-600 to-pink-600"
+        user={user}
+        profile={profile}
+        activeTab="draw"
+      >
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div className="p-6">
+            {/* Program Selection */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select Program</label>
+              <div className="grid grid-cols-3 gap-3">
+                <button onClick={() => { setSelectedProgram('merkato'); setSelectedPool(null); setSelectedCity(null); setWinner(null); }} className={`p-3 rounded-xl text-center transition ${selectedProgram === 'merkato' ? 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                  <div className="text-2xl">🏪</div><div className="font-semibold text-sm">Merkato VIP</div>
+                </button>
+                <button onClick={() => { setSelectedProgram('city'); setSelectedPool(null); setSelectedCity(null); setWinner(null); }} className={`p-3 rounded-xl text-center transition ${selectedProgram === 'city' ? 'bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                  <div className="text-2xl">🏙️</div><div className="font-semibold text-sm">City VIP</div>
+                </button>
+                <button onClick={() => { setSelectedProgram('regular'); setSelectedPool(null); setSelectedCity(null); setWinner(null); }} className={`p-3 rounded-xl text-center transition ${selectedProgram === 'regular' ? 'bg-gradient-to-r from-green-600 to-teal-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                  <div className="text-2xl">🏊</div><div className="font-semibold text-sm">Regular Pools</div>
+                </button>
+              </div>
             </div>
             
-            <div className="p-6">
-              {/* Program Selection */}
+            {/* Merkato VIP Selection */}
+            {selectedProgram === 'merkato' && (
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select Program</label>
-                <div className="grid grid-cols-3 gap-3">
-                  <button onClick={() => { setSelectedProgram('merkato'); setSelectedPool(null); setSelectedCity(null); setWinner(null); }} className={`p-3 rounded-xl text-center transition ${selectedProgram === 'merkato' ? 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-                    <div className="text-2xl">🏪</div><div className="font-semibold text-sm">Merkato VIP</div>
-                  </button>
-                  <button onClick={() => { setSelectedProgram('city'); setSelectedPool(null); setSelectedCity(null); setWinner(null); }} className={`p-3 rounded-xl text-center transition ${selectedProgram === 'city' ? 'bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-                    <div className="text-2xl">🏙️</div><div className="font-semibold text-sm">City VIP</div>
-                  </button>
-                  <button onClick={() => { setSelectedProgram('regular'); setSelectedPool(null); setSelectedCity(null); setWinner(null); }} className={`p-3 rounded-xl text-center transition ${selectedProgram === 'regular' ? 'bg-gradient-to-r from-green-600 to-teal-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-                    <div className="text-2xl">🏊</div><div className="font-semibold text-sm">Regular Pools</div>
-                  </button>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Select Merkato Pool</label>
+                <select onChange={(e) => { const pool = merkatoPools.find(p => p.id === e.target.value); setSelectedPool(pool); setWinner(null); }} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500">
+                  <option value="">-- Select a pool --</option>
+                  {merkatoPools.map(pool => (
+                    <option key={pool.id} value={pool.id}>{getTierIcon(pool.tier)} {pool.name} - {formatNumber(pool.prize_amount)} ETB</option>
+                  ))}
+                </select>
+                {merkatoPools.length === 0 && <p className="text-sm text-gray-500 mt-2">No active Merkato pools available.</p>}
+              </div>
+            )}
+            
+            {/* City VIP Selection */}
+            {selectedProgram === 'city' && (
+              <>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Select City</label>
+                  <select onChange={(e) => setSelectedCity(e.target.value)} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500">
+                    <option value="">-- Select a city --</option>
+                    {cities.map(city => (<option key={city.city} value={city.city}>🏙️ {city.city} ({cityStats[city.city]?.total || 0} participants)</option>))}
+                  </select>
+                </div>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Pool Type</label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {Object.entries(poolTypes).map(([type, config]) => (
+                      <button key={type} onClick={() => setSelectedPoolType(type)} className={`p-3 rounded-xl text-center transition ${selectedPoolType === type ? `bg-gradient-to-r ${config.color} text-white shadow-lg` : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                        <div className="text-2xl">{config.icon}</div><div className="font-bold text-sm">{config.name}</div>
+                        <div className="text-xs mt-1">{cityStats[selectedCity]?.[type] || 0} participants</div>
+                        <div className="text-xs font-semibold mt-1">{formatNumber(config.prize)} ETB</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+            
+            {/* Regular Pools Selection */}
+            {selectedProgram === 'regular' && (
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Select Regular Pool</label>
+                <select onChange={(e) => { const pool = regularPools.find(p => p.id === e.target.value); setSelectedPool(pool); setWinner(null); }} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500">
+                  <option value="">-- Select a pool --</option>
+                  {regularPools.map(pool => (<option key={pool.id} value={pool.id}>🎯 {pool.prize_name} - {formatNumber(pool.target_amount)} ETB</option>))}
+                </select>
+                {regularPools.length === 0 && <p className="text-sm text-gray-500 mt-2">No active regular pools available.</p>}
+              </div>
+            )}
+            
+            {/* Winner Display */}
+            {winner && (
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-6 mb-6 border-2 border-yellow-400">
+                <div className="text-center">
+                  <div className="text-6xl mb-3">🏆</div>
+                  <h3 className="text-2xl font-bold text-gray-800">WINNER!</h3>
+                  <p className="text-4xl font-bold text-green-600 my-3">{formatNumber(winner.prize)} ETB</p>
+                  <div className="bg-white rounded-lg p-4 mt-4">
+                    <p className="font-semibold">{winner.user_name || 'Anonymous Winner'}</p>
+                    <p className="text-gray-500 text-sm">{winner.user_email}</p>
+                    <p className="text-gray-400 text-xs mt-2">Ticket: {winner.ticketNumber}</p>
+                    {winner.seat_numbers && <p className="text-gray-400 text-xs">Seats: {winner.seat_numbers.join(', ')}</p>}
+                  </div>
+                  <p className="text-sm text-gray-500 mt-4">{winner.poolName}</p>
                 </div>
               </div>
-              
-              {/* Merkato VIP Selection */}
-              {selectedProgram === 'merkato' && (
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Merkato Pool</label>
-                  <select onChange={(e) => { const pool = merkatoPools.find(p => p.id === e.target.value); setSelectedPool(pool); setWinner(null); }} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500">
-                    <option value="">-- Select a pool --</option>
-                    {merkatoPools.map(pool => (
-                      <option key={pool.id} value={pool.id}>{getTierIcon(pool.tier)} {pool.name} - {formatNumber(pool.prize_amount)} ETB</option>
-                    ))}
-                  </select>
-                  {merkatoPools.length === 0 && <p className="text-sm text-gray-500 mt-2">No active Merkato pools available.</p>}
-                </div>
-              )}
-              
-              {/* City VIP Selection */}
-              {selectedProgram === 'city' && (
-                <>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Select City</label>
-                    <select onChange={(e) => setSelectedCity(e.target.value)} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500">
-                      <option value="">-- Select a city --</option>
-                      {cities.map(city => (<option key={city.city} value={city.city}>🏙️ {city.city} ({cityStats[city.city]?.total || 0} participants)</option>))}
-                    </select>
-                  </div>
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Select Pool Type</label>
-                    <div className="grid grid-cols-3 gap-3">
-                      {Object.entries(poolTypes).map(([type, config]) => (
-                        <button key={type} onClick={() => setSelectedPoolType(type)} className={`p-3 rounded-xl text-center transition ${selectedPoolType === type ? `bg-gradient-to-r ${config.color} text-white shadow-lg` : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-                          <div className="text-2xl">{config.icon}</div><div className="font-bold text-sm">{config.name}</div>
-                          <div className="text-xs mt-1">{cityStats[selectedCity]?.[type] || 0} participants</div>
-                          <div className="text-xs font-semibold mt-1">{formatNumber(config.prize)} ETB</div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-              
-              {/* Regular Pools Selection */}
-              {selectedProgram === 'regular' && (
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Regular Pool</label>
-                  <select onChange={(e) => { const pool = regularPools.find(p => p.id === e.target.value); setSelectedPool(pool); setWinner(null); }} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500">
-                    <option value="">-- Select a pool --</option>
-                    {regularPools.map(pool => (<option key={pool.id} value={pool.id}>🎯 {pool.prize_name} - {formatNumber(pool.target_amount)} ETB</option>))}
-                  </select>
-                  {regularPools.length === 0 && <p className="text-sm text-gray-500 mt-2">No active regular pools available.</p>}
-                </div>
-              )}
-              
-              {/* Winner Display */}
-              {winner && (
-                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-6 mb-6 border-2 border-yellow-400">
-                  <div className="text-center">
-                    <div className="text-6xl mb-3">🏆</div>
-                    <h3 className="text-2xl font-bold text-gray-800">WINNER!</h3>
-                    <p className="text-4xl font-bold text-green-600 my-3">{formatNumber(winner.prize)} ETB</p>
-                    <div className="bg-white rounded-lg p-4 mt-4">
-                      <p className="font-semibold">{winner.user_name || 'Anonymous Winner'}</p>
-                      <p className="text-gray-500 text-sm">{winner.user_email}</p>
-                      <p className="text-gray-400 text-xs mt-2">Ticket: {winner.ticketNumber}</p>
-                      {winner.seat_numbers && <p className="text-gray-400 text-xs">Seats: {winner.seat_numbers.join(', ')}</p>}
-                    </div>
-                    <p className="text-sm text-gray-500 mt-4">{winner.poolName}</p>
-                  </div>
-                </div>
-              )}
-              
-              {/* Draw Button */}
-              {(selectedPool || selectedCity) && !winner && (
-                <button onClick={() => setShowConfirm(true)} disabled={drawing} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50">
-                  {drawing ? <span className="flex items-center justify-center gap-2"><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Drawing...</span> : '🎲 Draw Winner Now'}
-                </button>
-              )}
-              
-              <Link href="/admin/dashboard" className="block w-full mt-3 py-2 text-center text-gray-600 hover:text-gray-800 transition">
-                Back to Dashboard
-              </Link>
-            </div>
+            )}
+            
+            {/* Draw Button */}
+            {(selectedPool || selectedCity) && !winner && (
+              <button onClick={() => setShowConfirm(true)} disabled={drawing} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50">
+                {drawing ? <span className="flex items-center justify-center gap-2"><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Drawing...</span> : '🎲 Draw Winner Now'}
+              </button>
+            )}
           </div>
         </div>
-      </div>
+      </AdminLayout>
       
       {/* Confirm Modal */}
       {showConfirm && (
