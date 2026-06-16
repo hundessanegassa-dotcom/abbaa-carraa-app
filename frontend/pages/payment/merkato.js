@@ -1,11 +1,11 @@
-// pages/payment/merkato.js
+// pages/payment/merkato.js - Fixed with TicketImage import
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
 import Head from 'next/head';
 import toast from 'react-hot-toast';
 import BankTransferUpload from '../../components/BankTransferUpload';
-import Ticket from '../../components/Ticket';
+import TicketImage from '../../components/TicketImage'; // ✅ FIXED: Changed from Ticket to TicketImage
 
 export default function MerkatoPayment() {
   const router = useRouter();
@@ -110,6 +110,9 @@ export default function MerkatoPayment() {
 
   if (!poolInfo) return null;
 
+  const seatNumbersArray = getSeatNumbersArray();
+  const totalAmount = parseInt(amount) || poolInfo.entryFee * (seatNumbersArray.length || 1);
+
   return (
     <>
       <Head>
@@ -128,8 +131,8 @@ export default function MerkatoPayment() {
           {showPayment && participantData && (
             <BankTransferUpload
               poolId={`merkato_${type}`}
-              amount={parseInt(amount) || poolInfo.entryFee * (getSeatNumbersArray().length || 1)}
-              seatNumbers={getSeatNumbersArray()}
+              amount={totalAmount}
+              seatNumbers={seatNumbersArray}
               onSuccess={handlePaymentSuccess}
               onClose={() => router.push('/merkato-vip')}
             />
@@ -138,11 +141,23 @@ export default function MerkatoPayment() {
           {ticketGenerated && participantData && (
             <div className="bg-white rounded-2xl shadow-xl p-6">
               <h2 className="text-2xl font-bold text-center mb-6">🎫 Your Merkato VIP Ticket</h2>
-              <Ticket
+              {/* ✅ FIXED: Updated to TicketImage with correct props */}
+              <TicketImage
                 participant={participantData}
-                pool={{...poolInfo, drawDate: poolInfo.drawDate}}
+                pool={{
+                  prize_amount: poolInfo.prize,
+                  target_amount: poolInfo.prize,
+                  prize_name: poolInfo.name,
+                  drawDate: poolInfo.drawDate,
+                  name: 'Merkato VIP'
+                }}
                 isVerified={false}
-                seatNumbers={getSeatNumbersArray()}
+                seatNumbers={seatNumbersArray}
+                ticketNumber={participantData.ticket_number || `MK-${Date.now()}`}
+                amount={totalAmount}
+                createdAt={participantData.created_at || new Date().toISOString()}
+                poolType="merkato"
+                show3D={true}
               />
               <div className="text-center mt-6">
                 <p className="text-sm text-yellow-600">
