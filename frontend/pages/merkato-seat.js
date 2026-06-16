@@ -1,16 +1,18 @@
-// pages/merkato-seat.js - COMPLETE WITH ALL SEATS VISIBLE + ATTRACTIVE TEXT
+// pages/merkato-seat.js - COMPLETE WITH ALL SEATS VISIBLE + ATTRACTIVE TEXT + 3D BANNER UPLOAD
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
 import Head from 'next/head';
 import toast from 'react-hot-toast';
 import TicketImage from '../components/TicketImage';
+import ThreeDBannerUpload from '../components/ThreeDBannerUpload';
 
 export default function MerkatoSeat() {
   const router = useRouter();
   const { type } = router.query;
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedType, setSelectedType] = useState(type || 'daily');
   const [poolInfo, setPoolInfo] = useState(null);
   const [selectedSeats, setSelectedSeats] = useState([]);
@@ -27,12 +29,24 @@ export default function MerkatoSeat() {
   const [manualSeatInput, setManualSeatInput] = useState('');
   const [showSeatSelector, setShowSeatSelector] = useState(true);
   const [language, setLanguage] = useState('am');
+  const [bannerUrls, setBannerUrls] = useState({
+    daily: null,
+    weekly: null,
+    monthly: null
+  });
 
   // Load language preference
   useEffect(() => {
     const savedLang = localStorage.getItem('appLanguage');
     if (savedLang === 'am' || savedLang === 'en') {
       setLanguage(savedLang);
+    }
+    // Load saved banners
+    const savedBanners = localStorage.getItem('merkato_banners');
+    if (savedBanners) {
+      try {
+        setBannerUrls(JSON.parse(savedBanners));
+      } catch (e) {}
     }
   }, []);
 
@@ -160,6 +174,31 @@ export default function MerkatoSeat() {
     setReservedSeats([]);
     setSelectedSeats([]);
   }
+
+  const refreshSeats = async () => {
+    setIsRefreshing(true);
+    try {
+      await fetchBookedSeats();
+      await fetchUserReservations();
+      toast.success(language === 'am' ? 'መቀመጫዎች ታድሰዋል! ✅' : 'Seats refreshed! ✅');
+    } catch (error) {
+      toast.error(language === 'am' ? 'መቀመጫዎችን ማደስ አልተቻለም' : 'Failed to refresh seats');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleBannerUpload = (poolType, url) => {
+    setBannerUrls(prev => ({
+      ...prev,
+      [poolType]: url
+    }));
+    // Save to localStorage
+    localStorage.setItem('merkato_banners', JSON.stringify({
+      ...bannerUrls,
+      [poolType]: url
+    }));
+  };
 
   const handleManualSeatAdd = async () => {
     const seatNum = parseInt(manualSeatInput);
@@ -314,6 +353,20 @@ export default function MerkatoSeat() {
             <p className="text-gray-500 text-sm mt-1">{language === 'am' ? 'እስከ 40 ሚሊዮን ብር ለማሸነፍ መቀመጫዎን ይምረጡ' : 'Select your seat to win up to 40 Million ETB'}</p>
           </div>
 
+          {/* 3D Banner Upload Section */}
+          <div className="mb-6">
+            <ThreeDBannerUpload 
+              city="Merkato"
+              poolType={selectedType}
+              title="🏪 Merkato VIP Banner"
+              existingBannerUrl={bannerUrls[selectedType]}
+              onBannerUploaded={(url) => handleBannerUpload(selectedType, url)}
+              autoRotate={true}
+              rotationSpeed={0.3}
+              maxFileSize={10}
+            />
+          </div>
+
           {/* 3 Main Buttons with different colors */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <button onClick={() => setSelectedType('daily')} className={`p-5 rounded-2xl border-2 text-left transition-all ${selectedType === 'daily' ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-gray-200 bg-white hover:border-blue-300'}`}>
@@ -349,7 +402,26 @@ export default function MerkatoSeat() {
           {/* Seat Selection */}
           {!showPayment && !showTicket && (
             <div className="bg-white rounded-2xl border border-gray-200 p-6">
-              <h3 className="text-lg font-bold mb-4">{language === 'am' ? 'መቀመጫዎችን ይምረጡ (ከፍተኛ 5)' : 'Select Your Seats (Max 5)'}</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-bold">{language === 'am' ? 'መቀመጫዎችን ይምረጡ (ከፍተኛ 5)' : 'Select Your Seats (Max 5)'}</h3>
+                <button 
+                  onClick={refreshSeats} 
+                  disabled={isRefreshing}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-xs transition disabled:opacity-50 flex items-center gap-1"
+                >
+                  {isRefreshing ? (
+                    <>
+                      <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Refreshing...
+                    </>
+                  ) : (
+                    '🔄 Refresh Seats'
+                  )}
+                </button>
+              </div>
               
               <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
                 <p className="text-sm font-medium mb-2">🎯 {language === 'am' ? 'የመቀመጫ ቁጥር በእጅ ያስገቡ:' : 'Enter seat number manually:'}</p>
