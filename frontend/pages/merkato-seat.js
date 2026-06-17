@@ -352,21 +352,6 @@ export default function MerkatoSeat() {
             </p>
             <p className="text-gray-500 text-sm mt-1">{language === 'am' ? 'እስከ 40 ሚሊዮን ብር ለማሸነፍ መቀመጫዎን ይምረጡ' : 'Select your seat to win up to 40 Million ETB'}</p>
           </div>
-
-          {/* 3D Banner Upload Section */}
-          <div className="mb-6">
-            <ThreeDBannerUpload 
-              city="Merkato"
-              poolType={selectedType}
-              title="🏪 Merkato VIP Banner"
-              existingBannerUrl={bannerUrls[selectedType]}
-              onBannerUploaded={(url) => handleBannerUpload(selectedType, url)}
-              autoRotate={true}
-              rotationSpeed={0.3}
-              maxFileSize={10}
-            />
-          </div>
-
           {/* 3 Main Buttons with different colors */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <button onClick={() => setSelectedType('daily')} className={`p-5 rounded-2xl border-2 text-left transition-all ${selectedType === 'daily' ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-gray-200 bg-white hover:border-blue-300'}`}>
