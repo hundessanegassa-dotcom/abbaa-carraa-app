@@ -1,4 +1,4 @@
-// components/Navbar.js - UPDATED with NotificationCenter
+// components/Navbar.js - FIXED with error handling for missing tables
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
@@ -6,7 +6,7 @@ import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import LanguageToggle from './LanguageToggle';
-import NotificationCenter from './NotificationCenter'; // ✅ FIXED: Changed from NotificationBell
+import NotificationCenter from './NotificationCenter';
 import TopCitySelector from './TopCitySelector';
 import { checkAdminStatus } from '../lib/adminCheck';
 
@@ -27,7 +27,7 @@ export default function Navbar() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // HIDE NAVBAR ON HOMEPAGE - ADD THIS CHECK
+  // HIDE NAVBAR ON HOMEPAGE
   if (router.pathname === '/') {
     return null;
   }
@@ -62,26 +62,61 @@ export default function Navbar() {
         const { isAdmin: adminStatus } = await checkAdminStatus();
         setIsAdmin(adminStatus);
         
-        const { data: agentCheck } = await supabase
-          .from('agents')
-          .select('id, is_approved')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        setHasAgentApplication(!!agentCheck);
+        // ✅ FIXED: Wrap each query in try/catch to prevent 406 errors
+        // Check Agent Application
+        try {
+          const { data: agentCheck, error: agentError } = await supabase
+            .from('agents')
+            .select('id, is_approved')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          // Only set if no error (table exists and query succeeded)
+          if (!agentError && agentCheck) {
+            setHasAgentApplication(!!agentCheck);
+          } else {
+            setHasAgentApplication(false);
+          }
+        } catch (agentErr) {
+          console.log('Agent table may not exist yet:', agentErr.message);
+          setHasAgentApplication(false);
+        }
         
-        const { data: vendorCheck } = await supabase
-          .from('vendors')
-          .select('id, verified')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        setHasVendorApplication(!!vendorCheck);
+        // Check Vendor Application
+        try {
+          const { data: vendorCheck, error: vendorError } = await supabase
+            .from('vendors')
+            .select('id, verified')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          if (!vendorError && vendorCheck) {
+            setHasVendorApplication(!!vendorCheck);
+          } else {
+            setHasVendorApplication(false);
+          }
+        } catch (vendorErr) {
+          console.log('Vendor table may not exist yet:', vendorErr.message);
+          setHasVendorApplication(false);
+        }
         
-        const { data: orgCheck } = await supabase
-          .from('organizations')
-          .select('id, verified')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        setHasOrgApplication(!!orgCheck);
+        // Check Organization Application
+        try {
+          const { data: orgCheck, error: orgError } = await supabase
+            .from('organizations')
+            .select('id, verified')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          if (!orgError && orgCheck) {
+            setHasOrgApplication(!!orgCheck);
+          } else {
+            setHasOrgApplication(false);
+          }
+        } catch (orgErr) {
+          console.log('Organization table may not exist yet:', orgErr.message);
+          setHasOrgApplication(false);
+        }
       }
     } catch (error) {
       console.error('Error fetching user:', error);
@@ -239,11 +274,11 @@ export default function Navbar() {
               )}
             </div>
             
-            {/* Right side icons - Updated with NotificationCenter */}
+            {/* Right side icons */}
             <div className="flex items-center gap-1 sm:gap-2">
               <TopCitySelector />
               
-              {/* ✅ UPDATED: NotificationCenter with userId prop */}
+              {/* NotificationCenter with userId prop */}
               {user && (
                 <NotificationCenter 
                   userId={user.id}
