@@ -890,21 +890,6 @@ export default function PoolDetails() {
               )}
             </div>
           </div>
-
-          {/* 3D Banner Upload Section */}
-          <div className="mb-6">
-            <ThreeDBannerUpload 
-              city={pool?.city || 'Pool'}
-              poolType="regular"
-              title={`${pool.prize_name || 'Pool'} Banner`}
-              existingBannerUrl={bannerUrl}
-              onBannerUploaded={handleBannerUpload}
-              autoRotate={true}
-              rotationSpeed={0.3}
-              maxFileSize={10}
-            />
-          </div>
-
           {showSeatSelector && renderSeatSelector()}
           {showPayment && renderPayment()}
           
