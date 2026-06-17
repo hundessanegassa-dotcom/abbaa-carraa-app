@@ -1,4 +1,4 @@
-// pages/_app.js - OPTIMIZED WITH PWA, SEO, PERFORMANCE
+// pages/_app.js - OPTIMIZED WITH PWA, SEO, PERFORMANCE (FIXED)
 import '../styles/globals.css';
 import { useState, useEffect, useTransition } from 'react';
 import dynamic from 'next/dynamic';
@@ -56,7 +56,7 @@ function MyApp({ Component, pageProps }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowInitialLoading(false);
-    }, 2000); // Reduced from 2500ms for better UX
+    }, 2000);
     
     return () => clearTimeout(timer);
   }, []);
@@ -95,6 +95,18 @@ function MyApp({ Component, pageProps }) {
     setMounted(true);
   }, []);
 
+  // 🚀 ADDED: Unregister old service workers to prevent cache issues
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for(let registration of registrations) {
+          // Only unregister if it's not the latest version
+          registration.unregister();
+        }
+      });
+    }
+  }, []);
+
   const getPageTitle = () => {
     const path = router.pathname;
     const titles = {
@@ -121,6 +133,17 @@ function MyApp({ Component, pageProps }) {
       '/cities': 'City VIP Programs',
       '/cities/seat': 'Select Seats - City VIP',
       '/payment/merkato': 'Payment - Merkato VIP',
+      // ✅ ADDED: Admin pages
+      '/admin/dashboard': 'Admin Dashboard',
+      '/admin/analytics': 'Admin Analytics',
+      '/admin/draw-winner': 'Draw Winner',
+      '/admin/verify-payments': 'Verify Payments',
+      '/admin/announcements': 'Announcements',
+      '/admin/applications': 'Applications',
+      '/admin/bank-transfers': 'Bank Transfers',
+      '/admin/logs': 'System Logs',
+      '/admin/newsletter': 'Newsletter',
+      '/admin/test-connections': 'Connection Test',
     };
     return titles[path] || 'Abbaa Carraa';
   };
