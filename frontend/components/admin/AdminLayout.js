@@ -1,16 +1,16 @@
-// components/admin/AdminLayout.js - Complete Admin Layout Wrapper with 3D Effects & Sidebar Navigation
+// components/admin/AdminLayout.js - FIXED Realtime Subscription
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
-export default function AdminLayout({ 
-  children, 
-  title, 
-  subtitle, 
-  icon, 
-  user, 
+export default function AdminLayout({
+  children,
+  title,
+  subtitle,
+  icon,
+  user,
   profile,
   activeTab = 'overview',
   language = 'am',
@@ -27,6 +27,7 @@ export default function AdminLayout({
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
   const animationRef = useRef(null);
+  const channelRef = useRef(null);
 
   // Auto-rotation for 3D effect
   useEffect(() => {
@@ -47,8 +48,36 @@ export default function AdminLayout({
   useEffect(() => {
     if (user) {
       fetchNotifications();
-      setupRealtimeSubscription();
     }
+  }, [user]);
+
+  // ✅ FIXED: Realtime subscription with correct order
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase.channel('admin_notifications_channel');
+
+    channel
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'admin_notifications'
+      }, (payload) => {
+        setNotifications(prev => [payload.new, ...prev]);
+        setUnreadCount(prev => prev + 1);
+        toast.info(`🔔 ${payload.new.title}`);
+      })
+      .subscribe((status) => {
+        console.log('Admin notification subscription status:', status);
+      });
+
+    channelRef.current = channel;
+
+    return () => {
+      if (channelRef.current) {
+        channelRef.current.unsubscribe();
+      }
+    };
   }, [user]);
 
   const toggle3D = () => {
@@ -70,29 +99,12 @@ export default function AdminLayout({
         .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
-      
+
       setNotifications(data || []);
       setUnreadCount(data?.filter(n => !n.read).length || 0);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }
-  };
-
-  const setupRealtimeSubscription = () => {
-    const subscription = supabase
-      .channel('admin_notifications_channel')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'admin_notifications'
-      }, (payload) => {
-        setNotifications(prev => [payload.new, ...prev]);
-        setUnreadCount(prev => prev + 1);
-        toast.info(`🔔 ${payload.new.title}`);
-      })
-      .subscribe();
-
-    return () => subscription.unsubscribe();
   };
 
   const markNotificationRead = async (id) => {
@@ -101,8 +113,8 @@ export default function AdminLayout({
         .from('admin_notifications')
         .update({ read: true })
         .eq('id', id);
-      
-      setNotifications(prev => 
+
+      setNotifications(prev =>
         prev.map(n => n.id === id ? { ...n, read: true } : n)
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
@@ -120,7 +132,7 @@ export default function AdminLayout({
         .from('admin_notifications')
         .update({ read: true })
         .in('id', unreadIds);
-      
+
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
       setUnreadCount(0);
       toast.success('All notifications marked as read');
@@ -178,9 +190,8 @@ export default function AdminLayout({
               {/* 3D Toggle */}
               <button
                 onClick={toggle3D}
-                className={`hidden sm:block px-2 py-1 rounded-lg text-xs font-medium transition ${
-                  is3D 
-                    ? 'bg-blue-600/30 text-blue-300 hover:bg-blue-600/40' 
+                className={`hidden sm:block px-2 py-1 rounded-lg text-xs font-medium transition ${is3D
+                    ? 'bg-blue-600/30 text-blue-300 hover:bg-blue-600/40'
                     : 'bg-gray-700/30 text-gray-400 hover:bg-gray-700/40'
                 }`}
                 title={is3D ? '3D ON' : '3D OFF'}
@@ -233,9 +244,8 @@ export default function AdminLayout({
                       notifications.slice(0, 10).map(n => (
                         <div
                           key={n.id}
-                          className={`p-3 border-b border-gray-700 cursor-pointer hover:bg-gray-700 transition ${
-                            !n.read ? 'bg-gray-700/50 border-l-4 border-l-blue-500' : ''
-                          }`}
+                          className={`p-3 border-b border-gray-700 cursor-pointer hover:bg-gray-700 transition ${!n.read ? 'bg-gray-700/50 border-l-4 border-l-blue-500' : ''
+                            }`}
                           onClick={() => markNotificationRead(n.id)}
                         >
                           <p className="font-medium text-white text-sm">{n.title}</p>
@@ -274,9 +284,8 @@ export default function AdminLayout({
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-gray-900 transform transition-transform duration-300 ease-in-out ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 lg:static lg:inset-auto`}>
+        <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-gray-900 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } lg:translate-x-0 lg:static lg:inset-auto`}>
           <div className="h-full overflow-y-auto p-4">
             <div className="flex items-center justify-between mb-6 lg:hidden">
               <span className="text-white font-bold text-lg">Menu</span>
@@ -287,17 +296,16 @@ export default function AdminLayout({
                 ✕
               </button>
             </div>
-            
+
             <div className="space-y-1">
               {menuItems.map((item) => (
                 <Link
                   key={item.id}
                   href={item.href}
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition ${
-                    activeTab === item.id
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition ${activeTab === item.id
                       ? 'bg-red-600 text-white'
                       : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                  }`}
+                    }`}
                   onClick={() => {
                     setSidebarOpen(false);
                     if (onTabChange) onTabChange(item.id);
@@ -329,7 +337,7 @@ export default function AdminLayout({
         </aside>
 
         {/* Main Content with 3D Effect */}
-        <main 
+        <main
           className="flex-1 min-h-screen transition-all duration-500"
           style={{
             transform: get3DTransform(),
