@@ -699,23 +699,6 @@ export default function CityVip() {
             </div>
             <p className="text-gray-200 mt-2">{language === 'am' ? 'እስከ 40 ሚሊዮን ብር ለማሸነፍ መቀመጫዎን ይምረጡ' : 'Select your seat to win up to 40 Million ETB'}</p>
           </div>
-
-          {/* 3D Banner Upload Section */}
-          <div className="container mx-auto px-4 py-8">
-            <div className="max-w-4xl mx-auto">
-              <ThreeDBannerUpload 
-                city={city}
-                poolType={activeTab}
-                title={`${cityInfo.name.split('|')[0]} VIP Banner`}
-                existingBannerUrl={bannerUrls[activeTab]}
-                onBannerUploaded={(url) => handleBannerUpload(activeTab, url)}
-                autoRotate={true}
-                rotationSpeed={0.3}
-                maxFileSize={10}
-              />
-            </div>
-          </div>
-
           {/* 3 COLORED TABS */}
           <div className="container mx-auto px-4 py-8">
             <div className="flex flex-wrap justify-center gap-3 mb-8">
