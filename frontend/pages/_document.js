@@ -1,4 +1,4 @@
-// pages/_document.js - OPTIMIZED FOR PWA AND PERFORMANCE
+// pages/_document.js - FIXED (Removed X-Frame-Options meta tag)
 import { Html, Head, Main, NextScript } from 'next/document';
 
 export default function Document() {
@@ -20,7 +20,7 @@ export default function Document() {
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Abbaa Carraa" />
         
-        {/* Icons - Multiple sizes for different devices - FIXED: using /images/ */}
+        {/* Icons - Multiple sizes for different devices */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" type="image/png" sizes="32x32" href="/images/icon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/images/icon-16x16.png" />
@@ -37,11 +37,11 @@ export default function Document() {
         {/* SEO - Basic meta tags */}
         <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
         
-        {/* Security headers via meta tags - ALL KEPT */}
+        {/* ✅ REMOVED: X-Frame-Options meta tag (needs to be HTTP header only) */}
+        {/* ✅ KEPT: X-Content-Type-Options (works as meta tag) */}
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
-        <meta httpEquiv="X-Frame-Options" content="DENY" />
 
-        {/* Google Search Console Verification - KEPT */}
+        {/* Google Search Console Verification */}
         <meta name="google-site-verification" content="R7_wK0rVZIH3R1tBPRkZQiiFDz9TC04m5NdAmmRuVbk" />
       </Head>
       <body>
