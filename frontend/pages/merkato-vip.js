@@ -222,23 +222,6 @@ export default function MerkatoVIP() {
               <div className="bg-orange-600/30 px-4 py-2 rounded-full text-sm">👑 Monthly 40M</div>
             </div>
           </div>
-
-          {/* 3D Banner Upload Section */}
-          <div className="container mx-auto px-4 py-8">
-            <div className="max-w-4xl mx-auto">
-              <ThreeDBannerUpload 
-                city="Merkato"
-                poolType={activeTab}
-                title="🏪 Merkato VIP Banner"
-                existingBannerUrl={bannerUrls[activeTab]}
-                onBannerUploaded={(url) => handleBannerUpload(activeTab, url)}
-                autoRotate={true}
-                rotationSpeed={0.3}
-                maxFileSize={10}
-              />
-            </div>
-          </div>
-
           {/* 3 Colorful Tabs */}
           <div className="container mx-auto px-4 py-8">
             <div className="flex flex-wrap justify-center gap-3 mb-8">
