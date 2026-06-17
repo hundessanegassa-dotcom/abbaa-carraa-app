@@ -42,6 +42,32 @@ main {
 }
 
 /* ========================================
+   🚫 DISABLE 3D EFFECTS GLOBALLY
+   ======================================== */
+.perspective-1000,
+.transform-gpu,
+[style*="perspective"],
+[style*="rotateY"],
+[style*="rotateX"],
+.preserve-3d {
+  transform: none !important;
+  perspective: none !important;
+  transform-style: flat !important;
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Keep scale effects for cards */
+.pool-card:hover {
+  transform: scale(1.02) !important;
+}
+
+/* Keep hover lift */
+.hover-lift:hover {
+  transform: translateY(-2px) !important;
+}
+
+/* ========================================
    CONTAINER FIXES FOR MOBILE
    ======================================== */
 
