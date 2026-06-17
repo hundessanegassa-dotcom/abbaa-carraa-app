@@ -1,4 +1,4 @@
-// components/NotificationCenter.js - Complete Notification System with Real-time Updates
+// components/NotificationCenter.js - FIXED Realtime Subscription
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -16,22 +16,20 @@ export default function NotificationCenter({
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [filter, setFilter] = useState('all'); // 'all', 'unread', 'read'
-  const [typeFilter, setTypeFilter] = useState('all'); // 'all', 'ticket', 'payment', 'pool', 'system', 'promotion'
+  const [filter, setFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(showSounds);
   const dropdownRef = useRef(null);
-  const audioRef = useRef(null);
   const subscriptionRef = useRef(null);
+  const channelRef = useRef(null);
   const [notificationSound, setNotificationSound] = useState(null);
 
   // Load notification sound
   useEffect(() => {
-    // Create audio element for notification sound
     try {
       const audio = new Audio();
-      // Use a simple beep or load from URL
-      audio.src = 'data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0Y...'; // Short beep sound
+      audio.src = 'data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0Y...';
       audio.volume = 0.3;
       setNotificationSound(audio);
     } catch (e) {
@@ -60,22 +58,23 @@ export default function NotificationCenter({
 
     } catch (error) {
       console.error('Error fetching notifications:', error);
-      // Fallback to mock notifications if supabase fails
       setNotifications(getMockNotifications());
     } finally {
       setLoading(false);
     }
   }, [userId, maxDisplay]);
 
-  // Subscribe to real-time notifications
+  // ✅ FIXED: Subscribe to real-time notifications with proper pattern
   useEffect(() => {
     if (!userId) return;
 
     fetchNotifications();
 
-    // Subscribe to new notifications
-    const subscription = supabase
-      .channel('notifications_channel')
+    // ✅ Create channel first
+    const channel = supabase.channel('notifications_channel');
+
+    // ✅ Add the callback BEFORE subscribing
+    channel
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -86,7 +85,6 @@ export default function NotificationCenter({
         setNotifications(prev => [newNotification, ...prev]);
         setUnreadCount(prev => prev + 1);
         
-        // Play sound
         if (soundEnabled && notificationSound) {
           try {
             notificationSound.play();
@@ -95,7 +93,6 @@ export default function NotificationCenter({
           }
         }
 
-        // Show toast
         toast.custom((t) => (
           <div 
             className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
@@ -137,12 +134,17 @@ export default function NotificationCenter({
           onNotificationRead(newNotification);
         }
       })
-      .subscribe();
+      // ✅ Now subscribe
+      .subscribe((status) => {
+        console.log('Notification subscription status:', status);
+      });
 
-    subscriptionRef.current = subscription;
+    channelRef.current = channel;
 
     return () => {
-      subscription.unsubscribe();
+      if (channelRef.current) {
+        channelRef.current.unsubscribe();
+      }
     };
   }, [userId, soundEnabled, notificationSound, autoHide, autoHideDuration]);
 
@@ -156,7 +158,6 @@ export default function NotificationCenter({
       onNotificationClick(notification);
     }
     
-    // Navigate based on notification type
     if (notification.link_url) {
       window.location.href = notification.link_url;
     }
@@ -165,7 +166,6 @@ export default function NotificationCenter({
   // Mark notification as read
   const markAsRead = async (notificationId) => {
     try {
-      // Update local state
       setNotifications(prev => 
         prev.map(n => 
           n.id === notificationId ? { ...n, is_read: true } : n
@@ -173,7 +173,6 @@ export default function NotificationCenter({
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
 
-      // Update database
       await supabase
         .from('notifications')
         .update({ is_read: true, read_at: new Date().toISOString() })
@@ -190,13 +189,11 @@ export default function NotificationCenter({
       const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
       if (unreadIds.length === 0) return;
 
-      // Update local state
       setNotifications(prev => 
         prev.map(n => ({ ...n, is_read: true }))
       );
       setUnreadCount(0);
 
-      // Update database
       await supabase
         .from('notifications')
         .update({ is_read: true, read_at: new Date().toISOString() })
@@ -213,14 +210,12 @@ export default function NotificationCenter({
   // Delete notification
   const deleteNotification = async (notificationId) => {
     try {
-      // Update local state
       setNotifications(prev => prev.filter(n => n.id !== notificationId));
       setUnreadCount(prev => {
         const wasUnread = notifications.find(n => n.id === notificationId && !n.is_read);
         return wasUnread ? prev - 1 : prev;
       });
 
-      // Delete from database
       await supabase
         .from('notifications')
         .delete()
@@ -239,11 +234,9 @@ export default function NotificationCenter({
     if (!confirm('Are you sure you want to clear all notifications?')) return;
 
     try {
-      // Update local state
       setNotifications([]);
       setUnreadCount(0);
 
-      // Delete from database
       await supabase
         .from('notifications')
         .delete()
@@ -268,14 +261,12 @@ export default function NotificationCenter({
   const getFilteredNotifications = () => {
     let filtered = notifications;
 
-    // Filter by read status
     if (filter === 'unread') {
       filtered = filtered.filter(n => !n.is_read);
     } else if (filter === 'read') {
       filtered = filtered.filter(n => n.is_read);
     }
 
-    // Filter by type
     if (typeFilter !== 'all') {
       filtered = filtered.filter(n => n.type === typeFilter);
     }
