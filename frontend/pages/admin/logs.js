@@ -1,18 +1,59 @@
-// pages/admin/logs.js
+// pages/admin/logs.js - FIXED with AdminLayout
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import BackButton from '../../components/BackButton';
 import toast from 'react-hot-toast';
+import AdminLayout from '../../components/admin/AdminLayout'; // ✅ ADDED
 
 export default function AdminLogs() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    loadLogs();
+    checkAdmin();
   }, []);
+
+  async function checkAdmin() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      setUser(user);
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+      setProfile(profile);
+
+      const { data: adminRecord } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (profile?.role !== 'admin' && !adminRecord) {
+        toast.error('Admin access required');
+        router.push('/dashboard');
+        return;
+      }
+
+      setIsAdmin(true);
+      await loadLogs();
+    } catch (error) {
+      console.error('Admin check error:', error);
+      toast.error('Failed to verify admin access');
+      router.push('/dashboard');
+    }
+  }
 
   async function loadLogs() {
     setLoading(true);
@@ -53,7 +94,7 @@ export default function AdminLogs() {
           action: 'Payment Verified',
           details: `${p.user_name} paid ETB ${p.contribution_amount?.toLocaleString()} for ${p.city || 'Merkato'} ${p.pool_type}`,
           user: p.user_name,
-          timestamp: p.verified_at,
+          timestamp: p.verified_at || p.created_at,
           icon: '💰'
         });
       });
@@ -111,39 +152,109 @@ export default function AdminLogs() {
     }
   };
 
+  const getTypeIcon = (type) => {
+    switch(type) {
+      case 'notification': return '🔔';
+      case 'payment': return '💰';
+      case 'draw': return '🏆';
+      case 'user': return '👤';
+      default: return '📌';
+    }
+  };
+
+  if (!isAdmin) return null;
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
-        <BackButton />
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <BackButton />
-      <h1 className="text-3xl font-bold mb-6">📜 System Logs</h1>
-
+    <AdminLayout
+      title="System Logs"
+      subtitle={`${filteredLogs.length} logs found`}
+      icon="📜"
+      user={user}
+      profile={profile}
+      activeTab="logs"
+    >
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6 flex flex-wrap gap-4 items-center">
-        <div className="flex gap-2">
-          <button onClick={() => setFilter('all')} className={`px-3 py-1 rounded-full text-sm ${filter === 'all' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}>All</button>
-          <button onClick={() => setFilter('notification')} className={`px-3 py-1 rounded-full text-sm ${filter === 'notification' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}>🔔 Notifications</button>
-          <button onClick={() => setFilter('payment')} className={`px-3 py-1 rounded-full text-sm ${filter === 'payment' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}>💰 Payments</button>
-          <button onClick={() => setFilter('draw')} className={`px-3 py-1 rounded-full text-sm ${filter === 'draw' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'}`}>🏆 Draws</button>
-          <button onClick={() => setFilter('user')} className={`px-3 py-1 rounded-full text-sm ${filter === 'user' ? 'bg-yellow-600 text-white' : 'bg-gray-200 text-gray-700'}`}>👤 Users</button>
+      <div className="bg-white rounded-xl shadow p-4 mb-6 border border-gray-200">
+        <div className="flex flex-wrap gap-4 items-center">
+          <div className="flex flex-wrap gap-2">
+            <button 
+              onClick={() => setFilter('all')} 
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
+                filter === 'all' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              All
+            </button>
+            <button 
+              onClick={() => setFilter('notification')} 
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition flex items-center gap-1 ${
+                filter === 'notification' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              🔔 Notifications
+            </button>
+            <button 
+              onClick={() => setFilter('payment')} 
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition flex items-center gap-1 ${
+                filter === 'payment' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              💰 Payments
+            </button>
+            <button 
+              onClick={() => setFilter('draw')} 
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition flex items-center gap-1 ${
+                filter === 'draw' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              🏆 Draws
+            </button>
+            <button 
+              onClick={() => setFilter('user')} 
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition flex items-center gap-1 ${
+                filter === 'user' ? 'bg-yellow-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              👤 Users
+            </button>
+          </div>
+          <div className="flex-1 min-w-[200px]">
+            <div className="relative">
+              <input 
+                type="text" 
+                placeholder="Search logs..." 
+                value={search} 
+                onChange={(e) => setSearch(e.target.value)} 
+                className="w-full border rounded-lg px-4 py-1.5 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              />
+              {search && (
+                <button 
+                  onClick={() => setSearch('')} 
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+          <button 
+            onClick={loadLogs} 
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1"
+          >
+            🔄 Refresh
+          </button>
         </div>
-        <div className="flex-1">
-          <input type="text" placeholder="Search logs..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full md:w-64 border rounded-lg px-3 py-1 text-sm" />
-        </div>
-        <button onClick={loadLogs} className="bg-blue-600 text-white px-4 py-1 rounded-lg text-sm hover:bg-blue-700">Refresh</button>
       </div>
 
       {/* Logs Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
@@ -158,20 +269,26 @@ export default function AdminLogs() {
             <tbody className="divide-y divide-gray-200">
               {filteredLogs.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-4 py-8 text-center text-gray-400">No logs found</td>
+                  <td colSpan="5" className="px-4 py-12 text-center text-gray-400">
+                    <div className="text-4xl mb-2">📭</div>
+                    <p>No logs found</p>
+                    <p className="text-sm mt-1">Try adjusting your filters or refresh</p>
+                  </td>
                 </tr>
               ) : (
                 filteredLogs.map(log => (
-                  <tr key={log.id} className="hover:bg-gray-50">
+                  <tr key={`${log.id}-${log.timestamp}`} className="hover:bg-gray-50 transition">
                     <td className="px-4 py-3">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(log.type)}`}>
-                        {log.icon} {log.type}
+                        {getTypeIcon(log.type)} {log.type}
                       </span>
                     </td>
                     <td className="px-4 py-3 font-medium text-sm">{log.action}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{log.details}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">{log.details}</td>
                     <td className="px-4 py-3 text-sm text-gray-500">{log.user}</td>
-                    <td className="px-4 py-3 text-xs text-gray-400">{new Date(log.timestamp).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                      {new Date(log.timestamp).toLocaleString()}
+                    </td>
                   </tr>
                 ))
               )}
@@ -179,6 +296,26 @@ export default function AdminLogs() {
           </table>
         </div>
       </div>
-    </div>
+
+      {/* Stats */}
+      <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-200">
+          <p className="text-2xl font-bold text-blue-600">{logs.filter(l => l.type === 'notification').length}</p>
+          <p className="text-xs text-gray-500">🔔 Notifications</p>
+        </div>
+        <div className="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-200">
+          <p className="text-2xl font-bold text-green-600">{logs.filter(l => l.type === 'payment').length}</p>
+          <p className="text-xs text-gray-500">💰 Payments</p>
+        </div>
+        <div className="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-200">
+          <p className="text-2xl font-bold text-purple-600">{logs.filter(l => l.type === 'draw').length}</p>
+          <p className="text-xs text-gray-500">🏆 Draws</p>
+        </div>
+        <div className="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-200">
+          <p className="text-2xl font-bold text-yellow-600">{logs.filter(l => l.type === 'user').length}</p>
+          <p className="text-xs text-gray-500">👤 Users</p>
+        </div>
+      </div>
+    </AdminLayout>
   );
 }
