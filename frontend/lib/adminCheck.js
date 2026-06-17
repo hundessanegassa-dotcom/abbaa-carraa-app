@@ -1,75 +1,58 @@
-// lib/adminCheck.js - FINAL FIXED VERSION
+// lib/adminCheck.js
 import { supabase } from './supabase';
 
-/**
- * Check if current user is admin
- * Returns: { isAdmin: boolean, user: object, profile: object }
- */
 export async function checkAdminStatus() {
   try {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !user) {
-      return { isAdmin: false, user: null, profile: null };
-    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { isAdmin: false, error: 'No user' };
 
-    // Check profile role first (most reliable)
+    // Check profile role
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('role, user_type, full_name, email')
+      .select('role')
       .eq('id', user.id)
       .maybeSingle();
 
-    // Check admins table - FIXED: only select existing columns
-    let adminRecord = null;
-    try {
-      const { data, error: adminError } = await supabase
-        .from('admins')
-        .select('is_active')  // Remove 'role as admin_role' - column doesn't exist
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (!adminError) {
-        adminRecord = data;
-      }
-    } catch (err) {
-      // Table might not exist - ignore
-      console.warn('Admin table check failed:', err.message);
+    if (profileError) {
+      console.error('Profile check error:', profileError);
     }
 
-    const isAdmin = profile?.role === 'admin' || 
-                    profile?.user_type === 'admin' || 
-                    adminRecord?.is_active === true;
+    // Check admin record
+    const { data: adminRecord, error: adminError } = await supabase
+      .from('admins')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .maybeSingle();
 
+    if (adminError) {
+      console.error('Admin record check error:', adminError);
+    }
+
+    const isAdmin = profile?.role === 'admin' || !!adminRecord;
+    
     return { 
       isAdmin, 
-      user, 
-      profile,
-      adminRecord: adminRecord || null
+      role: profile?.role || null,
+      isSuperAdmin: !!adminRecord
     };
   } catch (error) {
     console.error('Admin check error:', error);
-    return { isAdmin: false, user: null, profile: null };
+    return { isAdmin: false, error: error.message };
   }
 }
 
-/**
- * Require admin access - redirects to dashboard if not admin
- */
-export async function requireAdmin(router) {
+export async function requireAdmin(context) {
   const { isAdmin } = await checkAdminStatus();
   
   if (!isAdmin) {
-    router.push('/dashboard');
-    return false;
+    return {
+      redirect: {
+        destination: '/dashboard',
+        permanent: false,
+      },
+    };
   }
-  return true;
-}
-
-/**
- * Simple check if user is admin
- */
-export async function isAdmin() {
-  const { isAdmin: adminStatus } = await checkAdminStatus();
-  return adminStatus;
+  
+  return { props: {} };
 }
