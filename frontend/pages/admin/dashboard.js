@@ -1,13 +1,11 @@
-// pages/admin/dashboard.js - COMPLETE 1900+ LINE ADMIN DASHBOARD
-// FULLY INTERLINKED WITH ALL ABBAA CARRAA PLATFORM
-// UPDATED WITH UNIFIED MODALS (CREATE, EDIT, DELETE)
+// pages/admin/dashboard.js - COMPLETE FIXED ADMIN DASHBOARD
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import BackButton from '../../components/BackButton';
-// IMPORT UNIFIED MODALS - REPLACES THE THREE OLD MODALS
+import AdminLayout from '../../components/admin/AdminLayout'; // ✅ ADDED
 import CityVipModal from '../../components/admin/CityVipModal';
 import MerkatoVipModal from '../../components/admin/MerkatoVipModal';
 import RegularPoolModal from '../../components/admin/RegularPoolModal';
@@ -19,6 +17,7 @@ export default function AdminDashboard() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [isAdmin, setIsAdmin] = useState(false);
   
   // Stats
   const [stats, setStats] = useState({
@@ -44,12 +43,12 @@ export default function AdminDashboard() {
   const [selectedCityPool, setSelectedCityPool] = useState(null);
   const [cityVipConfigs, setCityVipConfigs] = useState([]);
   
-  // UNIFIED MODAL STATES - REPLACES THE THREE OLD MODAL STATES
-  const [cityModalMode, setCityModalMode] = useState(null); // 'create', 'edit', 'delete'
+  // UNIFIED MODAL STATES
+  const [cityModalMode, setCityModalMode] = useState(null);
   const [selectedCityData, setSelectedCityData] = useState(null);
-  const [merkatoModalMode, setMerkatoModalMode] = useState(null); // 'create', 'edit', 'delete'
+  const [merkatoModalMode, setMerkatoModalMode] = useState(null);
   const [selectedMerkatoData, setSelectedMerkatoData] = useState(null);
-  const [regularModalMode, setRegularModalMode] = useState(null); // 'create', 'edit', 'delete'
+  const [regularModalMode, setRegularModalMode] = useState(null);
   const [selectedRegularData, setSelectedRegularData] = useState(null);
   
   // Admin's personal pools
@@ -93,9 +92,9 @@ export default function AdminDashboard() {
   
   // Announcement modal
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
-  const [newAnnouncement, setNewAnnouncement] = useState({ title: '', content: '', target_audience: 'all' });
+  const [newAnnouncement, setNewAnnouncement] = useState({ title: '', message: '', target_audience: 'all' });
   
-  // Pool creation modal (KEPT for backward compatibility)
+  // Pool creation modal
   const [showPoolModal, setShowPoolModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [newPool, setNewPool] = useState({
@@ -173,6 +172,7 @@ export default function AdminDashboard() {
         return; 
       }
       
+      setIsAdmin(true);
       await loadAllData();
       await loadNotifications();
       setLoading(false);
@@ -392,6 +392,15 @@ export default function AdminDashboard() {
           type: 'winner', 
           link_url: `/dashboard`, 
           created_at: new Date().toISOString() 
+        });
+      
+      // ✅ ADDED: Admin notification
+      await supabase
+        .from('admin_notifications')
+        .insert({
+          title: `🏆 City VIP Winner! ${winner.user_name || winner.user_email}`,
+          message: `${cityName} ${poolType} winner: ${prizeAmount.toLocaleString()} ETB`,
+          type: 'winner'
         });
       
       toast.success(`🎉 Winner drawn for ${cityName} ${poolType}! ${winner.user_name || winner.user_email} wins ${prizeAmount.toLocaleString()} ETB!`);
@@ -1116,7 +1125,7 @@ export default function AdminDashboard() {
   }
 
   async function createAnnouncement() {
-    if (!newAnnouncement.title || !newAnnouncement.content) { 
+    if (!newAnnouncement.title || !newAnnouncement.message) { 
       toast.error('Please fill all fields'); 
       return; 
     }
@@ -1126,7 +1135,7 @@ export default function AdminDashboard() {
         .from('announcements')
         .insert({ 
           title: newAnnouncement.title, 
-          content: newAnnouncement.content, 
+          message: newAnnouncement.message, 
           target_audience: newAnnouncement.target_audience, 
           created_by: user?.id, 
           is_active: true 
@@ -1134,7 +1143,7 @@ export default function AdminDashboard() {
       
       toast.success('Announcement created');
       setShowAnnouncementModal(false);
-      setNewAnnouncement({ title: '', content: '', target_audience: 'all' });
+      setNewAnnouncement({ title: '', message: '', target_audience: 'all' });
     } catch (error) { 
       toast.error('Failed'); 
     }
@@ -1231,140 +1240,72 @@ export default function AdminDashboard() {
     );
   }
 
+  const totalPending = (pendingBankTransfers || 0) + 
+    (cityVipParticipants?.filter(p => p.payment_status === 'pending_verification')?.length || 0) +
+    (merkatoParticipants?.filter(p => p.payment_status === 'pending_verification')?.length || 0) +
+    (pendingAgents?.length || 0) +
+    (pendingVendors?.length || 0) +
+    (pendingOrganizations?.length || 0) +
+    (disputes?.length || 0) +
+    (withdrawalRequests?.length || 0);
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-red-600 to-rose-600 text-white py-6">
-        <div className="container mx-auto px-4">
-          <div className="mb-4"><BackButton /></div>
-          <div className="flex justify-between items-center flex-wrap gap-4">
-            <div>
-              <h1 className="text-3xl font-bold">Admin Command Center</h1>
-              <p className="text-red-100">Welcome, {profile?.full_name || 'Admin'}</p>
-            </div>
-            <div className="flex gap-3 flex-wrap">
-              <div className="relative">
-                <button className="bg-white/20 px-3 py-2 rounded-full text-sm flex items-center gap-2">
-                  🔔 {unreadNotifications > 0 && (
-                    <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      {unreadNotifications}
-                    </span>
-                  )}
-                </button>
-                {notifications.length > 0 && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto">
-                    <div className="p-3 border-b font-semibold text-gray-800">Notifications</div>
-                    {notifications.slice(0, 10).map(n => (
-                      <div 
-                        key={n.id} 
-                        className={`p-3 border-b cursor-pointer hover:bg-gray-50 ${!n.read ? 'bg-blue-50' : ''}`} 
-                        onClick={() => markNotificationRead(n.id)}
-                      >
-                        <p className="font-medium text-sm text-gray-800">{n.title}</p>
-                        <p className="text-xs text-gray-500">{n.message}</p>
-                        <p className="text-xs text-gray-400 mt-1">{new Date(n.created_at).toLocaleString()}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <Link href="/admin/draw" className="bg-white text-red-600 px-4 py-2 rounded-full font-semibold text-sm">🎲 Draw Management</Link>
-              <button onClick={() => setRegularModalMode('create')} className="bg-white text-red-600 px-4 py-2 rounded-full font-semibold text-sm">+ Create Pool (20%)</button>
-              <button onClick={() => setShowMerkatoModal(true)} className="bg-yellow-500 text-gray-900 px-4 py-2 rounded-full font-semibold text-sm">🏪 Create Merkato VIP Pool</button>
-              <Link href="/dashboard" className="bg-white/20 px-4 py-2 rounded-full text-sm">Home</Link>
-                  <Link href="/admin/newsletter" className="bg-pink-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
-  <div className="text-2xl mb-1">📧</div>
-  <p className="font-semibold text-xs">Newsletter</p>
-  <p className="text-xs opacity-80">Manage</p>
-</Link>
-            </div>
-          </div>
+    <AdminLayout
+      title="Admin Command Center"
+      subtitle={`${totalPending} items pending review`}
+      icon="👑"
+      user={user}
+      profile={profile}
+      activeTab={activeTab}
+    >
+      {/* Quick Stats - Pending Items Summary */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-6">
+        <div className="bg-yellow-50 rounded-xl p-3 text-center border border-yellow-200">
+          <p className="text-2xl font-bold text-yellow-600">{pendingBankTransfers || 0}</p>
+          <p className="text-xs text-gray-500">🏦 Bank Transfers</p>
         </div>
-      </div>
-
-      {/* Role Description */}
-      <div className="container mx-auto px-4 mt-6">
-        <div className="bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 rounded-xl p-5">
-          <h3 className="font-bold text-red-800 text-lg mb-2">👑 Your Role: Platform Administrator</h3>
-          <p className="text-red-700 text-sm leading-relaxed">
-            As the Platform Administrator, you have full control over Abbaa Carraa. You can manage users, approve applications, 
-            monitor all pools, process withdrawals, resolve disputes, verify bank transfers, and manage commissions.
-            Additionally, you can create your own personal pools and earn <strong>20% commission</strong> on them.
+        <div className="bg-purple-50 rounded-xl p-3 text-center border border-purple-200">
+          <p className="text-2xl font-bold text-purple-600">
+            {(cityVipParticipants?.filter(p => p.payment_status === 'pending_verification')?.length || 0) +
+             (merkatoParticipants?.filter(p => p.payment_status === 'pending_verification')?.length || 0)}
           </p>
+          <p className="text-xs text-gray-500">💳 Pending Payments</p>
         </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="container mx-auto px-4 mt-6">
-        <div className="grid grid-cols-2 md:grid-cols-10 gap-3">
-          <button onClick={() => setRegularModalMode('create')} className="bg-gradient-to-r from-red-600 to-rose-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
-            <div className="text-2xl mb-1">➕</div>
-            <p className="font-semibold text-xs">Create Pool</p>
-            <p className="text-xs opacity-80">20%</p>
-          </button>
-          <button onClick={() => setShowMerkatoModal(true)} className="bg-gradient-to-r from-yellow-600 to-orange-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
-            <div className="text-2xl mb-1">🏪</div>
-            <p className="font-semibold text-xs">Merkato VIP</p>
-            <p className="text-xs opacity-80">1M/10M/40M</p>
-          </button>
-          <button onClick={() => setActiveTab('city-vip')} className="bg-gradient-to-r from-gray-600 to-gray-800 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
-            <div className="text-2xl mb-1">🏙️</div>
-            <p className="font-semibold text-xs">City VIP</p>
-            <p className="text-xs opacity-80">Manage</p>
-          </button>
-          <button onClick={() => setActiveTab('approvals')} className="bg-yellow-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
-            <div className="text-2xl mb-1">📝</div>
-            <p className="font-semibold text-xs">Approvals</p>
-            <p className="text-xs opacity-80">{pendingAgents.length + pendingVendors.length + pendingOrganizations.length}</p>
-          </button>
-          <button onClick={() => setActiveTab('withdrawals')} className="bg-green-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
-            <div className="text-2xl mb-1">💰</div>
-            <p className="font-semibold text-xs">Withdrawals</p>
-            <p className="text-xs opacity-80">{withdrawalRequests.length}</p>
-          </button>
-          <button onClick={() => setActiveTab('bank-transfers')} className="bg-blue-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
-            <div className="text-2xl mb-1">🏦</div>
-            <p className="font-semibold text-xs">Bank Transfers</p>
-            <p className="text-xs opacity-80">{pendingBankTransfers}</p>
-          </button>
-          <button onClick={() => setActiveTab('disputes')} className="bg-orange-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
-            <div className="text-2xl mb-1">⚖️</div>
-            <p className="font-semibold text-xs">Disputes</p>
-            <p className="text-xs opacity-80">{disputes.length}</p>
-          </button>
-          <button onClick={() => setShowAnnouncementModal(true)} className="bg-purple-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
-            <div className="text-2xl mb-1">📢</div>
-            <p className="font-semibold text-xs">Announce</p>
-          </button>
-          <Link href="/admin/verify-payments" className="bg-indigo-600 text-white p-3 rounded-xl text-center hover:shadow-lg transition">
-            <div className="text-2xl mb-1">🔍</div>
-            <p className="font-semibold text-xs">Verify Payments</p>
-            <p className="text-xs opacity-80">Approve/Reject</p>
-          </Link>
+        <div className="bg-blue-50 rounded-xl p-3 text-center border border-blue-200">
+          <p className="text-2xl font-bold text-blue-600">
+            {(pendingAgents?.length || 0) + (pendingVendors?.length || 0) + (pendingOrganizations?.length || 0)}
+          </p>
+          <p className="text-xs text-gray-500">📝 Approvals</p>
+        </div>
+        <div className="bg-red-50 rounded-xl p-3 text-center border border-red-200">
+          <p className="text-2xl font-bold text-red-600">{disputes?.length || 0}</p>
+          <p className="text-xs text-gray-500">⚖️ Disputes</p>
+        </div>
+        <div className="bg-orange-50 rounded-xl p-3 text-center border border-orange-200">
+          <p className="text-2xl font-bold text-orange-600">{withdrawalRequests?.length || 0}</p>
+          <p className="text-xs text-gray-500">💰 Withdrawals</p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b bg-white sticky top-0 z-10 overflow-x-auto mt-6">
-        <div className="container mx-auto px-4">
-          <div className="flex gap-1 min-w-max">
-            <button onClick={() => setActiveTab('overview')} className={`px-4 py-3 font-semibold ${activeTab === 'overview' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>📊 Overview</button>
-            <button onClick={() => setActiveTab('my-pools')} className={`px-4 py-3 font-semibold ${activeTab === 'my-pools' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🎯 My Pools (20%)</button>
-            <button onClick={() => setActiveTab('merkato')} className={`px-4 py-3 font-semibold ${activeTab === 'merkato' ? 'border-b-2 border-yellow-600 text-yellow-600' : 'text-gray-500'}`}>🏪 Merkato VIP</button>
-            <button onClick={() => setActiveTab('city-vip')} className={`px-4 py-3 font-semibold ${activeTab === 'city-vip' ? 'border-b-2 border-gray-600 text-gray-600' : 'text-gray-500'}`}>🏙️ City VIP</button>
-            <button onClick={() => setActiveTab('users')} className={`px-4 py-3 font-semibold ${activeTab === 'users' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>👥 Users</button>
-            <button onClick={() => setActiveTab('pools')} className={`px-4 py-3 font-semibold ${activeTab === 'pools' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🌊 All Pools</button>
-            <button onClick={() => setActiveTab('approvals')} className={`px-4 py-3 font-semibold ${activeTab === 'approvals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>📝 Approvals ({pendingAgents.length + pendingVendors.length + pendingOrganizations.length})</button>
-            <button onClick={() => setActiveTab('withdrawals')} className={`px-4 py-3 font-semibold ${activeTab === 'withdrawals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>💰 Withdrawals ({withdrawalRequests.length})</button>
-            <button onClick={() => setActiveTab('bank-transfers')} className={`px-4 py-3 font-semibold ${activeTab === 'bank-transfers' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🏦 Bank Transfers ({pendingBankTransfers})</button>
-            <button onClick={() => setActiveTab('finance')} className={`px-4 py-3 font-semibold ${activeTab === 'finance' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>💰 Finance</button>
-            <button onClick={() => setActiveTab('disputes')} className={`px-4 py-3 font-semibold ${activeTab === 'disputes' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>⚖️ Disputes ({disputes.length})</button>
-            <button onClick={() => setActiveTab('settings')} className={`px-4 py-3 font-semibold ${activeTab === 'settings' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>⚙️ Settings</button>
-          </div>
+      <div className="border-b bg-white sticky top-0 z-10 overflow-x-auto">
+        <div className="flex gap-1 min-w-max">
+          <button onClick={() => setActiveTab('overview')} className={`px-4 py-3 font-semibold ${activeTab === 'overview' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>📊 Overview</button>
+          <button onClick={() => setActiveTab('my-pools')} className={`px-4 py-3 font-semibold ${activeTab === 'my-pools' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🎯 My Pools (20%)</button>
+          <button onClick={() => setActiveTab('merkato')} className={`px-4 py-3 font-semibold ${activeTab === 'merkato' ? 'border-b-2 border-yellow-600 text-yellow-600' : 'text-gray-500'}`}>🏪 Merkato VIP</button>
+          <button onClick={() => setActiveTab('city-vip')} className={`px-4 py-3 font-semibold ${activeTab === 'city-vip' ? 'border-b-2 border-gray-600 text-gray-600' : 'text-gray-500'}`}>🏙️ City VIP</button>
+          <button onClick={() => setActiveTab('users')} className={`px-4 py-3 font-semibold ${activeTab === 'users' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>👥 Users</button>
+          <button onClick={() => setActiveTab('pools')} className={`px-4 py-3 font-semibold ${activeTab === 'pools' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🌊 All Pools</button>
+          <button onClick={() => setActiveTab('approvals')} className={`px-4 py-3 font-semibold ${activeTab === 'approvals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>📝 Approvals</button>
+          <button onClick={() => setActiveTab('withdrawals')} className={`px-4 py-3 font-semibold ${activeTab === 'withdrawals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>💰 Withdrawals</button>
+          <button onClick={() => setActiveTab('bank-transfers')} className={`px-4 py-3 font-semibold ${activeTab === 'bank-transfers' ? 'border-b-2 border-yellow-600 text-yellow-600' : 'text-gray-500'}`}>🏦 Bank Transfers</button>
+          <button onClick={() => setActiveTab('finance')} className={`px-4 py-3 font-semibold ${activeTab === 'finance' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>💰 Finance</button>
+          <button onClick={() => setActiveTab('disputes')} className={`px-4 py-3 font-semibold ${activeTab === 'disputes' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>⚖️ Disputes</button>
+          <button onClick={() => setActiveTab('settings')} className={`px-4 py-3 font-semibold ${activeTab === 'settings' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>⚙️ Settings</button>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="py-6">
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
@@ -1407,7 +1348,6 @@ export default function AdminDashboard() {
                   <div><p className="text-2xl font-bold">{merkatoStats.pending_verification}</p><p className="text-xs opacity-90">Pending Verify</p></div>
                   <div><p className="text-2xl font-bold">{merkatoStats.pending_draws}</p><p className="text-xs opacity-90">Pending Draws</p></div>
                 </div>
-                <button onClick={() => setActiveTab('merkato')} className="mt-3 w-full bg-white text-orange-600 py-1 rounded-lg text-sm font-semibold">Manage →</button>
               </div>
             </div>
 
@@ -1639,6 +1579,7 @@ export default function AdminDashboard() {
         {/* Approvals Tab */}
         {activeTab === 'approvals' && (
           <div className="space-y-6">
+            {/* Pending Agents */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-bold text-lg">🤝 Pending Agent Applications ({pendingAgents.length})</h3>
@@ -1686,6 +1627,7 @@ export default function AdminDashboard() {
               )}
             </div>
 
+            {/* Pending Vendors */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-bold text-lg">🏪 Pending Vendor Applications ({pendingVendors.length})</h3>
@@ -1728,6 +1670,7 @@ export default function AdminDashboard() {
               )}
             </div>
 
+            {/* Pending Organizations */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-bold text-lg">🏢 Pending Organization Applications ({pendingOrganizations.length})</h3>
@@ -2025,9 +1968,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* UNIFIED MODALS - REPLACES THE THREE OLD MODALS */}
-      
-      {/* City VIP Modal - Unified (Create, Edit, Delete) */}
+      {/* UNIFIED MODALS */}
       <CityVipModal
         isOpen={cityModalMode !== null}
         onClose={() => { setCityModalMode(null); setSelectedCityData(null); }}
@@ -2037,7 +1978,6 @@ export default function AdminDashboard() {
         userId={user?.id}
       />
 
-      {/* Merkato VIP Modal - Unified (Create, Edit, Delete) */}
       <MerkatoVipModal
         isOpen={merkatoModalMode !== null}
         onClose={() => { setMerkatoModalMode(null); setSelectedMerkatoData(null); }}
@@ -2047,7 +1987,6 @@ export default function AdminDashboard() {
         userId={user?.id}
       />
 
-      {/* Regular Pool Modal - Unified (Create, Edit, Delete) */}
       <RegularPoolModal
         isOpen={regularModalMode !== null}
         onClose={() => { setRegularModalMode(null); setSelectedRegularData(null); }}
@@ -2057,10 +1996,6 @@ export default function AdminDashboard() {
         userId={user?.id}
       />
 
-      {/* Keep these for backward compatibility with existing code that might still use them */}
-      {/* These are hidden - the unified modals above handle everything */}
-     
-      {/* Keep existing modals that are still needed */}
       {showPoolModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -2133,7 +2068,7 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-2xl max-w-md w-full p-6">
             <h3 className="text-xl font-bold mb-4">Create Announcement</h3>
             <input type="text" placeholder="Title" className="w-full border rounded-lg p-2 mb-3" value={newAnnouncement.title} onChange={(e) => setNewAnnouncement({...newAnnouncement, title: e.target.value})} />
-            <textarea placeholder="Content" rows="4" className="w-full border rounded-lg p-2 mb-3" value={newAnnouncement.content} onChange={(e) => setNewAnnouncement({...newAnnouncement, content: e.target.value})}></textarea>
+            <textarea placeholder="Message" rows="4" className="w-full border rounded-lg p-2 mb-3" value={newAnnouncement.message} onChange={(e) => setNewAnnouncement({...newAnnouncement, message: e.target.value})}></textarea>
             <select className="w-full border rounded-lg p-2 mb-4" value={newAnnouncement.target_audience} onChange={(e) => setNewAnnouncement({...newAnnouncement, target_audience: e.target.value})}>
               <option value="all">All Users</option>
               <option value="agents">Agents</option>
@@ -2165,6 +2100,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 }
