@@ -747,22 +747,39 @@ export default function AdminDashboard() {
     }
   }
 
-  async function loadBankTransfers() {
-    try {
-      const { data } = await supabase
-        .from('bank_transfers')
-        .select('*, profiles!user_id (id, full_name, email, phone), pools!pool_id (prize_name, target_amount)')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false });
-      
-      if (isMounted.current) { 
-        setBankTransfers(data || []); 
-        setPendingBankTransfers(data?.length || 0); 
+ // Alternative: Use bank_transfers_simple view
+async function loadBankTransfers() {
+  try {
+    const { data, error } = await supabase
+      .from('bank_transfers_simple')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    // ✅ Manually fetch user profiles for each transfer
+    const transfersWithProfiles = await Promise.all((data || []).map(async (transfer) => {
+      let profile = null;
+      if (transfer.user_id) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, phone')
+          .eq('id', transfer.user_id)
+          .maybeSingle();
+        profile = profileData;
       }
-    } catch (error) { 
-      console.error('Error loading bank transfers:', error); 
+      return { ...transfer, profiles: profile };
+    }));
+
+    if (isMounted.current) {
+      setBankTransfers(transfersWithProfiles || []);
+      setPendingBankTransfers(transfersWithProfiles?.length || 0);
     }
+  } catch (error) {
+    console.error('Error loading bank transfers:', error);
+    toast.error('Failed to load bank transfers');
   }
+}
 
   async function loadUsers() {
     try {
@@ -1741,44 +1758,100 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Bank Transfers Tab */}
-        {activeTab === 'bank-transfers' && (
-          <div className="bg-white rounded-xl shadow-md overflow-hidden">
-            <div className="px-6 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">🏦 Bank Transfer Verification</h2></div>
-            <div className="p-4">
-              {bankTransfers.length === 0 ? (
-                <div className="text-center py-12"><div className="text-5xl mb-3">✅</div><p className="text-gray-500">No pending bank transfers</p></div>
-              ) : (
-                <div className="space-y-4">
-                  {bankTransfers.map((transfer) => (
-                    <div key={transfer.id} className="border rounded-lg p-4 hover:shadow-md transition">
-                      <div className="flex justify-between items-start flex-wrap gap-4">
-                        <div className="space-y-1">
-                          <p className="font-semibold text-lg">{transfer.profiles?.full_name}</p>
-                          <p className="text-sm text-gray-500">{transfer.profiles?.email}</p>
-                          <p className="text-sm">🎯 Pool: <span className="font-medium">{transfer.pools?.prize_name}</span></p>
-                          <p className="text-sm">🎟️ Seats: <span className="font-mono">{transfer.seat_numbers?.join(', ')}</span></p>
-                          <p className="text-sm font-bold text-green-600">💰 ETB {transfer.amount?.toLocaleString()}</p>
-                          <p className="text-xs text-gray-400">Submitted: {new Date(transfer.created_at).toLocaleString()}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          {transfer.proof_image && (
-                            <button onClick={() => window.open(transfer.proof_image, '_blank')} className="bg-blue-600 text-white px-3 py-1 rounded text-sm">📸 View Proof</button>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex gap-3 mt-4 pt-3 border-t">
-                        <button onClick={() => verifyBankTransfer(transfer.id, transfer.user_id, transfer.pool_id, transfer.amount, transfer.seat_numbers, true)} className="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold">✅ Approve & Confirm Seats</button>
-                        <button onClick={() => verifyBankTransfer(transfer.id, transfer.user_id, transfer.pool_id, transfer.amount, transfer.seat_numbers, false)} className="flex-1 bg-red-600 text-white py-2 rounded-lg font-semibold">❌ Reject</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        // pages/admin/dashboard.js - UPDATED Bank Transfers Tab
 
+{activeTab === 'bank-transfers' && (
+  <div className="bg-white rounded-xl shadow-md overflow-hidden">
+    <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
+      <h2 className="font-bold text-lg">🏦 Bank Transfer Verification</h2>
+      <div className="flex gap-2">
+        <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold">
+          {pendingBankTransfers} Pending
+        </span>
+        <button 
+          onClick={loadBankTransfers} 
+          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm transition"
+        >
+          🔄 Refresh
+        </button>
+      </div>
+    </div>
+    <div className="p-4">
+      {bankTransfers.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-5xl mb-3">✅</div>
+          <p className="text-gray-500 font-medium">No pending bank transfers</p>
+          <p className="text-sm text-gray-400 mt-1">All transfers have been processed</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {bankTransfers.map((transfer) => (
+            <div key={transfer.id} className="border rounded-lg p-4 hover:shadow-md transition bg-white">
+              <div className="flex flex-wrap justify-between items-start gap-4">
+                <div className="space-y-2 flex-1 min-w-[200px]">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold text-lg">{transfer.profiles?.full_name || transfer.full_name || 'Unknown User'}</span>
+                    <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full">⏳ Pending</span>
+                  </div>
+                  <p className="text-sm text-gray-500">{transfer.profiles?.email || transfer.email || 'No email'}</p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-sm">
+                    <p><span className="text-gray-500">💰 Amount:</span> <span className="font-bold text-green-600">ETB {transfer.amount?.toLocaleString()}</span></p>
+                    <p><span className="text-gray-500">🎯 Pool:</span> {transfer.pools?.prize_name || transfer.prize_name || 'N/A'}</p>
+                    <p><span className="text-gray-500">🎟️ Seats:</span> <span className="font-mono">{transfer.seat_numbers?.join(', ') || 'N/A'}</span></p>
+                    <p><span className="text-gray-500">🔖 Reference:</span> {transfer.reference || 'N/A'}</p>
+                  </div>
+                  
+                  <p className="text-xs text-gray-400">Submitted: {new Date(transfer.created_at).toLocaleString()}</p>
+                </div>
+                
+                <div className="flex flex-col gap-2">
+                  {transfer.proof_image && (
+                    <button
+                      onClick={() => window.open(transfer.proof_image, '_blank')}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition flex items-center gap-2"
+                    >
+                      📸 View Proof
+                    </button>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap gap-3 mt-4 pt-3 border-t">
+                <button
+                  onClick={() => verifyBankTransfer(
+                    transfer.id, 
+                    transfer.user_id, 
+                    transfer.pool_id, 
+                    transfer.amount, 
+                    transfer.seat_numbers, 
+                    true
+                  )}
+                  className="flex-1 min-w-[100px] bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg font-semibold transition flex items-center justify-center gap-2"
+                >
+                  ✅ Approve & Confirm
+                </button>
+                <button
+                  onClick={() => verifyBankTransfer(
+                    transfer.id, 
+                    transfer.user_id, 
+                    transfer.pool_id, 
+                    transfer.amount, 
+                    transfer.seat_numbers, 
+                    false
+                  )}
+                  className="flex-1 min-w-[100px] bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg font-semibold transition flex items-center justify-center gap-2"
+                >
+                  ❌ Reject
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+)}
         {/* Finance Tab */}
         {activeTab === 'finance' && (
           <div className="space-y-6">
