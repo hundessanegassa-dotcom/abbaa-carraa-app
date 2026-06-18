@@ -284,79 +284,228 @@ export default function AdminDashboard() {
     }
   }
 
-  async function loadCityVipConfigs() {
-    try {
-      const { data: configs } = await supabase
-        .from('city_vip_config')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (isMounted.current) setCityVipConfigs(configs || []);
-    } catch (error) { 
-      console.error('Error loading city VIP configs:', error); 
-    }
-  }
-
-  async function loadCityVipData() {
-    try {
-      const { data: participants } = await supabase
+async function loadCityVipData() {
+  try {
+    // ✅ Add try-catch and error handling
+    const { data: participants, error } = await supabase
+      .from('city_vip_participants')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('City VIP participants error:', error);
+      // Check if table exists
+      const { data: tableCheck } = await supabase
         .from('city_vip_participants')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('count', { count: 'exact', head: true })
+        .maybeSingle();
       
-      if (!isMounted.current) return;
-      setCityVipParticipants(participants || []);
-      
-      const uniqueCities = [...new Set(participants?.map(p => p.city).filter(Boolean))];
-      const cityPools = uniqueCities.map(city => ({
-        id: `city-${city}`, 
-        city: city, 
-        name: `${city} VIP`,
-        total_participants: participants?.filter(p => p.city === city).length || 0,
-        total_collected: participants?.filter(p => p.city === city).reduce((sum, p) => sum + (p.contribution_amount || 0), 0) || 0,
-        pending_verification: participants?.filter(p => p.city === city && p.payment_status === 'pending_verification').length || 0,
-        verified_participants: participants?.filter(p => p.city === city && p.payment_status === 'verified').length || 0,
-        active: true
-      }));
-      setCityVipPools(cityPools);
-    } catch (error) { 
-      console.error('Error loading City VIP data:', error); 
-    }
-  }
-
-  async function loadCityVipWinners() {
-    try {
-      const { data: winners } = await supabase
-        .from('merkato_vip_draws')
-        .select('*')
-        .eq('pool_type', 'city')
-        .order('drawn_at', { ascending: false })
-        .limit(20);
-      
-      if (isMounted.current) setCityVipWinners(winners || []);
-    } catch (error) { 
-      console.error('Error loading city winners:', error); 
-    }
-  }
-
-  async function drawCityVipWinner(cityName, poolType) {
-    if (!confirm(`Draw winner for ${cityName} VIP ${poolType} pool? This action cannot be undone.`)) return;
-    setDrawingCityWinner(true);
-    try {
-      const { data: participants } = await supabase
-        .from('city_vip_participants')
-        .select('*')
-        .eq('city', cityName)
-        .eq('pool_type', poolType)
-        .eq('payment_status', 'verified')
-        .neq('is_winner', true);
-      
-      if (!participants || participants.length === 0) { 
-        toast.error(`No verified participants in ${cityName} VIP ${poolType} pool`); 
-        setDrawingCityWinner(false); 
-        return; 
+      if (!tableCheck) {
+        console.log('City VIP participants table may not exist yet');
       }
-      
+      if (isMounted.current) {
+        setCityVipParticipants([]);
+        setCityVipPools([]);
+      }
+      return;
+    }
+    
+    if (!isMounted.current) return;
+    setCityVipParticipants(participants || []);
+    
+    const uniqueCities = [...new Set(participants?.map(p => p.city).filter(Boolean))];
+    const cityPools = uniqueCities.map(city => ({
+      id: `city-${city}`, 
+      city: city, 
+      name: `${city} VIP`,
+      total_participants: participants?.filter(p => p.city === city).length || 0,
+      total_collected: participants?.filter(p => p.city === city).reduce((sum, p) => sum + (p.contribution_amount || 0), 0) || 0,
+      pending_verification: participants?.filter(p => p.city === city && p.payment_status === 'pending_verification').length || 0,
+      verified_participants: participants?.filter(p => p.city === city && p.payment_status === 'verified').length || 0,
+      active: true
+    }));
+    setCityVipPools(cityPools);
+  } catch (error) { 
+    console.error('Error loading City VIP data:', error);
+    if (isMounted.current) {
+      setCityVipParticipants([]);
+      setCityVipPools([]);
+    }
+  }
+}
+  async function loadCityVipConfigs() {
+  try {
+    const { data: configs, error } = await supabase
+      .from('city_vip_config')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('City VIP configs error:', error);
+      if (isMounted.current) setCityVipConfigs([]);
+      return;
+    }
+    
+    if (isMounted.current) setCityVipConfigs(configs || []);
+  } catch (error) { 
+    console.error('Error loading city VIP configs:', error);
+    if (isMounted.current) setCityVipConfigs([]);
+  }
+}
+  async function loadCityVipWinners() {
+  try {
+    const { data: winners, error } = await supabase
+      .from('merkato_vip_draws')
+      .select('*')
+      .eq('pool_type', 'city')
+      .order('drawn_at', { ascending: false })
+      .limit(20);
+    
+    if (error) {
+      console.error('City VIP winners error:', error);
+      if (isMounted.current) setCityVipWinners([]);
+      return;
+    }
+    
+    if (isMounted.current) setCityVipWinners(winners || []);
+  } catch (error) { 
+    console.error('Error loading city winners:', error);
+    if (isMounted.current) setCityVipWinners([]);
+  }
+}
+  async function drawCityVipWinner(cityName, poolType) {
+  if (!confirm(`Draw winner for ${cityName} VIP ${poolType} pool? This action cannot be undone.`)) return;
+  setDrawingCityWinner(true);
+  const toastId = toast.loading(`Drawing ${cityName} ${poolType} winner...`);
+  
+  try {
+    // ✅ Add error handling for participant query
+    const { data: participants, error: participantsError } = await supabase
+      .from('city_vip_participants')
+      .select('*')
+      .eq('city', cityName)
+      .eq('pool_type', poolType)
+      .eq('payment_status', 'verified')
+      .neq('is_winner', true);
+    
+    if (participantsError) {
+      console.error('Participants query error:', participantsError);
+      toast.error(`Failed to fetch participants: ${participantsError.message}`, { id: toastId });
+      setDrawingCityWinner(false);
+      return;
+    }
+    
+    if (!participants || participants.length === 0) { 
+      toast.error(`No verified participants in ${cityName} VIP ${poolType} pool`, { id: toastId });
+      setDrawingCityWinner(false);
+      return; 
+    }
+    
+    const randomIndex = Math.floor(Math.random() * participants.length);
+    const winner = participants[randomIndex];
+    const prizeAmount = poolType === 'daily' ? 1000000 : poolType === 'weekly' ? 10000000 : 40000000;
+    
+    // Update winner
+    const { error: updateError } = await supabase
+      .from('city_vip_participants')
+      .update({ is_winner: true, winner_drawn_at: new Date().toISOString(), status: 'winner' })
+      .eq('id', winner.id);
+    
+    if (updateError) {
+      console.error('Update winner error:', updateError);
+      toast.error('Failed to update winner', { id: toastId });
+      setDrawingCityWinner(false);
+      return;
+    }
+    
+    // Insert draw record
+    const { error: drawError } = await supabase
+      .from('merkato_vip_draws')
+      .insert({ 
+        pool_id: `city-${cityName}-${poolType}`, 
+        pool_type: 'city', 
+        city: cityName, 
+        drawn_at: new Date().toISOString(), 
+        winner_id: winner.user_id, 
+        winner_email: winner.user_email, 
+        winner_name: winner.user_name, 
+        prize_amount: prizeAmount, 
+        ticket_number: winner.ticket_number, 
+        random_seed: Math.random().toString(), 
+        verification_hash: btoa(`${cityName}-${winner.user_id}-${Date.now()}`), 
+        drawn_by: user?.id 
+      });
+    
+    if (drawError) {
+      console.error('Draw record error:', drawError);
+      // Continue even if draw record fails
+    }
+    
+    // Send notification
+    await supabase
+      .from('notifications')
+      .insert({ 
+        user_id: winner.user_id, 
+        title: '🎉 Congratulations! You Won!', 
+        message: `You have won ${prizeAmount.toLocaleString()} ETB in the ${cityName} City VIP ${poolType} pool!`, 
+        type: 'winner', 
+        link_url: `/dashboard`, 
+        created_at: new Date().toISOString() 
+      });
+    
+    // Admin notification
+    await supabase
+      .from('admin_notifications')
+      .insert({
+        title: `🏆 City VIP Winner! ${winner.user_name || winner.user_email}`,
+        message: `${cityName} ${poolType} winner: ${prizeAmount.toLocaleString()} ETB`,
+        type: 'winner'
+      });
+    
+    toast.success(`🎉 ${winner.user_name || winner.user_email} wins ${prizeAmount.toLocaleString()} ETB!`, { id: toastId });
+    await loadCityVipData();
+    await loadCityVipWinners();
+    
+    setSelectedCityPool({ city: cityName, poolType: poolType, winner: winner, prize: prizeAmount });
+    setShowCityDrawModal(true);
+    
+  } catch (error) { 
+    console.error('Draw error:', error);
+    toast.error('Failed to draw winner', { id: toastId });
+  } finally { 
+    setDrawingCityWinner(false); 
+  }
+}
+  async function verifyCityVipPayment(participantId, approved) {
+  if (!confirm(approved ? 'Approve this payment?' : 'Reject this payment?')) return;
+  
+  const toastId = toast.loading(approved ? 'Approving payment...' : 'Rejecting payment...');
+  
+  try {
+    const { error } = await supabase
+      .from('city_vip_participants')
+      .update({ 
+        payment_status: approved ? 'verified' : 'rejected', 
+        verified_at: approved ? new Date().toISOString() : null, 
+        verified_by: user?.id, 
+        status: approved ? 'active' : 'cancelled' 
+      })
+      .eq('id', participantId);
+    
+    if (error) {
+      console.error('Verification error:', error);
+      toast.error(`Failed to ${approved ? 'approve' : 'reject'} payment`, { id: toastId });
+      return;
+    }
+    
+    toast.success(`Payment ${approved ? 'approved' : 'rejected'} successfully`, { id: toastId });
+    await loadCityVipData();
+    await loadMerkatoData();
+  } catch (error) { 
+    console.error('Verification error:', error);
+    toast.error('Failed to verify payment', { id: toastId });
+  }
+}
       const randomIndex = Math.floor(Math.random() * participants.length);
       const winner = participants[randomIndex];
       const prizeAmount = poolType === 'daily' ? 1000000 : poolType === 'weekly' ? 10000000 : 40000000;
