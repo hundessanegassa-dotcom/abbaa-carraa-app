@@ -595,7 +595,7 @@ async function loadCityVipData() {
     console.error('Verification error:', error);
     toast.error('Failed to verify payment', { id: toastId });
   }
-}
+ }
 
   async function loadMerkatoData() {
     try {
