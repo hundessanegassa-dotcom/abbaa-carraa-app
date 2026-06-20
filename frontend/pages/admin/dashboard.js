@@ -566,27 +566,36 @@ async function loadCityVipData() {
     }
   }
 
-  async function verifyCityVipPayment(participantId, approved) {
-    if (!confirm(approved ? 'Approve this payment?' : 'Reject this payment?')) return;
-    try {
-      await supabase
-        .from('city_vip_participants')
-        .update({ 
-          payment_status: approved ? 'verified' : 'rejected', 
-          verified_at: approved ? new Date().toISOString() : null, 
-          verified_by: user?.id, 
-          status: approved ? 'active' : 'cancelled' 
-        })
-        .eq('id', participantId);
-      
-      toast.success(`Payment ${approved ? 'approved' : 'rejected'} successfully`);
-      await loadCityVipData();
-      await loadMerkatoData();
-    } catch (error) { 
-      console.error('Verification error:', error); 
-      toast.error('Failed to verify payment'); 
+ async function verifyCityVipPayment(participantId, approved) {
+  if (!confirm(approved ? 'Approve this payment?' : 'Reject this payment?')) return;
+  
+  const toastId = toast.loading(approved ? 'Approving payment...' : 'Rejecting payment...');
+  
+  try {
+    const { error } = await supabase
+      .from('city_vip_participants')
+      .update({ 
+        payment_status: approved ? 'verified' : 'rejected', 
+        verified_at: approved ? new Date().toISOString() : null, 
+        verified_by: user?.id, 
+        status: approved ? 'active' : 'cancelled' 
+      })
+      .eq('id', participantId);
+    
+    if (error) {
+      console.error('Verification error:', error);
+      toast.error(`Failed to ${approved ? 'approve' : 'reject'} payment`, { id: toastId });
+      return;
     }
+    
+    toast.success(`Payment ${approved ? 'approved' : 'rejected'} successfully`, { id: toastId });
+    await loadCityVipData();
+    await loadMerkatoData();
+  } catch (error) { 
+    console.error('Verification error:', error);
+    toast.error('Failed to verify payment', { id: toastId });
   }
+}
 
   async function loadMerkatoData() {
     try {
