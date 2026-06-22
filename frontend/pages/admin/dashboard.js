@@ -1,11 +1,11 @@
-// pages/admin/dashboard.js - COMPLETE FIXED ADMIN DASHBOARD
+// pages/admin/dashboard.js - COMPLETE WITH THEATER STYLE SEATS FOR CITY VIP & MERKATO VIP
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import BackButton from '../../components/BackButton';
-import AdminLayout from '../../components/admin/AdminLayout'; // ✅ ADDED
+import AdminLayout from '../../components/admin/AdminLayout';
 import CityVipModal from '../../components/admin/CityVipModal';
 import MerkatoVipModal from '../../components/admin/MerkatoVipModal';
 import RegularPoolModal from '../../components/admin/RegularPoolModal';
@@ -43,6 +43,11 @@ export default function AdminDashboard() {
   const [selectedCityPool, setSelectedCityPool] = useState(null);
   const [cityVipConfigs, setCityVipConfigs] = useState([]);
   
+  // Seat View States (Theater Style)
+  const [showSeatView, setShowSeatView] = useState(false);
+  const [selectedSeatViewParticipant, setSelectedSeatViewParticipant] = useState(null);
+  const [seatViewType, setSeatViewType] = useState('city'); // 'city' or 'merkato'
+  
   // UNIFIED MODAL STATES
   const [cityModalMode, setCityModalMode] = useState(null);
   const [selectedCityData, setSelectedCityData] = useState(null);
@@ -77,6 +82,14 @@ export default function AdminDashboard() {
   const [charityTransactions, setCharityTransactions] = useState([]);
   const [disputes, setDisputes] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
+  
+  // Regular Pool specific
+  const [regularParticipants, setRegularParticipants] = useState([]);
+  const [regularPoolStats, setRegularPoolStats] = useState({
+    total_participants: 0,
+    pending_verification: 0,
+    total_collected: 0
+  });
   
   // Merkato VIP specific
   const [merkatoPools, setMerkatoPools] = useState([]);
@@ -226,6 +239,7 @@ export default function AdminDashboard() {
         loadDisputes(),
         loadRecentActivity(),
         loadMerkatoData(),
+        loadRegularPoolData(),
         loadCityVipData(),
         loadCityVipWinners(),
         loadCityVipConfigs()
@@ -284,228 +298,119 @@ export default function AdminDashboard() {
     }
   }
 
-async function loadCityVipData() {
-  try {
-    // ✅ Add try-catch and error handling
-    const { data: participants, error } = await supabase
-      .from('city_vip_participants')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error('City VIP participants error:', error);
-      // Check if table exists
-      const { data: tableCheck } = await supabase
-        .from('city_vip_participants')
-        .select('count', { count: 'exact', head: true })
-        .maybeSingle();
+  // ============================================
+  // CITY VIP FUNCTIONS - FIXED
+  // ============================================
+
+  async function loadCityVipConfigs() {
+    try {
+      const { data: configs, error } = await supabase
+        .from('city_vip_config')
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      if (!tableCheck) {
-        console.log('City VIP participants table may not exist yet');
+      if (error) {
+        console.error('City VIP configs error:', error);
+        if (isMounted.current) setCityVipConfigs([]);
+        return;
       }
+      
+      if (isMounted.current) setCityVipConfigs(configs || []);
+    } catch (error) { 
+      console.error('Error loading city VIP configs:', error);
+      if (isMounted.current) setCityVipConfigs([]);
+    }
+  }
+
+  async function loadCityVipData() {
+    try {
+      const { data: participants, error } = await supabase
+        .from('city_vip_participants')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('City VIP participants error:', error);
+        if (isMounted.current) {
+          setCityVipParticipants([]);
+          setCityVipPools([]);
+        }
+        return;
+      }
+      
+      if (!isMounted.current) return;
+      setCityVipParticipants(participants || []);
+      
+      const uniqueCities = [...new Set(participants?.map(p => p.city).filter(Boolean))];
+      const cityPools = uniqueCities.map(city => ({
+        id: `city-${city}`, 
+        city: city, 
+        name: `${city} VIP`,
+        total_participants: participants?.filter(p => p.city === city).length || 0,
+        total_collected: participants?.filter(p => p.city === city).reduce((sum, p) => sum + (p.contribution_amount || 0), 0) || 0,
+        pending_verification: participants?.filter(p => p.city === city && p.payment_status === 'pending_verification').length || 0,
+        verified_participants: participants?.filter(p => p.city === city && p.payment_status === 'verified').length || 0,
+        active: true
+      }));
+      setCityVipPools(cityPools);
+    } catch (error) { 
+      console.error('Error loading City VIP data:', error);
       if (isMounted.current) {
         setCityVipParticipants([]);
         setCityVipPools([]);
       }
-      return;
-    }
-    
-    if (!isMounted.current) return;
-    setCityVipParticipants(participants || []);
-    
-    const uniqueCities = [...new Set(participants?.map(p => p.city).filter(Boolean))];
-    const cityPools = uniqueCities.map(city => ({
-      id: `city-${city}`, 
-      city: city, 
-      name: `${city} VIP`,
-      total_participants: participants?.filter(p => p.city === city).length || 0,
-      total_collected: participants?.filter(p => p.city === city).reduce((sum, p) => sum + (p.contribution_amount || 0), 0) || 0,
-      pending_verification: participants?.filter(p => p.city === city && p.payment_status === 'pending_verification').length || 0,
-      verified_participants: participants?.filter(p => p.city === city && p.payment_status === 'verified').length || 0,
-      active: true
-    }));
-    setCityVipPools(cityPools);
-  } catch (error) { 
-    console.error('Error loading City VIP data:', error);
-    if (isMounted.current) {
-      setCityVipParticipants([]);
-      setCityVipPools([]);
     }
   }
-}
-  async function loadCityVipConfigs() {
-  try {
-    const { data: configs, error } = await supabase
-      .from('city_vip_config')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error('City VIP configs error:', error);
-      if (isMounted.current) setCityVipConfigs([]);
-      return;
-    }
-    
-    if (isMounted.current) setCityVipConfigs(configs || []);
-  } catch (error) { 
-    console.error('Error loading city VIP configs:', error);
-    if (isMounted.current) setCityVipConfigs([]);
-  }
-}
+
   async function loadCityVipWinners() {
-  try {
-    const { data: winners, error } = await supabase
-      .from('merkato_vip_draws')
-      .select('*')
-      .eq('pool_type', 'city')
-      .order('drawn_at', { ascending: false })
-      .limit(20);
-    
-    if (error) {
-      console.error('City VIP winners error:', error);
+    try {
+      const { data: winners, error } = await supabase
+        .from('merkato_vip_draws')
+        .select('*')
+        .eq('pool_type', 'city')
+        .order('drawn_at', { ascending: false })
+        .limit(20);
+      
+      if (error) {
+        console.error('City VIP winners error:', error);
+        if (isMounted.current) setCityVipWinners([]);
+        return;
+      }
+      
+      if (isMounted.current) setCityVipWinners(winners || []);
+    } catch (error) { 
+      console.error('Error loading city winners:', error);
       if (isMounted.current) setCityVipWinners([]);
-      return;
     }
-    
-    if (isMounted.current) setCityVipWinners(winners || []);
-  } catch (error) { 
-    console.error('Error loading city winners:', error);
-    if (isMounted.current) setCityVipWinners([]);
   }
-}
+
   async function drawCityVipWinner(cityName, poolType) {
-  if (!confirm(`Draw winner for ${cityName} VIP ${poolType} pool? This action cannot be undone.`)) return;
-  setDrawingCityWinner(true);
-  const toastId = toast.loading(`Drawing ${cityName} ${poolType} winner...`);
-  
-  try {
-    // ✅ Add error handling for participant query
-    const { data: participants, error: participantsError } = await supabase
-      .from('city_vip_participants')
-      .select('*')
-      .eq('city', cityName)
-      .eq('pool_type', poolType)
-      .eq('payment_status', 'verified')
-      .neq('is_winner', true);
+    if (!confirm(`Draw winner for ${cityName} VIP ${poolType} pool? This action cannot be undone.`)) return;
+    setDrawingCityWinner(true);
+    const toastId = toast.loading(`Drawing ${cityName} ${poolType} winner...`);
     
-    if (participantsError) {
-      console.error('Participants query error:', participantsError);
-      toast.error(`Failed to fetch participants: ${participantsError.message}`, { id: toastId });
-      setDrawingCityWinner(false);
-      return;
-    }
-    
-    if (!participants || participants.length === 0) { 
-      toast.error(`No verified participants in ${cityName} VIP ${poolType} pool`, { id: toastId });
-      setDrawingCityWinner(false);
-      return; 
-    }
-    
-    const randomIndex = Math.floor(Math.random() * participants.length);
-    const winner = participants[randomIndex];
-    const prizeAmount = poolType === 'daily' ? 1000000 : poolType === 'weekly' ? 10000000 : 40000000;
-    
-    // Update winner
-    const { error: updateError } = await supabase
-      .from('city_vip_participants')
-      .update({ is_winner: true, winner_drawn_at: new Date().toISOString(), status: 'winner' })
-      .eq('id', winner.id);
-    
-    if (updateError) {
-      console.error('Update winner error:', updateError);
-      toast.error('Failed to update winner', { id: toastId });
-      setDrawingCityWinner(false);
-      return;
-    }
-    
-    // Insert draw record
-    const { error: drawError } = await supabase
-      .from('merkato_vip_draws')
-      .insert({ 
-        pool_id: `city-${cityName}-${poolType}`, 
-        pool_type: 'city', 
-        city: cityName, 
-        drawn_at: new Date().toISOString(), 
-        winner_id: winner.user_id, 
-        winner_email: winner.user_email, 
-        winner_name: winner.user_name, 
-        prize_amount: prizeAmount, 
-        ticket_number: winner.ticket_number, 
-        random_seed: Math.random().toString(), 
-        verification_hash: btoa(`${cityName}-${winner.user_id}-${Date.now()}`), 
-        drawn_by: user?.id 
-      });
-    
-    if (drawError) {
-      console.error('Draw record error:', drawError);
-      // Continue even if draw record fails
-    }
-    
-    // Send notification
-    await supabase
-      .from('notifications')
-      .insert({ 
-        user_id: winner.user_id, 
-        title: '🎉 Congratulations! You Won!', 
-        message: `You have won ${prizeAmount.toLocaleString()} ETB in the ${cityName} City VIP ${poolType} pool!`, 
-        type: 'winner', 
-        link_url: `/dashboard`, 
-        created_at: new Date().toISOString() 
-      });
-    
-    // Admin notification
-    await supabase
-      .from('admin_notifications')
-      .insert({
-        title: `🏆 City VIP Winner! ${winner.user_name || winner.user_email}`,
-        message: `${cityName} ${poolType} winner: ${prizeAmount.toLocaleString()} ETB`,
-        type: 'winner'
-      });
-    
-    toast.success(`🎉 ${winner.user_name || winner.user_email} wins ${prizeAmount.toLocaleString()} ETB!`, { id: toastId });
-    await loadCityVipData();
-    await loadCityVipWinners();
-    
-    setSelectedCityPool({ city: cityName, poolType: poolType, winner: winner, prize: prizeAmount });
-    setShowCityDrawModal(true);
-    
-  } catch (error) { 
-    console.error('Draw error:', error);
-    toast.error('Failed to draw winner', { id: toastId });
-  } finally { 
-    setDrawingCityWinner(false); 
-  }
-}
-  async function verifyCityVipPayment(participantId, approved) {
-  if (!confirm(approved ? 'Approve this payment?' : 'Reject this payment?')) return;
-  
-  const toastId = toast.loading(approved ? 'Approving payment...' : 'Rejecting payment...');
-  
-  try {
-    const { error } = await supabase
-      .from('city_vip_participants')
-      .update({ 
-        payment_status: approved ? 'verified' : 'rejected', 
-        verified_at: approved ? new Date().toISOString() : null, 
-        verified_by: user?.id, 
-        status: approved ? 'active' : 'cancelled' 
-      })
-      .eq('id', participantId);
-    
-    if (error) {
-      console.error('Verification error:', error);
-      toast.error(`Failed to ${approved ? 'approve' : 'reject'} payment`, { id: toastId });
-      return;
-    }
-    
-    toast.success(`Payment ${approved ? 'approved' : 'rejected'} successfully`, { id: toastId });
-    await loadCityVipData();
-    await loadMerkatoData();
-  } catch (error) { 
-    console.error('Verification error:', error);
-    toast.error('Failed to verify payment', { id: toastId });
-  }
-}
+    try {
+      const { data: participants, error: participantsError } = await supabase
+        .from('city_vip_participants')
+        .select('*')
+        .eq('city', cityName)
+        .eq('pool_type', poolType)
+        .eq('payment_status', 'verified')
+        .neq('is_winner', true);
+      
+      if (participantsError) {
+        console.error('Participants query error:', participantsError);
+        toast.error(`Failed to fetch participants: ${participantsError.message}`, { id: toastId });
+        setDrawingCityWinner(false);
+        return;
+      }
+      
+      if (!participants || participants.length === 0) { 
+        toast.error(`No verified participants in ${cityName} VIP ${poolType} pool`, { id: toastId });
+        setDrawingCityWinner(false);
+        return; 
+      }
+      
       const randomIndex = Math.floor(Math.random() * participants.length);
       const winner = participants[randomIndex];
       const prizeAmount = poolType === 'daily' ? 1000000 : poolType === 'weekly' ? 10000000 : 40000000;
@@ -543,7 +448,6 @@ async function loadCityVipData() {
           created_at: new Date().toISOString() 
         });
       
-      // ✅ ADDED: Admin notification
       await supabase
         .from('admin_notifications')
         .insert({
@@ -552,58 +456,67 @@ async function loadCityVipData() {
           type: 'winner'
         });
       
-      toast.success(`🎉 Winner drawn for ${cityName} ${poolType}! ${winner.user_name || winner.user_email} wins ${prizeAmount.toLocaleString()} ETB!`);
+      toast.success(`🎉 ${winner.user_name || winner.user_email} wins ${prizeAmount.toLocaleString()} ETB!`, { id: toastId });
       await loadCityVipData();
       await loadCityVipWinners();
       
       setSelectedCityPool({ city: cityName, poolType: poolType, winner: winner, prize: prizeAmount });
       setShowCityDrawModal(true);
+      
     } catch (error) { 
-      console.error('Draw error:', error); 
-      toast.error('Failed to draw winner'); 
+      console.error('Draw error:', error);
+      toast.error('Failed to draw winner', { id: toastId });
     } finally { 
       setDrawingCityWinner(false); 
     }
   }
 
- async function verifyCityVipPayment(participantId, approved) {
-  if (!confirm(approved ? 'Approve this payment?' : 'Reject this payment?')) return;
-  
-  const toastId = toast.loading(approved ? 'Approving payment...' : 'Rejecting payment...');
-  
-  try {
-    const { error } = await supabase
-      .from('city_vip_participants')
-      .update({ 
-        payment_status: approved ? 'verified' : 'rejected', 
-        verified_at: approved ? new Date().toISOString() : null, 
-        verified_by: user?.id, 
-        status: approved ? 'active' : 'cancelled' 
-      })
-      .eq('id', participantId);
+  async function verifyCityVipPayment(participantId, approved) {
+    if (!confirm(approved ? 'Approve this payment?' : 'Reject this payment?')) return;
     
-    if (error) {
+    const toastId = toast.loading(approved ? 'Approving payment...' : 'Rejecting payment...');
+    
+    try {
+      const { error } = await supabase
+        .from('city_vip_participants')
+        .update({ 
+          payment_status: approved ? 'verified' : 'rejected', 
+          verified_at: approved ? new Date().toISOString() : null, 
+          verified_by: user?.id, 
+          status: approved ? 'active' : 'cancelled' 
+        })
+        .eq('id', participantId);
+      
+      if (error) {
+        console.error('Verification error:', error);
+        toast.error(`Failed to ${approved ? 'approve' : 'reject'} payment`, { id: toastId });
+        return;
+      }
+      
+      toast.success(`Payment ${approved ? 'approved' : 'rejected'} successfully`, { id: toastId });
+      await loadCityVipData();
+      await loadMerkatoData();
+    } catch (error) { 
       console.error('Verification error:', error);
-      toast.error(`Failed to ${approved ? 'approve' : 'reject'} payment`, { id: toastId });
-      return;
+      toast.error('Failed to verify payment', { id: toastId });
     }
-    
-    toast.success(`Payment ${approved ? 'approved' : 'rejected'} successfully`, { id: toastId });
-    await loadCityVipData();
-    await loadMerkatoData();
-  } catch (error) { 
-    console.error('Verification error:', error);
-    toast.error('Failed to verify payment', { id: toastId });
   }
- }
+
+  // ============================================
+  // MERKATO VIP FUNCTIONS - FIXED
+  // ============================================
 
   async function loadMerkatoData() {
     try {
-      const [{ data: pools }, { data: participants }, { data: winners }] = await Promise.all([
+      const [{ data: pools, error: poolsError }, { data: participants, error: participantsError }, { data: winners, error: winnersError }] = await Promise.all([
         supabase.from('merkato_vip_pools').select('*').order('created_at', { ascending: false }),
         supabase.from('merkato_vip_participants').select('*').order('created_at', { ascending: false }),
         supabase.from('merkato_vip_pools').select('*').eq('status', 'completed').not('winner_id', 'is', null)
       ]);
+      
+      if (poolsError) console.error('Merkato pools error:', poolsError);
+      if (participantsError) console.error('Merkato participants error:', participantsError);
+      if (winnersError) console.error('Merkato winners error:', winnersError);
       
       if (!isMounted.current) return;
       setMerkatoPools(pools || []);
@@ -629,20 +542,391 @@ async function loadCityVipData() {
         pending_verification: pendingVerification 
       });
     } catch (error) { 
-      console.error('Error loading Merkato data:', error); 
+      console.error('Error loading Merkato data:', error);
+      if (isMounted.current) {
+        setMerkatoPools([]);
+        setMerkatoParticipants([]);
+        setMerkatoWinners([]);
+      }
     }
   }
 
+  async function loadRegularPoolData() {
+    try {
+      const { data: participants, error } = await supabase
+        .from('regular_pool_participants')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Regular pool participants error:', error);
+        if (isMounted.current) {
+          setRegularParticipants([]);
+          setRegularPoolStats({ total_participants: 0, pending_verification: 0, total_collected: 0 });
+        }
+        return;
+      }
+      
+      if (!isMounted.current) return;
+      setRegularParticipants(participants || []);
+      
+      const pendingVerification = participants?.filter(p => p.payment_status === 'pending_verification')?.length || 0;
+      const totalCollected = participants?.filter(p => p.payment_status === 'verified').reduce((sum, p) => sum + (p.contribution_amount || 0), 0) || 0;
+      
+      setRegularPoolStats({
+        total_participants: participants?.length || 0,
+        pending_verification: pendingVerification,
+        total_collected: totalCollected
+      });
+    } catch (error) {
+      console.error('Error loading regular pool data:', error);
+      if (isMounted.current) {
+        setRegularParticipants([]);
+        setRegularPoolStats({ total_participants: 0, pending_verification: 0, total_collected: 0 });
+      }
+    }
+  }
+
+  // ============================================
+  // SEAT VIEW MODAL (THEATER STYLE)
+  // ============================================
+
+  const openSeatView = (participant, type) => {
+    setSelectedSeatViewParticipant(participant);
+    setSeatViewType(type);
+    setShowSeatView(true);
+  };
+
+  const SeatViewModal = () => {
+    if (!showSeatView || !selectedSeatViewParticipant) return null;
+    
+    const seats = selectedSeatViewParticipant.seat_numbers || [];
+    const totalSeats = selectedSeatViewParticipant.pool_type === 'daily' ? 2400 : 
+                       selectedSeatViewParticipant.pool_type === 'weekly' ? 4800 : 9600;
+    const participantName = selectedSeatViewParticipant.user_name || 'Unknown';
+    const participantEmail = selectedSeatViewParticipant.user_email || 'No email';
+    const amount = selectedSeatViewParticipant.contribution_amount || 0;
+    const city = selectedSeatViewParticipant.city || 'Merkato';
+    const poolType = selectedSeatViewParticipant.pool_type || 'daily';
+    const typeLabel = seatViewType === 'city' ? 'City VIP' : 'Merkato VIP';
+    
+    // Generate seat grid (theater style)
+    const seatsPerRow = 20;
+    const rows = Math.ceil(totalSeats / seatsPerRow);
+    const seatRows = [];
+    for (let row = 0; row < rows; row++) {
+      const startSeat = row * seatsPerRow + 1;
+      const endSeat = Math.min(startSeat + seatsPerRow - 1, totalSeats);
+      const rowSeats = [];
+      for (let seat = startSeat; seat <= endSeat; seat++) {
+        rowSeats.push(seat);
+      }
+      seatRows.push(rowSeats);
+    }
+
+    const isSeatSelected = (seatNum) => seats.includes(seatNum);
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70" onClick={() => setShowSeatView(false)}>
+        <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <span>🎭</span> {typeLabel} - Seat View
+                <span className="text-sm font-normal text-gray-500 ml-2">
+                  {city} • {poolType}
+                </span>
+              </h2>
+              <p className="text-sm text-gray-500">
+                {participantName} • {participantEmail} • {seats.length} seats • ETB {amount.toLocaleString()}
+              </p>
+            </div>
+            <button onClick={() => setShowSeatView(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+          </div>
+          
+          <div className="p-6">
+            {/* Legend */}
+            <div className="flex flex-wrap gap-4 mb-4 pb-4 border-b">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 bg-emerald-500 rounded"></div>
+                <span className="text-sm">Selected Seats ({seats.length})</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 bg-gray-200 border border-gray-300 rounded"></div>
+                <span className="text-sm">Available</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 bg-red-400 rounded"></div>
+                <span className="text-sm">Taken</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 bg-yellow-400 rounded animate-pulse"></div>
+                <span className="text-sm">Reserved</span>
+              </div>
+            </div>
+
+            {/* Screen */}
+            <div className="text-center mb-6">
+              <div className="inline-block bg-gray-800 text-white text-xs px-6 py-1 rounded-full">🎬 SCREEN</div>
+              <div className="w-full h-1 bg-gray-300 mt-2"></div>
+            </div>
+
+            {/* Seat Grid */}
+            <div className="space-y-1.5 max-h-[50vh] overflow-y-auto p-2">
+              {seatRows.map((rowSeats, rowIndex) => (
+                <div key={rowIndex} className="flex flex-wrap items-center gap-1">
+                  <div className="w-8 text-[10px] font-mono font-semibold text-gray-400 text-right">
+                    {String.fromCharCode(65 + rowIndex)}
+                  </div>
+                  <div className="flex flex-wrap gap-1 flex-1">
+                    {rowSeats.map(seatNum => {
+                      const isSelected = isSeatSelected(seatNum);
+                      const bgColor = isSelected ? 'bg-emerald-500 border-emerald-600' : 'bg-gray-200 border-gray-300';
+                      const textColor = isSelected ? 'text-white' : 'text-gray-700';
+                      const size = selectedSeatViewParticipant.seat_numbers?.length > 50 ? 'w-5 h-5 text-[8px]' : 'w-7 h-7 text-xs';
+                      return (
+                        <div
+                          key={seatNum}
+                          className={`${size} rounded flex items-center justify-center font-mono border ${bgColor} ${textColor}`}
+                          title={`Row ${String.fromCharCode(65 + rowIndex)}, Seat ${seatNum}`}
+                        >
+                          {seatNum}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Summary */}
+            <div className="mt-4 pt-4 border-t grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-gray-50 rounded-lg p-3 text-center">
+                <p className="text-xs text-gray-500">Total Seats</p>
+                <p className="font-bold text-lg">{totalSeats.toLocaleString()}</p>
+              </div>
+              <div className="bg-emerald-50 rounded-lg p-3 text-center">
+                <p className="text-xs text-gray-500">Selected Seats</p>
+                <p className="font-bold text-lg text-emerald-600">{seats.length}</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3 text-center">
+                <p className="text-xs text-gray-500">Amount Paid</p>
+                <p className="font-bold text-lg">ETB {amount.toLocaleString()}</p>
+              </div>
+              <div className="bg-blue-50 rounded-lg p-3 text-center">
+                <p className="text-xs text-gray-500">Status</p>
+                <p className={`font-bold text-lg ${selectedSeatViewParticipant.payment_status === 'verified' ? 'text-green-600' : 'text-yellow-600'}`}>
+                  {selectedSeatViewParticipant.payment_status === 'verified' ? '✅ Verified' : '⏳ Pending'}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => setShowSeatView(false)}
+                className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ============================================
+  // BANK TRANSFERS - FIXED
+  // ============================================
+
+  async function loadBankTransfers() {
+    try {
+      const { data, error } = await supabase
+        .from('bank_transfers')
+        .select('*')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Bank transfers error:', error);
+        if (isMounted.current) {
+          setBankTransfers([]);
+          setPendingBankTransfers(0);
+        }
+        return;
+      }
+
+      const transfersWithProfiles = await Promise.all((data || []).map(async (transfer) => {
+        let profile = null;
+        let pool = null;
+        
+        if (transfer.user_id) {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('id, full_name, email, phone')
+            .eq('id', transfer.user_id)
+            .maybeSingle();
+          profile = profileData;
+        }
+        
+        if (transfer.pool_id) {
+          const { data: poolData } = await supabase
+            .from('pools')
+            .select('id, prize_name, target_amount')
+            .eq('id', transfer.pool_id)
+            .maybeSingle();
+          pool = poolData;
+        }
+        
+        return { ...transfer, profiles: profile, pools: pool };
+      }));
+
+      if (isMounted.current) {
+        setBankTransfers(transfersWithProfiles || []);
+        setPendingBankTransfers(transfersWithProfiles?.length || 0);
+      }
+    } catch (error) {
+      console.error('Error loading bank transfers:', error);
+      if (isMounted.current) {
+        setBankTransfers([]);
+        setPendingBankTransfers(0);
+      }
+    }
+  }
+
+  async function verifyBankTransfer(transferId, userId, poolId, amount, seatNumbers, approved) {
+    if (!confirm(approved ? 'Approve this payment and confirm seats?' : 'Reject this payment?')) return;
+    
+    const toastId = toast.loading(approved ? 'Approving payment...' : 'Rejecting payment...');
+    
+    try {
+      if (approved) {
+        await supabase
+          .from('bank_transfers')
+          .update({ status: 'verified', verified_at: new Date().toISOString(), verified_by: user?.id })
+          .eq('id', transferId);
+        
+        if (seatNumbers && seatNumbers.length > 0) {
+          await supabase
+            .from('pool_seats')
+            .update({ status: 'taken', user_id: userId })
+            .in('seat_number', seatNumbers)
+            .eq('pool_id', poolId);
+        }
+        
+        await supabase
+          .from('contributions')
+          .insert({ 
+            user_id: userId, 
+            pool_id: poolId, 
+            amount: amount, 
+            status: 'completed', 
+            payment_method: 'bank_transfer', 
+            seat_numbers: seatNumbers, 
+            created_at: new Date().toISOString() 
+          });
+        
+        const { data: pool } = await supabase
+          .from('pools')
+          .select('current_amount')
+          .eq('id', poolId)
+          .single();
+        
+        await supabase
+          .from('pools')
+          .update({ current_amount: (pool?.current_amount || 0) + amount })
+          .eq('id', poolId);
+        
+        toast.success('✅ Payment approved! Seats confirmed.', { id: toastId });
+      } else {
+        await supabase
+          .from('bank_transfers')
+          .update({ status: 'rejected', rejected_at: new Date().toISOString() })
+          .eq('id', transferId);
+        
+        if (seatNumbers && seatNumbers.length > 0) {
+          await supabase
+            .from('pool_seats')
+            .update({ status: 'available', user_id: null })
+            .in('seat_number', seatNumbers)
+            .eq('pool_id', poolId);
+        }
+        
+        toast.success('❌ Payment rejected. Seats released.', { id: toastId });
+      }
+      await loadBankTransfers();
+      await loadStats();
+    } catch (error) { 
+      console.error('Verification error:', error);
+      toast.error('Failed to process payment', { id: toastId });
+    }
+  }
+
+  // ============================================
+  // PENDING APPROVALS - FIXED
+  // ============================================
+
+  async function loadPendingApprovals() {
+    try {
+      const [{ data: agents, error: agentsError }, { data: vendors, error: vendorsError }, { data: organizations, error: orgsError }] = await Promise.all([
+        supabase.from('agents').select('*').eq('is_approved', false).order('created_at', { ascending: false }),
+        supabase.from('vendors').select('*, profiles!user_id(full_name, email)').eq('verified', false).order('created_at', { ascending: false }),
+        supabase.from('organizations').select('*, profiles!user_id(full_name, email)').eq('verified', false).order('created_at', { ascending: false })
+      ]);
+      
+      if (agentsError) console.error('Agents error:', agentsError);
+      if (vendorsError) console.error('Vendors error:', vendorsError);
+      if (orgsError) console.error('Organizations error:', orgsError);
+      
+      if (agents && agents.length > 0) {
+        const agentsWithProfiles = await Promise.all(agents.map(async (agent) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, email')
+            .eq('id', agent.user_id)
+            .maybeSingle();
+          return { ...agent, profile };
+        }));
+        if (isMounted.current) setPendingAgents(agentsWithProfiles || []);
+      } else { 
+        if (isMounted.current) setPendingAgents([]); 
+      }
+      
+      if (isMounted.current) {
+        setPendingVendors(vendors || []);
+        setPendingOrganizations(organizations || []);
+      }
+    } catch (error) { 
+      console.error('Error loading pending approvals:', error);
+      if (isMounted.current) {
+        setPendingAgents([]);
+        setPendingVendors([]);
+        setPendingOrganizations([]);
+      }
+    }
+  }
+
+  // ============================================
+  // OTHER FUNCTIONS (Keep existing)
+  // ============================================
+
   async function loadMyPools() {
     try {
-      const { data: pools } = await supabase
+      const { data: pools, error } = await supabase
         .from('pools')
         .select('*')
         .eq('created_by', user?.id)
         .order('created_at', { ascending: false });
       
+      if (error) {
+        console.error('My pools error:', error);
+        if (isMounted.current) setMyPools([]);
+        return;
+      }
+      
       if (!isMounted.current) return;
       setMyPools(pools || []);
+      
       const totalRaised = pools?.reduce((sum, p) => sum + (p.current_amount || 0), 0) || 0;
       const { data: commissions } = await supabase
         .from('commissions')
@@ -661,40 +945,166 @@ async function loadCityVipData() {
         pending_commission: pendingCommission 
       });
     } catch (error) { 
-      console.error('Error loading my pools:', error); 
+      console.error('Error loading my pools:', error);
+      if (isMounted.current) setMyPools([]);
     }
   }
 
-  async function loadPendingApprovals() {
+  async function loadUsers() {
     try {
-      const [{ data: agents }, { data: vendors }, { data: organizations }] = await Promise.all([
-        supabase.from('agents').select('*').eq('is_approved', false).order('created_at', { ascending: false }),
-        supabase.from('vendors').select('*, profiles!user_id(full_name, email)').eq('verified', false).order('created_at', { ascending: false }),
-        supabase.from('organizations').select('*, profiles!user_id(full_name, email)').eq('verified', false).order('created_at', { ascending: false })
-      ]);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
       
-      if (agents && agents.length > 0) {
-        const agentsWithProfiles = await Promise.all(agents.map(async (agent) => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('full_name, email')
-            .eq('id', agent.user_id)
-            .single();
-          return { ...agent, profile };
-        }));
-        if (isMounted.current) setPendingAgents(agentsWithProfiles || []);
-      } else { 
-        if (isMounted.current) setPendingAgents([]); 
+      if (error) {
+        console.error('Users error:', error);
+        if (isMounted.current) setUsers([]);
+        return;
       }
       
-      if (isMounted.current) {
-        setPendingVendors(vendors || []);
-        setPendingOrganizations(organizations || []);
-      }
+      if (isMounted.current) setUsers(data || []);
     } catch (error) { 
-      console.error('Error loading pending approvals:', error); 
+      console.error('Error loading users:', error);
+      if (isMounted.current) setUsers([]);
     }
   }
+
+  async function loadAllPools() {
+    try {
+      const { data, error } = await supabase
+        .from('pools')
+        .select('*, profiles!created_by(full_name)')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      
+      if (error) {
+        console.error('All pools error:', error);
+        if (isMounted.current) setAllPools([]);
+        return;
+      }
+      
+      if (isMounted.current) setAllPools(data || []);
+    } catch (error) { 
+      console.error('Error loading all pools:', error);
+      if (isMounted.current) setAllPools([]);
+    }
+  }
+
+  async function loadFeaturedPools() {
+    try {
+      const { data, error } = await supabase
+        .from('pools')
+        .select('*')
+        .eq('is_featured', true)
+        .eq('status', 'active');
+      
+      if (error) {
+        console.error('Featured pools error:', error);
+        if (isMounted.current) setFeaturedPools([]);
+        return;
+      }
+      
+      if (isMounted.current) setFeaturedPools(data || []);
+    } catch (error) { 
+      console.error('Error loading featured pools:', error);
+      if (isMounted.current) setFeaturedPools([]);
+    }
+  }
+
+  async function loadWithdrawalRequests() {
+    try {
+      const { data, error } = await supabase
+        .from('withdrawals')
+        .select('*, agents!agent_id(full_name, email)')
+        .eq('status', 'pending')
+        .order('requested_at', { ascending: false });
+      
+      if (error) {
+        console.error('Withdrawals error:', error);
+        if (isMounted.current) setWithdrawalRequests([]);
+        return;
+      }
+      
+      if (isMounted.current) setWithdrawalRequests(data || []);
+    } catch (error) { 
+      console.error('Error loading withdrawals:', error);
+      if (isMounted.current) setWithdrawalRequests([]);
+    }
+  }
+
+  async function loadDisputes() {
+    try {
+      const { data, error } = await supabase
+        .from('disputes')
+        .select('*, pool:pools(prize_name), user:profiles(full_name)')
+        .eq('status', 'pending');
+      
+      if (error) {
+        console.error('Disputes error:', error);
+        if (isMounted.current) setDisputes([]);
+        return;
+      }
+      
+      if (isMounted.current) setDisputes(data || []);
+    } catch (error) { 
+      console.error('Error loading disputes:', error);
+      if (isMounted.current) setDisputes([]);
+    }
+  }
+
+  async function loadRecentActivity() {
+    try {
+      const [{ data: recentUsers }, { data: recentPools }, { data: recentAgents }] = await Promise.all([
+        supabase.from('profiles').select('full_name, email, created_at').order('created_at', { ascending: false }).limit(3),
+        supabase.from('pools').select('prize_name, status, created_at').order('created_at', { ascending: false }).limit(3),
+        supabase.from('agents').select('full_name, business_name, created_at').eq('is_approved', false).order('created_at', { ascending: false }).limit(3)
+      ]);
+      
+      const activities = [];
+      (recentUsers || []).forEach(u => { 
+        activities.push({ action: `New user registered: ${u.full_name || u.email}`, date: u.created_at, icon: '👤' }); 
+      });
+      (recentPools || []).forEach(p => { 
+        activities.push({ action: `New pool created: "${p.prize_name}" (${p.status})`, date: p.created_at, icon: '🏊' }); 
+      });
+      (recentAgents || []).forEach(a => { 
+        activities.push({ action: `New agent application: ${a.full_name} - ${a.business_name}`, date: a.created_at, icon: '🤝' }); 
+      });
+      
+      activities.sort((a, b) => new Date(b.date) - new Date(a.date));
+      if (isMounted.current) setRecentActivity(activities.slice(0, 5));
+    } catch (error) { 
+      console.error('Error loading recent activity:', error);
+      if (isMounted.current) setRecentActivity([]);
+    }
+  }
+
+  async function loadCharityData() {
+    try {
+      const { data, error } = await supabase
+        .from('charity_transactions')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (error) {
+        console.error('Charity data error:', error);
+        if (isMounted.current) setCharityTransactions([]);
+        return;
+      }
+      
+      if (isMounted.current) setCharityTransactions(data || []);
+    } catch (error) { 
+      console.error('Error loading charity data:', error);
+      if (isMounted.current) setCharityTransactions([]);
+    }
+  }
+
+  // ============================================
+  // ACTION FUNCTIONS
+  // ============================================
 
   async function verifyAgent(agentId, approved, rejectionReason = null) {
     try {
@@ -702,7 +1112,7 @@ async function loadCityVipData() {
         .from('agents')
         .select('user_id, full_name, email')
         .eq('id', agentId)
-        .single();
+        .maybeSingle();
       
       if (approved) {
         await supabase
@@ -765,7 +1175,7 @@ async function loadCityVipData() {
         .from('vendors')
         .select('user_id, business_name')
         .eq('id', vendorId)
-        .single();
+        .maybeSingle();
       
       if (approved) {
         await supabase
@@ -831,7 +1241,7 @@ async function loadCityVipData() {
         .from('organizations')
         .select('user_id, business_name')
         .eq('id', orgId)
-        .single();
+        .maybeSingle();
       
       if (approved) {
         await supabase
@@ -891,149 +1301,6 @@ async function loadCityVipData() {
     }
   }
 
-  async function loadWithdrawalRequests() {
-    try {
-      const { data } = await supabase
-        .from('withdrawals')
-        .select('*, agents!agent_id(full_name, email)')
-        .eq('status', 'pending')
-        .order('requested_at', { ascending: false });
-      
-      if (isMounted.current) setWithdrawalRequests(data || []);
-    } catch (error) { 
-      console.error('Error loading withdrawals:', error); 
-    }
-  }
-
- // Alternative: Use bank_transfers_simple view
-async function loadBankTransfers() {
-  try {
-    const { data, error } = await supabase
-      .from('bank_transfers_simple')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-
-    // ✅ Manually fetch user profiles for each transfer
-    const transfersWithProfiles = await Promise.all((data || []).map(async (transfer) => {
-      let profile = null;
-      if (transfer.user_id) {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('id, full_name, email, phone')
-          .eq('id', transfer.user_id)
-          .maybeSingle();
-        profile = profileData;
-      }
-      return { ...transfer, profiles: profile };
-    }));
-
-    if (isMounted.current) {
-      setBankTransfers(transfersWithProfiles || []);
-      setPendingBankTransfers(transfersWithProfiles?.length || 0);
-    }
-  } catch (error) {
-    console.error('Error loading bank transfers:', error);
-    toast.error('Failed to load bank transfers');
-  }
-}
-
-  async function loadUsers() {
-    try {
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100);
-      
-      if (isMounted.current) setUsers(data || []);
-    } catch (error) { 
-      console.error('Error loading users:', error); 
-    }
-  }
-
-  async function loadAllPools() {
-    try {
-      const { data } = await supabase
-        .from('pools')
-        .select('*, profiles!created_by(full_name)')
-        .order('created_at', { ascending: false })
-        .limit(100);
-      
-      if (isMounted.current) setAllPools(data || []);
-    } catch (error) { 
-      console.error('Error loading pools:', error); 
-    }
-  }
-
-  async function loadFeaturedPools() {
-    try {
-      const { data } = await supabase
-        .from('pools')
-        .select('*')
-        .eq('is_featured', true)
-        .eq('status', 'active');
-      
-      if (isMounted.current) setFeaturedPools(data || []);
-    } catch (error) { 
-      console.error('Error loading featured pools:', error); 
-    }
-  }
-
-  async function loadCharityData() {
-    try {
-      const { data } = await supabase
-        .from('charity_transactions')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(20);
-      
-      if (isMounted.current) setCharityTransactions(data || []);
-    } catch (error) { 
-      console.error('Error loading charity data:', error); 
-    }
-  }
-
-  async function loadDisputes() {
-    try {
-      const { data } = await supabase
-        .from('disputes')
-        .select('*, pool:pools(prize_name), user:profiles(full_name)')
-        .eq('status', 'pending');
-      
-      if (isMounted.current) setDisputes(data || []);
-    } catch (error) { 
-      console.error('Error loading disputes:', error); 
-    }
-  }
-
-  async function loadRecentActivity() {
-    try {
-      const [{ data: recentUsers }, { data: recentPools }, { data: recentAgents }] = await Promise.all([
-        supabase.from('profiles').select('full_name, email, created_at').order('created_at', { ascending: false }).limit(3),
-        supabase.from('pools').select('prize_name, status, created_at').order('created_at', { ascending: false }).limit(3),
-        supabase.from('agents').select('full_name, business_name, created_at').eq('is_approved', false).order('created_at', { ascending: false }).limit(3)
-      ]);
-      
-      const activities = [];
-      (recentUsers || []).forEach(u => { 
-        activities.push({ action: `New user registered: ${u.full_name || u.email}`, date: u.created_at, icon: '👤' }); 
-      });
-      (recentPools || []).forEach(p => { 
-        activities.push({ action: `New pool created: "${p.prize_name}" (${p.status})`, date: p.created_at, icon: '🏊' }); 
-      });
-      (recentAgents || []).forEach(a => { 
-        activities.push({ action: `New agent application: ${a.full_name} - ${a.business_name}`, date: a.created_at, icon: '🤝' }); 
-      });
-      
-      activities.sort((a, b) => new Date(b.date) - new Date(a.date));
-      if (isMounted.current) setRecentActivity(activities.slice(0, 5));
-    } catch (error) { 
-      console.error('Error loading recent activity:', error); 
-    }
-  }
-
   async function processWithdrawal(requestId, approved) {
     try {
       await supabase
@@ -1048,71 +1315,7 @@ async function loadBankTransfers() {
       toast.success(`Withdrawal ${approved ? 'approved' : 'rejected'}`);
       loadWithdrawalRequests();
     } catch (error) { 
-      toast.error('Failed'); 
-    }
-  }
-
-  async function verifyBankTransfer(transferId, userId, poolId, amount, seatNumbers, approved) {
-    if (!confirm(approved ? 'Approve this payment and confirm seats?' : 'Reject this payment?')) return;
-    try {
-      if (approved) {
-        await supabase
-          .from('bank_transfers')
-          .update({ status: 'verified', verified_at: new Date().toISOString(), verified_by: user?.id })
-          .eq('id', transferId);
-        
-        if (seatNumbers && seatNumbers.length > 0) {
-          await supabase
-            .from('pool_seats')
-            .update({ status: 'taken', user_id: userId })
-            .in('seat_number', seatNumbers)
-            .eq('pool_id', poolId);
-        }
-        
-        await supabase
-          .from('contributions')
-          .insert({ 
-            user_id: userId, 
-            pool_id: poolId, 
-            amount: amount, 
-            status: 'completed', 
-            payment_method: 'bank_transfer', 
-            seat_numbers: seatNumbers, 
-            created_at: new Date().toISOString() 
-          });
-        
-        const { data: pool } = await supabase
-          .from('pools')
-          .select('current_amount')
-          .eq('id', poolId)
-          .single();
-        
-        await supabase
-          .from('pools')
-          .update({ current_amount: (pool?.current_amount || 0) + amount })
-          .eq('id', poolId);
-        
-        toast.success('Payment approved! Seats confirmed.');
-      } else {
-        await supabase
-          .from('bank_transfers')
-          .update({ status: 'rejected', rejected_at: new Date().toISOString() })
-          .eq('id', transferId);
-        
-        if (seatNumbers && seatNumbers.length > 0) {
-          await supabase
-            .from('pool_seats')
-            .update({ status: 'available', user_id: null })
-            .in('seat_number', seatNumbers)
-            .eq('pool_id', poolId);
-        }
-        
-        toast.success('Payment rejected. Seats released.');
-      }
-      await loadBankTransfers();
-      await loadStats();
-    } catch (error) { 
-      toast.error('Failed to process'); 
+      toast.error('Failed to process withdrawal'); 
     }
   }
 
@@ -1126,7 +1329,7 @@ async function loadBankTransfers() {
       toast.success('Dispute resolved');
       loadDisputes();
     } catch (error) { 
-      toast.error('Failed'); 
+      toast.error('Failed to resolve dispute'); 
     }
   }
 
@@ -1141,7 +1344,7 @@ async function loadBankTransfers() {
       loadUsers();
       loadStats();
     } catch (error) { 
-      toast.error('Failed'); 
+      toast.error('Failed to update user role'); 
     }
   }
 
@@ -1155,7 +1358,7 @@ async function loadBankTransfers() {
       toast.success(`User ${!isBanned ? 'banned' : 'unbanned'}`);
       loadUsers();
     } catch (error) { 
-      toast.error('Failed'); 
+      toast.error('Failed to toggle user ban'); 
     }
   }
 
@@ -1171,7 +1374,7 @@ async function loadBankTransfers() {
       loadAllPools();
       loadStats();
     } catch (error) { 
-      toast.error('Failed'); 
+      toast.error('Failed to update pool status'); 
     }
   }
 
@@ -1186,7 +1389,7 @@ async function loadBankTransfers() {
       loadAllPools();
       loadFeaturedPools();
     } catch (error) { 
-      toast.error('Failed'); 
+      toast.error('Failed to update featured status'); 
     }
   }
 
@@ -1203,7 +1406,7 @@ async function loadBankTransfers() {
       loadStats();
       loadMyPools();
     } catch (error) { 
-      toast.error('Failed'); 
+      toast.error('Failed to delete pool'); 
     }
   }
 
@@ -1285,20 +1488,6 @@ async function loadBankTransfers() {
     }
   }
 
-  function openEditMerkatoModal(pool) {
-    setEditMerkatoData({ 
-      id: pool.id, 
-      tier: pool.tier, 
-      name: pool.name, 
-      contribution_amount: pool.contribution_amount, 
-      prize_amount: pool.prize_amount, 
-      draw_time: pool.draw_time ? new Date(pool.draw_time).toISOString().slice(0, 16) : '', 
-      status: pool.status 
-    });
-    setEditingMerkatoPool(pool);
-    setShowEditMerkatoModal(true);
-  }
-
   async function createAnnouncement() {
     if (!newAnnouncement.title || !newAnnouncement.message) { 
       toast.error('Please fill all fields'); 
@@ -1320,7 +1509,7 @@ async function loadBankTransfers() {
       setShowAnnouncementModal(false);
       setNewAnnouncement({ title: '', message: '', target_audience: 'all' });
     } catch (error) { 
-      toast.error('Failed'); 
+      toast.error('Failed to create announcement'); 
     }
   }
 
@@ -1418,6 +1607,7 @@ async function loadBankTransfers() {
   const totalPending = (pendingBankTransfers || 0) + 
     (cityVipParticipants?.filter(p => p.payment_status === 'pending_verification')?.length || 0) +
     (merkatoParticipants?.filter(p => p.payment_status === 'pending_verification')?.length || 0) +
+    (regularParticipants?.filter(p => p.payment_status === 'pending_verification')?.length || 0) +
     (pendingAgents?.length || 0) +
     (pendingVendors?.length || 0) +
     (pendingOrganizations?.length || 0) +
@@ -1432,6 +1622,7 @@ async function loadBankTransfers() {
       user={user}
       profile={profile}
       activeTab={activeTab}
+      show3D={false}
     >
       {/* Quick Stats - Pending Items Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-6">
@@ -1442,7 +1633,8 @@ async function loadBankTransfers() {
         <div className="bg-purple-50 rounded-xl p-3 text-center border border-purple-200">
           <p className="text-2xl font-bold text-purple-600">
             {(cityVipParticipants?.filter(p => p.payment_status === 'pending_verification')?.length || 0) +
-             (merkatoParticipants?.filter(p => p.payment_status === 'pending_verification')?.length || 0)}
+             (merkatoParticipants?.filter(p => p.payment_status === 'pending_verification')?.length || 0) +
+             (regularParticipants?.filter(p => p.payment_status === 'pending_verification')?.length || 0)}
           </p>
           <p className="text-xs text-gray-500">💳 Pending Payments</p>
         </div>
@@ -1469,6 +1661,7 @@ async function loadBankTransfers() {
           <button onClick={() => setActiveTab('my-pools')} className={`px-4 py-3 font-semibold ${activeTab === 'my-pools' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🎯 My Pools (20%)</button>
           <button onClick={() => setActiveTab('merkato')} className={`px-4 py-3 font-semibold ${activeTab === 'merkato' ? 'border-b-2 border-yellow-600 text-yellow-600' : 'text-gray-500'}`}>🏪 Merkato VIP</button>
           <button onClick={() => setActiveTab('city-vip')} className={`px-4 py-3 font-semibold ${activeTab === 'city-vip' ? 'border-b-2 border-gray-600 text-gray-600' : 'text-gray-500'}`}>🏙️ City VIP</button>
+          <button onClick={() => setActiveTab('regular')} className={`px-4 py-3 font-semibold ${activeTab === 'regular' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500'}`}>🎯 Regular Pools</button>
           <button onClick={() => setActiveTab('users')} className={`px-4 py-3 font-semibold ${activeTab === 'users' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>👥 Users</button>
           <button onClick={() => setActiveTab('pools')} className={`px-4 py-3 font-semibold ${activeTab === 'pools' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🌊 All Pools</button>
           <button onClick={() => setActiveTab('approvals')} className={`px-4 py-3 font-semibold ${activeTab === 'approvals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>📝 Approvals</button>
@@ -1481,7 +1674,7 @@ async function loadBankTransfers() {
       </div>
 
       <div className="py-6">
-        {/* Overview Tab */}
+        {/* Overview Tab - Same as before */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
@@ -1592,7 +1785,7 @@ async function loadBankTransfers() {
           </div>
         )}
 
-        {/* Merkato VIP Tab */}
+        {/* Merkato VIP Tab with Seat View */}
         {activeTab === 'merkato' && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -1643,10 +1836,81 @@ async function loadBankTransfers() {
                 )}
               </div>
             </div>
+
+            {/* Merkato VIP Participants with Seat View */}
+            <div className="bg-white rounded-xl shadow-md overflow-hidden">
+              <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
+                <h2 className="font-bold text-lg">👥 Merkato VIP Participants</h2>
+                <div className="flex gap-2">
+                  <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold">
+                    {merkatoParticipants?.filter(p => p.payment_status === 'pending_verification')?.length || 0} Pending
+                  </span>
+                  <button onClick={loadMerkatoData} className="bg-blue-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-blue-700">🔄 Refresh</button>
+                </div>
+              </div>
+              <div className="p-4">
+                {merkatoParticipants.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-5xl mb-3">🏪</div>
+                    <p className="text-gray-500">No Merkato VIP participants yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {merkatoParticipants.slice(0, 20).map((participant) => (
+                      <div key={participant.id} className={`border rounded-lg p-4 ${participant.payment_status === 'verified' ? 'border-green-200 bg-green-50/30' : participant.payment_status === 'pending_verification' ? 'border-yellow-200 bg-yellow-50/30' : 'border-gray-200'}`}>
+                        <div className="flex flex-wrap justify-between items-start gap-4">
+                          <div className="space-y-1 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-2xl">🏪</span>
+                              <span className="font-semibold">{participant.user_name || 'Anonymous'}</span>
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${participant.payment_status === 'verified' ? 'bg-green-100 text-green-700' : participant.payment_status === 'pending_verification' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'}`}>
+                                {participant.payment_status === 'verified' ? '✓ Verified' : participant.payment_status === 'pending_verification' ? '⏳ Pending' : 'Pending Payment'}
+                              </span>
+                              <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full capitalize">{participant.pool_type}</span>
+                            </div>
+                            <p className="text-sm text-gray-500">{participant.user_email}</p>
+                            <p className="text-sm">🎟️ Seats: <span className="font-mono font-semibold">{participant.seat_numbers?.join(', ') || 'N/A'}</span></p>
+                            <p className="text-sm font-bold text-green-600">💰 ETB {participant.contribution_amount?.toLocaleString()}</p>
+                            <p className="text-xs text-gray-400">🎫 Ticket: {participant.ticket_number}</p>
+                            <p className="text-xs text-gray-400">📅 Submitted: {new Date(participant.created_at).toLocaleString()}</p>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            {participant.payment_proof_url && (
+                              <button onClick={() => window.open(participant.payment_proof_url, '_blank')} className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">📸 View Proof</button>
+                            )}
+                            <button
+                              onClick={() => openSeatView(participant, 'merkato')}
+                              className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm transition flex items-center gap-1"
+                            >
+                              🎭 View Seats
+                            </button>
+                            {participant.payment_status === 'pending_verification' && (
+                              <div className="flex gap-2">
+                                <button onClick={() => {
+                                  const tableName = 'merkato_vip_participants';
+                                  verifyPayment(tableName, participant.id, true);
+                                }} className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">✅ Approve</button>
+                                <button onClick={() => {
+                                  const tableName = 'merkato_vip_participants';
+                                  verifyPayment(tableName, participant.id, false);
+                                }} className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">❌ Reject</button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {merkatoParticipants.length > 20 && (
+                      <p className="text-center text-sm text-gray-400">Showing first 20 of {merkatoParticipants.length} participants</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
-        {/* City VIP Tab */}
+        {/* City VIP Tab with Seat View */}
         {activeTab === 'city-vip' && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -1678,41 +1942,50 @@ async function loadBankTransfers() {
                   <div className="text-center py-12"><div className="text-5xl mb-3">🏙️</div><p className="text-gray-400">No City VIP participants yet</p></div>
                 ) : (
                   <div className="space-y-4">
-                    {cityVipParticipants.filter(p => selectedCityFilter === 'all' || p.city === selectedCityFilter).map((participant) => {
+                    {cityVipParticipants.filter(p => selectedCityFilter === 'all' || p.city === selectedCityFilter).slice(0, 20).map((participant) => {
                       const isVerified = participant.payment_status === 'verified';
                       const isPending = participant.payment_status === 'pending_verification';
                       return (
                         <div key={participant.id} className={`border rounded-lg p-4 ${isVerified ? 'border-green-200 bg-green-50/30' : isPending ? 'border-yellow-200 bg-yellow-50/30' : 'border-gray-200'}`}>
-                          <div className="flex justify-between items-start flex-wrap gap-4">
-                            <div className="space-y-1">
+                          <div className="flex flex-wrap justify-between items-start gap-4">
+                            <div className="space-y-1 flex-1">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-2xl">🏙️</span>
                                 <span className="font-semibold">{participant.city || 'Unknown City'}</span>
-                                <span className="text-sm text-gray-500">{participant.pool_type} Pool</span>
+                                <span className="text-sm text-gray-500 capitalize">{participant.pool_type} Pool</span>
                                 {isVerified ? <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">✓ Verified</span> : isPending ? <span className="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">⏳ Pending</span> : <span className="bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded-full">Pending Payment</span>}
                               </div>
                               <p className="text-sm font-medium">{participant.user_name}</p>
                               <p className="text-sm text-gray-500">{participant.user_email}</p>
-                              <p className="text-sm">Seats: <span className="font-mono">{participant.seat_numbers?.join(', ')}</span></p>
-                              <p className="text-sm font-semibold text-green-600">Amount: ETB {participant.contribution_amount?.toLocaleString()}</p>
-                              <p className="text-xs text-gray-400">Ticket: {participant.ticket_number}</p>
-                              <p className="text-xs text-gray-400">Submitted: {new Date(participant.created_at).toLocaleString()}</p>
+                              <p className="text-sm">🎟️ Seats: <span className="font-mono font-semibold">{participant.seat_numbers?.join(', ') || 'N/A'}</span></p>
+                              <p className="text-sm font-bold text-green-600">💰 ETB {participant.contribution_amount?.toLocaleString()}</p>
+                              <p className="text-xs text-gray-400">🎫 Ticket: {participant.ticket_number}</p>
+                              <p className="text-xs text-gray-400">📅 Submitted: {new Date(participant.created_at).toLocaleString()}</p>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex flex-col gap-2">
                               {participant.payment_proof_url && (
                                 <button onClick={() => window.open(participant.payment_proof_url, '_blank')} className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">📸 View Proof</button>
                               )}
+                              <button
+                                onClick={() => openSeatView(participant, 'city')}
+                                className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm transition flex items-center gap-1"
+                              >
+                                🎭 View Seats
+                              </button>
                               {isPending && (
-                                <>
+                                <div className="flex gap-2">
                                   <button onClick={() => verifyCityVipPayment(participant.id, true)} className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">✅ Approve</button>
                                   <button onClick={() => verifyCityVipPayment(participant.id, false)} className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">❌ Reject</button>
-                                </>
+                                </div>
                               )}
                             </div>
                           </div>
                         </div>
                       );
                     })}
+                    {cityVipParticipants.filter(p => selectedCityFilter === 'all' || p.city === selectedCityFilter).length > 20 && (
+                      <p className="text-center text-sm text-gray-400">Showing first 20 of {cityVipParticipants.filter(p => selectedCityFilter === 'all' || p.city === selectedCityFilter).length} participants</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -1751,10 +2024,76 @@ async function loadBankTransfers() {
           </div>
         )}
 
-        {/* Approvals Tab */}
+        {/* Regular Pools Tab */}
+        {activeTab === 'regular' && (
+          <div className="bg-white rounded-xl shadow-md overflow-hidden">
+            <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
+              <h2 className="font-bold text-lg">🎯 Regular Pool Participants</h2>
+              <div className="flex gap-2">
+                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${regularPoolStats.pending_verification > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
+                  {regularPoolStats.pending_verification} Pending
+                </span>
+                <button onClick={loadRegularPoolData} className="bg-blue-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-blue-700">🔄 Refresh</button>
+              </div>
+            </div>
+            <div className="p-4">
+              {regularParticipants.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-5xl mb-3">🎯</div>
+                  <p className="text-gray-500">No regular pool participants yet</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {regularParticipants.filter(p => p.payment_status === 'pending_verification' || p.payment_status === 'verified').slice(0, 20).map((participant) => (
+                    <div key={participant.id} className={`border rounded-lg p-4 ${participant.payment_status === 'verified' ? 'border-green-200 bg-green-50/30' : 'border-yellow-200 bg-yellow-50/30'}`}>
+                      <div className="flex flex-wrap justify-between items-start gap-4">
+                        <div className="space-y-1 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-2xl">🎯</span>
+                            <span className="font-semibold">{participant.user_name || 'Anonymous'}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${participant.payment_status === 'verified' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                              {participant.payment_status === 'verified' ? '✓ Verified' : '⏳ Pending'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-500">{participant.user_email}</p>
+                          <p className="text-sm">🎯 Pool: <span className="font-medium">{participant.pool_name || 'Regular Pool'}</span></p>
+                          <p className="text-sm">🎟️ Seats: <span className="font-mono font-semibold">{participant.seat_numbers?.join(', ') || 'N/A'}</span></p>
+                          <p className="text-sm font-bold text-green-600">💰 ETB {participant.contribution_amount?.toLocaleString()}</p>
+                          <p className="text-xs text-gray-400">🎫 Ticket: {participant.ticket_number}</p>
+                          <p className="text-xs text-gray-400">📅 Submitted: {new Date(participant.created_at).toLocaleString()}</p>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          {participant.payment_proof_url && (
+                            <button onClick={() => window.open(participant.payment_proof_url, '_blank')} className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">📸 View Proof</button>
+                          )}
+                          {participant.payment_status === 'pending_verification' && (
+                            <div className="flex gap-2">
+                              <button onClick={() => {
+                                const tableName = 'regular_pool_participants';
+                                verifyPayment(tableName, participant.id, true);
+                              }} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700">✅ Approve</button>
+                              <button onClick={() => {
+                                const tableName = 'regular_pool_participants';
+                                verifyPayment(tableName, participant.id, false);
+                              }} className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700">❌ Reject</button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {regularParticipants.filter(p => p.payment_status === 'pending_verification' || p.payment_status === 'verified').length > 20 && (
+                    <p className="text-center text-sm text-gray-400">Showing first 20 of {regularParticipants.filter(p => p.payment_status === 'pending_verification' || p.payment_status === 'verified').length} participants</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Approvals Tab - Same as before */}
         {activeTab === 'approvals' && (
           <div className="space-y-6">
-            {/* Pending Agents */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-bold text-lg">🤝 Pending Agent Applications ({pendingAgents.length})</h3>
@@ -1802,7 +2141,6 @@ async function loadBankTransfers() {
               )}
             </div>
 
-            {/* Pending Vendors */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-bold text-lg">🏪 Pending Vendor Applications ({pendingVendors.length})</h3>
@@ -1845,7 +2183,6 @@ async function loadBankTransfers() {
               )}
             </div>
 
-            {/* Pending Organizations */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-bold text-lg">🏢 Pending Organization Applications ({pendingOrganizations.length})</h3>
@@ -1916,130 +2253,61 @@ async function loadBankTransfers() {
           </div>
         )}
 
-        // pages/admin/dashboard.js - UPDATED Bank Transfers Tab
-
-{activeTab === 'bank-transfers' && (
-  <div className="bg-white rounded-xl shadow-md overflow-hidden">
-    <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
-      <h2 className="font-bold text-lg">🏦 Bank Transfer Verification</h2>
-      <div className="flex gap-2">
-        <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold">
-          {pendingBankTransfers} Pending
-        </span>
-        <button 
-          onClick={loadBankTransfers} 
-          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm transition"
-        >
-          🔄 Refresh
-        </button>
-      </div>
-    </div>
-    <div className="p-4">
-      {bankTransfers.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-5xl mb-3">✅</div>
-          <p className="text-gray-500 font-medium">No pending bank transfers</p>
-          <p className="text-sm text-gray-400 mt-1">All transfers have been processed</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {bankTransfers.map((transfer) => (
-            <div key={transfer.id} className="border rounded-lg p-4 hover:shadow-md transition bg-white">
-              <div className="flex flex-wrap justify-between items-start gap-4">
-                <div className="space-y-2 flex-1 min-w-[200px]">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-bold text-lg">{transfer.profiles?.full_name || transfer.full_name || 'Unknown User'}</span>
-                    <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full">⏳ Pending</span>
-                  </div>
-                  <p className="text-sm text-gray-500">{transfer.profiles?.email || transfer.email || 'No email'}</p>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-sm">
-                    <p><span className="text-gray-500">💰 Amount:</span> <span className="font-bold text-green-600">ETB {transfer.amount?.toLocaleString()}</span></p>
-                    <p><span className="text-gray-500">🎯 Pool:</span> {transfer.pools?.prize_name || transfer.prize_name || 'N/A'}</p>
-                    <p><span className="text-gray-500">🎟️ Seats:</span> <span className="font-mono">{transfer.seat_numbers?.join(', ') || 'N/A'}</span></p>
-                    <p><span className="text-gray-500">🔖 Reference:</span> {transfer.reference || 'N/A'}</p>
-                  </div>
-                  
-                  <p className="text-xs text-gray-400">Submitted: {new Date(transfer.created_at).toLocaleString()}</p>
-                </div>
-                
-                <div className="flex flex-col gap-2">
-                  {transfer.proof_image && (
-                    <button
-                      onClick={() => window.open(transfer.proof_image, '_blank')}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition flex items-center gap-2"
-                    >
-                      📸 View Proof
-                    </button>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex flex-wrap gap-3 mt-4 pt-3 border-t">
-                <button
-                  onClick={() => verifyBankTransfer(
-                    transfer.id, 
-                    transfer.user_id, 
-                    transfer.pool_id, 
-                    transfer.amount, 
-                    transfer.seat_numbers, 
-                    true
-                  )}
-                  className="flex-1 min-w-[100px] bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg font-semibold transition flex items-center justify-center gap-2"
-                >
-                  ✅ Approve & Confirm
-                </button>
-                <button
-                  onClick={() => verifyBankTransfer(
-                    transfer.id, 
-                    transfer.user_id, 
-                    transfer.pool_id, 
-                    transfer.amount, 
-                    transfer.seat_numbers, 
-                    false
-                  )}
-                  className="flex-1 min-w-[100px] bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg font-semibold transition flex items-center justify-center gap-2"
-                >
-                  ❌ Reject
-                </button>
+        {/* Bank Transfers Tab */}
+        {activeTab === 'bank-transfers' && (
+          <div className="bg-white rounded-xl shadow-md overflow-hidden">
+            <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
+              <h2 className="font-bold text-lg">🏦 Bank Transfer Verification</h2>
+              <div className="flex gap-2">
+                <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold">
+                  {pendingBankTransfers} Pending
+                </span>
+                <button onClick={loadBankTransfers} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm transition">🔄 Refresh</button>
               </div>
             </div>
-          ))}
-        </div>
-      )}
-    </div>
-  </div>
-)}
-        {/* Finance Tab */}
-        {activeTab === 'finance' && (
-          <div className="space-y-6">
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <h3 className="font-bold text-gray-500">Total Volume</h3>
-                <p className="text-3xl font-bold text-green-600">ETB {stats.total_volume.toLocaleString()}</p>
-              </div>
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <h3 className="font-bold text-gray-500">Platform Revenue (10%)</h3>
-                <p className="text-3xl font-bold text-blue-600">ETB {stats.platform_revenue.toLocaleString()}</p>
-              </div>
-              <div className="bg-gradient-to-r from-red-500 to-pink-500 rounded-xl p-6 text-white">
-                <h3 className="font-bold">Charity Fund (2%)</h3>
-                <p className="text-3xl font-bold">ETB {Math.floor(stats.charity_total).toLocaleString()}</p>
-                <p className="text-sm">Lives Impacted: {stats.lives_impacted}</p>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="font-bold text-lg mb-4">💚 Charity Transaction History</h3>
-              {charityTransactions.length === 0 ? (
-                <p className="text-gray-400 text-center py-8">No charity transactions yet</p>
+            <div className="p-4">
+              {bankTransfers.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-5xl mb-3">✅</div>
+                  <p className="text-gray-500 font-medium">No pending bank transfers</p>
+                  <p className="text-sm text-gray-400 mt-1">All transfers have been processed</p>
+                </div>
               ) : (
-                charityTransactions.map(t => (
-                  <div key={t.id} className="border-b py-3 flex justify-between">
-                    <span>{new Date(t.created_at).toLocaleDateString()}</span>
-                    <span className="font-bold text-green-600">ETB {t.amount?.toLocaleString()}</span>
-                    <span className="text-gray-500">{t.source}</span>
-                  </div>
-                ))
+                <div className="space-y-4">
+                  {bankTransfers.map((transfer) => (
+                    <div key={transfer.id} className="border rounded-lg p-4 hover:shadow-md transition bg-white">
+                      <div className="flex flex-wrap justify-between items-start gap-4">
+                        <div className="space-y-2 flex-1 min-w-[200px]">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-lg">{transfer.profiles?.full_name || 'Unknown User'}</span>
+                            <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full">⏳ Pending</span>
+                          </div>
+                          <p className="text-sm text-gray-500">{transfer.profiles?.email || 'No email'}</p>
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-sm">
+                            <p><span className="text-gray-500">💰 Amount:</span> <span className="font-bold text-green-600">ETB {transfer.amount?.toLocaleString()}</span></p>
+                            <p><span className="text-gray-500">🎯 Pool:</span> {transfer.pools?.prize_name || 'N/A'}</p>
+                            <p><span className="text-gray-500">🎟️ Seats:</span> <span className="font-mono">{transfer.seat_numbers?.join(', ') || 'N/A'}</span></p>
+                            <p><span className="text-gray-500">🔖 Reference:</span> {transfer.reference || 'N/A'}</p>
+                          </div>
+                          
+                          <p className="text-xs text-gray-400">Submitted: {new Date(transfer.created_at).toLocaleString()}</p>
+                        </div>
+                        
+                        <div className="flex flex-col gap-2">
+                          {transfer.proof_image && (
+                            <button onClick={() => window.open(transfer.proof_image, '_blank')} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition flex items-center gap-2">📸 View Proof</button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-3 mt-4 pt-3 border-t">
+                        <button onClick={() => verifyBankTransfer(transfer.id, transfer.user_id, transfer.pool_id, transfer.amount, transfer.seat_numbers, true)} className="flex-1 min-w-[100px] bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg font-semibold transition flex items-center justify-center gap-2">✅ Approve & Confirm</button>
+                        <button onClick={() => verifyBankTransfer(transfer.id, transfer.user_id, transfer.pool_id, transfer.amount, transfer.seat_numbers, false)} className="flex-1 min-w-[100px] bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg font-semibold transition flex items-center justify-center gap-2">❌ Reject</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
@@ -2141,17 +2409,8 @@ async function loadBankTransfers() {
                   <p className="font-bold text-lg">Pool: {d.pool?.prize_name}</p>
                   <p className="text-gray-600">Filed by: {d.user?.full_name}</p>
                   <p className="mt-2">{d.description}</p>
-                  <textarea 
-                    id={`res-${d.id}`} 
-                    placeholder="Enter resolution notes..." 
-                    className="w-full border rounded-lg p-2 mt-3"
-                  ></textarea>
-                  <button 
-                    onClick={() => resolveDispute(d.id, document.getElementById(`res-${d.id}`).value)} 
-                    className="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg"
-                  >
-                    Resolve Dispute
-                  </button>
+                  <textarea id={`res-${d.id}`} placeholder="Enter resolution notes..." className="w-full border rounded-lg p-2 mt-3"></textarea>
+                  <button onClick={() => resolveDispute(d.id, document.getElementById(`res-${d.id}`).value)} className="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg">Resolve Dispute</button>
                 </div>
               ))
             )}
@@ -2162,9 +2421,7 @@ async function loadBankTransfers() {
         {activeTab === 'settings' && (
           <div className="bg-white rounded-xl shadow-md p-6">
             <h2 className="font-bold text-xl mb-4">⚙️ Platform Settings</h2>
-            <button onClick={() => setShowAnnouncementModal(true)} className="bg-blue-600 text-white px-6 py-2 rounded-lg">
-              📢 Create Announcement
-            </button>
+            <button onClick={() => setShowAnnouncementModal(true)} className="bg-blue-600 text-white px-6 py-2 rounded-lg">📢 Create Announcement</button>
             <div className="mt-6 pt-6 border-t">
               <Link href="/admin/analytics" className="text-blue-600 hover:underline">📊 View Full Analytics →</Link>
             </div>
@@ -2174,6 +2431,9 @@ async function loadBankTransfers() {
           </div>
         )}
       </div>
+
+      {/* Seat View Modal */}
+      <SeatViewModal />
 
       {/* Modals */}
       {showCityDrawModal && selectedCityPool && (
@@ -2200,33 +2460,11 @@ async function loadBankTransfers() {
       )}
 
       {/* UNIFIED MODALS */}
-      <CityVipModal
-        isOpen={cityModalMode !== null}
-        onClose={() => { setCityModalMode(null); setSelectedCityData(null); }}
-        onSuccess={() => { loadCityVipData(); loadCityVipConfigs(); loadStats(); }}
-        mode={cityModalMode}
-        cityData={selectedCityData}
-        userId={user?.id}
-      />
+      <CityVipModal isOpen={cityModalMode !== null} onClose={() => { setCityModalMode(null); setSelectedCityData(null); }} onSuccess={() => { loadCityVipData(); loadCityVipConfigs(); loadStats(); }} mode={cityModalMode} cityData={selectedCityData} userId={user?.id} />
+      <MerkatoVipModal isOpen={merkatoModalMode !== null} onClose={() => { setMerkatoModalMode(null); setSelectedMerkatoData(null); }} onSuccess={() => { loadMerkatoData(); loadStats(); }} mode={merkatoModalMode} poolData={selectedMerkatoData} userId={user?.id} />
+      <RegularPoolModal isOpen={regularModalMode !== null} onClose={() => { setRegularModalMode(null); setSelectedRegularData(null); }} onSuccess={() => { loadAllPools(); loadFeaturedPools(); loadStats(); loadMyPools(); }} mode={regularModalMode} poolData={selectedRegularData} userId={user?.id} />
 
-      <MerkatoVipModal
-        isOpen={merkatoModalMode !== null}
-        onClose={() => { setMerkatoModalMode(null); setSelectedMerkatoData(null); }}
-        onSuccess={() => { loadMerkatoData(); loadStats(); }}
-        mode={merkatoModalMode}
-        poolData={selectedMerkatoData}
-        userId={user?.id}
-      />
-
-      <RegularPoolModal
-        isOpen={regularModalMode !== null}
-        onClose={() => { setRegularModalMode(null); setSelectedRegularData(null); }}
-        onSuccess={() => { loadAllPools(); loadFeaturedPools(); loadStats(); loadMyPools(); }}
-        mode={regularModalMode}
-        poolData={selectedRegularData}
-        userId={user?.id}
-      />
-
+      {/* Keep existing modals */}
       {showPoolModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
