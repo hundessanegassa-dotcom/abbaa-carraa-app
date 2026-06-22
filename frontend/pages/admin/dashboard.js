@@ -971,48 +971,66 @@ export default function AdminDashboard() {
     }
   }
 
-  async function loadAllPools() {
-    try {
-      const { data, error } = await supabase
-        .from('pools')
-        .select('*, profiles!created_by(full_name)')
-        .order('created_at', { ascending: false })
-        .limit(100);
-      
-      if (error) {
-        console.error('All pools error:', error);
+ // pages/admin/dashboard.js - COMPLETE FIXED loadAllPools
+
+async function loadAllPools() {
+  try {
+    // ✅ First, check if we can query pools
+    const { data: poolsData, error: poolsError } = await supabase
+      .from('pools')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (poolsError) {
+      console.error('Pools query error:', poolsError);
+      // If the table doesn't exist, create it
+      if (poolsError.code === '42P01') { // Table doesn't exist
+        console.log('Pools table may not exist yet');
         if (isMounted.current) setAllPools([]);
         return;
       }
-      
-      if (isMounted.current) setAllPools(data || []);
-    } catch (error) { 
-      console.error('Error loading all pools:', error);
       if (isMounted.current) setAllPools([]);
+      return;
     }
-  }
 
-  async function loadFeaturedPools() {
-    try {
-      const { data, error } = await supabase
-        .from('pools')
-        .select('*')
-        .eq('is_featured', true)
-        .eq('status', 'active');
+    // ✅ If pools data exists, try to get creator names
+    let poolsWithCreators = [];
+    if (poolsData && poolsData.length > 0) {
+      // Get unique creator IDs
+      const creatorIds = [...new Set(poolsData.map(p => p.created_by).filter(Boolean))];
       
-      if (error) {
-        console.error('Featured pools error:', error);
-        if (isMounted.current) setFeaturedPools([]);
-        return;
+      // Fetch profiles for creators
+      let profilesMap = {};
+      if (creatorIds.length > 0) {
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', creatorIds);
+        
+        if (!profilesError && profilesData) {
+          profilesMap = profilesData.reduce((acc, p) => {
+            acc[p.id] = p;
+            return acc;
+          }, {});
+        }
       }
-      
-      if (isMounted.current) setFeaturedPools(data || []);
-    } catch (error) { 
-      console.error('Error loading featured pools:', error);
-      if (isMounted.current) setFeaturedPools([]);
-    }
-  }
 
+      // Map creator names to pools
+      poolsWithCreators = poolsData.map(pool => ({
+        ...pool,
+        profiles: pool.created_by ? profilesMap[pool.created_by] || null : null
+      }));
+    }
+
+    if (isMounted.current) {
+      setAllPools(poolsWithCreators || []);
+    }
+  } catch (error) {
+    console.error('Error loading all pools:', error);
+    if (isMounted.current) setAllPools([]);
+  }
+}
   async function loadWithdrawalRequests() {
     try {
       const { data, error } = await supabase
