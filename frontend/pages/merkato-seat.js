@@ -1,4 +1,4 @@
-// pages/merkato-seat.js - COMPLETE REDESIGNED LIKE CITY VIP (Theater Style Seats)
+// pages/merkato-seat.js - COMPLETE FIXED (Seats Available & No Duplicates)
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
@@ -29,6 +29,7 @@ export default function MerkatoSeat() {
   const [showSeatSelector, setShowSeatSelector] = useState(true);
   const [language, setLanguage] = useState('am');
   const [currentRow, setCurrentRow] = useState(0);
+  const [seatsInitialized, setSeatsInitialized] = useState(false);
   const seatGridRef = useRef(null);
 
   // Load language preference
@@ -45,7 +46,7 @@ export default function MerkatoSeat() {
     localStorage.setItem('appLanguage', newLang);
   };
 
-  // VIP Pools with flexible configuration
+  // VIP Pools configuration
   const vipPools = {
     daily: {
       name: "Daily Millionaire",
@@ -117,12 +118,21 @@ export default function MerkatoSeat() {
 
   useEffect(() => {
     if (user && poolInfo) {
+      initializeSeats();
+    }
+  }, [user, poolInfo]);
+
+  useEffect(() => {
+    if (user && poolInfo && seatsInitialized) {
       fetchBookedSeats();
       fetchUserReservations();
-      const interval = setInterval(() => { fetchBookedSeats(); fetchUserReservations(); }, 30000);
+      const interval = setInterval(() => { 
+        fetchBookedSeats(); 
+        fetchUserReservations(); 
+      }, 30000);
       return () => clearInterval(interval);
     }
-  }, [user, poolInfo, selectedType]);
+  }, [user, poolInfo, seatsInitialized]);
 
   const checkUser = async () => {
     try {
@@ -143,93 +153,215 @@ export default function MerkatoSeat() {
     }
   };
 
-  async function fetchBookedSeats() {
+  // Initialize seats in the database
+  const initializeSeats = async () => {
+    if (!poolInfo || !user) return;
+    
     try {
-      const { data, error } = await supabase
-        .from('merkato_vip_participants')
-        .select('seat_numbers, payment_status')
-        .eq('pool_type', selectedType)
-        .in('payment_status', ['verified', 'pending_verification']);
+      const poolId = `merkato_${selectedType}`;
       
-      if (error) throw error;
-      const allBookedSeats = [];
-      if (data) data.forEach(p => { if (p.seat_numbers) allBookedSeats.push(...p.seat_numbers); });
-      setBookedSeats([...new Set(allBookedSeats)]);
-    } catch (err) { console.error(err); }
+      // Check if seats already exist
+      const { count, error: countError } = await supabase
+        .from('merkato_vip_seats')
+        .select('*', { count: 'exact', head: true })
+        .eq('pool_id', poolId);
+      
+      if (countError) {
+        // If table doesn't exist, show error
+        console.error('Seats table error:', countError);
+        toast.error('Seats system not ready. Please contact support.');
+        return;
+      }
+      
+      // If no seats exist, generate them
+      if (count === 0) {
+        const totalSeats = poolInfo.totalSeats;
+        const seatsToInsert = [];
+        for (let i = 1; i <= totalSeats; i++) {
+          seatsToInsert.push({
+            pool_id: poolId,
+            seat_number: i,
+            status: 'available'
+          });
+        }
+        
+        const batchSize = 500;
+        for (let i = 0; i < seatsToInsert.length; i += batchSize) {
+          const batch = seatsToInsert.slice(i, i + batchSize);
+          const { error: insertError } = await supabase
+            .from('merkato_vip_seats')
+            .insert(batch);
+          if (insertError) console.error('Batch insert error:', insertError);
+        }
+        
+        console.log(`✅ Generated ${totalSeats} seats for Merkato ${selectedType}`);
+      }
+      
+      setSeatsInitialized(true);
+    } catch (error) {
+      console.error('Error initializing seats:', error);
+    }
+  };
+
+  async function fetchBookedSeats() {
+    if (!poolInfo) return;
+    
+    try {
+      const poolId = `merkato_${selectedType}`;
+      
+      const { data, error } = await supabase
+        .from('merkato_vip_seats')
+        .select('seat_number, status, reserved_by')
+        .eq('pool_id', poolId);
+      
+      if (error) {
+        console.error('Fetch booked seats error:', error);
+        return;
+      }
+      
+      const takenSeats = (data || [])
+        .filter(seat => seat.status === 'taken')
+        .map(seat => seat.seat_number);
+      
+      const reservedByOthers = (data || [])
+        .filter(seat => seat.status === 'reserved' && seat.reserved_by !== user?.id)
+        .map(seat => seat.seat_number);
+      
+      const reservedByMe = (data || [])
+        .filter(seat => seat.status === 'reserved' && seat.reserved_by === user?.id)
+        .map(seat => seat.seat_number);
+      
+      const allUnavailable = [...new Set([...takenSeats, ...reservedByOthers])];
+      setBookedSeats(allUnavailable);
+      setReservedSeats(reservedByMe);
+      
+      if (reservedByMe.length > 0 && selectedSeats.length === 0) {
+        setSelectedSeats(reservedByMe);
+      }
+      
+    } catch (err) {
+      console.error('Error fetching booked seats:', err);
+    }
   }
 
   async function fetchUserReservations() {
-    if (!user) return;
+    if (!user || !poolInfo) return;
+    
     try {
       const poolId = `merkato_${selectedType}`;
       const { data, error } = await supabase
-        .from('vip_seat_reservations')
-        .select('seat_number, expires_at')
-        .eq('user_id', user.id)
+        .from('merkato_vip_seats')
+        .select('seat_number, reserved_until')
         .eq('pool_id', poolId)
-        .gte('expires_at', new Date().toISOString());
+        .eq('reserved_by', user.id)
+        .eq('status', 'reserved')
+        .gte('reserved_until', new Date().toISOString());
       
       if (!error && data && data.length > 0) {
-        setReservedSeats(data.map(r => r.seat_number));
-        setSelectedSeats(data.map(r => r.seat_number));
+        const reservedSeatNumbers = data.map(r => r.seat_number);
+        setReservedSeats(reservedSeatNumbers);
+        setSelectedSeats(reservedSeatNumbers);
       }
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error('Error fetching user reservations:', err);
+    }
   }
 
   async function reserveSeatsInDB(seatNumbers) {
-    if (!user) return false;
+    if (!user || !poolInfo) return false;
+    
     const poolId = `merkato_${selectedType}`;
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-    const reservations = seatNumbers.map(seatNumber => ({
-      pool_id: poolId,
-      seat_number: seatNumber,
-      user_id: user.id,
-      expires_at: expiresAt,
-      created_at: new Date().toISOString()
-    }));
+    const expiryTime = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     
-    const { error } = await supabase
-      .from('vip_seat_reservations')
-      .upsert(reservations, { onConflict: 'pool_id, seat_number' });
-    
-    if (error) return false;
-    
-    if (reservationTimer) clearTimeout(reservationTimer);
-    const timer = setTimeout(() => {
-      releaseUserReservations();
-      toast.warning('Your seat reservation has expired.');
-      window.location.reload();
-    }, 10 * 60 * 1000);
-    setReservationTimer(timer);
-    return true;
+    try {
+      for (const seatNumber of seatNumbers) {
+        const { error } = await supabase
+          .from('merkato_vip_seats')
+          .upsert({
+            pool_id: poolId,
+            seat_number: seatNumber,
+            user_id: user.id,
+            reserved_by: user.id,
+            status: 'reserved',
+            reserved_until: expiryTime,
+            reserved_at: new Date().toISOString()
+          }, { onConflict: 'pool_id, seat_number' });
+        
+        if (error) {
+          console.error('Reserve error:', error);
+          return false;
+        }
+      }
+      
+      if (reservationTimer) clearTimeout(reservationTimer);
+      const timer = setTimeout(() => {
+        releaseUserReservations();
+        toast.warning('Your seat reservation has expired.');
+        window.location.reload();
+      }, 10 * 60 * 1000);
+      setReservationTimer(timer);
+      
+      return true;
+    } catch (error) {
+      console.error('Error reserving seats:', error);
+      return false;
+    }
   }
 
   async function releaseSeats(seatNumbers) {
-    if (!seatNumbers || seatNumbers.length === 0 || !user) return;
+    if (!seatNumbers || seatNumbers.length === 0 || !user || !poolInfo) return;
+    
     const poolId = `merkato_${selectedType}`;
-    await supabase
-      .from('vip_seat_reservations')
-      .delete()
-      .eq('user_id', user.id)
-      .eq('pool_id', poolId)
-      .in('seat_number', seatNumbers);
+    
+    try {
+      await supabase
+        .from('merkato_vip_seats')
+        .update({
+          status: 'available',
+          user_id: null,
+          reserved_by: null,
+          reserved_at: null,
+          reserved_until: null
+        })
+        .in('seat_number', seatNumbers)
+        .eq('pool_id', poolId)
+        .eq('reserved_by', user.id);
+    } catch (error) {
+      console.error('Error releasing seats:', error);
+    }
   }
 
   async function releaseUserReservations() {
-    if (!user) return;
+    if (!user || !poolInfo) return;
+    
     const poolId = `merkato_${selectedType}`;
-    await supabase
-      .from('vip_seat_reservations')
-      .delete()
-      .eq('user_id', user.id)
-      .eq('pool_id', poolId);
-    setReservedSeats([]);
-    setSelectedSeats([]);
+    
+    try {
+      await supabase
+        .from('merkato_vip_seats')
+        .update({
+          status: 'available',
+          user_id: null,
+          reserved_by: null,
+          reserved_at: null,
+          reserved_until: null
+        })
+        .eq('pool_id', poolId)
+        .eq('reserved_by', user.id)
+        .eq('status', 'reserved');
+      
+      setReservedSeats([]);
+      setSelectedSeats([]);
+      await fetchBookedSeats();
+    } catch (error) {
+      console.error('Error releasing user reservations:', error);
+    }
   }
 
   const refreshSeats = async () => {
     setIsRefreshing(true);
     try {
+      await initializeSeats();
       await fetchBookedSeats();
       await fetchUserReservations();
       toast.success(language === 'am' ? 'መቀመጫዎች ታድሰዋል! ✅' : 'Seats refreshed! ✅');
@@ -237,6 +369,43 @@ export default function MerkatoSeat() {
       toast.error(language === 'am' ? 'መቀመጫዎችን ማደስ አልተቻለም' : 'Failed to refresh seats');
     } finally {
       setIsRefreshing(false);
+    }
+  };
+
+  const handleManualSeatAdd = async () => {
+    const seatNum = parseInt(manualSeatInput);
+    if (isNaN(seatNum)) {
+      toast.error(language === 'am' ? 'እባክዎ ትክክለኛ የመቀመጫ ቁጥር ያስገቡ' : 'Enter a valid seat number');
+      return;
+    }
+    if (seatNum < 1 || seatNum > poolInfo.totalSeats) {
+      toast.error(language === 'am' ? `የመቀመጫ ቁጥር ከ1 እስከ ${poolInfo.totalSeats.toLocaleString()} መሆን አለበት` : `Seat must be between 1 and ${poolInfo.totalSeats.toLocaleString()}`);
+      return;
+    }
+    if (bookedSeats.includes(seatNum)) {
+      toast.error(language === 'am' ? `መቀመጫ ${seatNum} ተይዟል` : `Seat ${seatNum} is taken`);
+      setManualSeatInput('');
+      return;
+    }
+    if (selectedSeats.includes(seatNum)) {
+      toast.error(language === 'am' ? `መቀመጫ ${seatNum} አስቀድሞ ተመርጧል` : `Seat ${seatNum} already selected`);
+      setManualSeatInput('');
+      return;
+    }
+    if (selectedSeats.length >= 5) {
+      toast.error(language === 'am' ? 'እስከ 5 መቀመጫዎች ብቻ መምረጥ ይችላሉ' : 'Max 5 seats');
+      return;
+    }
+    const success = await reserveSeatsInDB([seatNum]);
+    if (success) {
+      setSelectedSeats([...selectedSeats, seatNum]);
+      setReservedSeats([...reservedSeats, seatNum]);
+      toast.success(language === 'am' ? `መቀመጫ ${seatNum} ለ10 ደቂቃ ተይዟል` : `Seat ${seatNum} reserved for 10 min`);
+      await fetchBookedSeats();
+      setManualSeatInput('');
+    } else {
+      toast.error(language === 'am' ? `መቀመጫ ${seatNum} አይገኝም` : `Seat ${seatNum} unavailable`);
+      await fetchBookedSeats();
     }
   };
 
@@ -308,62 +477,27 @@ export default function MerkatoSeat() {
       
       if (error) throw error;
       
+      // Mark seats as taken
+      await supabase
+        .from('merkato_vip_seats')
+        .update({
+          status: 'taken',
+          user_id: user.id,
+          reserved_by: null,
+          reserved_until: null
+        })
+        .in('seat_number', selectedSeats)
+        .eq('pool_id', `merkato_${selectedType}`);
+      
       setParticipantId(participant.id);
       setShowSeatSelector(false);
       setShowPayment(true);
       toast.success(language === 'am' ? 'መቀመጫዎች ተይዘዋል! እባክዎ ክፍያ ይፈጽሙ' : 'Seats reserved! Complete payment.');
     } catch (error) {
+      console.error('Confirmation error:', error);
       toast.error(language === 'am' ? 'መቀመጫዎችን ማስያዝ አልተቻለም' : 'Failed to reserve seats');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handlePaymentSubmit = async () => {
-    if (!selectedFile) {
-      toast.error(language === 'am' ? 'እባክዎ የክፍያ ማስረጃ ይስቀሉ' : 'Upload payment screenshot');
-      return;
-    }
-    setUploading(true);
-    try {
-      const compressedFile = await compressImage(selectedFile);
-      const fileName = `${user.id}/${Date.now()}_merkato_${selectedType}.jpg`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('payment-proofs')
-        .upload(fileName, compressedFile);
-      
-      if (uploadError) throw uploadError;
-      
-      const { data: { publicUrl } } = supabase.storage
-        .from('payment-proofs')
-        .getPublicUrl(fileName);
-      
-      await supabase
-        .from('merkato_vip_participants')
-        .update({
-          payment_status: 'pending_verification',
-          payment_proof_url: publicUrl,
-          payment_submitted_at: new Date().toISOString()
-        })
-        .eq('id', participantId);
-      
-      await releaseUserReservations();
-      
-      const { data: updatedParticipant } = await supabase
-        .from('merkato_vip_participants')
-        .select('*')
-        .eq('id', participantId)
-        .single();
-      
-      setParticipantData(updatedParticipant);
-      setShowPayment(false);
-      setShowTicket(true);
-      toast.success(language === 'am' ? 'ክፍያ ተልኳል! ቲኬትዎ ዝግጁ ነው' : 'Payment submitted! Ticket ready');
-    } catch (error) {
-      toast.error(language === 'am' ? 'ክፍያ መላክ አልተቻለም' : 'Payment failed');
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -398,6 +532,37 @@ export default function MerkatoSeat() {
       };
     };
   });
+
+  const handlePaymentSubmit = async () => {
+    if (!selectedFile) {
+      toast.error(language === 'am' ? 'እባክዎ የክፍያ ማስረጃ ይስቀሉ' : 'Upload payment screenshot');
+      return;
+    }
+    setUploading(true);
+    try {
+      const compressedFile = await compressImage(selectedFile);
+      const fileName = `${user.id}/${Date.now()}_merkato_${selectedType}.jpg`;
+      const { error: uploadError } = await supabase.storage.from('payment-proofs').upload(fileName, compressedFile);
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from('payment-proofs').getPublicUrl(fileName);
+      await supabase.from('merkato_vip_participants').update({
+        payment_status: 'pending_verification',
+        payment_proof_url: publicUrl,
+        payment_submitted_at: new Date().toISOString()
+      }).eq('id', participantId);
+      await releaseUserReservations();
+      const { data: updatedParticipant } = await supabase.from('merkato_vip_participants').select('*').eq('id', participantId).single();
+      setParticipantData(updatedParticipant);
+      setShowPayment(false);
+      setShowTicket(true);
+      toast.success(language === 'am' ? 'ክፍያ ተልኳል! ቲኬትዎ ዝግጁ ነው' : 'Payment submitted! Ticket ready');
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast.error(language === 'am' ? 'ክፍያ መላክ አልተቻለም' : 'Payment failed');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">
@@ -559,10 +724,28 @@ export default function MerkatoSeat() {
                   </button>
                 ))}
                 {rows > 20 && (
-                  <span className="px-3 py-1.5 text-xs text-gray-400">
-                    +{rows - 20} more
-                  </span>
+                  <span className="px-3 py-1.5 text-xs text-gray-400">+{rows - 20} more</span>
                 )}
+              </div>
+
+              {/* Manual Seat Input */}
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm font-semibold text-blue-700 mb-2">🎯 Or enter seat number manually:</p>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    value={manualSeatInput}
+                    onChange={(e) => setManualSeatInput(e.target.value)}
+                    placeholder={`Enter seat number (1-${totalSeatsCount.toLocaleString()})`}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500"
+                  />
+                  <button
+                    onClick={handleManualSeatAdd}
+                    className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-700"
+                  >
+                    Add Seat
+                  </button>
+                </div>
               </div>
 
               {/* Legend */}
@@ -587,9 +770,7 @@ export default function MerkatoSeat() {
 
               {/* Screen */}
               <div className="text-center mb-4">
-                <div className="inline-block bg-gray-700 text-white text-[10px] px-6 py-1 rounded-full uppercase tracking-wider">
-                  🎬 SCREEN
-                </div>
+                <div className="inline-block bg-gray-700 text-white text-[10px] px-6 py-1 rounded-full uppercase tracking-wider">🎬 SCREEN</div>
                 <div className="w-full h-px bg-gray-300 mt-2"></div>
               </div>
 
