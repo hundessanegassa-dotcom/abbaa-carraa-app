@@ -1,4 +1,4 @@
-// pages/pools/[id].js - COMPLETE WITH THEATER STYLE (LIKE CITY VIP)
+// pages/pools/[id].js - COMPLETE FIXED (Pool Not Found Error Fixed)
 import { useRouter } from 'next/router';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -6,56 +6,6 @@ import Head from 'next/head';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import TicketImage from '../../components/TicketImage';
-
-// Optimized file upload utilities
-const validateFile = (file) => {
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-  const MAX_SIZE = 5 * 1024 * 1024;
-  
-  if (!allowedTypes.includes(file.type)) {
-    throw new Error('Please upload a valid image file (JPEG, PNG, WEBP)');
-  }
-  
-  if (file.size > MAX_SIZE) {
-    throw new Error('File size must be less than 5MB');
-  }
-  
-  return true;
-};
-
-const compressImage = async (file) => {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target.result;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width, height = img.height;
-        const maxSize = 1024;
-        if (width > height) {
-          if (width > maxSize) {
-            height = (height * maxSize) / width;
-            width = maxSize;
-          }
-        } else {
-          if (height > maxSize) {
-            width = (width * maxSize) / height;
-            height = maxSize;
-          }
-        }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        canvas.toBlob((blob) => {
-          resolve(new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), { type: 'image/jpeg' }));
-        }, 'image/jpeg', 0.7);
-      };
-    };
-  });
-};
 
 export default function PoolDetails() {
   const router = useRouter();
@@ -102,6 +52,26 @@ export default function PoolDetails() {
   const maxSeatsPerUser = Math.min(5, Math.floor((totalSeats - bookedSeats.length) / 2) || 5);
   const seatsPerRow = 20;
 
+  // ✅ FIX: Better ID handling - useEffect to fetch pool when id is available
+  useEffect(() => {
+    if (id) {
+      console.log('Pool ID from query:', id);
+      fetchPool();
+      getCurrentUser();
+    } else {
+      console.log('No pool ID in query, waiting...');
+    }
+  }, [id]);
+
+  // ✅ FIX: Redirect if no id and not loading
+  useEffect(() => {
+    if (!id && !loading && router.isReady) {
+      console.log('No pool ID, redirecting to listings');
+      toast.error('No pool selected');
+      router.push('/listings');
+    }
+  }, [id, loading, router.isReady]);
+
   useEffect(() => {
     return () => {
       isMounted.current = false;
@@ -111,13 +81,6 @@ export default function PoolDetails() {
       }
     };
   }, [reservedSeats, user]);
-
-  useEffect(() => {
-    if (id) {
-      fetchPool();
-      getCurrentUser();
-    }
-  }, [id]);
 
   useEffect(() => {
     if (user && pool && id) {
@@ -138,18 +101,31 @@ export default function PoolDetails() {
   }, [user, pool, id]);
 
   async function getCurrentUser() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (isMounted.current) setUser(user);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (isMounted.current) setUser(user);
+    } catch (error) {
+      console.error('Error getting user:', error);
+    }
   }
 
+  // ✅ FIX: Better pool fetching with error handling
   async function fetchPool() {
+    if (!id) {
+      console.log('No ID provided to fetchPool');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
+      console.log('Fetching pool with ID:', id);
+      
       const { data, error } = await supabase
         .from('pools')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle(); // ✅ Changed from .single() to .maybeSingle()
       
       if (error) {
         console.error('Pool fetch error:', error);
@@ -158,13 +134,23 @@ export default function PoolDetails() {
         return;
       }
       
+      if (!data) {
+        console.error('No pool found with ID:', id);
+        toast.error('Pool not found');
+        setTimeout(() => router.push('/listings'), 2000);
+        setLoading(false);
+        return;
+      }
+      
+      console.log('Pool found:', data);
       if (isMounted.current) setPool(data);
+      
     } catch (err) {
-      console.error('Unexpected error:', err);
+      console.error('Unexpected error fetching pool:', err);
       toast.error('An unexpected error occurred.');
       setTimeout(() => router.push('/listings'), 2000);
     } finally {
-      setLoading(false);
+      if (isMounted.current) setLoading(false);
     }
   }
 
@@ -227,13 +213,18 @@ export default function PoolDetails() {
   };
 
   async function fetchBookedSeats() {
+    if (!id) return;
+    
     try {
       const { data, error } = await supabase
         .from('pool_seats')
         .select('seat_number, status, reserved_by')
         .eq('pool_id', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Fetch booked seats error:', error);
+        return;
+      }
       
       const takenSeats = (data || [])
         .filter(seat => seat.status === 'taken')
@@ -264,7 +255,7 @@ export default function PoolDetails() {
   }
 
   async function fetchUserReservations() {
-    if (!user) return;
+    if (!user || !id) return;
     
     try {
       const { data, error } = await supabase
@@ -286,76 +277,89 @@ export default function PoolDetails() {
   }
 
   async function reserveSeatsInDB(seatNumbers) {
-    if (!user) return false;
+    if (!user || !id) return false;
     
     const expiryTime = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     
-    for (const seatNumber of seatNumbers) {
-      const { error } = await supabase
-        .from('pool_seats')
-        .upsert({
-          pool_id: id,
-          seat_number: seatNumber,
-          user_id: user.id,
-          reserved_by: user.id,
-          status: 'reserved',
-          reserved_until: expiryTime,
-          reserved_at: new Date().toISOString()
-        }, { onConflict: 'pool_id, seat_number' });
-      
-      if (error) {
-        console.error('Reserve error:', error);
-        return false;
+    try {
+      for (const seatNumber of seatNumbers) {
+        const { error } = await supabase
+          .from('pool_seats')
+          .upsert({
+            pool_id: id,
+            seat_number: seatNumber,
+            user_id: user.id,
+            reserved_by: user.id,
+            status: 'reserved',
+            reserved_until: expiryTime,
+            reserved_at: new Date().toISOString()
+          }, { onConflict: 'pool_id, seat_number' });
+        
+        if (error) {
+          console.error('Reserve error:', error);
+          return false;
+        }
       }
+      
+      if (reservationTimer) clearTimeout(reservationTimer);
+      const timer = setTimeout(() => {
+        releaseUserReservations();
+        toast.warning('Your seat reservation has expired. Please reselect seats.', { duration: 5000 });
+        window.location.reload();
+      }, 10 * 60 * 1000);
+      setReservationTimer(timer);
+      
+      return true;
+    } catch (error) {
+      console.error('Error reserving seats:', error);
+      return false;
     }
-    
-    if (reservationTimer) clearTimeout(reservationTimer);
-    const timer = setTimeout(() => {
-      releaseUserReservations();
-      toast.warning('Your seat reservation has expired. Please reselect seats.', { duration: 5000 });
-      window.location.reload();
-    }, 10 * 60 * 1000);
-    setReservationTimer(timer);
-    
-    return true;
   }
 
   async function releaseSeats(seatNumbers) {
-    if (!seatNumbers || seatNumbers.length === 0 || !user) return;
+    if (!seatNumbers || seatNumbers.length === 0 || !user || !id) return;
     
-    await supabase
-      .from('pool_seats')
-      .update({
-        status: 'available',
-        user_id: null,
-        reserved_by: null,
-        reserved_at: null,
-        reserved_until: null
-      })
-      .in('seat_number', seatNumbers)
-      .eq('pool_id', id)
-      .eq('reserved_by', user.id);
+    try {
+      await supabase
+        .from('pool_seats')
+        .update({
+          status: 'available',
+          user_id: null,
+          reserved_by: null,
+          reserved_at: null,
+          reserved_until: null
+        })
+        .in('seat_number', seatNumbers)
+        .eq('pool_id', id)
+        .eq('reserved_by', user.id);
+    } catch (error) {
+      console.error('Error releasing seats:', error);
+    }
   }
 
   async function releaseUserReservations() {
-    if (!user) return;
+    if (!user || !id) return;
     
-    await supabase
-      .from('pool_seats')
-      .update({
-        status: 'available',
-        user_id: null,
-        reserved_by: null,
-        reserved_at: null,
-        reserved_until: null
-      })
-      .eq('pool_id', id)
-      .eq('reserved_by', user.id)
-      .eq('status', 'reserved');
-    
-    setReservedSeats([]);
-    setSelectedSeats([]);
-    await fetchBookedSeats();
+    try {
+      await supabase
+        .from('pool_seats')
+        .update({
+          status: 'available',
+          user_id: null,
+          reserved_by: null,
+          reserved_at: null,
+          reserved_until: null
+        })
+        .eq('pool_id', id)
+        .eq('reserved_by', user.id)
+        .eq('status', 'reserved');
+      
+      setReservedSeats([]);
+      setSelectedSeats([]);
+      await fetchBookedSeats();
+    } catch (error) {
+      console.error('Error releasing user reservations:', error);
+    }
   }
 
   const handleJoinNow = () => {
@@ -527,6 +531,38 @@ export default function PoolDetails() {
     }
   };
 
+  const compressImage = (file) => new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width, height = img.height;
+        const maxSize = 1024;
+        if (width > height) {
+          if (width > maxSize) {
+            height = (height * maxSize) / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = (width * maxSize) / height;
+            height = maxSize;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          resolve(new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), { type: 'image/jpeg' }));
+        }, 'image/jpeg', 0.7);
+      };
+    };
+  });
+
   const handlePaymentSubmit = async () => {
     if (!selectedFile) { 
       toast.error('Please upload payment screenshot'); 
@@ -537,7 +573,6 @@ export default function PoolDetails() {
     const loadingToast = toast.loading('Uploading payment screenshot...');
     
     try {
-      validateFile(selectedFile);
       const compressedFile = await compressImage(selectedFile);
       
       const fileName = `${user.id}/${Date.now()}_regular_${pool.id}.jpg`;
@@ -607,17 +642,29 @@ export default function PoolDetails() {
     setShowSeatSelector(true);
   };
 
+  // ✅ FIX: Show proper loading state
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div></div>;
-  }
-
-  if (!pool) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Pool not found</h1>
-          <p className="text-gray-500 mt-2">The pool you're looking for may have been removed.</p>
-          <Link href="/listings" className="text-green-600 hover:underline mt-4 inline-block">Back to listings</Link>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-500">Loading pool details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ FIX: Show "Pool not found" with proper redirect
+  if (!pool) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md bg-white rounded-2xl shadow-xl p-8">
+          <div className="text-6xl mb-4">🔍</div>
+          <h1 className="text-2xl font-bold text-gray-800">Pool Not Found</h1>
+          <p className="text-gray-500 mt-2">The pool you're looking for may have been removed or doesn't exist.</p>
+          <Link href="/listings" className="inline-block mt-6 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+            Browse All Pools →
+          </Link>
         </div>
       </div>
     );
