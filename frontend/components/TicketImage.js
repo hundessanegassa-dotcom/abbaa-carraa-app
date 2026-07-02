@@ -1,4 +1,4 @@
-// components/TicketImage.js - Complete Redesigned Ticket (No 3D, Unified Design)
+// components/TicketImage.js - COMPLETE REDESIGNED (No 3D, Unified Design)
 import { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import toast from 'react-hot-toast';
@@ -24,21 +24,24 @@ export default function TicketImage({
         primary: 'from-yellow-500 to-orange-600',
         secondary: 'bg-yellow-50 border-yellow-200',
         accent: 'text-yellow-700',
-        light: 'bg-yellow-50/30'
+        light: 'bg-yellow-50/30',
+        label: 'MERKATO VIP'
       };
     } else if (poolType === 'city') {
       return {
         primary: 'from-blue-600 to-indigo-600',
         secondary: 'bg-blue-50 border-blue-200',
         accent: 'text-blue-700',
-        light: 'bg-blue-50/30'
+        light: 'bg-blue-50/30',
+        label: 'CITY VIP'
       };
     } else {
       return {
         primary: 'from-emerald-600 to-teal-600',
         secondary: 'bg-emerald-50 border-emerald-200',
         accent: 'text-emerald-700',
-        light: 'bg-emerald-50/30'
+        light: 'bg-emerald-50/30',
+        label: 'REGULAR POOL'
       };
     }
   };
@@ -171,14 +174,13 @@ export default function TicketImage({
     return pool?.drawDate || pool?.draw_time || pool?.end_date || 'TBD';
   };
 
-  // Generate a random pattern for background (consistent per ticket)
+  // Generate a subtle pattern for background
   const getPatternStyle = () => {
     const patterns = [
       'linear-gradient(135deg, rgba(255,255,255,0.05) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.05) 75%, transparent 75%, transparent)',
       'radial-gradient(circle at 20% 30%, rgba(255,255,255,0.05) 0%, transparent 50%)',
       'linear-gradient(45deg, rgba(255,255,255,0.03) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.03) 50%, rgba(255,255,255,0.03) 75%, transparent 75%, transparent)'
     ];
-    // Use ticket number to pick consistent pattern
     const index = (ticketNumber?.length || 0) % patterns.length;
     return patterns[index];
   };
@@ -224,7 +226,6 @@ export default function TicketImage({
       >
         {/* Header with Program-Specific Color */}
         <div className={`bg-gradient-to-r ${colors.primary} text-white p-5 text-center relative overflow-hidden`}>
-          {/* Subtle pattern overlay */}
           <div
             className="absolute inset-0 opacity-10"
             style={{
@@ -238,9 +239,7 @@ export default function TicketImage({
             <p className="text-sm opacity-90 mt-1 font-medium">{getProgramName()}</p>
             <div className="mt-2 flex justify-center gap-2">
               <span className="bg-white/20 px-3 py-0.5 rounded-full text-xs font-semibold">
-                {poolType === 'merkato' ? '⭐ MERKATO' :
-                 poolType === 'city' ? '🏙️ CITY' :
-                 '🎯 REGULAR'}
+                {colors.label}
               </span>
               <span className="bg-white/20 px-3 py-0.5 rounded-full text-xs font-semibold">
                 {isVerified ? '✅ VERIFIED' : '⏳ PENDING'}
