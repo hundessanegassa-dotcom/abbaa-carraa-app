@@ -1,4 +1,4 @@
-// pages/merkato-vip.js - COMPLETE WITH 3D BANNER UPLOAD + REFRESH BUTTON
+// pages/merkato-vip.js - COMPLETE FIXED (Removed Duplicate Banner)
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
@@ -8,7 +8,6 @@ import toast from 'react-hot-toast';
 import NoSSR from '../components/NoSSR';
 import TopCitySelector from '../components/TopCitySelector';
 import UnifiedAgentApplication from '../components/UnifiedAgentApplication';
-import ThreeDBannerUpload from '../components/ThreeDBannerUpload';
 
 // VIP Pools with 3 different colors for buttons
 const vipPools = {
@@ -60,24 +59,12 @@ export default function MerkatoVIP() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showAgentApplication, setShowAgentApplication] = useState(false);
-  const [bannerUrls, setBannerUrls] = useState({
-    daily: null,
-    weekly: null,
-    monthly: null
-  });
 
   // Load language preference
   useEffect(() => {
     const savedLang = localStorage.getItem('appLanguage');
     if (savedLang === 'am' || savedLang === 'en') {
       setLanguage(savedLang);
-    }
-    // Load saved banners
-    const savedBanners = localStorage.getItem('merkato_vip_banners');
-    if (savedBanners) {
-      try {
-        setBannerUrls(JSON.parse(savedBanners));
-      } catch (e) {}
     }
     checkUser();
   }, []);
@@ -91,18 +78,6 @@ export default function MerkatoVIP() {
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     setUser(user);
-  };
-
-  const handleBannerUpload = (poolType, url) => {
-    setBannerUrls(prev => ({
-      ...prev,
-      [poolType]: url
-    }));
-    // Save to localStorage
-    localStorage.setItem('merkato_vip_banners', JSON.stringify({
-      ...bannerUrls,
-      [poolType]: url
-    }));
   };
 
   const handleJoinPool = (poolType) => {
@@ -222,6 +197,7 @@ export default function MerkatoVIP() {
               <div className="bg-orange-600/30 px-4 py-2 rounded-full text-sm">👑 Monthly 40M</div>
             </div>
           </div>
+
           {/* 3 Colorful Tabs */}
           <div className="container mx-auto px-4 py-8">
             <div className="flex flex-wrap justify-center gap-3 mb-8">
