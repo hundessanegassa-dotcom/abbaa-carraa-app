@@ -1,4 +1,4 @@
-// pages/pools/[id].js - FULLY CORRECTED (ALL SEATS VISIBLE) + 3D BANNER UPLOAD
+// pages/pools/[id].js - COMPLETE WITH THEATER STYLE (LIKE CITY VIP)
 import { useRouter } from 'next/router';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -6,7 +6,6 @@ import Head from 'next/head';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import TicketImage from '../../components/TicketImage';
-import ThreeDBannerUpload from '../../components/ThreeDBannerUpload';
 
 // Optimized file upload utilities
 const validateFile = (file) => {
@@ -81,8 +80,9 @@ export default function PoolDetails() {
   const [availableSeatsCount, setAvailableSeatsCount] = useState(0);
   const [manualSeatInput, setManualSeatInput] = useState('');
   const [seatsInitialized, setSeatsInitialized] = useState(false);
-  const [bannerUrl, setBannerUrl] = useState(null);
   const [language, setLanguage] = useState('am');
+  const [currentRow, setCurrentRow] = useState(0);
+  const seatGridRef = useRef(null);
 
   // Load language preference
   useEffect(() => {
@@ -100,81 +100,7 @@ export default function PoolDetails() {
   const currentAmount = pool?.current_amount || 0;
   const progress = (currentAmount / totalCollection) * 100;
   const maxSeatsPerUser = Math.min(5, Math.floor((totalSeats - bookedSeats.length) / 2) || 5);
-
-  // Load saved banner
-  useEffect(() => {
-    if (id) {
-      const savedBanner = localStorage.getItem(`pool_banner_${id}`);
-      if (savedBanner) {
-        setBannerUrl(savedBanner);
-      }
-    }
-  }, [id]);
-
-  // Generate seats if they don't exist
-  const generateSeatsIfNeeded = async () => {
-    if (!pool || seatsInitialized || !id) return;
-    
-    try {
-      const { count, error: countError } = await supabase
-        .from('pool_seats')
-        .select('*', { count: 'exact', head: true })
-        .eq('pool_id', id);
-      
-      if (countError) throw countError;
-      
-      if (count === 0 && totalSeats > 0) {
-        console.log(`Generating ${totalSeats} seats for pool ${id}`);
-        const seatsToInsert = [];
-        for (let i = 1; i <= totalSeats; i++) {
-          seatsToInsert.push({
-            pool_id: id,
-            seat_number: i,
-            status: 'available'
-          });
-        }
-        
-        const batchSize = 500;
-        for (let i = 0; i < seatsToInsert.length; i += batchSize) {
-          const batch = seatsToInsert.slice(i, i + batchSize);
-          const { error: insertError } = await supabase
-            .from('pool_seats')
-            .insert(batch);
-          if (insertError) console.error('Batch insert error:', insertError);
-        }
-        setSeatsInitialized(true);
-        console.log(`Successfully generated ${totalSeats} seats`);
-        return true;
-      }
-      setSeatsInitialized(true);
-      return true;
-    } catch (err) {
-      console.error('Error generating seats:', err);
-      return false;
-    }
-  };
-
-  const refreshSeats = async () => {
-    if (!id) return;
-    setIsRefreshing(true);
-    try {
-      await generateSeatsIfNeeded();
-      await fetchBookedSeats();
-      await fetchUserReservations();
-      toast.success(language === 'am' ? 'መቀመጫዎች ታድሰዋል! ✅' : 'Seats refreshed! ✅');
-    } catch (error) {
-      toast.error(language === 'am' ? 'መቀመጫዎችን ማደስ አልተቻለም' : 'Failed to refresh seats');
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
-  const handleBannerUpload = (url) => {
-    setBannerUrl(url);
-    if (id) {
-      localStorage.setItem(`pool_banner_${id}`, url);
-    }
-  };
+  const seatsPerRow = 20;
 
   useEffect(() => {
     return () => {
@@ -241,6 +167,64 @@ export default function PoolDetails() {
       setLoading(false);
     }
   }
+
+  // Generate seats if they don't exist
+  const generateSeatsIfNeeded = async () => {
+    if (!pool || seatsInitialized || !id) return;
+    
+    try {
+      const { count, error: countError } = await supabase
+        .from('pool_seats')
+        .select('*', { count: 'exact', head: true })
+        .eq('pool_id', id);
+      
+      if (countError) throw countError;
+      
+      if (count === 0 && totalSeats > 0) {
+        console.log(`Generating ${totalSeats} seats for pool ${id}`);
+        const seatsToInsert = [];
+        for (let i = 1; i <= totalSeats; i++) {
+          seatsToInsert.push({
+            pool_id: id,
+            seat_number: i,
+            status: 'available'
+          });
+        }
+        
+        const batchSize = 500;
+        for (let i = 0; i < seatsToInsert.length; i += batchSize) {
+          const batch = seatsToInsert.slice(i, i + batchSize);
+          const { error: insertError } = await supabase
+            .from('pool_seats')
+            .insert(batch);
+          if (insertError) console.error('Batch insert error:', insertError);
+        }
+        setSeatsInitialized(true);
+        console.log(`Successfully generated ${totalSeats} seats`);
+        return true;
+      }
+      setSeatsInitialized(true);
+      return true;
+    } catch (err) {
+      console.error('Error generating seats:', err);
+      return false;
+    }
+  };
+
+  const refreshSeats = async () => {
+    if (!id) return;
+    setIsRefreshing(true);
+    try {
+      await generateSeatsIfNeeded();
+      await fetchBookedSeats();
+      await fetchUserReservations();
+      toast.success(language === 'am' ? 'መቀመጫዎች ታድሰዋል! ✅' : 'Seats refreshed! ✅');
+    } catch (error) {
+      toast.error(language === 'am' ? 'መቀመጫዎችን ማደስ አልተቻለም' : 'Failed to refresh seats');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   async function fetchBookedSeats() {
     try {
@@ -623,19 +607,6 @@ export default function PoolDetails() {
     setShowSeatSelector(true);
   };
 
-  const getSeatColor = (seatNum) => {
-    if (bookedSeats.includes(seatNum)) {
-      return 'bg-red-400 cursor-not-allowed opacity-70';
-    }
-    if (selectedSeats.includes(seatNum)) {
-      return 'bg-green-600 text-white shadow-lg transform scale-105';
-    }
-    if (reservedSeats.includes(seatNum)) {
-      return 'bg-yellow-400 animate-pulse';
-    }
-    return 'bg-gray-200 hover:bg-gray-300 cursor-pointer transition-all hover:transform hover:scale-105';
-  };
-
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div></div>;
   }
@@ -652,16 +623,37 @@ export default function PoolDetails() {
     );
   }
 
-  // FIXED: Show ALL seats (not limited to 500)
-  const seatNumbers = Array.from({ length: totalSeats }, (_, i) => i + 1);
+  // Build seat rows for theater display
+  const rows = Math.ceil(totalSeats / seatsPerRow);
+  const rowLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const seatRows = [];
+  for (let row = 0; row < rows; row++) {
+    const startSeat = row * seatsPerRow + 1;
+    const endSeat = Math.min(startSeat + seatsPerRow - 1, totalSeats);
+    const rowSeats = [];
+    for (let seat = startSeat; seat <= endSeat; seat++) {
+      rowSeats.push(seat);
+    }
+    seatRows.push(rowSeats);
+  }
+
+  const availableCount = seatRows.flat().filter(s => 
+    !bookedSeats.includes(s) && !selectedSeats.includes(s) && !reservedSeats.includes(s)
+  ).length;
   const takenCount = bookedSeats.length;
-  const availableCount = totalSeats - takenCount;
-  const totalAmount = selectedSeats.length * entryFee;
+
+  const scrollToRow = (rowIndex) => {
+    setCurrentRow(rowIndex);
+    if (seatGridRef.current) {
+      const rowElement = document.getElementById(`row-${rowIndex}`);
+      if (rowElement) rowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
 
   const renderSeatSelector = () => {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl shadow-xl max-w-7xl w-full max-h-[90vh] overflow-y-auto pb-24">
+        <div className="bg-white rounded-2xl shadow-xl max-w-7xl w-full max-h-[90vh] overflow-y-auto">
           <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
             <div>
               <h2 className="text-xl font-bold">Select Your Seats</h2>
@@ -690,6 +682,26 @@ export default function PoolDetails() {
           </div>
           
           <div className="p-6">
+            {/* Row Navigation */}
+            <div className="flex overflow-x-auto gap-1 mb-4 pb-2">
+              {Array.from({ length: Math.min(rows, 20) }).map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => scrollToRow(idx)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
+                    currentRow === idx
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {language === 'am' ? `ረድፍ ${idx + 1}` : `Row ${rowLetters[idx] || (idx + 1)}`}
+                </button>
+              ))}
+              {rows > 20 && (
+                <span className="px-3 py-1.5 text-xs text-gray-400">+{rows - 20} more</span>
+              )}
+            </div>
+
             {/* Manual Seat Input */}
             <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
               <p className="text-sm font-semibold text-blue-700 mb-2">🎯 Or enter seat number manually:</p>
@@ -717,36 +729,78 @@ export default function PoolDetails() {
               <div className="flex items-center gap-2"><div className="w-5 h-5 bg-yellow-400 rounded animate-pulse"></div><span>Reserved for You (10 min)</span></div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 mb-6">
-              <div className="bg-green-50 rounded-lg p-3 text-center"><p className="text-2xl font-bold text-green-600">{availableCount.toLocaleString()}</p><p className="text-xs text-gray-500">Available Seats</p></div>
-              <div className="bg-yellow-50 rounded-lg p-3 text-center"><p className="text-2xl font-bold text-yellow-600">{selectedSeats.length}</p><p className="text-xs text-gray-500">Your Selected</p></div>
-              <div className="bg-red-50 rounded-lg p-3 text-center"><p className="text-2xl font-bold text-red-600">{takenCount.toLocaleString()}</p><p className="text-xs text-gray-500">Booked/Taken</p></div>
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="bg-green-50 rounded-lg p-2 text-center border">
+                <p className="text-xl font-bold text-green-600">{availableCount.toLocaleString()}</p>
+                <p className="text-[10px] text-gray-500">Available</p>
+              </div>
+              <div className="bg-yellow-50 rounded-lg p-2 text-center border">
+                <p className="text-xl font-bold text-yellow-600">{selectedSeats.length}</p>
+                <p className="text-[10px] text-gray-500">Your Selected</p>
+              </div>
+              <div className="bg-red-50 rounded-lg p-2 text-center border">
+                <p className="text-xl font-bold text-red-600">{takenCount.toLocaleString()}</p>
+                <p className="text-[10px] text-gray-500">Booked/Taken</p>
+              </div>
             </div>
 
-            <div className="grid grid-cols-10 md:grid-cols-15 lg:grid-cols-20 gap-2 mb-6 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-xl">
-              {seatNumbers.map(seatNum => {
-                const isDisabled = bookedSeats.includes(seatNum);
-                const seatColor = getSeatColor(seatNum);
-                const isSelected = selectedSeats.includes(seatNum);
-                const isReserved = reservedSeats.includes(seatNum);
-                
-                return (
-                  <button
-                    key={seatNum}
-                    onClick={() => toggleSeat(seatNum)}
-                    disabled={isDisabled || (isReserved && !isSelected)}
-                    className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center text-xs font-semibold transition-all duration-200 ${seatColor} ${isSelected ? 'ring-2 ring-green-300 ring-offset-2' : ''}`}
-                    title={`Seat ${seatNum}${isDisabled ? ' - Taken' : isSelected ? ' - Selected by you' : isReserved ? ' - Reserved by you' : ' - Available'}`}
-                  >
-                    <span className="text-sm">{seatNum}</span>
-                    <span className="text-[8px] mt-0.5">{isDisabled ? '🔒' : isSelected ? '✓' : isReserved ? '⏳' : '🟢'}</span>
-                  </button>
-                );
-              })}
+            {/* Screen */}
+            <div className="text-center mb-4">
+              <div className="inline-block bg-gray-700 text-white text-[10px] px-6 py-1 rounded-full uppercase tracking-wider">🎬 SCREEN</div>
+              <div className="w-full h-px bg-gray-300 mt-2"></div>
             </div>
-            
+
+            {/* Seat Grid - Theater Style */}
+            <div ref={seatGridRef} className="space-y-1.5 max-h-[50vh] overflow-y-auto p-2">
+              {seatRows.map((rowSeats, rowIndex) => (
+                <div key={rowIndex} id={`row-${rowIndex}`} className="flex flex-wrap items-center gap-1">
+                  <div className="w-10 text-[10px] font-mono font-semibold text-gray-400 text-right">
+                    {rowLetters[rowIndex] || (rowIndex + 1)}
+                  </div>
+                  <div className="flex flex-wrap gap-1 flex-1">
+                    {rowSeats.map(seatNum => {
+                      const isTaken = bookedSeats.includes(seatNum);
+                      const isSelected = selectedSeats.includes(seatNum);
+                      const isReserved = reservedSeats.includes(seatNum);
+                      let bgColor = 'bg-white border border-gray-300 hover:bg-gray-100 cursor-pointer';
+                      let textColor = 'text-gray-700';
+                      let size = 'w-8 h-8 text-[10px]';
+                      
+                      if (isSelected) {
+                        bgColor = 'bg-emerald-600 border-emerald-700';
+                        textColor = 'text-white';
+                        size = 'w-8 h-8 text-[10px] ring-2 ring-emerald-300 ring-offset-1';
+                      }
+                      if (isTaken) {
+                        bgColor = 'bg-red-400 border-red-500';
+                        textColor = 'text-white opacity-60';
+                        size = 'w-8 h-8 text-[10px] cursor-not-allowed';
+                      }
+                      if (isReserved && !isSelected) {
+                        bgColor = 'bg-yellow-400 border-yellow-500 animate-pulse';
+                        textColor = 'text-gray-700';
+                      }
+
+                      return (
+                        <button
+                          key={seatNum}
+                          onClick={() => !isTaken && toggleSeat(seatNum)}
+                          disabled={isTaken}
+                          className={`${size} rounded-lg flex items-center justify-center font-mono font-semibold transition-all ${bgColor} ${textColor}`}
+                          title={isTaken ? `Seat ${seatNum} taken` : `Select Seat ${seatNum}`}
+                        >
+                          {seatNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
             {totalSeats > 500 && (
-              <p className="text-xs text-gray-400 text-center mb-4">Showing all {totalSeats.toLocaleString()} seats (scroll to see more)</p>
+              <p className="text-xs text-gray-400 text-center mt-4">Showing all {totalSeats.toLocaleString()} seats (scroll to see more)</p>
             )}
             
             {selectedSeats.length > 0 && (
@@ -755,7 +809,7 @@ export default function PoolDetails() {
                   <div><p className="text-sm text-gray-500">Selected Seats</p><p className="font-bold text-lg">{selectedSeats.sort((a,b)=>a-b).join(', ')}</p></div>
                   <div className="text-right"><p className="text-sm text-gray-500">Total Amount</p><p className="font-bold text-2xl text-green-600">ETB {totalAmount.toLocaleString()}</p><p className="text-xs text-gray-400">({selectedSeats.length} seats × ETB {entryFee.toLocaleString()})</p></div>
                 </div>
-                <button onClick={confirmSeats} disabled={loading} className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition disabled:opacity-50 mb-16">
+                <button onClick={confirmSeats} disabled={loading} className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition disabled:opacity-50">
                   {loading ? 'Processing...' : `Confirm ${selectedSeats.length} Seat${selectedSeats.length !== 1 ? 's' : ''} & Proceed to Payment`}
                 </button>
                 <p className="text-xs text-gray-400 text-center mt-3">⏰ Your selected seats are reserved for 10 minutes</p>
@@ -890,11 +944,13 @@ export default function PoolDetails() {
               )}
             </div>
           </div>
+
           {showSeatSelector && renderSeatSelector()}
           {showPayment && renderPayment()}
           
           {showTicket && participantData && (
-            <div className="bg-white rounded-2xl shadow-xl p-6">
+            <div className="bg-white rounded-2xl shadow-xl p-6 max-w-2xl mx-auto">
+              <h2 className="text-2xl font-bold text-center mb-4">🎫 Your Ticket</h2>
               <TicketImage 
                 participant={participantData}
                 pool={pool}
@@ -905,8 +961,11 @@ export default function PoolDetails() {
                 createdAt={participantData.created_at}
                 poolType="regular"
               />
-              <div className="text-center mt-6">
-                <button onClick={() => router.push('/dashboard')} className="bg-gray-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-700 transition">
+              <div className="text-center mt-4">
+                <p className="text-sm text-yellow-600">
+                  ⏳ This is an UNVERIFIED ticket. Your seats will be confirmed after payment verification.
+                </p>
+                <button onClick={() => router.push('/dashboard')} className="mt-4 bg-gray-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-700 transition">
                   Go to Dashboard
                 </button>
               </div>
