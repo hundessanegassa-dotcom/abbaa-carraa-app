@@ -1,4 +1,4 @@
-// pages/merkato-vip.js - COMPLETE FIXED (Removed Duplicate Banner)
+// pages/merkato-vip.js - COMPLETE FIXED (No Duplicate Banner)
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
