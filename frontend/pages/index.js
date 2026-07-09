@@ -1,4 +1,4 @@
-// pages/index.js - Complete with Bilingual Marquee (Amharic First)
+// pages/index.js - Complete with Fixed Layout, Slower Marquee, Optimized Featured Pools
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -358,27 +358,27 @@ export default function Home() {
     </div>
   );
 
-  // ========== BILINGUAL MOVING MARQUEE (Amharic First) ==========
+  // ========== BILINGUAL MOVING MARQUEE (Slower Speed) ==========
   const MovingMarquee = () => {
     const marqueeText = `🏆 በAbbaa Carraa ወርቃማ እድልን ያሸንፉ! • 🏪 መርካቶ ቪአይፒ: እስከ 40M ብር ጥሬ ገንዘብ ያሸንፉ • 🏙️ ከተማ ቪአይፒ: በ94 ከተሞች ጥሬ ገንዘብ ያሸንፉ • 🏊 መደበኛ የእጣ መደቦች: መኪና፣ ቤት፣ ማሽነሪ እና ኤሌክትሮኒክስ ያሸንፉ • 💚 2% ለጤና ይውላል • ይቀላቀሉ እና ዛሬ ማሸነፍ ይጀምሩ! 🎯 || 🏆 WIN BIG WITH ABBAA CARRAA • 🏪 Merkato VIP: Win Cash up to 40M ETB • 🏙️ City VIP: Win Cash in 94 Cities • 🏊 Regular Pools: Win Cars, Houses, Machinery & Electronics • 💚 2% Supports Health • Join & Start Winning Today! 🎯`;
 
     return (
       <div className="w-full overflow-hidden bg-gradient-to-r from-green-600 to-teal-600 py-2.5 md:py-3 shadow-inner">
-        <div className="whitespace-nowrap animate-marquee" style={{ display: 'inline-block' }}>
+        <div className="whitespace-nowrap animate-marquee-slow" style={{ display: 'inline-block' }}>
           <span className="text-white font-semibold text-[11px] md:text-sm tracking-wide px-4">
             {marqueeText}
           </span>
         </div>
         <style jsx>{`
-          @keyframes marquee {
+          @keyframes marquee-slow {
             0% { transform: translateX(100%); }
             100% { transform: translateX(-100%); }
           }
-          .animate-marquee {
-            animation: marquee 30s linear infinite;
+          .animate-marquee-slow {
+            animation: marquee-slow 45s linear infinite;
             will-change: transform;
           }
-          .animate-marquee:hover {
+          .animate-marquee-slow:hover {
             animation-play-state: paused;
           }
         `}</style>
@@ -386,28 +386,28 @@ export default function Home() {
     );
   };
 
-  // ========== MODE SWITCHER ==========
+  // ========== MODE SWITCHER - Moved to Bottom Left ==========
   const ModeSwitcher = () => (
-    <div className="fixed top-3 right-3 z-50 flex gap-1 bg-white/95 backdrop-blur-md rounded-full shadow-lg border border-gray-200 p-1">
+    <div className="fixed bottom-20 left-3 z-50 flex flex-col gap-1 bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200 p-1.5">
       <button 
         onClick={() => { setActiveView('app'); }} 
-        className={`px-2.5 py-1 rounded-full text-[10px] md:text-xs font-medium transition-all duration-300 ${activeView === 'app' ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+        className={`px-2.5 py-1.5 rounded-xl text-[10px] font-medium transition-all duration-300 ${activeView === 'app' ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
       >
-        📱 App
+        📱
       </button>
       <button 
         onClick={() => { setActiveView('classic'); }} 
-        className={`px-2.5 py-1 rounded-full text-[10px] md:text-xs font-medium transition-all duration-300 ${activeView === 'classic' ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+        className={`px-2.5 py-1.5 rounded-xl text-[10px] font-medium transition-all duration-300 ${activeView === 'classic' ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
       >
-        🖥️ Classic
+        🖥️
       </button>
       <button 
         onClick={() => { setActiveView('banking'); }} 
-        className={`px-2.5 py-1 rounded-full text-[10px] md:text-xs font-medium transition-all duration-300 ${activeView === 'banking' ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+        className={`px-2.5 py-1.5 rounded-xl text-[10px] font-medium transition-all duration-300 ${activeView === 'banking' ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
       >
-        🏦 Banking
+        🏦
       </button>
-      <button onClick={toggleLanguage} className="px-2.5 py-1 rounded-full text-[10px] md:text-xs font-medium text-gray-600 hover:bg-gray-100 transition">
+      <button onClick={toggleLanguage} className="px-2.5 py-1.5 rounded-xl text-[10px] font-medium text-gray-600 hover:bg-gray-100 transition">
         {language === 'am' ? '🇬🇧' : '🇪🇹'}
       </button>
     </div>
@@ -460,7 +460,7 @@ export default function Home() {
         <div className="min-h-screen bg-gray-50 pb-20">
           <ModeSwitcher />
 
-          {/* TOP APP BAR */}
+          {/* TOP APP BAR - Clean, no overlap */}
           <header className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-100 px-3 md:px-4 py-2.5 md:py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 md:gap-2">
@@ -485,7 +485,7 @@ export default function Home() {
             </div>
           </header>
 
-          {/* BILINGUAL MOVING MARQUEE */}
+          {/* SLOW MOVING MARQUEE - Starts immediately */}
           <MovingMarquee />
 
           {/* WELCOME SECTION */}
@@ -579,7 +579,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* FEATURED POOLS - Grid view like PC */}
+          {/* FEATURED POOLS - Mobile Optimized Grid */}
           {featuredPools.length > 0 && (
             <div className="px-3 md:px-4 py-3 md:py-4">
               <div className="flex justify-between items-center mb-2 md:mb-3">
@@ -588,7 +588,9 @@ export default function Home() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                 {featuredPools.map(pool => (
-                  <PoolCard key={pool.id} pool={pool} featured={true} />
+                  <div key={pool.id} className="transform transition-all duration-300 hover:scale-[1.02]">
+                    <PoolCard pool={pool} featured={true} />
+                  </div>
                 ))}
               </div>
             </div>
@@ -736,7 +738,7 @@ export default function Home() {
         <CashEquivalentBanner />
         <CharityBanner />
 
-        {/* BILINGUAL MOVING MARQUEE */}
+        {/* SLOW MOVING MARQUEE */}
         <MovingMarquee />
 
         <div className="w-full bg-gradient-to-br from-green-700 to-teal-700">
@@ -996,15 +998,15 @@ export default function Home() {
         @keyframes fade-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fade-in 0.5s ease-out; }
         .scroll-mt-20 { scroll-margin-top: 80px; }
-        @keyframes marquee {
+        @keyframes marquee-slow {
           0% { transform: translateX(100%); }
           100% { transform: translateX(-100%); }
         }
-        .animate-marquee {
-          animation: marquee 30s linear infinite;
+        .animate-marquee-slow {
+          animation: marquee-slow 45s linear infinite;
           will-change: transform;
         }
-        .animate-marquee:hover {
+        .animate-marquee-slow:hover {
           animation-play-state: paused;
         }
       `}</style>
