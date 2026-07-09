@@ -1,6 +1,5 @@
-// components/PoolCard.js - SIMPLE & OPTIMIZED
+// components/PoolCard.js - SIMPLE & OPTIMIZED with Fixed Images
 import Link from 'next/link';
-import Image from 'next/image';
 import { useState } from 'react';
 
 export default function PoolCard({ pool, featured = false }) {
@@ -13,6 +12,7 @@ export default function PoolCard({ pool, featured = false }) {
     title,
     prize_name,
     prize_image,
+    image_url,
     entry_fee,
     contribution_amount,
     target_amount,
@@ -47,15 +47,25 @@ export default function PoolCard({ pool, featured = false }) {
 
   const daysLeft = getDaysLeft();
 
-  // Prize emoji based on type
+  // Get image source - try multiple possible fields
+  const getImageSrc = () => {
+    if (imageError) return null;
+    return prize_image || image_url || null;
+  };
+
+  const imageSrc = getImageSrc();
+
+  // Prize emoji based on type/name
   const getPrizeEmoji = () => {
-    const name = (prize_name || '').toLowerCase();
+    const name = (prize_name || title || '').toLowerCase();
     if (name.includes('car') || name.includes('vehicle') || name.includes('🚗')) return '🚗';
     if (name.includes('house') || name.includes('home') || name.includes('property')) return '🏠';
     if (name.includes('cash') || name.includes('money')) return '💰';
     if (name.includes('phone') || name.includes('electronics')) return '📱';
-    if (name.includes('machinery')) return '🏭';
+    if (name.includes('machinery') || name.includes('machine')) return '🏭';
     if (name.includes('gold') || name.includes('jewelry')) return '💎';
+    if (name.includes('vip') || name.includes('merkato')) return '👑';
+    if (name.includes('city')) return '🏙️';
     return '🎁';
   };
 
@@ -65,44 +75,45 @@ export default function PoolCard({ pool, featured = false }) {
         featured ? 'border-green-500 ring-2 ring-green-500 ring-offset-2' : 'border-gray-100'
       }`}>
         
-        {/* Prize Image - Optimized */}
+        {/* Prize Image - Fixed with better fallback */}
         <div className="relative w-full aspect-[16/10] bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
-          {prize_image && !imageError ? (
+          {imageSrc && !imageError ? (
             <img
-              src={prize_image}
-              alt={prize_name || 'Prize'}
+              src={imageSrc}
+              alt={prize_name || title || 'Prize'}
               className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
               loading="lazy"
               onError={() => setImageError(true)}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-6xl">
-              {getPrizeEmoji()}
+            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
+              <span className="text-6xl mb-1">{getPrizeEmoji()}</span>
+              <span className="text-xs text-gray-500 font-medium">{prize_name || 'Prize'}</span>
             </div>
           )}
           
           {/* Featured Badge */}
           {featured && (
-            <div className="absolute top-3 left-3 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+            <div className="absolute top-3 left-3 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10">
               ⭐ Featured
             </div>
           )}
           
           {/* Status Badge */}
-          <div className={`absolute top-3 right-3 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg ${
+          <div className={`absolute top-3 right-3 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10 ${
             isCompleted ? 'bg-green-600' : isActive ? 'bg-red-600 animate-pulse' : 'bg-gray-600'
           }`}>
             {isCompleted ? '✅ Won' : isActive ? '🔴 Live' : '⏸️ Ended'}
           </div>
           
           {/* Prize Amount Badge */}
-          <div className="absolute bottom-3 right-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+          <div className="absolute bottom-3 right-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg z-10">
             🏆 {formatCurrency(prizeAmount)} ETB
           </div>
           
           {/* Days Left */}
           {daysLeft !== null && daysLeft > 0 && isActive && (
-            <div className="absolute bottom-3 left-3 bg-black/70 text-white text-xs font-medium px-3 py-1.5 rounded-full shadow-lg backdrop-blur-sm">
+            <div className="absolute bottom-3 left-3 bg-black/70 text-white text-xs font-medium px-3 py-1.5 rounded-full shadow-lg backdrop-blur-sm z-10">
               ⏰ {daysLeft}d left
             </div>
           )}
