@@ -1,4 +1,4 @@
-// pages/index.js - Complete with Horizontal Scrolling for Both Featured & Regular Pools
+// pages/index.js - Complete with Language Support for PoolCard
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -600,14 +600,14 @@ export default function Home() {
               <div className="flex overflow-x-auto gap-3 md:gap-4 pb-3 snap-x snap-mandatory scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
                 {featuredPools.map((pool) => (
                   <div key={pool.id} className="min-w-[280px] md:min-w-[300px] max-w-[280px] md:max-w-[300px] snap-start flex-shrink-0 transform transition-all duration-300 hover:scale-[1.02]">
-                    <PoolCard pool={pool} featured={true} />
+                    <PoolCard pool={pool} featured={true} language={language} />
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* REGULAR POOLS - Horizontal Scroll like Featured */}
+          {/* REGULAR POOLS - Horizontal Scroll */}
           <div className="px-3 md:px-4 py-3 md:py-4">
             <div className="flex justify-between items-center mb-2 md:mb-3">
               <h2 className="text-[10px] md:text-sm font-semibold text-gray-500 uppercase tracking-wider">🏊 Regular Pools</h2>
@@ -624,7 +624,7 @@ export default function Home() {
               <div className="flex overflow-x-auto gap-3 md:gap-4 pb-3 snap-x snap-mandatory scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
                 {pools.map((pool) => (
                   <div key={pool.id} className="min-w-[280px] md:min-w-[300px] max-w-[280px] md:max-w-[300px] snap-start flex-shrink-0 transform transition-all duration-300 hover:scale-[1.02]">
-                    <PoolCard pool={pool} featured={pool.is_featured === true} />
+                    <PoolCard pool={pool} featured={pool.is_featured === true} language={language} />
                   </div>
                 ))}
               </div>
@@ -957,7 +957,7 @@ export default function Home() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {pools.map((pool) => <PoolCard key={pool.id} pool={pool} featured={pool.is_featured === true} />)}
+                    {pools.map((pool) => <PoolCard key={pool.id} pool={pool} featured={pool.is_featured === true} language={language} />)}
                   </div>
                 )}
               </div>
