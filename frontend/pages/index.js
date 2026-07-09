@@ -1,4 +1,4 @@
-// pages/index.js - Complete with Fixed Layout, Slower Marquee, Optimized Featured Pools
+// pages/index.js - Complete with Green Login, Collapsible Modes, Visible Featured Pools
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -56,6 +56,7 @@ export default function Home() {
     fullName: '', email: '', phone: '', password: '', confirmPassword: '', city: '', agreeTerms: false
   });
   const [activeView, setActiveView] = useState('app');
+  const [showModeDrawer, setShowModeDrawer] = useState(false);
 
   // Load language preference
   useEffect(() => {
@@ -386,30 +387,54 @@ export default function Home() {
     );
   };
 
-  // ========== MODE SWITCHER - Moved to Bottom Left ==========
-  const ModeSwitcher = () => (
-    <div className="fixed bottom-20 left-3 z-50 flex flex-col gap-1 bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200 p-1.5">
+  // ========== COLLAPSIBLE MODE DRAWER ==========
+  const ModeDrawer = () => (
+    <div className="relative">
+      {/* Toggle Button */}
       <button 
-        onClick={() => { setActiveView('app'); }} 
-        className={`px-2.5 py-1.5 rounded-xl text-[10px] font-medium transition-all duration-300 ${activeView === 'app' ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+        onClick={() => setShowModeDrawer(!showModeDrawer)}
+        className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-xs font-medium text-gray-700 transition"
       >
-        📱
+        <span>⚙️</span>
+        <span>Views</span>
+        <svg className={`w-3 h-3 transition-transform ${showModeDrawer ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
       </button>
-      <button 
-        onClick={() => { setActiveView('classic'); }} 
-        className={`px-2.5 py-1.5 rounded-xl text-[10px] font-medium transition-all duration-300 ${activeView === 'classic' ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
-      >
-        🖥️
-      </button>
-      <button 
-        onClick={() => { setActiveView('banking'); }} 
-        className={`px-2.5 py-1.5 rounded-xl text-[10px] font-medium transition-all duration-300 ${activeView === 'banking' ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
-      >
-        🏦
-      </button>
-      <button onClick={toggleLanguage} className="px-2.5 py-1.5 rounded-xl text-[10px] font-medium text-gray-600 hover:bg-gray-100 transition">
-        {language === 'am' ? '🇬🇧' : '🇪🇹'}
-      </button>
+
+      {/* Dropdown Drawer */}
+      {showModeDrawer && (
+        <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-2xl border border-gray-200 p-1.5 z-50 min-w-[160px]">
+          <button 
+            onClick={() => { setActiveView('app'); setShowModeDrawer(false); }} 
+            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-2 ${activeView === 'app' ? 'bg-green-600 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+          >
+            <span>📱</span> App View
+            {activeView === 'app' && <span className="ml-auto text-white">✓</span>}
+          </button>
+          <button 
+            onClick={() => { setActiveView('classic'); setShowModeDrawer(false); }} 
+            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-2 ${activeView === 'classic' ? 'bg-green-600 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+          >
+            <span>🖥️</span> Classic View
+            {activeView === 'classic' && <span className="ml-auto text-white">✓</span>}
+          </button>
+          <button 
+            onClick={() => { setActiveView('banking'); setShowModeDrawer(false); }} 
+            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-2 ${activeView === 'banking' ? 'bg-green-600 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+          >
+            <span>🏦</span> Banking View
+            {activeView === 'banking' && <span className="ml-auto text-white">✓</span>}
+          </button>
+          <div className="border-t border-gray-100 my-1"></div>
+          <button 
+            onClick={() => { toggleLanguage(); setShowModeDrawer(false); }} 
+            className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-100 transition flex items-center gap-2"
+          >
+            <span>🌐</span> {language === 'am' ? 'Switch to English' : 'ወደ አማርኛ ቀይር'}
+          </button>
+        </div>
+      )}
     </div>
   );
 
@@ -431,7 +456,9 @@ export default function Home() {
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
         </Head>
         
-        <ModeSwitcher />
+        <div className="fixed top-4 right-4 z-50">
+          <ModeDrawer />
+        </div>
         
         <BankingStyleView 
           pools={pools}
@@ -458,9 +485,7 @@ export default function Home() {
         </Head>
 
         <div className="min-h-screen bg-gray-50 pb-20">
-          <ModeSwitcher />
-
-          {/* TOP APP BAR - Clean, no overlap */}
+          {/* TOP APP BAR - With Mode Drawer and Green Login */}
           <header className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-100 px-3 md:px-4 py-2.5 md:py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 md:gap-2">
@@ -468,10 +493,11 @@ export default function Home() {
                 <span className="font-bold text-sm md:text-lg text-gray-800">Abbaa Carraa</span>
               </div>
               <div className="flex items-center gap-1.5 md:gap-2">
-                <Link href="/login" className="text-[10px] md:text-xs bg-gray-100 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full text-gray-700 hover:bg-gray-200 transition font-medium">
+                <ModeDrawer />
+                <Link href="/login" className="text-[10px] md:text-xs bg-green-600 text-white px-2.5 md:px-3 py-1 md:py-1.5 rounded-full hover:bg-green-700 transition font-medium shadow-sm">
                   Login
                 </Link>
-                <button onClick={() => setShowRegisterModal(true)} className="text-[10px] md:text-xs bg-green-600 text-white px-2.5 md:px-3 py-1 md:py-1.5 rounded-full hover:bg-green-700 transition font-medium">
+                <button onClick={() => setShowRegisterModal(true)} className="text-[10px] md:text-xs bg-gray-100 text-gray-700 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full hover:bg-gray-200 transition font-medium">
                   Register
                 </button>
                 <button className="relative p-1">
@@ -485,7 +511,7 @@ export default function Home() {
             </div>
           </header>
 
-          {/* SLOW MOVING MARQUEE - Starts immediately */}
+          {/* SLOW MOVING MARQUEE */}
           <MovingMarquee />
 
           {/* WELCOME SECTION */}
@@ -579,16 +605,16 @@ export default function Home() {
             </div>
           </div>
 
-          {/* FEATURED POOLS - Mobile Optimized Grid */}
+          {/* FEATURED POOLS - Visible on Mobile like PC (Horizontal Scroll) */}
           {featuredPools.length > 0 && (
             <div className="px-3 md:px-4 py-3 md:py-4">
               <div className="flex justify-between items-center mb-2 md:mb-3">
                 <h2 className="text-[10px] md:text-sm font-semibold text-gray-500 uppercase tracking-wider">⭐ Featured Pools</h2>
                 <Link href="/listings" className="text-[10px] md:text-xs text-green-600 font-medium">See All</Link>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+              <div className="flex overflow-x-auto gap-3 md:gap-4 pb-3 snap-x snap-mandatory scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
                 {featuredPools.map(pool => (
-                  <div key={pool.id} className="transform transition-all duration-300 hover:scale-[1.02]">
+                  <div key={pool.id} className="min-w-[280px] md:min-w-[300px] max-w-[280px] md:max-w-[300px] snap-start flex-shrink-0 transform transition-all duration-300 hover:scale-[1.02]">
                     <PoolCard pool={pool} featured={true} />
                   </div>
                 ))}
@@ -641,6 +667,11 @@ export default function Home() {
           </nav>
 
           {showRegisterModal && <RegisterModal />}
+
+          <style jsx>{`
+            .scrollbar-hide::-webkit-scrollbar { display: none; }
+            .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+          `}</style>
         </div>
       </>
     );
@@ -655,9 +686,11 @@ export default function Home() {
       </Head>
 
       <div className="min-h-screen bg-white w-full">
-        <ModeSwitcher />
+        <div className="fixed top-4 right-4 z-50">
+          <ModeDrawer />
+        </div>
 
-        <nav className="sticky top-0 z-50 bg-gray-900 shadow-lg border-b border-gray-700">
+        <nav className="sticky top-0 z-40 bg-gray-900 shadow-lg border-b border-gray-700">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-between h-16">
               <Link href="/" className="flex items-center gap-2 group shrink-0">
@@ -694,8 +727,8 @@ export default function Home() {
               </div>
               <div className="hidden md:flex items-center gap-2">
                 <TopCitySelector />
-                <Link href="/login" className="px-4 py-2 text-gray-300 hover:text-white transition text-sm font-medium">Login</Link>
-                <button onClick={() => setShowRegisterModal(true)} className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium">Register</button>
+                <Link href="/login" className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium shadow-sm">Login</Link>
+                <button onClick={() => setShowRegisterModal(true)} className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition text-sm font-medium">Register</button>
               </div>
               <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -706,8 +739,8 @@ export default function Home() {
             {mobileMenuOpen && (
               <div className="md:hidden py-4 border-t border-gray-700 space-y-2">
                 <div className="flex gap-2 px-4 py-2">
-                  <Link href="/login" className="flex-1 text-center px-3 py-2 bg-gray-700 text-white rounded-lg text-xs">🔐 Login</Link>
-                  <button onClick={() => { setShowRegisterModal(true); setMobileMenuOpen(false); }} className="flex-1 text-center px-3 py-2 bg-green-600 text-white rounded-lg text-xs">📝 Register</button>
+                  <Link href="/login" className="flex-1 text-center px-3 py-2 bg-green-600 text-white rounded-lg text-xs">🔐 Login</Link>
+                  <button onClick={() => { setShowRegisterModal(true); setMobileMenuOpen(false); }} className="flex-1 text-center px-3 py-2 bg-gray-700 text-white rounded-lg text-xs">📝 Register</button>
                 </div>
                 <button onClick={() => scrollToSection('merkato-vip')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
                   <span className="text-xl">🏪</span><div><div>Merkato VIP</div><div className="text-xs text-gray-400">Cash up to 40M</div></div>
@@ -1009,6 +1042,8 @@ export default function Home() {
         .animate-marquee-slow:hover {
           animation-play-state: paused;
         }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </>
   );
