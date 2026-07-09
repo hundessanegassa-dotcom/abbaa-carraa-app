@@ -1,4 +1,4 @@
-// pages/index.js - Complete with Filters Removed & Mobile Error Fixed
+// pages/index.js - Complete with Horizontal Scrolling for Both Featured & Regular Pools
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -590,7 +590,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* FEATURED POOLS - Mobile Optimized Horizontal Scroll */}
+          {/* FEATURED POOLS - Horizontal Scroll */}
           {featuredPools.length > 0 && (
             <div className="px-3 md:px-4 py-3 md:py-4">
               <div className="flex justify-between items-center mb-2 md:mb-3">
@@ -607,7 +607,7 @@ export default function Home() {
             </div>
           )}
 
-          {/* REGULAR POOLS - No Filters */}
+          {/* REGULAR POOLS - Horizontal Scroll like Featured */}
           <div className="px-3 md:px-4 py-3 md:py-4">
             <div className="flex justify-between items-center mb-2 md:mb-3">
               <h2 className="text-[10px] md:text-sm font-semibold text-gray-500 uppercase tracking-wider">🏊 Regular Pools</h2>
@@ -621,9 +621,11 @@ export default function Home() {
                 <p className="text-xs text-gray-400 mt-1">Check back soon!</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-                {pools.slice(0, 6).map((pool) => (
-                  <PoolCard key={pool.id} pool={pool} featured={pool.is_featured === true} />
+              <div className="flex overflow-x-auto gap-3 md:gap-4 pb-3 snap-x snap-mandatory scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
+                {pools.map((pool) => (
+                  <div key={pool.id} className="min-w-[280px] md:min-w-[300px] max-w-[280px] md:max-w-[300px] snap-start flex-shrink-0 transform transition-all duration-300 hover:scale-[1.02]">
+                    <PoolCard pool={pool} featured={pool.is_featured === true} />
+                  </div>
                 ))}
               </div>
             )}
@@ -905,7 +907,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Regular Pools - No Filters */}
+          {/* Regular Pools - No Filters, Grid on Desktop */}
           <div id="regular-pools" className="mb-12 scroll-mt-20">
             <button onClick={() => setShowRegularPools(!showRegularPools)} className="w-full bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white rounded-2xl p-6 transition-all duration-300 shadow-lg group">
               <div className="flex flex-col items-center text-center">
