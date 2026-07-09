@@ -1,4 +1,4 @@
-// pages/index.js - Complete with Green Login, Collapsible Modes, Visible Featured Pools
+// pages/index.js - Complete with Filters Removed & Mobile Error Fixed
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -44,7 +44,6 @@ export default function Home() {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [showCitySelector, setShowCitySelector] = useState(false);
   const [showRegularPools, setShowRegularPools] = useState(false);
-  const [regularPoolFilter, setRegularPoolFilter] = useState('all');
   const [showCityDropdown, setShowCityDropdown] = useState(false);
   const [citySearchTerm, setCitySearchTerm] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -325,18 +324,6 @@ export default function Home() {
     setProgramsDropdownOpen(false);
   };
 
-  const getFilteredPools = () => {
-    let filtered = [...pools];
-    switch (regularPoolFilter) {
-      case 'lowToHigh': filtered.sort((a, b) => (a.entry_fee || 0) - (b.entry_fee || 0)); break;
-      case 'highToLow': filtered.sort((a, b) => (b.entry_fee || 0) - (a.entry_fee || 0)); break;
-      default: break;
-    }
-    return filtered;
-  };
-
-  const displayedPools = getFilteredPools();
-
   const RegisterModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -390,7 +377,6 @@ export default function Home() {
   // ========== COLLAPSIBLE MODE DRAWER ==========
   const ModeDrawer = () => (
     <div className="relative">
-      {/* Toggle Button */}
       <button 
         onClick={() => setShowModeDrawer(!showModeDrawer)}
         className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-xs font-medium text-gray-700 transition"
@@ -402,7 +388,6 @@ export default function Home() {
         </svg>
       </button>
 
-      {/* Dropdown Drawer */}
       {showModeDrawer && (
         <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-2xl border border-gray-200 p-1.5 z-50 min-w-[160px]">
           <button 
@@ -485,7 +470,7 @@ export default function Home() {
         </Head>
 
         <div className="min-h-screen bg-gray-50 pb-20">
-          {/* TOP APP BAR - With Mode Drawer and Green Login */}
+          {/* TOP APP BAR */}
           <header className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-100 px-3 md:px-4 py-2.5 md:py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 md:gap-2">
@@ -605,7 +590,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* FEATURED POOLS - Visible on Mobile like PC (Horizontal Scroll) */}
+          {/* FEATURED POOLS - Mobile Optimized Horizontal Scroll */}
           {featuredPools.length > 0 && (
             <div className="px-3 md:px-4 py-3 md:py-4">
               <div className="flex justify-between items-center mb-2 md:mb-3">
@@ -613,7 +598,7 @@ export default function Home() {
                 <Link href="/listings" className="text-[10px] md:text-xs text-green-600 font-medium">See All</Link>
               </div>
               <div className="flex overflow-x-auto gap-3 md:gap-4 pb-3 snap-x snap-mandatory scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
-                {featuredPools.map(pool => (
+                {featuredPools.map((pool) => (
                   <div key={pool.id} className="min-w-[280px] md:min-w-[300px] max-w-[280px] md:max-w-[300px] snap-start flex-shrink-0 transform transition-all duration-300 hover:scale-[1.02]">
                     <PoolCard pool={pool} featured={true} />
                   </div>
@@ -622,17 +607,26 @@ export default function Home() {
             </div>
           )}
 
-          {/* REGULAR POOLS QUICK VIEW */}
+          {/* REGULAR POOLS - No Filters */}
           <div className="px-3 md:px-4 py-3 md:py-4">
             <div className="flex justify-between items-center mb-2 md:mb-3">
               <h2 className="text-[10px] md:text-sm font-semibold text-gray-500 uppercase tracking-wider">🏊 Regular Pools</h2>
               <Link href="/listings" className="text-[10px] md:text-xs text-green-600 font-medium">View All</Link>
             </div>
-            <div className="space-y-2 md:space-y-3">
-              {pools.slice(0, 3).map(pool => (
-                <PoolCard key={pool.id} pool={pool} featured={false} />
-              ))}
-            </div>
+            
+            {pools.length === 0 ? (
+              <div className="text-center py-8 bg-gray-50 rounded-xl">
+                <div className="text-4xl mb-2">🏊</div>
+                <p className="text-gray-500 text-sm">No active pools at the moment</p>
+                <p className="text-xs text-gray-400 mt-1">Check back soon!</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+                {pools.slice(0, 6).map((pool) => (
+                  <PoolCard key={pool.id} pool={pool} featured={pool.is_featured === true} />
+                ))}
+              </div>
+            )}
           </div>
 
           {/* CHARITY BANNER */}
@@ -911,7 +905,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Regular Pools */}
+          {/* Regular Pools - No Filters */}
           <div id="regular-pools" className="mb-12 scroll-mt-20">
             <button onClick={() => setShowRegularPools(!showRegularPools)} className="w-full bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white rounded-2xl p-6 transition-all duration-300 shadow-lg group">
               <div className="flex flex-col items-center text-center">
@@ -947,18 +941,13 @@ export default function Home() {
             </button>
             {showRegularPools && (
               <div className="mt-6 animate-fade-in">
-                <div className="flex justify-end items-center flex-wrap gap-2 mb-6">
-                  <button onClick={() => setRegularPoolFilter('all')} className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition ${regularPoolFilter === 'all' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>All</button>
-                  <button onClick={() => setRegularPoolFilter('lowToHigh')} className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition ${regularPoolFilter === 'lowToHigh' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>Low to High</button>
-                  <button onClick={() => setRegularPoolFilter('highToLow')} className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition ${regularPoolFilter === 'highToLow' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>High to Low</button>
-                </div>
                 <div className="flex justify-between items-center flex-wrap gap-4 mb-6">
                   <div>
                     <h4 className="text-lg font-semibold text-gray-700">Available Prize Pools</h4>
                     <p className="text-sm text-gray-500">Choose based on your budget and preference</p>
                   </div>
                 </div>
-                {displayedPools.length === 0 ? (
+                {pools.length === 0 ? (
                   <div className="text-center py-12 bg-gray-50 rounded-lg">
                     <div className="text-5xl mb-3">🏊</div>
                     <p className="text-gray-500">No active pools at the moment</p>
@@ -966,7 +955,7 @@ export default function Home() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {displayedPools.map(pool => <PoolCard key={pool.id} pool={pool} featured={pool.is_featured === true} />)}
+                    {pools.map((pool) => <PoolCard key={pool.id} pool={pool} featured={pool.is_featured === true} />)}
                   </div>
                 )}
               </div>
