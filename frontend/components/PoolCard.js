@@ -1,4 +1,4 @@
-// components/PoolCard.js - SIMPLE & OPTIMIZED with Fixed Images
+// components/PoolCard.js - Fixed with Full Numbers & Bilingual
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -30,11 +30,9 @@ export default function PoolCard({ pool, featured = false }) {
   // Calculate progress
   const progress = target_amount > 0 ? (current_amount / target_amount) * 100 : 0;
 
-  // Format currency
+  // Format currency - FULL NUMBERS (no K or M)
   const formatCurrency = (amount) => {
     if (!amount) return '0';
-    if (amount >= 1000000) return `${(amount / 1000000).toFixed(1)}M`;
-    if (amount >= 1000) return `${(amount / 1000).toFixed(0)}K`;
     return amount.toLocaleString();
   };
 
@@ -75,7 +73,7 @@ export default function PoolCard({ pool, featured = false }) {
         featured ? 'border-green-500 ring-2 ring-green-500 ring-offset-2' : 'border-gray-100'
       }`}>
         
-        {/* Prize Image - Fixed with better fallback */}
+        {/* Prize Image */}
         <div className="relative w-full aspect-[16/10] bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
           {imageSrc && !imageError ? (
             <img
@@ -95,7 +93,7 @@ export default function PoolCard({ pool, featured = false }) {
           {/* Featured Badge */}
           {featured && (
             <div className="absolute top-3 left-3 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10">
-              ⭐ Featured
+              ⭐ {language === 'am' ? 'ተለይቶ' : 'Featured'}
             </div>
           )}
           
@@ -103,7 +101,9 @@ export default function PoolCard({ pool, featured = false }) {
           <div className={`absolute top-3 right-3 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10 ${
             isCompleted ? 'bg-green-600' : isActive ? 'bg-red-600 animate-pulse' : 'bg-gray-600'
           }`}>
-            {isCompleted ? '✅ Won' : isActive ? '🔴 Live' : '⏸️ Ended'}
+            {isCompleted ? '✅ ' + (language === 'am' ? 'አሸንፏል' : 'Won') : 
+             isActive ? '🔴 ' + (language === 'am' ? 'በስራ ላይ' : 'Live') : 
+             '⏸️ ' + (language === 'am' ? 'አልቋል' : 'Ended')}
           </div>
           
           {/* Prize Amount Badge */}
@@ -114,7 +114,7 @@ export default function PoolCard({ pool, featured = false }) {
           {/* Days Left */}
           {daysLeft !== null && daysLeft > 0 && isActive && (
             <div className="absolute bottom-3 left-3 bg-black/70 text-white text-xs font-medium px-3 py-1.5 rounded-full shadow-lg backdrop-blur-sm z-10">
-              ⏰ {daysLeft}d left
+              ⏰ {daysLeft} {language === 'am' ? 'ቀናት ቀርተዋል' : 'days left'}
             </div>
           )}
         </div>
@@ -123,21 +123,21 @@ export default function PoolCard({ pool, featured = false }) {
         <div className="p-4 flex flex-col flex-grow">
           {/* Prize Name */}
           <h3 className="text-base font-bold text-gray-800 line-clamp-1 mb-1">
-            {prize_name || title || 'Amazing Prize'}
+            {prize_name || title || (language === 'am' ? 'ሽልማት' : 'Prize')}
           </h3>
           
-          {/* Description - Simple one line */}
+          {/* Description */}
           {pool.description && (
             <p className="text-xs text-gray-500 line-clamp-1 mb-3">
               {pool.description}
             </p>
           )}
 
-          {/* MAIN INFO: Pay This → Win This */}
+          {/* MAIN INFO: Pay → Win - Bilingual */}
           <div className="bg-gradient-to-r from-green-50 to-teal-50 rounded-xl p-3 mb-3 border border-green-100">
             <div className="flex items-center justify-between">
               <div className="text-center flex-1">
-                <div className="text-[10px] text-gray-500 font-medium">🎫 Pay</div>
+                <div className="text-[10px] text-gray-500 font-medium">🎫 {language === 'am' ? 'ክፈል' : 'Pay'}</div>
                 <div className="text-lg font-bold text-green-700">
                   ETB {formatCurrency(entryFee)}
                 </div>
@@ -146,7 +146,7 @@ export default function PoolCard({ pool, featured = false }) {
               <div className="text-2xl text-green-500 px-2">→</div>
               
               <div className="text-center flex-1">
-                <div className="text-[10px] text-gray-500 font-medium">🏆 Win</div>
+                <div className="text-[10px] text-gray-500 font-medium">🏆 {language === 'am' ? 'አሸንፍ' : 'Win'}</div>
                 <div className="text-lg font-bold text-orange-600">
                   ETB {formatCurrency(prizeAmount)}
                 </div>
@@ -154,11 +154,11 @@ export default function PoolCard({ pool, featured = false }) {
             </div>
           </div>
 
-          {/* Progress Bar - Simple */}
+          {/* Progress Bar */}
           {isActive && (
             <div className="mb-3">
               <div className="flex justify-between text-[10px] text-gray-500 mb-1">
-                <span>Progress</span>
+                <span>{language === 'am' ? 'እድገት' : 'Progress'}</span>
                 <span>{Math.min(Math.round(progress), 100)}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
@@ -170,41 +170,41 @@ export default function PoolCard({ pool, featured = false }) {
             </div>
           )}
 
-          {/* Stats - Simple */}
+          {/* Stats - Bilingual */}
           {isActive && (
             <div className="grid grid-cols-2 gap-2 text-[10px] text-gray-500 mb-3">
               <div className="flex items-center gap-1">
                 <span>👥</span>
-                <span>{current_amount ? Math.floor(current_amount / entryFee) : 0} joined</span>
+                <span>{current_amount ? Math.floor(current_amount / entryFee) : 0} {language === 'am' ? 'ተቀላቅለዋል' : 'joined'}</span>
               </div>
               <div className="flex items-center gap-1">
                 <span>🎯</span>
-                <span>{Math.floor(target_amount / entryFee)} seats</span>
+                <span>{Math.floor(target_amount / entryFee)} {language === 'am' ? 'መቀመጫዎች' : 'seats'}</span>
               </div>
             </div>
           )}
 
-          {/* Action Button */}
+          {/* Action Button - Bilingual */}
           <div className="mt-auto">
             {isCompleted ? (
               <div className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-center py-2.5 rounded-xl font-semibold text-sm">
-                🏆 Winner Announced
+                🏆 {language === 'am' ? 'አሸናፊ ታውቋል' : 'Winner Announced'}
               </div>
             ) : isActive ? (
               <button className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white py-2.5 rounded-xl font-semibold text-sm transition-transform hover:scale-[1.02] active:scale-[0.98]">
-                🎯 Join Now - ETB {formatCurrency(entryFee)}
+                🎯 {language === 'am' ? 'አሁን ይቀላቀሉ' : 'Join Now'} - ETB {formatCurrency(entryFee)}
               </button>
             ) : (
               <div className="w-full bg-gray-400 text-white text-center py-2.5 rounded-xl font-semibold text-sm">
-                ⏳ Coming Soon
+                ⏳ {language === 'am' ? 'በቅርቡ ይገኛል' : 'Coming Soon'}
               </div>
             )}
           </div>
 
-          {/* Small footer text */}
+          {/* Footer - Bilingual */}
           {isActive && (
             <p className="text-center text-[8px] text-gray-400 mt-2">
-              💰 Cash equivalent guaranteed • የገንዘብ ዋስትና
+              💰 {language === 'am' ? 'የገንዘብ ዋስትና ተረጋግጧል' : 'Cash equivalent guaranteed'}
             </p>
           )}
         </div>
