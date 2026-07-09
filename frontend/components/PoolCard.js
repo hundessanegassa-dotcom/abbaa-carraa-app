@@ -1,8 +1,8 @@
-// components/PoolCard.js - Fixed with Full Numbers & Bilingual
+// components/PoolCard.js - COMPLETE FIXED with language prop
 import Link from 'next/link';
 import { useState } from 'react';
 
-export default function PoolCard({ pool, featured = false }) {
+export default function PoolCard({ pool, featured = false, language = 'am' }) {
   const [imageError, setImageError] = useState(false);
   
   if (!pool) return null;
@@ -45,7 +45,7 @@ export default function PoolCard({ pool, featured = false }) {
 
   const daysLeft = getDaysLeft();
 
-  // Get image source - try multiple possible fields
+  // Get image source
   const getImageSrc = () => {
     if (imageError) return null;
     return prize_image || image_url || null;
@@ -53,7 +53,7 @@ export default function PoolCard({ pool, featured = false }) {
 
   const imageSrc = getImageSrc();
 
-  // Prize emoji based on type/name
+  // Prize emoji
   const getPrizeEmoji = () => {
     const name = (prize_name || title || '').toLowerCase();
     if (name.includes('car') || name.includes('vehicle') || name.includes('🚗')) return '🚗';
@@ -65,6 +65,19 @@ export default function PoolCard({ pool, featured = false }) {
     if (name.includes('vip') || name.includes('merkato')) return '👑';
     if (name.includes('city')) return '🏙️';
     return '🎁';
+  };
+
+  // Get status text based on language
+  const getStatusText = () => {
+    if (isCompleted) return language === 'am' ? 'አሸንፏል' : 'Won';
+    if (isActive) return language === 'am' ? 'በስራ ላይ' : 'Live';
+    return language === 'am' ? 'አልቋል' : 'Ended';
+  };
+
+  const getStatusEmoji = () => {
+    if (isCompleted) return '✅';
+    if (isActive) return '🔴';
+    return '⏸️';
   };
 
   return (
@@ -86,7 +99,7 @@ export default function PoolCard({ pool, featured = false }) {
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
               <span className="text-6xl mb-1">{getPrizeEmoji()}</span>
-              <span className="text-xs text-gray-500 font-medium">{prize_name || 'Prize'}</span>
+              <span className="text-xs text-gray-500 font-medium">{prize_name || (language === 'am' ? 'ሽልማት' : 'Prize')}</span>
             </div>
           )}
           
@@ -101,9 +114,7 @@ export default function PoolCard({ pool, featured = false }) {
           <div className={`absolute top-3 right-3 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10 ${
             isCompleted ? 'bg-green-600' : isActive ? 'bg-red-600 animate-pulse' : 'bg-gray-600'
           }`}>
-            {isCompleted ? '✅ ' + (language === 'am' ? 'አሸንፏል' : 'Won') : 
-             isActive ? '🔴 ' + (language === 'am' ? 'በስራ ላይ' : 'Live') : 
-             '⏸️ ' + (language === 'am' ? 'አልቋል' : 'Ended')}
+            {getStatusEmoji()} {getStatusText()}
           </div>
           
           {/* Prize Amount Badge */}
