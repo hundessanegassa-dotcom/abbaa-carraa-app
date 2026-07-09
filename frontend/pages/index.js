@@ -1,4 +1,4 @@
-// pages/index.js - Three-Mode Modern Homepage (App | Classic | Banking)
+// pages/index.js - Three-Mode Modern Homepage (App | Classic | Banking) - WITH MOVING MARQUEE
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -55,7 +55,8 @@ export default function Home() {
   const [registerForm, setRegisterForm] = useState({
     fullName: '', email: '', phone: '', password: '', confirmPassword: '', city: '', agreeTerms: false
   });
-  const [activeView, setActiveView] = useState('app'); // 'app', 'classic', 'banking'
+  const [activeView, setActiveView] = useState('app');
+  const marqueeRef = useRef(null);
 
   // Load language preference
   useEffect(() => {
@@ -358,23 +359,56 @@ export default function Home() {
     </div>
   );
 
+  // ========== MOVING MARQUEE COMPONENT ==========
+  const MovingMarquee = () => {
+    const marqueeText = `🏆 WIN BIG WITH ABBAA CARRAA • 🏪 Merkato VIP: Win Cash up to 40M ETB • 🏙️ City VIP: Win Cash in 94 Cities • 🏊 Regular Pools: Win Cars, Houses, Machinery & Electronics • 💚 2% Supports Health • Join & Start Winning Today! 🎯`;
+
+    return (
+      <div className="relative overflow-hidden bg-gradient-to-r from-green-600 to-teal-600 py-3 px-4 shadow-inner">
+        <div 
+          className="whitespace-nowrap animate-marquee hover:animation-pause"
+          style={{
+            display: 'inline-block',
+            animation: 'marquee 30s linear infinite',
+          }}
+        >
+          <span className="text-white font-semibold text-sm md:text-base tracking-wide">
+            {marqueeText}
+          </span>
+        </div>
+        <style jsx>{`
+          @keyframes marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+          }
+          .animate-marquee {
+            animation: marquee 30s linear infinite;
+          }
+          .hover\\:animation-pause:hover {
+            animation-play-state: paused;
+          }
+        `}</style>
+      </div>
+    );
+  };
+
   // ========== MODE SWITCHER ==========
   const ModeSwitcher = () => (
-    <div className="fixed top-4 right-4 z-50 flex gap-1 bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-gray-200 p-1">
+    <div className="fixed top-4 right-4 z-50 flex gap-1 bg-white/95 backdrop-blur-md rounded-full shadow-lg border border-gray-200 p-1">
       <button 
-        onClick={() => { setActiveView('app'); toggleMode('app'); }} 
+        onClick={() => { setActiveView('app'); }} 
         className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${activeView === 'app' ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
       >
         📱 App
       </button>
       <button 
-        onClick={() => { setActiveView('classic'); toggleMode('classic'); }} 
+        onClick={() => { setActiveView('classic'); }} 
         className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${activeView === 'classic' ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
       >
         🖥️ Classic
       </button>
       <button 
-        onClick={() => { setActiveView('banking'); toggleMode('banking'); }} 
+        onClick={() => { setActiveView('banking'); }} 
         className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${activeView === 'banking' ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
       >
         🏦 Banking
@@ -394,7 +428,7 @@ export default function Home() {
   }
 
   // ========== BANKING MODE ==========
-  if (activeView === 'banking' || mode === 'banking') {
+  if (activeView === 'banking') {
     return (
       <>
         <Head>
@@ -432,30 +466,42 @@ export default function Home() {
         <div className="min-h-screen bg-gray-50 pb-20">
           <ModeSwitcher />
 
-          {/* TOP APP BAR */}
-          <header className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-100 px-4 py-3 flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">🎫</span>
-              <span className="font-bold text-lg text-gray-800">Abbaa Carraa</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <button className="relative">
-                <span className="text-2xl">🔔</span>
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center">3</span>
-              </button>
-              <Link href="/profile" className="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-teal-500 flex items-center justify-center text-white font-bold text-sm">
-                U
-              </Link>
+          {/* TOP APP BAR - No overlap */}
+          <header className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-100 px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🎫</span>
+                <span className="font-bold text-lg text-gray-800">Abbaa Carraa</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Link href="/login" className="text-xs bg-gray-100 px-3 py-1.5 rounded-full text-gray-700 hover:bg-gray-200 transition font-medium">
+                  Login
+                </Link>
+                <button onClick={() => setShowRegisterModal(true)} className="text-xs bg-green-600 text-white px-3 py-1.5 rounded-full hover:bg-green-700 transition font-medium">
+                  Register
+                </button>
+                <button className="relative p-1">
+                  <span className="text-xl">🔔</span>
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center">3</span>
+                </button>
+                <Link href="/profile" className="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-teal-500 flex items-center justify-center text-white font-bold text-sm">
+                  U
+                </Link>
+              </div>
             </div>
           </header>
 
-          {/* WELCOME */}
+          {/* MOVING MARQUEE - Full width, no overlap */}
+          <MovingMarquee />
+
+          {/* WELCOME SECTION */}
           <div className="px-4 py-4 bg-white border-b border-gray-100">
             <p className="text-sm text-gray-500">Welcome back,</p>
             <p className="text-xl font-bold text-gray-800">Guest</p>
             <div className="flex flex-wrap gap-2 mt-2">
               <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">⭐ {stats.total_pools} Active Pools</span>
               <span className="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded-full">🏆 {stats.total_winners} Winners</span>
+              <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full">🏙️ {uniqueCities.length} Cities</span>
             </div>
           </div>
 
@@ -485,14 +531,17 @@ export default function Home() {
               <Link href="/listings" className="flex flex-col items-center bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition">
                 <span className="text-3xl mb-1">🏊</span>
                 <span className="text-xs font-medium text-gray-700">Regular Pools</span>
+                <span className="text-[8px] text-gray-400 mt-0.5">Cars • Houses</span>
               </Link>
               <Link href="/merkato-vip" className="flex flex-col items-center bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition">
                 <span className="text-3xl mb-1">🏪</span>
                 <span className="text-xs font-medium text-gray-700">Merkato VIP</span>
+                <span className="text-[8px] text-gray-400 mt-0.5">Cash up to 40M</span>
               </Link>
               <button onClick={() => setShowCityDropdown(!showCityDropdown)} className="flex flex-col items-center bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition relative">
                 <span className="text-3xl mb-1">🏙️</span>
                 <span className="text-xs font-medium text-gray-700">City VIP</span>
+                <span className="text-[8px] text-gray-400 mt-0.5">94 Cities • Cash</span>
                 {showCityDropdown && (
                   <div className="absolute bottom-full left-0 mb-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
                     <div className="p-3 bg-gray-50 border-b">
@@ -515,6 +564,7 @@ export default function Home() {
               <Link href="/winners" className="flex flex-col items-center bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition">
                 <span className="text-3xl mb-1">🏆</span>
                 <span className="text-xs font-medium text-gray-700">Winners</span>
+                <span className="text-[8px] text-gray-400 mt-0.5">Hall of Fame</span>
               </Link>
               <Link href="/how-it-works" className="flex flex-col items-center bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition">
                 <span className="text-3xl mb-1">📖</span>
@@ -542,9 +592,9 @@ export default function Home() {
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">⭐ Featured Pools</h2>
                 <Link href="/listings" className="text-xs text-green-600 font-medium">See All</Link>
               </div>
-              <div className="flex overflow-x-auto gap-4 pb-2 snap-x snap-mandatory scrollbar-hide">
+              <div className="flex overflow-x-auto gap-4 pb-2 snap-x snap-mandatory scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
                 {featuredPools.map(pool => (
-                  <div key={pool.id} className="min-w-[200px] snap-start">
+                  <div key={pool.id} className="min-w-[200px] max-w-[200px] snap-start flex-shrink-0">
                     <PoolCard pool={pool} featured={true} />
                   </div>
                 ))}
@@ -636,13 +686,13 @@ export default function Home() {
                   {programsDropdownOpen && (
                     <div className="absolute top-full left-0 mt-2 w-64 bg-gray-800 rounded-xl shadow-2xl border border-gray-700 z-50 overflow-hidden">
                       <button onClick={() => scrollToSection('merkato-vip')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3">
-                        <span className="text-xl">🏪</span><div><div className="font-medium">Merkato VIP</div><div className="text-xs text-gray-400">Win up to 40M ETB</div></div>
+                        <span className="text-xl">🏪</span><div><div className="font-medium">Merkato VIP</div><div className="text-xs text-gray-400">Win Cash up to 40M ETB</div></div>
                       </button>
                       <button onClick={() => scrollToSection('city-vip')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-t border-gray-700">
-                        <span className="text-xl">🏙️</span><div><div className="font-medium">City VIP</div><div className="text-xs text-gray-400">94 Ethiopian cities</div></div>
+                        <span className="text-xl">🏙️</span><div><div className="font-medium">City VIP</div><div className="text-xs text-gray-400">Win Cash in 94 Cities</div></div>
                       </button>
                       <button onClick={() => scrollToSection('regular-pools')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-t border-gray-700">
-                        <span className="text-xl">🏊</span><div><div className="font-medium">Regular Pools</div><div className="text-xs text-gray-400">Cars, houses & more</div></div>
+                        <span className="text-xl">🏊</span><div><div className="font-medium">Regular Pools</div><div className="text-xs text-gray-400">Cars, Houses & More</div></div>
                       </button>
                       <Link href="/dashboard" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-t border-gray-700">
                         <span className="text-xl">📊</span><div><div className="font-medium">Dashboard</div><div className="text-xs text-gray-400">Track your tickets</div></div>
@@ -666,14 +716,18 @@ export default function Home() {
             </div>
             {mobileMenuOpen && (
               <div className="md:hidden py-4 border-t border-gray-700 space-y-2">
+                <div className="flex gap-2 px-4 py-2">
+                  <Link href="/login" className="flex-1 text-center px-3 py-2 bg-gray-700 text-white rounded-lg text-xs">🔐 Login</Link>
+                  <button onClick={() => { setShowRegisterModal(true); setMobileMenuOpen(false); }} className="flex-1 text-center px-3 py-2 bg-green-600 text-white rounded-lg text-xs">📝 Register</button>
+                </div>
                 <button onClick={() => scrollToSection('merkato-vip')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
-                  <span className="text-xl">🏪</span><div><div>Merkato VIP</div><div className="text-xs text-gray-400">Win up to 40M ETB</div></div>
+                  <span className="text-xl">🏪</span><div><div>Merkato VIP</div><div className="text-xs text-gray-400">Cash up to 40M</div></div>
                 </button>
                 <button onClick={() => scrollToSection('city-vip')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
-                  <span className="text-xl">🏙️</span><div><div>City VIP</div><div className="text-xs text-gray-400">94 Ethiopian cities</div></div>
+                  <span className="text-xl">🏙️</span><div><div>City VIP</div><div className="text-xs text-gray-400">94 Cities • Cash</div></div>
                 </button>
                 <button onClick={() => scrollToSection('regular-pools')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
-                  <span className="text-xl">🏊</span><div><div>Regular Pools</div><div className="text-xs text-gray-400">Cars, houses & more</div></div>
+                  <span className="text-xl">🏊</span><div><div>Regular Pools</div><div className="text-xs text-gray-400">Cars, Houses & More</div></div>
                 </button>
                 <div className="h-px bg-gray-700 my-2"></div>
                 <Link href="/dashboard" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
@@ -685,12 +739,6 @@ export default function Home() {
                 <Link href="/contact" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
                   <span className="text-xl">📞</span><div><div>Contact</div><div className="text-xs text-gray-400">Get in touch</div></div>
                 </Link>
-                <Link href="/login" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3 mt-2">
-                  <span className="text-xl">🔐</span><div><div>Login</div><div className="text-xs text-gray-400">Existing user</div></div>
-                </Link>
-                <button onClick={() => { setShowRegisterModal(true); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition flex items-center gap-3 mt-2">
-                  <span className="text-xl">📝</span><div><div>Register</div><div className="text-xs text-green-200">New account</div></div>
-                </button>
                 <div className="pt-2"><TopCitySelector /></div>
               </div>
             )}
@@ -700,6 +748,9 @@ export default function Home() {
         <GlobalAnnouncement />
         <CashEquivalentBanner />
         <CharityBanner />
+
+        {/* MOVING MARQUEE - Below banners, before hero image */}
+        <MovingMarquee />
 
         <div className="w-full bg-gradient-to-br from-green-700 to-teal-700">
           <div className="max-w-7xl mx-auto">
@@ -766,7 +817,7 @@ export default function Home() {
                     <div className="text-5xl md:text-6xl animate-bounce">🏪</div>
                     <div>
                       <div className="font-bold text-2xl md:text-3xl">መርካቶ VIP</div>
-                      <div className="text-xs md:text-sm opacity-90">Merkato Special Program</div>
+                      <div className="text-xs md:text-sm opacity-90">Win Cash up to 40M ETB</div>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -794,7 +845,7 @@ export default function Home() {
                   <span className="text-4xl">🏙️</span>
                   <div>
                     <h3 className="text-xl font-bold text-white">City VIP Programs</h3>
-                    <p className="text-sm text-gray-300">Join your city's exclusive VIP program - {uniqueCities.length}+ Ethiopian cities available!</p>
+                    <p className="text-sm text-gray-300">Win Cash in your city - {uniqueCities.length}+ Ethiopian cities available!</p>
                   </div>
                 </div>
                 <div className="relative">
@@ -817,21 +868,21 @@ export default function Home() {
                             <div className="flex-1">
                               <div className="font-medium text-gray-800 group-hover:text-green-600 transition">{city.name} <span className="text-gray-400 text-xs">| {city.nameEn}</span></div>
                               <div className="text-xs text-gray-500">{city.region}</div>
-                              <div className="text-[10px] text-green-600 font-semibold mt-0.5">🏆 {city.prize}</div>
+                              <div className="text-[10px] text-green-600 font-semibold mt-0.5">🏆 Win Cash {city.prize}</div>
                             </div>
                             <span className="text-green-600 text-xs font-medium opacity-0 group-hover:opacity-100 transition flex items-center gap-1">Join <span>→</span></span>
                           </a>
                         ))}
                       </div>
-                      <div className="p-2 text-center text-xs text-gray-400 bg-gray-50">{uniqueCities.length}+ Ethiopian cities available • እስከ 40M ብር ለማሸነፍ ይቀላቀሉ</div>
+                      <div className="p-2 text-center text-xs text-gray-400 bg-gray-50">{uniqueCities.length}+ Ethiopian cities available • Win Cash up to 40M ETB</div>
                     </div>
                   )}
                 </div>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-6 pt-4 border-t border-gray-700">
-                <div className="text-center"><div className="text-2xl">🏆</div><div className="text-white font-bold text-sm">1M ETB</div><div className="text-[10px] text-gray-400">Daily</div></div>
-                <div className="text-center"><div className="text-2xl">⭐</div><div className="text-white font-bold text-sm">10M ETB</div><div className="text-[10px] text-gray-400">Weekly</div></div>
-                <div className="text-center"><div className="text-2xl">👑</div><div className="text-white font-bold text-sm">40M ETB</div><div className="text-[10px] text-gray-400">Monthly</div></div>
+                <div className="text-center"><div className="text-2xl">🏆</div><div className="text-white font-bold text-sm">1M ETB</div><div className="text-[10px] text-gray-400">Daily Cash</div></div>
+                <div className="text-center"><div className="text-2xl">⭐</div><div className="text-white font-bold text-sm">10M ETB</div><div className="text-[10px] text-gray-400">Weekly Cash</div></div>
+                <div className="text-center"><div className="text-2xl">👑</div><div className="text-white font-bold text-sm">40M ETB</div><div className="text-[10px] text-gray-400">Monthly Cash</div></div>
                 <div className="text-center"><div className="text-2xl">📍</div><div className="text-white font-bold text-sm">{uniqueCities.length}+</div><div className="text-[10px] text-gray-400">Cities</div></div>
                 <div className="text-center"><div className="text-2xl">🇪🇹</div><div className="text-white font-bold text-sm">All Regions</div><div className="text-[10px] text-gray-400">Nationwide</div></div>
               </div>
@@ -847,7 +898,7 @@ export default function Home() {
                     <span className="text-4xl group-hover:scale-110 transition-transform">🏊</span>
                     <div className="text-left">
                       <h3 className="text-2xl font-bold">Regular Prize Pools</h3>
-                      <p className="text-sm text-gray-300">Cars, Houses, Electronics & More</p>
+                      <p className="text-sm text-gray-300">Win Cars, Houses, Machinery & Electronics</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -958,8 +1009,16 @@ export default function Home() {
         @keyframes fade-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fade-in 0.5s ease-out; }
         .scroll-mt-20 { scroll-margin-top: 80px; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes marquee {
+          0% { transform: translateX(100%); }
+          100% { transform: translateX(-100%); }
+        }
+        .animate-marquee {
+          animation: marquee 30s linear infinite;
+        }
+        .hover\\:animation-pause:hover {
+          animation-play-state: paused;
+        }
       `}</style>
     </>
   );
