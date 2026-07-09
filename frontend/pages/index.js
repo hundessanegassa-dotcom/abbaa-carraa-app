@@ -1,4 +1,4 @@
-// pages/index.js - COMPLETE FIXED HOMEPAGE
+// pages/index.js - Three-Mode Modern Homepage (App | Classic | Banking)
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -55,6 +55,7 @@ export default function Home() {
   const [registerForm, setRegisterForm] = useState({
     fullName: '', email: '', phone: '', password: '', confirmPassword: '', city: '', agreeTerms: false
   });
+  const [activeView, setActiveView] = useState('app'); // 'app', 'classic', 'banking'
 
   // Load language preference
   useEffect(() => {
@@ -70,7 +71,7 @@ export default function Home() {
     localStorage.setItem('appLanguage', newLang);
   };
 
-  // ALL 94 ETHIOPIAN CITIES - Complete list shortened for brevity
+  // ALL 94 ETHIOPIAN CITIES - Complete list
   const allCityVipPrograms = [
     { id: 'addis-ababa', name: 'አዲስ አበባ', nameEn: 'Addis Ababa', region: 'Central', icon: '🏙️', prize: '40M ETB' },
     { id: 'shaggar', name: 'ሸገር', nameEn: 'Shaggar City', region: 'Oromia', icon: '🏗️', prize: '40M ETB' },
@@ -200,7 +201,6 @@ export default function Home() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Fetch all active pools
       const { data: poolsData, error: poolsError } = await supabase
         .from('pools')
         .select('*')
@@ -210,7 +210,6 @@ export default function Home() {
 
       if (poolsError) throw poolsError;
 
-      // Fetch featured pools
       const { data: featuredData, error: featuredError } = await supabase
         .from('pools')
         .select('*')
@@ -221,13 +220,11 @@ export default function Home() {
 
       if (featuredError) throw featuredError;
 
-      // Fetch stats
       const { data: allPools, error: statsError } = await supabase
         .from('pools')
         .select('status, target_amount, current_amount');
 
       if (!statsError && allPools) {
-        const active = allPools.filter(p => p.status === 'active').length;
         const totalRaised = allPools.reduce((sum, p) => sum + (p.current_amount || 0), 0);
         
         const { count: winnersCount } = await supabase
@@ -236,7 +233,6 @@ export default function Home() {
           .eq('status', 'completed')
           .not('winner_id', 'is', null);
 
-        // Get agents count
         const { count: agentsCount } = await supabase
           .from('agents')
           .select('*', { count: 'exact', head: true });
@@ -362,6 +358,33 @@ export default function Home() {
     </div>
   );
 
+  // ========== MODE SWITCHER ==========
+  const ModeSwitcher = () => (
+    <div className="fixed top-4 right-4 z-50 flex gap-1 bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-gray-200 p-1">
+      <button 
+        onClick={() => { setActiveView('app'); toggleMode('app'); }} 
+        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${activeView === 'app' ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+      >
+        📱 App
+      </button>
+      <button 
+        onClick={() => { setActiveView('classic'); toggleMode('classic'); }} 
+        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${activeView === 'classic' ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+      >
+        🖥️ Classic
+      </button>
+      <button 
+        onClick={() => { setActiveView('banking'); toggleMode('banking'); }} 
+        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${activeView === 'banking' ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+      >
+        🏦 Banking
+      </button>
+      <button onClick={toggleLanguage} className="px-3 py-1.5 rounded-full text-xs font-medium text-gray-600 hover:bg-gray-100 transition">
+        {language === 'am' ? '🇬🇧' : '🇪🇹'}
+      </button>
+    </div>
+  );
+
   if (loading && isInitialLoad) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -371,22 +394,16 @@ export default function Home() {
   }
 
   // ========== BANKING MODE ==========
-  if (mode === 'banking') {
+  if (activeView === 'banking' || mode === 'banking') {
     return (
       <>
         <Head>
           <title>Abbaa Carraa - Win Amazing Prizes</title>
           <meta name="description" content="Win amazing prizes. Join Merkato VIP, City VIP across 94 Ethiopian cities, or Regular Pools." />
+          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
         </Head>
         
-        <div className="fixed top-4 right-4 z-50 flex gap-1">
-          <button onClick={toggleLanguage} className="bg-gray-800 text-white px-2 py-1 rounded-full shadow-lg text-[10px]">
-            {language === 'am' ? '🇬🇧 EN' : '🇪🇹 አማ'}
-          </button>
-          <button onClick={toggleMode} className="bg-emerald-600 text-white px-2 py-1 rounded-full shadow-lg text-[10px]">
-            🔄 {language === 'am' ? 'ክላሲክ' : 'Classic'}
-          </button>
-        </div>
+        <ModeSwitcher />
         
         <BankingStyleView 
           pools={pools}
@@ -402,6 +419,194 @@ export default function Home() {
     );
   }
 
+  // ========== APP MODE (Mobile App Style) ==========
+  if (activeView === 'app') {
+    return (
+      <>
+        <Head>
+          <title>Abbaa Carraa - Win Amazing Prizes</title>
+          <meta name="description" content="Win amazing prizes. Join Merkato VIP, City VIP across 94 Ethiopian cities, or Regular Pools." />
+          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        </Head>
+
+        <div className="min-h-screen bg-gray-50 pb-20">
+          <ModeSwitcher />
+
+          {/* TOP APP BAR */}
+          <header className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-100 px-4 py-3 flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">🎫</span>
+              <span className="font-bold text-lg text-gray-800">Abbaa Carraa</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button className="relative">
+                <span className="text-2xl">🔔</span>
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center">3</span>
+              </button>
+              <Link href="/profile" className="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-teal-500 flex items-center justify-center text-white font-bold text-sm">
+                U
+              </Link>
+            </div>
+          </header>
+
+          {/* WELCOME */}
+          <div className="px-4 py-4 bg-white border-b border-gray-100">
+            <p className="text-sm text-gray-500">Welcome back,</p>
+            <p className="text-xl font-bold text-gray-800">Guest</p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">⭐ {stats.total_pools} Active Pools</span>
+              <span className="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded-full">🏆 {stats.total_winners} Winners</span>
+            </div>
+          </div>
+
+          {/* QUICK STATS */}
+          <div className="grid grid-cols-3 gap-3 px-4 py-4">
+            <div className="bg-white rounded-xl shadow-sm p-3 text-center border border-gray-100">
+              <div className="text-2xl mb-1">💰</div>
+              <div className="font-bold text-gray-800">{counterInView ? <CountUp start={0} end={Math.floor(stats.total_raised / 1000)} duration={2} separator="," /> : '0'}K+</div>
+              <div className="text-[10px] text-gray-400">Total Raised</div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm p-3 text-center border border-gray-100">
+              <div className="text-2xl mb-1">🎯</div>
+              <div className="font-bold text-gray-800">{stats.total_pools}</div>
+              <div className="text-[10px] text-gray-400">Active Pools</div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm p-3 text-center border border-gray-100">
+              <div className="text-2xl mb-1">🏆</div>
+              <div className="font-bold text-gray-800">{stats.total_winners}</div>
+              <div className="text-[10px] text-gray-400">Winners</div>
+            </div>
+          </div>
+
+          {/* CATEGORY GRID */}
+          <div className="px-4 py-2">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Explore</h2>
+            <div className="grid grid-cols-4 gap-4">
+              <Link href="/listings" className="flex flex-col items-center bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition">
+                <span className="text-3xl mb-1">🏊</span>
+                <span className="text-xs font-medium text-gray-700">Regular Pools</span>
+              </Link>
+              <Link href="/merkato-vip" className="flex flex-col items-center bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition">
+                <span className="text-3xl mb-1">🏪</span>
+                <span className="text-xs font-medium text-gray-700">Merkato VIP</span>
+              </Link>
+              <button onClick={() => setShowCityDropdown(!showCityDropdown)} className="flex flex-col items-center bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition relative">
+                <span className="text-3xl mb-1">🏙️</span>
+                <span className="text-xs font-medium text-gray-700">City VIP</span>
+                {showCityDropdown && (
+                  <div className="absolute bottom-full left-0 mb-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
+                    <div className="p-3 bg-gray-50 border-b">
+                      <input type="text" placeholder="🔍 Search city..." value={citySearchTerm} onChange={(e) => setCitySearchTerm(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500" autoFocus />
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {filteredCityList.slice(0, 15).map(city => (
+                        <Link key={city.id} href={`/cities/${city.id}`} className="block px-4 py-2 hover:bg-gray-50 transition border-b last:border-0 text-left">
+                          <div className="flex items-center gap-2">
+                            <span>{city.icon}</span>
+                            <span className="text-sm font-medium text-gray-800">{city.name}</span>
+                            <span className="text-xs text-gray-400">{city.nameEn}</span>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </button>
+              <Link href="/winners" className="flex flex-col items-center bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition">
+                <span className="text-3xl mb-1">🏆</span>
+                <span className="text-xs font-medium text-gray-700">Winners</span>
+              </Link>
+              <Link href="/how-it-works" className="flex flex-col items-center bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition">
+                <span className="text-3xl mb-1">📖</span>
+                <span className="text-xs font-medium text-gray-700">How It Works</span>
+              </Link>
+              <Link href="/about" className="flex flex-col items-center bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition">
+                <span className="text-3xl mb-1">ℹ️</span>
+                <span className="text-xs font-medium text-gray-700">About</span>
+              </Link>
+              <Link href="/contact" className="flex flex-col items-center bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition">
+                <span className="text-3xl mb-1">📞</span>
+                <span className="text-xs font-medium text-gray-700">Contact</span>
+              </Link>
+              <button onClick={() => setShowRegisterModal(true)} className="flex flex-col items-center bg-gradient-to-r from-green-500 to-teal-500 rounded-2xl shadow-sm p-4 text-white hover:shadow-md transition">
+                <span className="text-3xl mb-1">📝</span>
+                <span className="text-xs font-medium">Register</span>
+              </button>
+            </div>
+          </div>
+
+          {/* FEATURED POOLS CAROUSEL */}
+          {featuredPools.length > 0 && (
+            <div className="px-4 py-4">
+              <div className="flex justify-between items-center mb-3">
+                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">⭐ Featured Pools</h2>
+                <Link href="/listings" className="text-xs text-green-600 font-medium">See All</Link>
+              </div>
+              <div className="flex overflow-x-auto gap-4 pb-2 snap-x snap-mandatory scrollbar-hide">
+                {featuredPools.map(pool => (
+                  <div key={pool.id} className="min-w-[200px] snap-start">
+                    <PoolCard pool={pool} featured={true} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* REGULAR POOLS QUICK VIEW */}
+          <div className="px-4 py-4">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">🏊 Regular Pools</h2>
+              <Link href="/listings" className="text-xs text-green-600 font-medium">View All</Link>
+            </div>
+            <div className="space-y-3">
+              {pools.slice(0, 3).map(pool => (
+                <PoolCard key={pool.id} pool={pool} featured={false} />
+              ))}
+            </div>
+          </div>
+
+          {/* CHARITY BANNER */}
+          <div className="mx-4 p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-2xl border border-red-100 mb-4">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">💚</span>
+              <div>
+                <p className="font-bold text-red-800">2% for Health</p>
+                <p className="text-xs text-red-700">Supporting kidney & heart disease patients</p>
+              </div>
+            </div>
+          </div>
+
+          {/* BOTTOM NAVIGATION */}
+          <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center py-2 px-4 z-40 shadow-lg">
+            <Link href="/" className="flex flex-col items-center text-green-600">
+              <span className="text-2xl">🏠</span>
+              <span className="text-[10px] font-medium">Home</span>
+            </Link>
+            <Link href="/listings" className="flex flex-col items-center text-gray-400 hover:text-gray-600">
+              <span className="text-2xl">🎁</span>
+              <span className="text-[10px] font-medium">Pools</span>
+            </Link>
+            <Link href="/winners" className="flex flex-col items-center text-gray-400 hover:text-gray-600">
+              <span className="text-2xl">🏆</span>
+              <span className="text-[10px] font-medium">Winners</span>
+            </Link>
+            <Link href="/dashboard" className="flex flex-col items-center text-gray-400 hover:text-gray-600">
+              <span className="text-2xl">👤</span>
+              <span className="text-[10px] font-medium">Profile</span>
+            </Link>
+          </nav>
+
+          {showRegisterModal && <RegisterModal />}
+        </div>
+
+        <style jsx>{`
+          .scrollbar-hide::-webkit-scrollbar { display: none; }
+          .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        `}</style>
+      </>
+    );
+  }
+
   // ========== CLASSIC MODE ==========
   return (
     <>
@@ -411,6 +616,8 @@ export default function Home() {
       </Head>
 
       <div className="min-h-screen bg-white w-full">
+        <ModeSwitcher />
+
         <nav className="sticky top-0 z-50 bg-gray-900 shadow-lg border-b border-gray-700">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-between h-16">
@@ -447,15 +654,9 @@ export default function Home() {
                 <Link href="/contact" className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition whitespace-nowrap text-sm font-medium">📞 Contact</Link>
               </div>
               <div className="hidden md:flex items-center gap-2">
-                <button onClick={toggleLanguage} className="px-3 py-1 bg-gray-700 text-white rounded-lg text-xs flex items-center gap-1">
-                  {language === 'am' ? '🇬🇧 English' : '🇪🇹 አማርኛ'}
-                </button>
-                <button onClick={toggleMode} className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs flex items-center gap-1">
-                  🔄 Banking UI
-                </button>
+                <TopCitySelector />
                 <Link href="/login" className="px-4 py-2 text-gray-300 hover:text-white transition text-sm font-medium">Login</Link>
                 <button onClick={() => setShowRegisterModal(true)} className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium">Register</button>
-                <TopCitySelector />
               </div>
               <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -465,10 +666,6 @@ export default function Home() {
             </div>
             {mobileMenuOpen && (
               <div className="md:hidden py-4 border-t border-gray-700 space-y-2">
-                <div className="flex gap-2 px-4 py-2">
-                  <button onClick={toggleLanguage} className="flex-1 px-3 py-2 bg-gray-700 text-white rounded-lg text-xs">{language === 'am' ? '🇬🇧 English' : '🇪🇹 አማርኛ'}</button>
-                  <button onClick={toggleMode} className="flex-1 px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs">🔄 Banking UI</button>
-                </div>
                 <button onClick={() => scrollToSection('merkato-vip')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
                   <span className="text-xl">🏪</span><div><div>Merkato VIP</div><div className="text-xs text-gray-400">Win up to 40M ETB</div></div>
                 </button>
@@ -556,7 +753,7 @@ export default function Home() {
           <h2 className="text-3xl font-bold text-center mb-4">Available Opportunities</h2>
           <p className="text-center text-gray-500 mb-8">Choose from VIP programs or regular pools</p>
 
-          {/* Merkato VIP Section */}
+          {/* Merkato VIP */}
           <div id="merkato-vip" className="mb-12 scroll-mt-20">
             <div onClick={() => router.push('/merkato-vip')} className="relative bg-gradient-to-r from-yellow-500 via-orange-500 to-red-600 rounded-2xl p-6 md:p-8 text-white transform hover:scale-105 transition-all duration-500 shadow-2xl overflow-hidden group cursor-pointer">
               <div className="absolute inset-0 opacity-20">
@@ -589,7 +786,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* City VIP Section */}
+          {/* City VIP */}
           <div id="city-vip" className="mb-12 scroll-mt-20">
             <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-6 shadow-xl">
               <div className="flex items-center justify-between flex-wrap gap-4">
@@ -641,7 +838,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Regular Pools Section */}
+          {/* Regular Pools */}
           <div id="regular-pools" className="mb-12 scroll-mt-20">
             <button onClick={() => setShowRegularPools(!showRegularPools)} className="w-full bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white rounded-2xl p-6 transition-all duration-300 shadow-lg group">
               <div className="flex flex-col items-center text-center">
@@ -761,6 +958,8 @@ export default function Home() {
         @keyframes fade-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fade-in 0.5s ease-out; }
         .scroll-mt-20 { scroll-margin-top: 80px; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </>
   );
