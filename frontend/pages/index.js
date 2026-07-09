@@ -1,4 +1,4 @@
-// pages/index.js - Three-Mode Modern Homepage (App | Classic | Banking) - WITH MOVING MARQUEE
+// pages/index.js - Complete with Bilingual Marquee (Amharic First)
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -56,7 +56,6 @@ export default function Home() {
     fullName: '', email: '', phone: '', password: '', confirmPassword: '', city: '', agreeTerms: false
   });
   const [activeView, setActiveView] = useState('app');
-  const marqueeRef = useRef(null);
 
   // Load language preference
   useEffect(() => {
@@ -359,20 +358,14 @@ export default function Home() {
     </div>
   );
 
-  // ========== MOVING MARQUEE COMPONENT ==========
+  // ========== BILINGUAL MOVING MARQUEE (Amharic First) ==========
   const MovingMarquee = () => {
-    const marqueeText = `🏆 WIN BIG WITH ABBAA CARRAA • 🏪 Merkato VIP: Win Cash up to 40M ETB • 🏙️ City VIP: Win Cash in 94 Cities • 🏊 Regular Pools: Win Cars, Houses, Machinery & Electronics • 💚 2% Supports Health • Join & Start Winning Today! 🎯`;
+    const marqueeText = `🏆 በAbbaa Carraa ወርቃማ እድልን ያሸንፉ! • 🏪 መርካቶ ቪአይፒ: እስከ 40M ብር ጥሬ ገንዘብ ያሸንፉ • 🏙️ ከተማ ቪአይፒ: በ94 ከተሞች ጥሬ ገንዘብ ያሸንፉ • 🏊 መደበኛ የእጣ መደቦች: መኪና፣ ቤት፣ ማሽነሪ እና ኤሌክትሮኒክስ ያሸንፉ • 💚 2% ለጤና ይውላል • ይቀላቀሉ እና ዛሬ ማሸነፍ ይጀምሩ! 🎯 || 🏆 WIN BIG WITH ABBAA CARRAA • 🏪 Merkato VIP: Win Cash up to 40M ETB • 🏙️ City VIP: Win Cash in 94 Cities • 🏊 Regular Pools: Win Cars, Houses, Machinery & Electronics • 💚 2% Supports Health • Join & Start Winning Today! 🎯`;
 
     return (
-      <div className="relative overflow-hidden bg-gradient-to-r from-green-600 to-teal-600 py-3 px-4 shadow-inner">
-        <div 
-          className="whitespace-nowrap animate-marquee hover:animation-pause"
-          style={{
-            display: 'inline-block',
-            animation: 'marquee 30s linear infinite',
-          }}
-        >
-          <span className="text-white font-semibold text-sm md:text-base tracking-wide">
+      <div className="w-full overflow-hidden bg-gradient-to-r from-green-600 to-teal-600 py-2.5 md:py-3 shadow-inner">
+        <div className="whitespace-nowrap animate-marquee" style={{ display: 'inline-block' }}>
+          <span className="text-white font-semibold text-[11px] md:text-sm tracking-wide px-4">
             {marqueeText}
           </span>
         </div>
@@ -383,8 +376,9 @@ export default function Home() {
           }
           .animate-marquee {
             animation: marquee 30s linear infinite;
+            will-change: transform;
           }
-          .hover\\:animation-pause:hover {
+          .animate-marquee:hover {
             animation-play-state: paused;
           }
         `}</style>
@@ -394,26 +388,26 @@ export default function Home() {
 
   // ========== MODE SWITCHER ==========
   const ModeSwitcher = () => (
-    <div className="fixed top-4 right-4 z-50 flex gap-1 bg-white/95 backdrop-blur-md rounded-full shadow-lg border border-gray-200 p-1">
+    <div className="fixed top-3 right-3 z-50 flex gap-1 bg-white/95 backdrop-blur-md rounded-full shadow-lg border border-gray-200 p-1">
       <button 
         onClick={() => { setActiveView('app'); }} 
-        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${activeView === 'app' ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+        className={`px-2.5 py-1 rounded-full text-[10px] md:text-xs font-medium transition-all duration-300 ${activeView === 'app' ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
       >
         📱 App
       </button>
       <button 
         onClick={() => { setActiveView('classic'); }} 
-        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${activeView === 'classic' ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+        className={`px-2.5 py-1 rounded-full text-[10px] md:text-xs font-medium transition-all duration-300 ${activeView === 'classic' ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
       >
         🖥️ Classic
       </button>
       <button 
         onClick={() => { setActiveView('banking'); }} 
-        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${activeView === 'banking' ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+        className={`px-2.5 py-1 rounded-full text-[10px] md:text-xs font-medium transition-all duration-300 ${activeView === 'banking' ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
       >
         🏦 Banking
       </button>
-      <button onClick={toggleLanguage} className="px-3 py-1.5 rounded-full text-xs font-medium text-gray-600 hover:bg-gray-100 transition">
+      <button onClick={toggleLanguage} className="px-2.5 py-1 rounded-full text-[10px] md:text-xs font-medium text-gray-600 hover:bg-gray-100 transition">
         {language === 'am' ? '🇬🇧' : '🇪🇹'}
       </button>
     </div>
@@ -453,7 +447,7 @@ export default function Home() {
     );
   }
 
-  // ========== APP MODE (Mobile App Style) ==========
+  // ========== APP MODE ==========
   if (activeView === 'app') {
     return (
       <>
@@ -466,94 +460,94 @@ export default function Home() {
         <div className="min-h-screen bg-gray-50 pb-20">
           <ModeSwitcher />
 
-          {/* TOP APP BAR - No overlap */}
-          <header className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-100 px-4 py-3">
+          {/* TOP APP BAR */}
+          <header className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-100 px-3 md:px-4 py-2.5 md:py-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🎫</span>
-                <span className="font-bold text-lg text-gray-800">Abbaa Carraa</span>
+              <div className="flex items-center gap-1.5 md:gap-2">
+                <span className="text-xl md:text-2xl">🎫</span>
+                <span className="font-bold text-sm md:text-lg text-gray-800">Abbaa Carraa</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Link href="/login" className="text-xs bg-gray-100 px-3 py-1.5 rounded-full text-gray-700 hover:bg-gray-200 transition font-medium">
+              <div className="flex items-center gap-1.5 md:gap-2">
+                <Link href="/login" className="text-[10px] md:text-xs bg-gray-100 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full text-gray-700 hover:bg-gray-200 transition font-medium">
                   Login
                 </Link>
-                <button onClick={() => setShowRegisterModal(true)} className="text-xs bg-green-600 text-white px-3 py-1.5 rounded-full hover:bg-green-700 transition font-medium">
+                <button onClick={() => setShowRegisterModal(true)} className="text-[10px] md:text-xs bg-green-600 text-white px-2.5 md:px-3 py-1 md:py-1.5 rounded-full hover:bg-green-700 transition font-medium">
                   Register
                 </button>
                 <button className="relative p-1">
-                  <span className="text-xl">🔔</span>
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center">3</span>
+                  <span className="text-lg md:text-xl">🔔</span>
+                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 md:w-4 md:h-4 bg-red-500 text-white text-[7px] md:text-[9px] rounded-full flex items-center justify-center">3</span>
                 </button>
-                <Link href="/profile" className="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-teal-500 flex items-center justify-center text-white font-bold text-sm">
+                <Link href="/profile" className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-gradient-to-r from-green-500 to-teal-500 flex items-center justify-center text-white font-bold text-xs md:text-sm">
                   U
                 </Link>
               </div>
             </div>
           </header>
 
-          {/* MOVING MARQUEE - Full width, no overlap */}
+          {/* BILINGUAL MOVING MARQUEE */}
           <MovingMarquee />
 
           {/* WELCOME SECTION */}
-          <div className="px-4 py-4 bg-white border-b border-gray-100">
-            <p className="text-sm text-gray-500">Welcome back,</p>
-            <p className="text-xl font-bold text-gray-800">Guest</p>
-            <div className="flex flex-wrap gap-2 mt-2">
-              <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">⭐ {stats.total_pools} Active Pools</span>
-              <span className="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded-full">🏆 {stats.total_winners} Winners</span>
-              <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full">🏙️ {uniqueCities.length} Cities</span>
+          <div className="px-3 md:px-4 py-3 md:py-4 bg-white border-b border-gray-100">
+            <p className="text-xs md:text-sm text-gray-500">Welcome back,</p>
+            <p className="text-lg md:text-xl font-bold text-gray-800">Guest</p>
+            <div className="flex flex-wrap gap-1.5 md:gap-2 mt-1.5 md:mt-2">
+              <span className="bg-green-100 text-green-700 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full">⭐ {stats.total_pools} Active</span>
+              <span className="bg-yellow-100 text-yellow-700 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full">🏆 {stats.total_winners} Winners</span>
+              <span className="bg-blue-100 text-blue-700 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full">🏙️ {uniqueCities.length} Cities</span>
             </div>
           </div>
 
           {/* QUICK STATS */}
-          <div className="grid grid-cols-3 gap-3 px-4 py-4">
-            <div className="bg-white rounded-xl shadow-sm p-3 text-center border border-gray-100">
-              <div className="text-2xl mb-1">💰</div>
-              <div className="font-bold text-gray-800">{counterInView ? <CountUp start={0} end={Math.floor(stats.total_raised / 1000)} duration={2} separator="," /> : '0'}K+</div>
-              <div className="text-[10px] text-gray-400">Total Raised</div>
+          <div className="grid grid-cols-3 gap-2 md:gap-3 px-3 md:px-4 py-3 md:py-4">
+            <div className="bg-white rounded-xl shadow-sm p-2.5 md:p-3 text-center border border-gray-100">
+              <div className="text-xl md:text-2xl mb-0.5 md:mb-1">💰</div>
+              <div className="font-bold text-sm md:text-base text-gray-800">{counterInView ? <CountUp start={0} end={Math.floor(stats.total_raised / 1000)} duration={2} separator="," /> : '0'}K+</div>
+              <div className="text-[8px] md:text-[10px] text-gray-400">Total Raised</div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm p-3 text-center border border-gray-100">
-              <div className="text-2xl mb-1">🎯</div>
-              <div className="font-bold text-gray-800">{stats.total_pools}</div>
-              <div className="text-[10px] text-gray-400">Active Pools</div>
+            <div className="bg-white rounded-xl shadow-sm p-2.5 md:p-3 text-center border border-gray-100">
+              <div className="text-xl md:text-2xl mb-0.5 md:mb-1">🎯</div>
+              <div className="font-bold text-sm md:text-base text-gray-800">{stats.total_pools}</div>
+              <div className="text-[8px] md:text-[10px] text-gray-400">Active Pools</div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm p-3 text-center border border-gray-100">
-              <div className="text-2xl mb-1">🏆</div>
-              <div className="font-bold text-gray-800">{stats.total_winners}</div>
-              <div className="text-[10px] text-gray-400">Winners</div>
+            <div className="bg-white rounded-xl shadow-sm p-2.5 md:p-3 text-center border border-gray-100">
+              <div className="text-xl md:text-2xl mb-0.5 md:mb-1">🏆</div>
+              <div className="font-bold text-sm md:text-base text-gray-800">{stats.total_winners}</div>
+              <div className="text-[8px] md:text-[10px] text-gray-400">Winners</div>
             </div>
           </div>
 
           {/* CATEGORY GRID */}
-          <div className="px-4 py-2">
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Explore</h2>
-            <div className="grid grid-cols-4 gap-4">
-              <Link href="/listings" className="flex flex-col items-center bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition">
-                <span className="text-3xl mb-1">🏊</span>
-                <span className="text-xs font-medium text-gray-700">Regular Pools</span>
-                <span className="text-[8px] text-gray-400 mt-0.5">Cars • Houses</span>
+          <div className="px-3 md:px-4 py-2">
+            <h2 className="text-[10px] md:text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 md:mb-3">Explore</h2>
+            <div className="grid grid-cols-4 gap-2 md:gap-4">
+              <Link href="/listings" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border border-gray-100 hover:shadow-md transition">
+                <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">🏊</span>
+                <span className="text-[9px] md:text-xs font-medium text-gray-700 text-center leading-tight">Regular Pools</span>
+                <span className="text-[6px] md:text-[8px] text-gray-400 mt-0.5">Cars • Houses</span>
               </Link>
-              <Link href="/merkato-vip" className="flex flex-col items-center bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition">
-                <span className="text-3xl mb-1">🏪</span>
-                <span className="text-xs font-medium text-gray-700">Merkato VIP</span>
-                <span className="text-[8px] text-gray-400 mt-0.5">Cash up to 40M</span>
+              <Link href="/merkato-vip" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border border-gray-100 hover:shadow-md transition">
+                <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">🏪</span>
+                <span className="text-[9px] md:text-xs font-medium text-gray-700 text-center leading-tight">Merkato VIP</span>
+                <span className="text-[6px] md:text-[8px] text-gray-400 mt-0.5">Cash up to 40M</span>
               </Link>
-              <button onClick={() => setShowCityDropdown(!showCityDropdown)} className="flex flex-col items-center bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition relative">
-                <span className="text-3xl mb-1">🏙️</span>
-                <span className="text-xs font-medium text-gray-700">City VIP</span>
-                <span className="text-[8px] text-gray-400 mt-0.5">94 Cities • Cash</span>
+              <button onClick={() => setShowCityDropdown(!showCityDropdown)} className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border border-gray-100 hover:shadow-md transition relative">
+                <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">🏙️</span>
+                <span className="text-[9px] md:text-xs font-medium text-gray-700 text-center leading-tight">City VIP</span>
+                <span className="text-[6px] md:text-[8px] text-gray-400 mt-0.5">94 Cities • Cash</span>
                 {showCityDropdown && (
-                  <div className="absolute bottom-full left-0 mb-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
-                    <div className="p-3 bg-gray-50 border-b">
-                      <input type="text" placeholder="🔍 Search city..." value={citySearchTerm} onChange={(e) => setCitySearchTerm(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500" autoFocus />
+                  <div className="absolute bottom-full left-0 mb-2 w-56 md:w-64 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
+                    <div className="p-2 md:p-3 bg-gray-50 border-b">
+                      <input type="text" placeholder="🔍 Search city..." value={citySearchTerm} onChange={(e) => setCitySearchTerm(e.target.value)} className="w-full px-2 md:px-3 py-1.5 md:py-2 border rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-green-500" autoFocus />
                     </div>
-                    <div className="max-h-64 overflow-y-auto">
+                    <div className="max-h-48 md:max-h-64 overflow-y-auto">
                       {filteredCityList.slice(0, 15).map(city => (
-                        <Link key={city.id} href={`/cities/${city.id}`} className="block px-4 py-2 hover:bg-gray-50 transition border-b last:border-0 text-left">
-                          <div className="flex items-center gap-2">
-                            <span>{city.icon}</span>
-                            <span className="text-sm font-medium text-gray-800">{city.name}</span>
-                            <span className="text-xs text-gray-400">{city.nameEn}</span>
+                        <Link key={city.id} href={`/cities/${city.id}`} className="block px-3 md:px-4 py-1.5 md:py-2 hover:bg-gray-50 transition border-b last:border-0 text-left">
+                          <div className="flex items-center gap-1.5 md:gap-2">
+                            <span className="text-base md:text-lg">{city.icon}</span>
+                            <span className="text-xs md:text-sm font-medium text-gray-800">{city.name}</span>
+                            <span className="text-[8px] md:text-xs text-gray-400">{city.nameEn}</span>
                           </div>
                         </Link>
                       ))}
@@ -561,54 +555,52 @@ export default function Home() {
                   </div>
                 )}
               </button>
-              <Link href="/winners" className="flex flex-col items-center bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition">
-                <span className="text-3xl mb-1">🏆</span>
-                <span className="text-xs font-medium text-gray-700">Winners</span>
-                <span className="text-[8px] text-gray-400 mt-0.5">Hall of Fame</span>
+              <Link href="/winners" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border border-gray-100 hover:shadow-md transition">
+                <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">🏆</span>
+                <span className="text-[9px] md:text-xs font-medium text-gray-700 text-center leading-tight">Winners</span>
+                <span className="text-[6px] md:text-[8px] text-gray-400 mt-0.5">Hall of Fame</span>
               </Link>
-              <Link href="/how-it-works" className="flex flex-col items-center bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition">
-                <span className="text-3xl mb-1">📖</span>
-                <span className="text-xs font-medium text-gray-700">How It Works</span>
+              <Link href="/how-it-works" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border border-gray-100 hover:shadow-md transition">
+                <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">📖</span>
+                <span className="text-[9px] md:text-xs font-medium text-gray-700 text-center leading-tight">How It Works</span>
               </Link>
-              <Link href="/about" className="flex flex-col items-center bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition">
-                <span className="text-3xl mb-1">ℹ️</span>
-                <span className="text-xs font-medium text-gray-700">About</span>
+              <Link href="/about" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border border-gray-100 hover:shadow-md transition">
+                <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">ℹ️</span>
+                <span className="text-[9px] md:text-xs font-medium text-gray-700 text-center leading-tight">About</span>
               </Link>
-              <Link href="/contact" className="flex flex-col items-center bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition">
-                <span className="text-3xl mb-1">📞</span>
-                <span className="text-xs font-medium text-gray-700">Contact</span>
+              <Link href="/contact" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border border-gray-100 hover:shadow-md transition">
+                <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">📞</span>
+                <span className="text-[9px] md:text-xs font-medium text-gray-700 text-center leading-tight">Contact</span>
               </Link>
-              <button onClick={() => setShowRegisterModal(true)} className="flex flex-col items-center bg-gradient-to-r from-green-500 to-teal-500 rounded-2xl shadow-sm p-4 text-white hover:shadow-md transition">
-                <span className="text-3xl mb-1">📝</span>
-                <span className="text-xs font-medium">Register</span>
+              <button onClick={() => setShowRegisterModal(true)} className="flex flex-col items-center bg-gradient-to-r from-green-500 to-teal-500 rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 text-white hover:shadow-md transition">
+                <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">📝</span>
+                <span className="text-[9px] md:text-xs font-medium text-center leading-tight">Register</span>
               </button>
             </div>
           </div>
 
-          {/* FEATURED POOLS CAROUSEL */}
+          {/* FEATURED POOLS - Grid view like PC */}
           {featuredPools.length > 0 && (
-            <div className="px-4 py-4">
-              <div className="flex justify-between items-center mb-3">
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">⭐ Featured Pools</h2>
-                <Link href="/listings" className="text-xs text-green-600 font-medium">See All</Link>
+            <div className="px-3 md:px-4 py-3 md:py-4">
+              <div className="flex justify-between items-center mb-2 md:mb-3">
+                <h2 className="text-[10px] md:text-sm font-semibold text-gray-500 uppercase tracking-wider">⭐ Featured Pools</h2>
+                <Link href="/listings" className="text-[10px] md:text-xs text-green-600 font-medium">See All</Link>
               </div>
-              <div className="flex overflow-x-auto gap-4 pb-2 snap-x snap-mandatory scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                 {featuredPools.map(pool => (
-                  <div key={pool.id} className="min-w-[200px] max-w-[200px] snap-start flex-shrink-0">
-                    <PoolCard pool={pool} featured={true} />
-                  </div>
+                  <PoolCard key={pool.id} pool={pool} featured={true} />
                 ))}
               </div>
             </div>
           )}
 
           {/* REGULAR POOLS QUICK VIEW */}
-          <div className="px-4 py-4">
-            <div className="flex justify-between items-center mb-3">
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">🏊 Regular Pools</h2>
-              <Link href="/listings" className="text-xs text-green-600 font-medium">View All</Link>
+          <div className="px-3 md:px-4 py-3 md:py-4">
+            <div className="flex justify-between items-center mb-2 md:mb-3">
+              <h2 className="text-[10px] md:text-sm font-semibold text-gray-500 uppercase tracking-wider">🏊 Regular Pools</h2>
+              <Link href="/listings" className="text-[10px] md:text-xs text-green-600 font-medium">View All</Link>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2 md:space-y-3">
               {pools.slice(0, 3).map(pool => (
                 <PoolCard key={pool.id} pool={pool} featured={false} />
               ))}
@@ -616,43 +608,38 @@ export default function Home() {
           </div>
 
           {/* CHARITY BANNER */}
-          <div className="mx-4 p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-2xl border border-red-100 mb-4">
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">💚</span>
+          <div className="mx-3 md:mx-4 p-3 md:p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl md:rounded-2xl border border-red-100 mb-3 md:mb-4">
+            <div className="flex items-center gap-2 md:gap-3">
+              <span className="text-2xl md:text-3xl">💚</span>
               <div>
-                <p className="font-bold text-red-800">2% for Health</p>
-                <p className="text-xs text-red-700">Supporting kidney & heart disease patients</p>
+                <p className="font-bold text-sm md:text-base text-red-800">2% for Health</p>
+                <p className="text-[10px] md:text-xs text-red-700">Supporting kidney & heart disease patients</p>
               </div>
             </div>
           </div>
 
           {/* BOTTOM NAVIGATION */}
-          <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center py-2 px-4 z-40 shadow-lg">
+          <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center py-1.5 md:py-2 px-2 md:px-4 z-40 shadow-lg">
             <Link href="/" className="flex flex-col items-center text-green-600">
-              <span className="text-2xl">🏠</span>
-              <span className="text-[10px] font-medium">Home</span>
+              <span className="text-xl md:text-2xl">🏠</span>
+              <span className="text-[8px] md:text-[10px] font-medium">Home</span>
             </Link>
             <Link href="/listings" className="flex flex-col items-center text-gray-400 hover:text-gray-600">
-              <span className="text-2xl">🎁</span>
-              <span className="text-[10px] font-medium">Pools</span>
+              <span className="text-xl md:text-2xl">🎁</span>
+              <span className="text-[8px] md:text-[10px] font-medium">Pools</span>
             </Link>
             <Link href="/winners" className="flex flex-col items-center text-gray-400 hover:text-gray-600">
-              <span className="text-2xl">🏆</span>
-              <span className="text-[10px] font-medium">Winners</span>
+              <span className="text-xl md:text-2xl">🏆</span>
+              <span className="text-[8px] md:text-[10px] font-medium">Winners</span>
             </Link>
             <Link href="/dashboard" className="flex flex-col items-center text-gray-400 hover:text-gray-600">
-              <span className="text-2xl">👤</span>
-              <span className="text-[10px] font-medium">Profile</span>
+              <span className="text-xl md:text-2xl">👤</span>
+              <span className="text-[8px] md:text-[10px] font-medium">Profile</span>
             </Link>
           </nav>
 
           {showRegisterModal && <RegisterModal />}
         </div>
-
-        <style jsx>{`
-          .scrollbar-hide::-webkit-scrollbar { display: none; }
-          .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        `}</style>
       </>
     );
   }
@@ -749,7 +736,7 @@ export default function Home() {
         <CashEquivalentBanner />
         <CharityBanner />
 
-        {/* MOVING MARQUEE - Below banners, before hero image */}
+        {/* BILINGUAL MOVING MARQUEE */}
         <MovingMarquee />
 
         <div className="w-full bg-gradient-to-br from-green-700 to-teal-700">
@@ -1015,8 +1002,9 @@ export default function Home() {
         }
         .animate-marquee {
           animation: marquee 30s linear infinite;
+          will-change: transform;
         }
-        .hover\\:animation-pause:hover {
+        .animate-marquee:hover {
           animation-play-state: paused;
         }
       `}</style>
