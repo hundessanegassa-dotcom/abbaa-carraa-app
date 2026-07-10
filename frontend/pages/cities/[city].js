@@ -1,6 +1,7 @@
-// pages/cities/[cityId].js - COMPLETE WITH 4 TIERS (Bronze, Silver, Gold, Platinum)
+
+// pages/cities/[cityId].js - COMPLETE WITH 4 TIERS & ALL 94 CITIES
 import { useRouter } from 'next/router';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -364,12 +365,23 @@ export default function CityVip() {
 
   // Tier Selection UI
   const renderTierSelection = () => {
+    // Safety check
+    if (!TIERS) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-red-500">{language === 'am' ? 'ስህተት ተከስቷል' : 'Error loading tiers'}</p>
+        </div>
+      );
+    }
+
     const tiers = ['bronze', 'silver', 'gold', 'platinum'];
     
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
         {tiers.map((tierId) => {
           const tier = TIERS[tierId];
+          if (!tier) return null;
+          
           return (
             <div
               key={tierId}
