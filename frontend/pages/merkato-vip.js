@@ -1,4 +1,4 @@
-// pages/merkato-vip.js - COMPLETE WITH 4 TIERS
+// pages/merkato-vip.js - COMPLETE WITH 4 TIERS (Bronze, Silver, Gold, Platinum)
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
@@ -7,7 +7,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import NoSSR from '../components/NoSSR';
 import TopCitySelector from '../components/TopCitySelector';
-import { TIERS } from '../components/SeatSelector';
+import { TIERS, getDrawScheduleText } from '../components/SeatSelector';
 import SeatSelector from '../components/SeatSelector';
 import CityTicket from '../components/CityTicket';
 
@@ -107,6 +107,38 @@ export default function MerkatoVIP() {
     }
   };
 
+  const compressImage = (file) => new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width, height = img.height;
+        const maxSize = 1024;
+        if (width > height) {
+          if (width > maxSize) {
+            height = (height * maxSize) / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = (width * maxSize) / height;
+            height = maxSize;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          resolve(new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), { type: 'image/jpeg' }));
+        }, 'image/jpeg', 0.7);
+      };
+    };
+  });
+
   const handlePaymentSubmit = async () => {
     if (!selectedFile) {
       toast.error(language === 'am' ? 'እባክዎ የክፍያ ማስረጃ ይስቀሉ' : 'Please upload payment screenshot');
@@ -161,38 +193,6 @@ export default function MerkatoVIP() {
     }
   };
 
-  const compressImage = (file) => new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target.result;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width, height = img.height;
-        const maxSize = 1024;
-        if (width > height) {
-          if (width > maxSize) {
-            height = (height * maxSize) / width;
-            width = maxSize;
-          }
-        } else {
-          if (height > maxSize) {
-            width = (width * maxSize) / height;
-            height = maxSize;
-          }
-        }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        canvas.toBlob((blob) => {
-          resolve(new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), { type: 'image/jpeg' }));
-        }, 'image/jpeg', 0.7);
-      };
-    };
-  });
-
   const handleCloseSeats = () => {
     setShowSeats(false);
     setShowTiers(true);
@@ -210,12 +210,23 @@ export default function MerkatoVIP() {
 
   // Tier Selection UI
   const renderTierSelection = () => {
+    // Safety check
+    if (!TIERS) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-red-500">{language === 'am' ? 'ስህተት ተከስቷል' : 'Error loading tiers'}</p>
+        </div>
+      );
+    }
+
     const tiers = ['bronze', 'silver', 'gold', 'platinum'];
     
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
         {tiers.map((tierId) => {
           const tier = TIERS[tierId];
+          if (!tier) return null;
+          
           return (
             <div
               key={tierId}
