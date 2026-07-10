@@ -1,4 +1,4 @@
-// pages/index.js - Complete with Language Support for PoolCard
+// pages/index.js - Complete with Always-Visible Marquee & Green Buttons
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -346,9 +346,10 @@ export default function Home() {
     </div>
   );
 
-  // ========== BILINGUAL MOVING MARQUEE (Slower Speed) ==========
+  // ========== MOVING MARQUEE - UPDATED WITH TODAY'S MODIFICATIONS ==========
   const MovingMarquee = () => {
-    const marqueeText = `🏆 በAbbaa Carraa ወርቃማ እድልን ያሸንፉ! • 🏪 መርካቶ ቪአይፒ: እስከ 40M ብር ጥሬ ገንዘብ ያሸንፉ • 🏙️ ከተማ ቪአይፒ: በ94 ከተሞች ጥሬ ገንዘብ ያሸንፉ • 🏊 መደበኛ የእጣ መደቦች: መኪና፣ ቤት፣ ማሽነሪ እና ኤሌክትሮኒክስ ያሸንፉ • 💚 2% ለጤና ይውላል • ይቀላቀሉ እና ዛሬ ማሸነፍ ይጀምሩ! 🎯 || 🏆 WIN BIG WITH ABBAA CARRAA • 🏪 Merkato VIP: Win Cash up to 40M ETB • 🏙️ City VIP: Win Cash in 94 Cities • 🏊 Regular Pools: Win Cars, Houses, Machinery & Electronics • 💚 2% Supports Health • Join & Start Winning Today! 🎯`;
+    // Updated marquee text - Amharic first, then English
+    const marqueeText = `🏆 በAbbaa Carraa ወርቃማ እድልን ያሸንፉ! • 🏪 መርካቶ ቪአይፒ: እስከ 10M ብር ጥሬ ገንዘብ ያሸንፉ • 🏙️ ከተማ ቪአይፒ: በ94 ከተሞች ጥሬ ገንዘብ ያሸንፉ • 🏊 መደበኛ የእጣ መደቦች: መኪና፣ ቤት፣ ማሽነሪ እና ኤሌክትሮኒክስ ያሸንፉ • 💚 2% ለጤና ይውላል • ይቀላቀሉ እና ዛሬ ማሸነፍ ይጀምሩ! 🎯 || 🏆 WIN BIG WITH ABBAA CARRAA • 🏪 Merkato VIP: Win Cash up to 10M ETB • 🏙️ City VIP: Win Cash in 94 Cities • 🏊 Regular Pools: Win Cars, Houses, Machinery & Electronics • 💚 2% Supports Health • Join & Start Winning Today! 🎯`;
 
     return (
       <div className="w-full overflow-hidden bg-gradient-to-r from-green-600 to-teal-600 py-2.5 md:py-3 shadow-inner">
@@ -441,6 +442,9 @@ export default function Home() {
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
         </Head>
         
+        {/* Always show marquee on top */}
+        <MovingMarquee />
+        
         <div className="fixed top-4 right-4 z-50">
           <ModeDrawer />
         </div>
@@ -470,7 +474,10 @@ export default function Home() {
         </Head>
 
         <div className="min-h-screen bg-gray-50 pb-20">
-          {/* TOP APP BAR */}
+          {/* === MOVING MARQUEE - ALWAYS VISIBLE === */}
+          <MovingMarquee />
+
+          {/* TOP APP BAR - With Green Buttons */}
           <header className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-100 px-3 md:px-4 py-2.5 md:py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 md:gap-2">
@@ -479,12 +486,22 @@ export default function Home() {
               </div>
               <div className="flex items-center gap-1.5 md:gap-2">
                 <ModeDrawer />
+                
+                {/* VIEW BUTTON - GREEN */}
+                <button className="hidden sm:block text-[10px] md:text-xs bg-green-600 text-white px-2.5 md:px-3 py-1 md:py-1.5 rounded-full hover:bg-green-700 transition font-medium shadow-sm">
+                  👁️ View
+                </button>
+                
+                {/* LOGIN - GREEN */}
                 <Link href="/login" className="text-[10px] md:text-xs bg-green-600 text-white px-2.5 md:px-3 py-1 md:py-1.5 rounded-full hover:bg-green-700 transition font-medium shadow-sm">
                   Login
                 </Link>
-                <button onClick={() => setShowRegisterModal(true)} className="text-[10px] md:text-xs bg-gray-100 text-gray-700 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full hover:bg-gray-200 transition font-medium">
+                
+                {/* REGISTER - GREEN */}
+                <button onClick={() => setShowRegisterModal(true)} className="text-[10px] md:text-xs bg-green-600 text-white px-2.5 md:px-3 py-1 md:py-1.5 rounded-full hover:bg-green-700 transition font-medium shadow-sm">
                   Register
                 </button>
+                
                 <button className="relative p-1">
                   <span className="text-lg md:text-xl">🔔</span>
                   <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 md:w-4 md:h-4 bg-red-500 text-white text-[7px] md:text-[9px] rounded-full flex items-center justify-center">3</span>
@@ -495,9 +512,6 @@ export default function Home() {
               </div>
             </div>
           </header>
-
-          {/* SLOW MOVING MARQUEE */}
-          <MovingMarquee />
 
           {/* WELCOME SECTION */}
           <div className="px-3 md:px-4 py-3 md:py-4 bg-white border-b border-gray-100">
@@ -541,7 +555,7 @@ export default function Home() {
               <Link href="/merkato-vip" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border border-gray-100 hover:shadow-md transition">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">🏪</span>
                 <span className="text-[9px] md:text-xs font-medium text-gray-700 text-center leading-tight">Merkato VIP</span>
-                <span className="text-[6px] md:text-[8px] text-gray-400 mt-0.5">Cash up to 40M</span>
+                <span className="text-[6px] md:text-[8px] text-gray-400 mt-0.5">Cash up to 10M</span>
               </Link>
               <button onClick={() => setShowCityDropdown(!showCityDropdown)} className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border border-gray-100 hover:shadow-md transition relative">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">🏙️</span>
@@ -682,6 +696,9 @@ export default function Home() {
       </Head>
 
       <div className="min-h-screen bg-white w-full">
+        {/* === MOVING MARQUEE - ALWAYS VISIBLE === */}
+        <MovingMarquee />
+
         <div className="fixed top-4 right-4 z-50">
           <ModeDrawer />
         </div>
@@ -704,7 +721,7 @@ export default function Home() {
                   {programsDropdownOpen && (
                     <div className="absolute top-full left-0 mt-2 w-64 bg-gray-800 rounded-xl shadow-2xl border border-gray-700 z-50 overflow-hidden">
                       <button onClick={() => scrollToSection('merkato-vip')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3">
-                        <span className="text-xl">🏪</span><div><div className="font-medium">Merkato VIP</div><div className="text-xs text-gray-400">Win Cash up to 40M ETB</div></div>
+                        <span className="text-xl">🏪</span><div><div className="font-medium">Merkato VIP</div><div className="text-xs text-gray-400">Win Cash up to 10M ETB</div></div>
                       </button>
                       <button onClick={() => scrollToSection('city-vip')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-t border-gray-700">
                         <span className="text-xl">🏙️</span><div><div className="font-medium">City VIP</div><div className="text-xs text-gray-400">Win Cash in 94 Cities</div></div>
@@ -723,8 +740,12 @@ export default function Home() {
               </div>
               <div className="hidden md:flex items-center gap-2">
                 <TopCitySelector />
+                {/* LOGIN - GREEN */}
                 <Link href="/login" className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium shadow-sm">Login</Link>
-                <button onClick={() => setShowRegisterModal(true)} className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition text-sm font-medium">Register</button>
+                {/* REGISTER - GREEN */}
+                <button onClick={() => setShowRegisterModal(true)} className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium shadow-sm">Register</button>
+                {/* VIEW BUTTON - GREEN */}
+                <button className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium shadow-sm">👁️ View</button>
               </div>
               <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -736,10 +757,11 @@ export default function Home() {
               <div className="md:hidden py-4 border-t border-gray-700 space-y-2">
                 <div className="flex gap-2 px-4 py-2">
                   <Link href="/login" className="flex-1 text-center px-3 py-2 bg-green-600 text-white rounded-lg text-xs">🔐 Login</Link>
-                  <button onClick={() => { setShowRegisterModal(true); setMobileMenuOpen(false); }} className="flex-1 text-center px-3 py-2 bg-gray-700 text-white rounded-lg text-xs">📝 Register</button>
+                  <button onClick={() => { setShowRegisterModal(true); setMobileMenuOpen(false); }} className="flex-1 text-center px-3 py-2 bg-green-600 text-white rounded-lg text-xs">📝 Register</button>
+                  <button className="flex-1 text-center px-3 py-2 bg-green-600 text-white rounded-lg text-xs">👁️ View</button>
                 </div>
                 <button onClick={() => scrollToSection('merkato-vip')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
-                  <span className="text-xl">🏪</span><div><div>Merkato VIP</div><div className="text-xs text-gray-400">Cash up to 40M</div></div>
+                  <span className="text-xl">🏪</span><div><div>Merkato VIP</div><div className="text-xs text-gray-400">Cash up to 10M</div></div>
                 </button>
                 <button onClick={() => scrollToSection('city-vip')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
                   <span className="text-xl">🏙️</span><div><div>City VIP</div><div className="text-xs text-gray-400">94 Cities • Cash</div></div>
@@ -766,9 +788,6 @@ export default function Home() {
         <GlobalAnnouncement />
         <CashEquivalentBanner />
         <CharityBanner />
-
-        {/* SLOW MOVING MARQUEE */}
-        <MovingMarquee />
 
         <div className="w-full bg-gradient-to-br from-green-700 to-teal-700">
           <div className="max-w-7xl mx-auto">
@@ -835,13 +854,14 @@ export default function Home() {
                     <div className="text-5xl md:text-6xl animate-bounce">🏪</div>
                     <div>
                       <div className="font-bold text-2xl md:text-3xl">መርካቶ VIP</div>
-                      <div className="text-xs md:text-sm opacity-90">Win Cash up to 40M ETB</div>
+                      <div className="text-xs md:text-sm opacity-90">Win Cash up to 10M ETB</div>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <div className="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-xs md:text-sm font-bold shadow-lg">⭐ 1M ETB</div>
-                    <div className="bg-purple-500 text-white px-3 py-1 rounded-full text-xs md:text-sm font-bold shadow-lg">🏆 10M ETB</div>
-                    <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs md:text-sm font-bold shadow-lg">👑 40M ETB</div>
+                    <div className="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-xs md:text-sm font-bold shadow-lg">⭐ 100K ETB</div>
+                    <div className="bg-purple-500 text-white px-3 py-1 rounded-full text-xs md:text-sm font-bold shadow-lg">🏆 500K ETB</div>
+                    <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs md:text-sm font-bold shadow-lg">👑 2M ETB</div>
+                    <div className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs md:text-sm font-bold shadow-lg">💎 10M ETB</div>
                   </div>
                   <div className="bg-white text-gray-900 px-5 py-2 rounded-full font-bold hover:bg-gray-100 transition transform hover:scale-105 shadow-xl flex items-center gap-2 text-sm md:text-base">
                     <span>🎯</span><span>Join Now</span><span>→</span>
@@ -892,17 +912,17 @@ export default function Home() {
                           </a>
                         ))}
                       </div>
-                      <div className="p-2 text-center text-xs text-gray-400 bg-gray-50">{uniqueCities.length}+ Ethiopian cities available • Win Cash up to 40M ETB</div>
+                      <div className="p-2 text-center text-xs text-gray-400 bg-gray-50">{uniqueCities.length}+ Ethiopian cities available • Win Cash up to 10M ETB</div>
                     </div>
                   )}
                 </div>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-6 pt-4 border-t border-gray-700">
-                <div className="text-center"><div className="text-2xl">🏆</div><div className="text-white font-bold text-sm">1M ETB</div><div className="text-[10px] text-gray-400">Daily Cash</div></div>
-                <div className="text-center"><div className="text-2xl">⭐</div><div className="text-white font-bold text-sm">10M ETB</div><div className="text-[10px] text-gray-400">Weekly Cash</div></div>
-                <div className="text-center"><div className="text-2xl">👑</div><div className="text-white font-bold text-sm">40M ETB</div><div className="text-[10px] text-gray-400">Monthly Cash</div></div>
+                <div className="text-center"><div className="text-2xl">🏆</div><div className="text-white font-bold text-sm">100K ETB</div><div className="text-[10px] text-gray-400">Daily Cash</div></div>
+                <div className="text-center"><div className="text-2xl">⭐</div><div className="text-white font-bold text-sm">500K ETB</div><div className="text-[10px] text-gray-400">Daily Cash</div></div>
+                <div className="text-center"><div className="text-2xl">👑</div><div className="text-white font-bold text-sm">2M ETB</div><div className="text-[10px] text-gray-400">Weekly Cash</div></div>
+                <div className="text-center"><div className="text-2xl">💎</div><div className="text-white font-bold text-sm">10M ETB</div><div className="text-[10px] text-gray-400">Monthly Cash</div></div>
                 <div className="text-center"><div className="text-2xl">📍</div><div className="text-white font-bold text-sm">{uniqueCities.length}+</div><div className="text-[10px] text-gray-400">Cities</div></div>
-                <div className="text-center"><div className="text-2xl">🇪🇹</div><div className="text-white font-bold text-sm">All Regions</div><div className="text-[10px] text-gray-400">Nationwide</div></div>
               </div>
             </div>
           </div>
