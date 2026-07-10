@@ -1,269 +1,659 @@
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
+// components/SeatSelector.js - COMPLETE WITH 4 TIERS (Bronze, Silver, Gold, Platinum)
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
-const ethiopianCities = [
-  // ================= MAJOR & METROPOLITAN CITIES =================
-  { name: "አዲስ አበባ | Addis Ababa", code: "addis-ababa", region: "Central", population: "5M+", economy: "Capital & Trade Hub", color: "from-green-700 to-teal-700", icon: "🏙️", description: "የኢትዮጵያ የንግድ ልብ | Heart of Ethiopian Commerce" },
-  { name: "ሸገር ከተማ | Shaggar City", code: "shaggar", region: "Oromia", population: "3M+", economy: "Smart City & Investment Hub", color: "from-cyan-700 to-blue-700", icon: "🏗️", description: "ብልህ ከተማ እና የኢንቨስትመንት ማዕከል | Smart City & Investment Hub" },
-  { name: "ድሬ ዳዋ | Dire Dawa", code: "dire-dawa", region: "Dire Dawa", population: "535K+", economy: "Trade & Manufacturing", color: "from-orange-600 to-red-700", icon: "🚂", description: "የንግድ እና የማኑፋክቸሪንግ ከተማ | Trade & Manufacturing Hub" },
-  { name: "መቀሌ | Mekelle", code: "mekelle", region: "Tigray", population: "500K+", economy: "Industry & Trade", color: "from-red-700 to-rose-700", icon: "🏭", description: "ከፍተኛ የኢኮኖሚ ዕድገት | Highest GDP per Capita" },
-  { name: "አዳማ | Adama", code: "adama", region: "Oromia", population: "500K+", economy: "Industrial & Transport", color: "from-blue-700 to-cyan-700", icon: "🏭", description: "የኢንዱስትሪ እና የንግድ ከተማ | Industrial & Trade City" },
-  { name: "ሀዋሳ | Hawassa", code: "hawassa", region: "Sidama", population: "387K+", economy: "Industry & Tourism", color: "from-teal-600 to-green-700", icon: "🏞️", description: "የኢንዱስትሪ ፓርክ ከተማ | Industrial Park City" },
-  { name: "ጎንደር | Gondar", code: "gondar", region: "Amhara", population: "350K+", economy: "Tourism & Culture", color: "from-purple-600 to-pink-700", icon: "🏰", description: "የባህል እና የቱሪዝም ከተማ | Culture & Tourism City" },
-  { name: "ባህር ዳር | Bahir Dar", code: "bahir-dar", region: "Amhara", population: "350K+", economy: "Tourism & Textiles", color: "from-blue-600 to-indigo-700", icon: "🏞️", description: "የቱሪዝም እና የጨርቃጨርቅ ከተማ | Tourism & Textile City" },
-  { name: "ጅማ | Jimma", code: "jimma", region: "Oromia", population: "250K+", economy: "Coffee & Trade", color: "from-amber-600 to-orange-700", icon: "☕", description: "የቡና እና የንግድ ከተማ | Coffee & Trade City" },
-  { name: "ነቀምቴ | Nekemte", code: "nekemte", region: "Oromia", population: "150K+", economy: "Trade & Coffee", color: "from-amber-500 to-yellow-600", icon: "☕", description: "የንግድ እና የቡና ከተማ | Trade & Coffee City" },
-  { name: "ደሴ | Dessie", code: "dessie", region: "Amhara", population: "229K+", economy: "Trade & Agriculture", color: "from-yellow-600 to-orange-600", icon: "🛍️", description: "የንግድ እና የእርሻ ከተማ | Trade & Agriculture City" },
-  { name: "ጅጅጋ | Jijiga", code: "jijiga", region: "Somali", population: "200K+", economy: "Trade & Livestock", color: "from-emerald-600 to-teal-600", icon: "🐪", description: "የንግድ እና የእንስሳት ከተማ | Trade & Livestock City" },
-  { name: "ሀረር | Harar", code: "harar", region: "Harari", population: "150K+", economy: "Tourism & Culture", color: "from-rose-500 to-pink-600", icon: "🏛️", description: "የባህል እና የቱሪዝም ከተማ | Culture & Tourism City" },
-  { name: "ኮምቦልቻ | Kombolcha", code: "kombolcha", region: "Amhara", population: "120K+", economy: "Industry & Dry Port", color: "from-slate-600 to-gray-700", icon: "🏭", description: "የኢንዱስትሪ ዞን እና ደረቅ ወደብ | Industrial Zone & Dry Port" },
+// ============================================
+// TIER CONFIGURATION - 4 TIERS
+// ============================================
+export const TIERS = {
+  bronze: {
+    id: 'bronze',
+    labelAm: 'ብሮንዝ',
+    labelEn: 'Bronze',
+    contribution: 100,
+    prize: 100000,
+    seats: 1200,
+    commission: 20000,
+    totalCollection: 120000,
+    color: 'from-amber-600 to-amber-800',
+    badgeColor: 'bg-amber-500',
+    icon: '🥉',
+    drawSchedule: 'daily'
+  },
+  silver: {
+    id: 'silver',
+    labelAm: 'ሲልቨር',
+    labelEn: 'Silver',
+    contribution: 500,
+    prize: 500000,
+    seats: 1200,
+    commission: 100000,
+    totalCollection: 600000,
+    color: 'from-gray-400 to-gray-600',
+    badgeColor: 'bg-gray-500',
+    icon: '🥈',
+    drawSchedule: 'daily'
+  },
+  gold: {
+    id: 'gold',
+    labelAm: 'ወርቅ',
+    labelEn: 'Gold',
+    contribution: 1000,
+    prize: 2000000,
+    seats: 2400,
+    commission: 400000,
+    totalCollection: 2400000,
+    color: 'from-yellow-500 to-yellow-700',
+    badgeColor: 'bg-yellow-500',
+    icon: '🥇',
+    drawSchedule: 'weekly'
+  },
+  platinum: {
+    id: 'platinum',
+    labelAm: 'ፕላቲነም',
+    labelEn: 'Platinum',
+    contribution: 5000,
+    prize: 10000000,
+    seats: 2400,
+    commission: 2000000,
+    totalCollection: 12000000,
+    color: 'from-purple-500 to-purple-700',
+    badgeColor: 'bg-purple-500',
+    icon: '💎',
+    drawSchedule: 'monthly'
+  }
+};
 
-  // ================= OROMIA REGION CITIES =================
-  { name: "ቢሾፍቱ | Bishoftu (Debre Zeyit)", code: "bishoftu", region: "Oromia", population: "150K+", economy: "Tourism & Aviation", color: "from-sky-500 to-blue-600", icon: "✈️", description: "የሀይቆች ከተማ እና የአየር ሃይል ቤዝ | City of Lakes & Air Force Base" },
-  { name: "ገላን | Gelan", code: "gelan", region: "Oromia", population: "200K+", economy: "Industrial & Residential", color: "from-gray-500 to-slate-600", icon: "🏘️", description: "ፈጣን የከተማ ልማት | Rapid Urban Expansion" },
-  { name: "ሞጆ | Modjo", code: "modjo", region: "Oromia", population: "120K+", economy: "Logistics & Dry Port", color: "from-amber-600 to-orange-600", icon: "🚛", description: "የሎጂስቲክስ እና የደረቅ ወደብ ከተማ | Logistics & Dry Port City" },
-  { name: "መቱ | Metu", code: "metu", region: "Oromia", population: "60K+", economy: "Coffee & Agriculture", color: "from-emerald-600 to-green-700", icon: "🌿", description: "የቡና እና የግብርና ከተማ | Coffee & Agriculture City" },
-  { name: "መቂ | Meki", code: "meki", region: "Oromia", population: "50K+", economy: "Agriculture & Trade", color: "from-green-500 to-emerald-600", icon: "🌾", description: "የእህል እርሻ እና የንግድ ማዕከል | Grain Farming & Trade Center" },
-  { name: "ዚዋይ | Ziway", code: "ziway", region: "Oromia", population: "80K+", economy: "Fishing & Tourism", color: "from-teal-500 to-cyan-600", icon: "🐟", description: "የአሳ ማጥመድ እና የቱሪዝም ከተማ | Fishing & Tourism City" },
-  { name: "ሻሸመኔ | Shashemene", code: "shashemene", region: "Oromia", population: "150K+", economy: "Trade & Industry", color: "from-yellow-600 to-amber-600", icon: "🛍️", description: "የንግድ እና የኢንዱስትሪ ከተማ | Trade & Industrial City" },
-  { name: "ሮቤ | Robe", code: "robe", region: "Oromia", population: "80K+", economy: "Tourism & Agriculture", color: "from-green-600 to-teal-600", icon: "🌄", description: "የከፍተኛ ሀይላንድ ቱሪዝም | Highland Tourism Gateway" },
-  { name: "አምቦ | Ambo", code: "ambo", region: "Oromia", population: "100K+", economy: "Agriculture & Trade", color: "from-green-500 to-teal-500", icon: "💧", description: "የማዕድን ውሃ እና የግብርና ከተማ | Mineral Water & Agriculture City" },
-  { name: "ሆሌታ | Holeta", code: "holeta", region: "Oromia", population: "80K+", economy: "Agriculture & Military", color: "from-lime-500 to-green-500", icon: "🌾", description: "የግብርና እና የሰልጠኛ ከተማ | Agriculture & Training Center" },
-  { name: "ወሊሶ | Weliso", code: "weliso", region: "Oromia", population: "50K+", economy: "Tourism & Agriculture", color: "from-teal-500 to-cyan-600", icon: "🏞️", description: "የሙቀት ምንጭ እና የቱሪዝም ከተማ | Hot Springs & Tourism City" },
+// Get draw schedule text
+export const getDrawScheduleText = (tierId, language = 'am') => {
+  const schedule = TIERS[tierId]?.drawSchedule;
+  if (language === 'am') {
+    const map = { daily: 'ዕለታዊ እጣ', weekly: 'ሳምንታዊ እጣ', monthly: 'ወርሃዊ እጣ' };
+    return map[schedule] || schedule;
+  }
+  const map = { daily: 'Daily Draw', weekly: 'Weekly Draw', monthly: 'Monthly Draw' };
+  return map[schedule] || schedule;
+};
 
-  // ================= SOUTHERN REGION CITIES =================
-  { name: "አርባ ምንጭ | Arba Minch", code: "arba-minch", region: "South Ethiopia", population: "150K+", economy: "Tourism & Agriculture", color: "from-blue-500 to-cyan-600", icon: "🏞️", description: "የቱሪዝም እና የግብርና ከተማ | Tourism & Agriculture City" },
-  { name: "ሶዶ | Sodo", code: "sodo", region: "South Ethiopia", population: "150K+", economy: "Trade & Agriculture", color: "from-orange-500 to-red-600", icon: "🛍️", description: "የንግድ እና የግብርና ከተማ | Trade & Agriculture City" },
-  { name: "ቡታጅራ | Butajira", code: "butajira", region: "South Ethiopia", population: "80K+", economy: "Agriculture & Trade", color: "from-green-600 to-emerald-700", icon: "🌽", description: "የግብርና እና የንግድ ከተማ | Agriculture & Trade City" },
-  { name: "ወልቂጤ | Welkite", code: "welkite", region: "South Ethiopia", population: "70K+", economy: "Agriculture", color: "from-lime-600 to-green-700", icon: "🌾", description: "የግብርና እና የእርሻ ከተማ | Agriculture & Farming City" },
-  { name: "ሆሳና | Hosana", code: "hosana", region: "South Ethiopia", population: "90K+", economy: "Agriculture & Trade", color: "from-yellow-600 to-amber-700", icon: "🌻", description: "የግብርና እና የንግድ ከተማ | Agriculture & Trade City" },
+export default function SeatSelector({
+  isOpen,
+  onClose,
+  poolId,
+  entryFee,
+  tierId,
+  totalSeats: propTotalSeats,
+  seatsPerRow: propSeatsPerRow = 20,
+  maxSeats = 5,
+  poolInfo,
+  programType, // 'merkato', 'city', 'regular'
+  city,
+  language = 'am',
+  onSeatsSelected,
+  onCancel
+}) {
+  const isMounted = useRef(true);
+  const [selectedSeats, setSelectedSeats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [totalPrice, setTotalPrice] = useState(0);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
+  const [bookedSeats, setBookedSeats] = useState([]);
+  const [reservedSeats, setReservedSeats] = useState([]);
+  const [reservationTimer, setReservationTimer] = useState(null);
+  const [currentRow, setCurrentRow] = useState(0);
+  const seatGridRef = useRef(null);
 
-  // ================= OTHER REGIONS =================
-  { name: "ሺንዲ | Shindi", code: "shindi", region: "Benishangul", population: "100K+", economy: "Trade & Agriculture", color: "from-emerald-500 to-teal-600", icon: "🌾", description: "የንግድ እና የግብርና ከተማ | Trade & Agriculture City" },
-  { name: "አሶሳ | Assosa", code: "assosa", region: "Benishangul", population: "100K+", economy: "Trade & Agriculture", color: "from-green-500 to-emerald-600", icon: "🌿", description: "የንግድ እና የግብርና ከተማ | Trade & Agriculture City" },
-  { name: "ሰሜና ሸዋ | Semera", code: "semera", region: "Afar", population: "50K+", economy: "Trade & Livestock", color: "from-yellow-500 to-orange-600", icon: "🐪", description: "የንግድ እና የእንስሳት ከተማ | Trade & Livestock City" }
-];
+  // Get tier config if tierId is provided
+  const tier = tierId ? TIERS[tierId] : null;
+  
+  // Determine total seats and seats per row
+  const totalSeats = propTotalSeats || tier?.seats || 2400;
+  const seatsPerRow = propSeatsPerRow || 20;
+  const rows = Math.ceil(totalSeats / seatsPerRow);
+  const rowLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
-export default function CitySelector({ variant = "full", onCitySelect, onClose }) {
-  const router = useRouter();
-  const [selectedCity, setSelectedCity] = useState("");
-  const [customCity, setCustomCity] = useState("");
-  const [showCustomInput, setShowCustomInput] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filteredCities, setFilteredCities] = useState(ethiopianCities);
-
+  // Cleanup
   useEffect(() => {
-    checkUser();
-  }, []);
+    return () => {
+      isMounted.current = false;
+      if (reservationTimer) clearTimeout(reservationTimer);
+    };
+  }, [reservationTimer]);
 
+  // Fetch current user
   useEffect(() => {
-    if (searchTerm) {
-      setFilteredCities(
-        ethiopianCities.filter(city => 
-          city.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          city.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          city.region.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      );
-    } else {
-      setFilteredCities(ethiopianCities);
+    const getUser = async () => {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session?.user) {
+          toast.error(language === 'am' ? 'እባክዎ ወደ ስርዓት ይግቡ' : 'Please login to select seats');
+          onCancel?.();
+          return;
+        }
+        if (isMounted.current) setCurrentUser(session.user);
+      } catch (err) {
+        console.error('Session error:', err);
+        toast.error('Session error. Please refresh and try again');
+        onCancel?.();
+      } finally {
+        if (isMounted.current) setSessionLoading(false);
+      }
+    };
+    getUser();
+  }, [onCancel, language]);
+
+  // Fetch booked seats
+  useEffect(() => {
+    if (!sessionLoading && currentUser && (poolId || tierId)) {
+      fetchBookedSeats();
+      fetchUserReservations();
+      
+      const interval = setInterval(() => {
+        fetchBookedSeats();
+        fetchUserReservations();
+      }, 30000);
+      
+      return () => clearInterval(interval);
     }
-  }, [searchTerm]);
+  }, [poolId, tierId, sessionLoading, currentUser]);
 
-  const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
+  // Update total price
+  useEffect(() => {
+    if (isMounted.current) {
+      const fee = entryFee || tier?.contribution || 0;
+      setTotalPrice(selectedSeats.length * fee);
+    }
+  }, [selectedSeats, entryFee, tier]);
+
+  const fetchBookedSeats = async () => {
+    try {
+      let data;
+      
+      if (programType === 'merkato') {
+        const { data: d } = await supabase
+          .from('merkato_vip_participants')
+          .select('seat_numbers, payment_status')
+          .eq('tier', tierId || 'bronze')
+          .in('payment_status', ['verified', 'pending_verification']);
+        data = d;
+      } else if (programType === 'city') {
+        const { data: d } = await supabase
+          .from('city_vip_participants')
+          .select('seat_numbers, payment_status')
+          .eq('city', city)
+          .eq('tier', tierId || 'bronze')
+          .in('payment_status', ['verified', 'pending_verification']);
+        data = d;
+      } else if (poolId) {
+        const { data: d } = await supabase
+          .from('pool_seats')
+          .select('seat_number, status, reserved_by')
+          .eq('pool_id', poolId);
+        
+        const takenSeats = (d || [])
+          .filter(seat => seat.status === 'taken')
+          .map(seat => seat.seat_number);
+        const reservedByOthers = (d || [])
+          .filter(seat => seat.status === 'reserved' && seat.reserved_by !== currentUser?.id)
+          .map(seat => seat.seat_number);
+        const allBooked = [...new Set([...takenSeats, ...reservedByOthers])];
+        
+        if (isMounted.current) {
+          setBookedSeats(allBooked);
+          setLoading(false);
+        }
+        return;
+      }
+      
+      const allBookedSeats = [];
+      if (data) {
+        data.forEach(participant => {
+          if (participant.seat_numbers && Array.isArray(participant.seat_numbers)) {
+            allBookedSeats.push(...participant.seat_numbers);
+          }
+        });
+      }
+      
+      if (isMounted.current) {
+        setBookedSeats([...new Set(allBookedSeats)]);
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error('Fetch booked seats error:', err);
+      if (isMounted.current) setLoading(false);
+    }
   };
 
-  const handleCitySelect = (cityCode) => {
-    setSelectedCity(cityCode);
-    setShowCustomInput(cityCode === "other");
-    if (cityCode !== "other" && cityCode) {
-      const city = ethiopianCities.find(c => c.code === cityCode);
-      if (city && onCitySelect) onCitySelect(city);
-    }
-  };
-
-  const handleJoinCity = async () => {
-    let cityCode = selectedCity;
-    let cityName = "";
-    let cityData = null;
+  const fetchUserReservations = async () => {
+    if (!currentUser) return;
     
-    if (selectedCity === "other") {
-      if (!customCity.trim()) {
-        toast.error("እባክዎ የከተማዎን ስም ያስገቡ | Please enter your city name");
+    try {
+      if (poolId) {
+        const { data, error } = await supabase
+          .from('pool_seats')
+          .select('seat_number, reserved_until')
+          .eq('pool_id', poolId)
+          .eq('reserved_by', currentUser.id)
+          .eq('status', 'reserved')
+          .gte('reserved_until', new Date().toISOString());
+        
+        if (!error && data && data.length > 0) {
+          const reservedSeatNumbers = data.map(r => r.seat_number);
+          setReservedSeats(reservedSeatNumbers);
+          setSelectedSeats(reservedSeatNumbers);
+        }
         return;
       }
-      cityCode = customCity.toLowerCase().replace(/\s+/g, '-');
-      cityName = customCity;
-    } else {
-      const city = ethiopianCities.find(c => c.code === selectedCity);
-      if (!city) {
-        toast.error("Please select a city");
-        return;
+      
+      // For VIP programs, check reservations table
+      const { data, error } = await supabase
+        .from('vip_seat_reservations')
+        .select('seat_number, expires_at')
+        .eq('user_id', currentUser.id)
+        .eq('pool_id', poolId || `${programType}_${tierId}_${city || 'default'}`)
+        .gte('expires_at', new Date().toISOString());
+      
+      if (!error && data && data.length > 0) {
+        const reservedSeatNumbers = data.map(r => r.seat_number);
+        setReservedSeats(reservedSeatNumbers);
+        setSelectedSeats(reservedSeatNumbers);
       }
-      cityName = city.name;
-      cityData = city;
+    } catch (err) {
+      console.error('Fetch reservations error:', err);
     }
+  };
 
-    setLoading(true);
+  const reserveSeatsInDB = async (seatNumbers) => {
+    if (!currentUser) return false;
+    
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    
+    try {
+      if (poolId) {
+        for (const seatNumber of seatNumbers) {
+          const { error } = await supabase
+            .from('pool_seats')
+            .upsert({
+              pool_id: poolId,
+              seat_number: seatNumber,
+              user_id: currentUser.id,
+              reserved_by: currentUser.id,
+              status: 'reserved',
+              reserved_until: expiresAt,
+              reserved_at: new Date().toISOString()
+            }, { onConflict: 'pool_id, seat_number' });
+          
+          if (error) {
+            console.error('Reserve error:', error);
+            return false;
+          }
+        }
+      } else {
+        const reservations = seatNumbers.map(seatNumber => ({
+          pool_id: poolId || `${programType}_${tierId}_${city || 'default'}`,
+          seat_number: seatNumber,
+          user_id: currentUser.id,
+          expires_at: expiresAt,
+          created_at: new Date().toISOString()
+        }));
+        
+        const { error } = await supabase
+          .from('vip_seat_reservations')
+          .upsert(reservations, { onConflict: 'pool_id, seat_number' });
+        
+        if (error) {
+          console.error('Reserve error:', error);
+          return false;
+        }
+      }
+      
+      // Set timer to release seats after 10 minutes
+      if (reservationTimer) clearTimeout(reservationTimer);
+      const timer = setTimeout(() => {
+        releaseUserReservations();
+        toast.warning(language === 'am' ? 'የመቀመጫ ምርጫዎ ጊዜ አልቋል' : 'Your seat reservation has expired', { duration: 5000 });
+        onCancel?.();
+      }, 10 * 60 * 1000);
+      setReservationTimer(timer);
+      
+      return true;
+    } catch (error) {
+      console.error('Error reserving seats:', error);
+      return false;
+    }
+  };
 
-    if (!user) {
-      sessionStorage.setItem('pendingRole', 'individual');
-      sessionStorage.setItem('pendingCity', cityCode);
-      sessionStorage.setItem('pendingCityName', cityName);
-      sessionStorage.setItem('redirectAfterLogin', `/cities/${cityCode}`);
-      toast.loading('እባክዎ ይግቡ | Please login to join...');
-      router.push('/login');
+  const releaseUserReservations = async () => {
+    if (!currentUser) return;
+    
+    try {
+      if (poolId) {
+        await supabase
+          .from('pool_seats')
+          .update({
+            status: 'available',
+            user_id: null,
+            reserved_by: null,
+            reserved_at: null,
+            reserved_until: null
+          })
+          .eq('pool_id', poolId)
+          .eq('reserved_by', currentUser.id)
+          .eq('status', 'reserved');
+      } else {
+        await supabase
+          .from('vip_seat_reservations')
+          .delete()
+          .eq('user_id', currentUser.id)
+          .eq('pool_id', poolId || `${programType}_${tierId}_${city || 'default'}`);
+      }
+      
+      setReservedSeats([]);
+      setSelectedSeats([]);
+    } catch (error) {
+      console.error('Error releasing reservations:', error);
+    }
+  };
+
+  const handleSeatClick = async (seatNum) => {
+    if (bookedSeats.includes(seatNum)) {
+      toast.error(language === 'am' ? `መቀመጫ ${seatNum} ተይዟል` : `Seat ${seatNum} is already taken`);
       return;
     }
 
-    router.push(`/cities/${cityCode}?name=${encodeURIComponent(cityName)}`);
+    const isSelected = selectedSeats.includes(seatNum);
+
+    if (isSelected) {
+      if (poolId) {
+        await supabase
+          .from('pool_seats')
+          .update({
+            status: 'available',
+            user_id: null,
+            reserved_by: null,
+            reserved_at: null,
+            reserved_until: null
+          })
+          .eq('pool_id', poolId)
+          .eq('seat_number', seatNum)
+          .eq('reserved_by', currentUser.id);
+      } else {
+        await supabase
+          .from('vip_seat_reservations')
+          .delete()
+          .eq('pool_id', poolId || `${programType}_${tierId}_${city || 'default'}`)
+          .eq('seat_number', seatNum)
+          .eq('user_id', currentUser.id);
+      }
+      
+      setSelectedSeats(selectedSeats.filter(s => s !== seatNum));
+      setReservedSeats(reservedSeats.filter(s => s !== seatNum));
+    } else {
+      if (selectedSeats.length >= maxSeats) {
+        toast.error(language === 'am' ? `እስከ ${maxSeats} መቀመጫዎች ብቻ መምረጥ ይችላሉ` : `You can only select up to ${maxSeats} seats`);
+        return;
+      }
+      
+      const success = await reserveSeatsInDB([seatNum]);
+      if (success) {
+        setSelectedSeats([...selectedSeats, seatNum]);
+        setReservedSeats([...reservedSeats, seatNum]);
+        toast.success(language === 'am' ? `መቀመጫ ${seatNum} ለ10 ደቂቃ ተይዟል` : `Seat ${seatNum} reserved for 10 minutes`);
+      } else {
+        toast.error(language === 'am' ? `መቀመጫ ${seatNum} አይገኝም` : `Seat ${seatNum} is no longer available`);
+        await fetchBookedSeats();
+      }
+    }
   };
 
-  if (variant === "compact") {
+  const confirmSelection = async () => {
+    if (selectedSeats.length === 0) {
+      toast.error(language === 'am' ? 'እባክዎ ቢያንስ አንድ መቀመጫ ይምረጡ' : 'Please select at least one seat');
+      return;
+    }
+    
+    if (reservationTimer) clearTimeout(reservationTimer);
+    
+    onSeatsSelected({
+      seats: selectedSeats,
+      totalAmount: totalPrice,
+      seatCount: selectedSeats.length,
+      tier: tierId
+    });
+  };
+
+  const refreshSeats = async () => {
+    await fetchBookedSeats();
+    await fetchUserReservations();
+    toast.success(language === 'am' ? 'መቀመጫዎች ታድሰዋል! ✅' : 'Seats refreshed! ✅');
+  };
+
+  const scrollToRow = (rowIndex) => {
+    setCurrentRow(rowIndex);
+    if (seatGridRef.current) {
+      const rowElement = document.getElementById(`row-${rowIndex}`);
+      if (rowElement) rowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  if (sessionLoading || loading) {
     return (
-      <div className="bg-white rounded-xl shadow-md p-4">
-        <div className="flex gap-2">
-          <select
-            value={selectedCity}
-            onChange={(e) => handleCitySelect(e.target.value)}
-            className="flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 text-sm"
-          >
-            <option value="">ምረጥ ከተማ | Select City</option>
-            {ethiopianCities.map(city => (
-              <option key={city.code} value={city.code}>{city.name}</option>
-            ))}
-            <option value="other">ሌላ | Other (Type manually)</option>
-          </select>
-          <button
-            onClick={handleJoinCity}
-            disabled={!selectedCity || loading}
-            className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50 text-sm"
-          >
-            {loading ? '...' : 'Join'}
-          </button>
+      <div className="bg-white rounded-2xl shadow-lg p-6">
+        <div className="flex justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+          <span className="ml-2 text-gray-600">Loading seats...</span>
         </div>
-        {showCustomInput && (
-          <input
-            type="text"
-            placeholder="Enter your city name | የከተማዎን ስም ያስገቡ"
-            value={customCity}
-            onChange={(e) => setCustomCity(e.target.value)}
-            className="w-full mt-2 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 text-sm"
-          />
-        )}
       </div>
     );
   }
 
+  if (!currentUser) {
+    return (
+      <div className="bg-white rounded-2xl shadow-lg p-6">
+        <div className="text-center py-8">
+          <p className="text-red-600 mb-4">{language === 'am' ? 'እባክዎ ወደ ስርዓት ይግቡ' : 'Please login to select seats'}</p>
+          <button onClick={onCancel} className="bg-gray-600 text-white px-4 py-2 rounded-lg">{language === 'am' ? 'ተመለስ' : 'Go Back'}</button>
+        </div>
+      </div>
+    );
+  }
+
+  // Generate seat rows
+  const seatRows = [];
+  for (let row = 0; row < rows; row++) {
+    const startSeat = row * seatsPerRow + 1;
+    const endSeat = Math.min(startSeat + seatsPerRow - 1, totalSeats);
+    const rowSeats = [];
+    for (let seat = startSeat; seat <= endSeat; seat++) {
+      rowSeats.push(seat);
+    }
+    seatRows.push(rowSeats);
+  }
+
+  const availableCount = seatRows.flat().filter(s => 
+    !bookedSeats.includes(s) && !selectedSeats.includes(s) && !reservedSeats.includes(s)
+  ).length;
+  const takenCount = bookedSeats.length;
+  const fee = entryFee || tier?.contribution || 0;
+  const prize = poolInfo?.prize || tier?.prize || 0;
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-2">
+      <div className="bg-gray-100 rounded-2xl shadow-xl max-w-full w-full max-h-[98vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800">🇪🇹 ምረጥ ከተማህን | Select Your City</h2>
-            <p className="text-sm text-gray-500 mt-1">ከተማህን ምረጥ እና በአካባቢህ ያሉ ነጋዴዎችን ተቀላቀል</p>
-          </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-3xl leading-none">×</button>
-        </div>
-
-        {/* Search */}
-        <div className="p-4 border-b bg-gray-50">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="🔍 ፈልግ ከተማ | Search city..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full border rounded-lg px-4 py-3 pl-10 focus:ring-2 focus:ring-green-500"
-            />
-            <svg className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-          </div>
-        </div>
-
-        {/* Cities Grid */}
-        <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {filteredCities.map(city => (
-              <button
-                key={city.code}
-                onClick={() => handleCitySelect(city.code)}
-                className={`group p-4 rounded-xl text-left transition-all transform hover:scale-[1.02] ${
-                  selectedCity === city.code
-                    ? `bg-gradient-to-r ${city.color} text-white shadow-lg`
-                    : 'bg-white hover:bg-gray-100 border border-gray-200 shadow-sm'
-                }`}
+        <div className="sticky top-0 bg-gray-100 border-b border-gray-200 p-4 z-10">
+          <div className="flex justify-between items-center flex-wrap gap-2">
+            <div>
+              <h2 className="text-lg font-bold text-gray-800">
+                {language === 'am' ? 'መቀመጫዎችን ይምረጡ' : 'Select Your Seats'}
+              </h2>
+              <div className="flex items-center gap-2 text-sm">
+                {tier && (
+                  <span className={`px-2 py-0.5 rounded-full text-white text-xs ${tier.badgeColor}`}>
+                    {language === 'am' ? tier.labelAm : tier.labelEn}
+                  </span>
+                )}
+                <span className="text-gray-600">
+                  {language === 'am' ? 'ክፍያ:' : 'Entry:'} ETB {fee.toLocaleString()}
+                </span>
+                <span className="text-gray-600">
+                  {language === 'am' ? 'ሽልማት:' : 'Prize:'} ETB {prize.toLocaleString()}
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button 
+                onClick={refreshSeats} 
+                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-xs transition flex items-center gap-1"
               >
-                <div className="flex items-start gap-3">
-                  <div className={`text-3xl ${selectedCity === city.code ? 'text-white drop-shadow-md' : 'text-gray-500'}`}>{city.icon}</div>
-                  <div className="flex-1">
-                    <div className="font-bold text-sm leading-tight">{city.name}</div>
-                    <div className={`text-xs mt-1 flex gap-2 ${selectedCity === city.code ? 'text-white/80' : 'text-gray-400'}`}>
-                      <span>{city.region}</span>
-                      <span>•</span>
-                      <span>{city.population}</span>
-                    </div>
-                    <div className={`text-[11px] mt-1.5 leading-tight ${selectedCity === city.code ? 'text-white/70' : 'text-gray-500'}`}>
-                      {city.description}
-                    </div>
-                  </div>
-                  {selectedCity === city.code && (
-                    <div className="text-white text-xl font-bold">✓</div>
-                  )}
-                </div>
+                🔄 Refresh
               </button>
+              <button onClick={onClose || onCancel} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+            </div>
+          </div>
+          {/* Row Navigator */}
+          {rows > 10 && (
+            <div className="flex overflow-x-auto gap-1 mt-3 pb-2">
+              {Array.from({ length: Math.min(rows, 20) }).map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => scrollToRow(idx)}
+                  className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap transition ${
+                    currentRow === idx
+                      ? 'bg-green-600 text-white'
+                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {language === 'am' ? `ረድፍ ${idx + 1}` : `Row ${rowLetters[idx] || (idx + 1)}`}
+                </button>
+              ))}
+              {rows > 20 && <span className="px-2 py-1 text-xs text-gray-500">+{rows - 20} more</span>}
+            </div>
+          )}
+        </div>
+
+        {/* Seat Grid */}
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex flex-wrap justify-center gap-4 mb-4 pb-3 border-b">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 bg-gray-200 border border-gray-300 rounded"></div>
+              <span className="text-xs">{language === 'am' ? 'ክፍት' : 'Available'}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 bg-green-600 rounded"></div>
+              <span className="text-xs">{language === 'am' ? 'የእርስዎ ምርጫ' : 'Your Selection'}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 bg-red-400 rounded"></div>
+              <span className="text-xs">{language === 'am' ? 'የተያዙ' : 'Taken/Booked'}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 bg-yellow-400 rounded animate-pulse"></div>
+              <span className="text-xs">{language === 'am' ? 'ለእርስዎ የተያዘ (10 ደቂቃ)' : 'Reserved (10 min)'}</span>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="bg-green-50 rounded-lg p-2 text-center border">
+              <p className="text-xl font-bold text-green-600">{availableCount.toLocaleString()}</p>
+              <p className="text-[10px] text-gray-500">{language === 'am' ? 'ክፍት' : 'Available'}</p>
+            </div>
+            <div className="bg-yellow-50 rounded-lg p-2 text-center border">
+              <p className="text-xl font-bold text-yellow-600">{selectedSeats.length}</p>
+              <p className="text-[10px] text-gray-500">{language === 'am' ? 'የተመረጡ' : 'Selected'}</p>
+            </div>
+            <div className="bg-red-50 rounded-lg p-2 text-center border">
+              <p className="text-xl font-bold text-red-600">{takenCount.toLocaleString()}</p>
+              <p className="text-[10px] text-gray-500">{language === 'am' ? 'የተያዙ' : 'Booked'}</p>
+            </div>
+          </div>
+
+          {/* Screen */}
+          <div className="text-center mb-4">
+            <div className="inline-block bg-gray-600 text-white text-[10px] px-4 py-1 rounded-full">🎬 SCREEN</div>
+            <div className="w-full h-px bg-gray-300 mt-2"></div>
+          </div>
+
+          {/* Seat Grid - Theater Style */}
+          <div ref={seatGridRef} className="space-y-1.5 max-h-[50vh] overflow-y-auto p-2">
+            {seatRows.map((rowSeats, rowIndex) => (
+              <div key={rowIndex} id={`row-${rowIndex}`} className="flex flex-wrap items-center gap-1">
+                <div className="w-8 text-[10px] font-mono font-semibold text-gray-400 text-right">
+                  {rowLetters[rowIndex] || (rowIndex + 1)}
+                </div>
+                <div className="flex flex-wrap gap-1 flex-1">
+                  {rowSeats.map(seatNum => {
+                    const isTaken = bookedSeats.includes(seatNum);
+                    const isSelected = selectedSeats.includes(seatNum);
+                    const isReserved = reservedSeats.includes(seatNum) && !isSelected;
+                    
+                    let bgColor = 'bg-white border border-gray-300 hover:bg-gray-100 cursor-pointer';
+                    let textColor = 'text-gray-700';
+                    let size = 'w-8 h-8 text-[10px]';
+                    
+                    if (isSelected) {
+                      bgColor = 'bg-green-600 border-green-700';
+                      textColor = 'text-white';
+                      size = 'w-8 h-8 text-[10px] ring-2 ring-green-300 ring-offset-1';
+                    }
+                    if (isTaken) {
+                      bgColor = 'bg-red-400 border-red-500';
+                      textColor = 'text-white opacity-60';
+                      size = 'w-8 h-8 text-[10px] cursor-not-allowed';
+                    }
+                    if (isReserved) {
+                      bgColor = 'bg-yellow-400 border-yellow-500 animate-pulse';
+                      textColor = 'text-gray-700';
+                    }
+
+                    return (
+                      <button
+                        key={seatNum}
+                        onClick={() => !isTaken && handleSeatClick(seatNum)}
+                        disabled={isTaken}
+                        className={`${size} rounded-lg flex items-center justify-center font-mono font-semibold transition-all ${bgColor} ${textColor}`}
+                        title={isTaken ? `Seat ${seatNum} taken` : `Select Seat ${seatNum}`}
+                      >
+                        {seatNum}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             ))}
           </div>
 
-          {/* Other City Option */}
-          <div className={`mt-4 border rounded-xl p-4 transition-colors ${selectedCity === 'other' ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white'}`}>
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="radio"
-                name="city"
-                checked={selectedCity === 'other'}
-                onChange={() => handleCitySelect('other')}
-                className="w-4 h-4 text-green-600"
-              />
-              <span className="font-medium text-gray-700">ሌላ | Other City</span>
-            </label>
-            {selectedCity === 'other' && (
-              <input
-                type="text"
-                placeholder="የከተማዎን ስም ያስገቡ | Enter your city name"
-                value={customCity}
-                onChange={(e) => setCustomCity(e.target.value)}
-                className="w-full mt-3 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
-              />
-            )}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="sticky bottom-0 bg-white border-t p-4">
-          <button
-            onClick={handleJoinCity}
-            disabled={(!selectedCity || (selectedCity === 'other' && !customCity)) || loading}
-            className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2 text-lg"
-          >
-            {loading ? (
-              <>
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                በመጠባበቅ ላይ | Loading...
-              </>
-            ) : (
-              <>🎯 ይቀላቀሉ | Join Your City Pool →</>
-            )}
-          </button>
-          <p className="text-xs text-gray-400 text-center mt-3">
-            በከተማዎ ውስጥ ካሉ ሌሎች ነጋዴዎች እና ተሳታፊዎች ጋር በመሆን ሚሊየነር ይሁኑ!
-          </p>
+          {totalSeats > 500 && (
+            <p className="text-xs text-gray-400 text-center mt-4">
+              {language === 'am' ? `ሁሉም ${totalSeats.toLocaleString()} መቀመጫዎች እዚህ ይታያሉ` : `All ${totalSeats.toLocaleString()} seats are shown here`}
+            </p>
+          )}
+          
+          {selectedSeats.length > 0 && (
+            <div className="sticky bottom-0 bg-gray-100 border-t border-gray-200 p-4 mt-4">
+              <div className="flex justify-between items-center flex-wrap gap-3">
+                <div>
+                  <p className="text-xs text-gray-500">{language === 'am' ? 'የተመረጡ መቀመጫዎች' : 'Selected Seats'}</p>
+                  <p className="font-bold text-sm">{selectedSeats.sort((a,b)=>a-b).join(', ')}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">{language === 'am' ? 'ጠቅላላ ክፍያ' : 'Total Amount'}</p>
+                  <p className="font-bold text-xl text-green-600">ETB {totalPrice.toLocaleString()}</p>
+                  <p className="text-[10px] text-gray-400">({selectedSeats.length} {language === 'am' ? 'መቀመጫ ×' : 'seats ×'} ETB {fee.toLocaleString()})</p>
+                </div>
+                <button
+                  onClick={confirmSelection}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl font-semibold transition text-sm"
+                >
+                  {language === 'am' ? 'አረጋግጥ እና ወደ ክፍያ ቀጥል' : 'Confirm & Proceed to Payment'}
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 text-center mt-2">⏰ {language === 'am' ? 'የተመረጡት መቀመጫዎች ለ10 ደቂቃ ተይዘዋል' : 'Selected seats are reserved for 10 minutes'}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
