@@ -1,5 +1,4 @@
-
-// pages/cities/[cityId].js - COMPLETE WITH 4 TIERS & ALL 94 CITIES
+// pages/cities/[cityId].js - COMPLETE WITH 4 TIERS, ALL 94 CITIES & NO COMMISSION DISPLAY
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -171,6 +170,7 @@ export default function CityVip() {
   const [cityInfo, setCityInfo] = useState(null);
   const [showCityDropdown, setShowCityDropdown] = useState(false);
   const [showAgentApplication, setShowAgentApplication] = useState(false);
+  const [checkingUser, setCheckingUser] = useState(true);
 
   // Load language preference
   useEffect(() => {
@@ -199,8 +199,24 @@ export default function CityVip() {
   };
 
   const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
+    setCheckingUser(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      
+      const { tier } = router.query;
+      if (user && tier && TIERS[tier]) {
+        setSelectedTierId(tier);
+        setSelectedTier(TIERS[tier]);
+        setShowTiers(false);
+        setShowSeats(true);
+        router.replace(`/cities/${city}`, undefined, { shallow: true });
+      }
+    } catch (error) {
+      console.error('Error checking user:', error);
+    } finally {
+      setCheckingUser(false);
+    }
   };
 
   const handleTierSelect = (tierId) => {
@@ -363,13 +379,23 @@ export default function CityVip() {
     router.push('/dashboard');
   };
 
-  // Tier Selection UI
   const renderTierSelection = () => {
-    // Safety check
     if (!TIERS) {
       return (
-        <div className="text-center py-8">
-          <p className="text-red-500">{language === 'am' ? 'ስህተት ተከስቷል' : 'Error loading tiers'}</p>
+        <div className="text-center py-12 bg-white rounded-2xl shadow-md">
+          <div className="text-5xl mb-4">⚠️</div>
+          <p className="text-red-600 font-semibold">
+            {language === 'am' ? 'ስህተት: የደረጃ መረጃ አልተገኘም' : 'Error: Tier data not found'}
+          </p>
+          <p className="text-gray-500 text-sm mt-2">
+            {language === 'am' ? 'እባክዎ ገፁን እንደገና ያድሱ' : 'Please refresh the page'}
+          </p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
+          >
+            🔄 {language === 'am' ? 'ያድሱ' : 'Refresh'}
+          </button>
         </div>
       );
     }
@@ -411,10 +437,7 @@ export default function CityVip() {
                   <span className="text-gray-500">{language === 'am' ? 'መቀመጫዎች' : 'Seats'}</span>
                   <span className="font-semibold">{tier.seats.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{language === 'am' ? 'ኮሚሽን' : 'Commission'}</span>
-                  <span className="text-orange-600 font-semibold">ETB {tier.commission.toLocaleString()}</span>
-                </div>
+                {/* ❌ Commission NOT displayed to public */}
                 
                 <button 
                   className="w-full mt-3 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold text-sm transition"
@@ -430,7 +453,7 @@ export default function CityVip() {
     );
   };
 
-  if (!cityInfo) {
+  if (!cityInfo || checkingUser) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -466,14 +489,12 @@ export default function CityVip() {
         </nav>
 
         <div className="min-h-screen bg-gray-100">
-          {/* Language Toggle - Mobile */}
           <div className="container mx-auto px-4 pt-4 flex justify-end md:hidden">
             <button onClick={toggleLanguage} className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-xs font-medium">
               {language === 'am' ? '🇬🇧 English' : '🇪🇹 አማርኛ'}
             </button>
           </div>
 
-          {/* City Selector */}
           <div className="container mx-auto px-4 pt-4">
             <div className="relative">
               <button onClick={() => setShowCityDropdown(!showCityDropdown)} className="w-full md:w-auto bg-white border rounded-xl px-5 py-3 flex items-center justify-between gap-3 shadow-sm">
@@ -508,7 +529,6 @@ export default function CityVip() {
             </div>
           </div>
 
-          {/* Hero Section */}
           <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-12 text-center mt-4 mx-4 rounded-2xl">
             <div className="text-6xl mb-3">{cityInfo.icon}</div>
             <h1 className="text-3xl md:text-4xl font-bold">{cityInfo.name.split('|')[0]} VIP</h1>
@@ -522,7 +542,6 @@ export default function CityVip() {
             </p>
           </div>
 
-          {/* Tier Selection */}
           {showTiers && (
             <div className="container mx-auto px-4 py-8">
               <h2 className="text-2xl font-bold text-center mb-6">
@@ -537,7 +556,6 @@ export default function CityVip() {
             </div>
           )}
 
-          {/* Seat Selector */}
           {showSeats && selectedTier && (
             <SeatSelector
               isOpen={showSeats}
@@ -555,7 +573,6 @@ export default function CityVip() {
             />
           )}
 
-          {/* Payment */}
           {showPayment && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -628,7 +645,6 @@ export default function CityVip() {
             </div>
           )}
 
-          {/* Ticket */}
           {showTicket && participantData && (
             <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4 overflow-y-auto">
               <div className="bg-white rounded-2xl max-w-md w-full">
@@ -652,7 +668,6 @@ export default function CityVip() {
             </div>
           )}
 
-          {/* Become an Agent Section */}
           <div className="container mx-auto px-4 py-12">
             <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-8 text-white">
               <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -685,7 +700,6 @@ export default function CityVip() {
           </div>
         </div>
 
-        {/* Agent Application Modal */}
         {showAgentApplication && (
           <UnifiedAgentApplication 
             onClose={() => setShowAgentApplication(false)} 
