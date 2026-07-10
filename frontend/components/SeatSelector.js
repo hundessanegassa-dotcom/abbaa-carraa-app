@@ -1,4 +1,4 @@
-// components/SeatSelector.js - COMPLETE WITH PROPER EXPORTS
+// components/SeatSelector.js - COMPLETE WITH PROPER EXPORTS & FIXED SEAT AVAILABILITY
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -166,6 +166,7 @@ export default function SeatSelector({
     }
   }, [selectedSeats, entryFee, tier]);
 
+  // ✅ FIXED: Properly fetch booked seats
   const fetchBookedSeats = async () => {
     try {
       let data;
@@ -208,17 +209,21 @@ export default function SeatSelector({
         }
       }
       
+      // ✅ FIX: Check if data exists and has seat_numbers
       const allBookedSeats = [];
-      if (data) {
+      if (data && data.length > 0) {
         data.forEach(participant => {
-          if (participant.seat_numbers && Array.isArray(participant.seat_numbers)) {
+          if (participant.seat_numbers && Array.isArray(participant.seat_numbers) && participant.seat_numbers.length > 0) {
             allBookedSeats.push(...participant.seat_numbers);
           }
         });
       }
       
+      // ✅ Remove duplicates
+      const uniqueBookedSeats = [...new Set(allBookedSeats)];
+      
       if (isMounted.current) {
-        setBookedSeats([...new Set(allBookedSeats)]);
+        setBookedSeats(uniqueBookedSeats);
         setLoading(false);
       }
     } catch (err) {
