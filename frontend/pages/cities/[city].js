@@ -1,4 +1,4 @@
-// pages/cities/[city].js - COMPLETE WITH ALL 94 CITIES, AMHARIC SUPPORT, ALL SEATS VISIBLE, REFRESH BUTTON, 3D BANNER UPLOAD
+// pages/cities/[cityId].js - COMPLETE WITH 4 TIERS (Bronze, Silver, Gold, Platinum)
 import { useRouter } from 'next/router';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -8,22 +8,9 @@ import toast from 'react-hot-toast';
 import NoSSR from '../../components/NoSSR';
 import TopCitySelector from '../../components/TopCitySelector';
 import UnifiedAgentApplication from '../../components/UnifiedAgentApplication';
-import TicketImage from '../../components/TicketImage';
-import ThreeDBannerUpload from '../../components/ThreeDBannerUpload';
-
-// Helper function for next draw dates
-const getNextSunday = () => {
-  const today = new Date();
-  const nextSunday = new Date(today);
-  nextSunday.setDate(today.getDate() + (7 - today.getDay()) % 7);
-  return nextSunday.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-};
-
-const getNextMonthEnd = () => {
-  const today = new Date();
-  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-  return lastDay.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-};
+import { TIERS, getDrawScheduleText } from '../../components/SeatSelector';
+import SeatSelector from '../../components/SeatSelector';
+import CityTicket from '../../components/CityTicket';
 
 // ============================================
 // COMPLETE CITY DATA - ALL 94 ETHIOPIAN CITIES
@@ -162,8 +149,119 @@ const cityList = Object.keys(cityData).map(key => ({
   icon: cityData[key].icon
 }));
 
-const compressImage = async (file) => {
-  return new Promise((resolve) => {
+export default function CityVip() {
+  const router = useRouter();
+  const { city } = router.query;
+  const [language, setLanguage] = useState('am');
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [showTiers, setShowTiers] = useState(true);
+  const [showSeats, setShowSeats] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [showTicket, setShowTicket] = useState(false);
+  const [selectedTierId, setSelectedTierId] = useState(null);
+  const [selectedTier, setSelectedTier] = useState(null);
+  const [participantId, setParticipantId] = useState(null);
+  const [participantData, setParticipantData] = useState(null);
+  const [selectedSeats, setSelectedSeats] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cityInfo, setCityInfo] = useState(null);
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const [showAgentApplication, setShowAgentApplication] = useState(false);
+
+  // Load language preference
+  useEffect(() => {
+    const savedLang = localStorage.getItem('appLanguage');
+    if (savedLang === 'am' || savedLang === 'en') {
+      setLanguage(savedLang);
+    }
+    if (city) {
+      const data = cityData[city];
+      if (data) setCityInfo(data);
+      else setCityInfo({ 
+        name: city.replace(/-/g, ' '), 
+        icon: '🏙️', 
+        slogan: 'አንድ ብሔር አንድ እድል',
+        region: 'Ethiopia',
+        description: 'አዲስ ከተማ | New City'
+      });
+    }
+    checkUser();
+  }, [city]);
+
+  const toggleLanguage = () => {
+    const newLang = language === 'am' ? 'en' : 'am';
+    setLanguage(newLang);
+    localStorage.setItem('appLanguage', newLang);
+  };
+
+  const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+  };
+
+  const handleTierSelect = (tierId) => {
+    if (!user) {
+      const redirectUrl = `/cities/${city}?tier=${tierId}`;
+      localStorage.setItem('abbaa_redirect_after_login', redirectUrl);
+      sessionStorage.setItem('redirectAfterLogin', redirectUrl);
+      toast.loading(language === 'am' ? 'እባክዎ ወደ ስርዓት ይግቡ...' : 'Please login...');
+      router.push('/login');
+      return;
+    }
+    setSelectedTierId(tierId);
+    setSelectedTier(TIERS[tierId]);
+    setShowTiers(false);
+    setShowSeats(true);
+  };
+
+  const handleSeatsSelected = async ({ seats, totalAmount, seatCount, tier }) => {
+    const tierConfig = TIERS[tier];
+    setLoading(true);
+    
+    try {
+      const ticketNumber = `CT-${tier.toUpperCase()}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+      
+      const { data: participant, error } = await supabase
+        .from('city_vip_participants')
+        .insert({
+          user_id: user.id,
+          user_email: user.email,
+          user_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+          city: cityInfo?.name?.split('|')[0] || city || 'Unknown City',
+          tier: tier,
+          pool_type: tier,
+          seat_numbers: seats,
+          contribution_amount: totalAmount,
+          prize_amount: tierConfig.prize,
+          payment_status: 'pending',
+          ticket_number: ticketNumber,
+          status: 'active',
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      setParticipantId(participant.id);
+      setSelectedSeats(seats);
+      setShowSeats(false);
+      setShowPayment(true);
+      
+      toast.success(language === 'am' ? 'መቀመጫዎች ተይዘዋል! እባክዎ ክፍያ ይፈጽሙ' : 'Seats reserved! Please complete payment.');
+      
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error(language === 'am' ? 'መቀመጫዎችን ማስያዝ አልተቻለም' : 'Failed to reserve seats');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const compressImage = (file) => new Promise((resolve) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = (event) => {
@@ -172,492 +270,195 @@ const compressImage = async (file) => {
       img.onload = () => {
         const canvas = document.createElement('canvas');
         let width = img.width, height = img.height;
-        const MAX_WIDTH = 1024, MAX_HEIGHT = 1024;
+        const maxSize = 1024;
         if (width > height) {
-          if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+          if (width > maxSize) {
+            height = (height * maxSize) / width;
+            width = maxSize;
+          }
         } else {
-          if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+          if (height > maxSize) {
+            width = (width * maxSize) / height;
+            height = maxSize;
+          }
         }
-        canvas.width = width; canvas.height = height;
+        canvas.width = width;
+        canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
         canvas.toBlob((blob) => {
           resolve(new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), { type: 'image/jpeg' }));
         }, 'image/jpeg', 0.7);
       };
-      img.onerror = () => resolve(file);
     };
-    reader.onerror = () => resolve(file);
   });
-};
 
-const validateFile = (file) => {
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-  if (!allowedTypes.includes(file.type)) throw new Error('Please upload a valid image file');
-  if (file.size > 5 * 1024 * 1024) throw new Error('File size must be less than 5MB');
-  return true;
-};
-
-// VIP Pools with 3 different colors for buttons
-const vipPools = {
-  daily: { 
-    name: "ዕለታዊ ሚሊየነር | Daily Millionaire", 
-    nameAm: "ዕለታዊ",
-    nameEn: "Daily",
-    tier: "ለሁሉም ኢትዮጵያዊ", frequency: "Daily", 
-    contribution: "500", contributionFormatted: "500 ETB", prize: "1,000,000 ETB", prizeNumber: 1000000, 
-    totalSeats: 2400, seatsPerRow: 20, rows: 120, time: "Every Day at 8:00 PM", 
-    color: "from-gray-700 to-gray-900", icon: "⭐", 
-    buttonColor: "bg-blue-500 hover:bg-blue-600",
-    activeColor: "border-blue-500 bg-blue-50",
-    textColor: "text-blue-600",
-    description: "Start your day with a chance to become an instant millionaire!" 
-  },
-  weekly: { 
-    name: "ሳምንታዊ ግዙፍ አሸናፊ | Weekly Mega Winner", 
-    nameAm: "ሳምንታዊ",
-    nameEn: "Weekly",
-    tier: "VIP 2", frequency: "Weekly", 
-    contribution: "2500", contributionFormatted: "2,500 ETB", prize: "10,000,000 ETB", prizeNumber: 10000000, 
-    totalSeats: 4800, seatsPerRow: 20, rows: 240, time: "Every Sunday at 6:00 PM", 
-    color: "from-gray-700 to-gray-900", icon: "🏆", 
-    buttonColor: "bg-green-500 hover:bg-green-600",
-    activeColor: "border-green-500 bg-green-50",
-    textColor: "text-green-600",
-    description: "Ten MILLION Birr changes everything!" 
-  },
-  monthly: { 
-    name: "ወርሃዊ አሸናፊ | Monthly Winner", 
-    nameAm: "ወርሃዊ",
-    nameEn: "Monthly",
-    tier: "VIP 1", frequency: "Monthly", 
-    contribution: "5000", contributionFormatted: "5,000 ETB", prize: "40,000,000 ETB", prizeNumber: 40000000, 
-    totalSeats: 9600, seatsPerRow: 20, rows: 480, time: "Last Day of Month at 8:00 PM", 
-    color: "from-gray-700 to-gray-900", icon: "👑", 
-    buttonColor: "bg-orange-500 hover:bg-orange-600",
-    activeColor: "border-orange-500 bg-orange-50",
-    textColor: "text-orange-600",
-    description: "The ULTIMATE nationwide prize pool!" 
-  }
-};
-
-export default function CityVip() {
-  const router = useRouter();
-  const { city } = router.query;
-  const [language, setLanguage] = useState('am');
-  const [activeTab, setActiveTab] = useState('daily');
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [cityInfo, setCityInfo] = useState(null);
-  const [showCityDropdown, setShowCityDropdown] = useState(false);
-  const [showAgentApplication, setShowAgentApplication] = useState(false);
-  const [showSeatSelector, setShowSeatSelector] = useState(false);
-  const [selectedSeats, setSelectedSeats] = useState([]);
-  const [selectedPoolType, setSelectedPoolType] = useState(null);
-  const [showPayment, setShowPayment] = useState(false);
-  const [participantId, setParticipantId] = useState(null);
-  const [maxSeats, setMaxSeats] = useState(5);
-  const [takenSeats, setTakenSeats] = useState([]);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showTicket, setShowTicket] = useState(false);
-  const [participantData, setParticipantData] = useState(null);
-  const [ticketType, setTicketType] = useState('unverified');
-  const [currentRow, setCurrentRow] = useState(0);
-  const [bannerUrls, setBannerUrls] = useState({
-    daily: null,
-    weekly: null,
-    monthly: null
-  });
-  const seatGridRef = useRef(null);
-
-  // Load language preference
-  useEffect(() => {
-    const savedLang = localStorage.getItem('appLanguage');
-    if (savedLang === 'am' || savedLang === 'en') {
-      setLanguage(savedLang);
-    }
-  }, []);
-
-  const toggleLanguage = () => {
-    const newLang = language === 'am' ? 'en' : 'am';
-    setLanguage(newLang);
-    localStorage.setItem('appLanguage', newLang);
-  };
-
-  useEffect(() => {
-    if (city) {
-      const data = cityData[city];
-      if (data) setCityInfo(data);
-      else setCityInfo({ name: city.replace(/-/g, ' '), slogan: 'አንድ ብሔር አንድ እድል', businesses: '1,000+', workers: '5,000+', color: 'from-gray-700 to-gray-900', icon: '🇪🇹', product: 'ማህበረሰብ እና ንግድ', description: 'የኢትዮጵያ ከተማ', population: 'N/A', region: 'Ethiopia' });
-    }
-    checkUser();
-    // Load saved banners from localStorage
-    const savedBanners = localStorage.getItem(`city_banners_${city}`);
-    if (savedBanners) {
-      try {
-        setBannerUrls(JSON.parse(savedBanners));
-      } catch (e) {}
-    }
-  }, [city]);
-
-  useEffect(() => {
-    const { type, showSeats } = router.query;
-    if (type && showSeats === 'true' && city && !showSeatSelector && !showPayment && !showTicket) {
-      setSelectedPoolType(type);
-      setSelectedSeats([]);
-      fetchTakenSeats(city, type);
-      setShowSeatSelector(true);
-      router.replace(`/cities/${city}`, undefined, { shallow: true });
-    }
-  }, [router.query, city, showSeatSelector, showPayment, showTicket]);
-
-  const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
-  };
-
-  const fetchTakenSeats = async (cityName, poolType) => {
-    if (!cityName || !poolType) return;
-    try {
-      const { data } = await supabase.from('city_vip_participants').select('seat_numbers').eq('city', cityName).eq('pool_type', poolType).eq('payment_status', 'verified');
-      if (data) setTakenSeats(data.flatMap(p => p.seat_numbers || []));
-    } catch (error) { console.error('Error fetching taken seats:', error); }
-  };
-
-  const refreshSeats = async () => {
-    if (!city || !selectedPoolType) {
-      toast.error(language === 'am' ? 'እባክዎ መጀመሪያ የመቀመጫ ምርጫን ይክፈቱ' : 'Please open seat selection first');
+  const handlePaymentSubmit = async () => {
+    if (!selectedFile) {
+      toast.error(language === 'am' ? 'እባክዎ የክፍያ ማስረጃ ይስቀሉ' : 'Please upload payment screenshot');
       return;
     }
-    setIsRefreshing(true);
-    try {
-      await fetchTakenSeats(city, selectedPoolType);
-      toast.success(language === 'am' ? 'መቀመጫዎች ታድሰዋል! ✅' : 'Seats refreshed! ✅');
-    } catch (error) {
-      toast.error(language === 'am' ? 'መቀመጫዎችን ማደስ አልተቻለም' : 'Failed to refresh seats');
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
-  const handleBannerUpload = (poolType, url) => {
-    setBannerUrls(prev => ({
-      ...prev,
-      [poolType]: url
-    }));
-    // Save to localStorage
-    localStorage.setItem(`city_banners_${city}`, JSON.stringify({
-      ...bannerUrls,
-      [poolType]: url
-    }));
-  };
-
-  const handleJoinPool = async (poolType) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      const redirectUrl = `/cities/${city}?type=${poolType}&showSeats=true`;
-      localStorage.setItem('abbaa_redirect_after_login', redirectUrl);
-      sessionStorage.setItem('redirectAfterLogin', redirectUrl);
-      localStorage.setItem('pendingRole', 'individual');
-      localStorage.setItem('pendingCity', city);
-      sessionStorage.setItem('pendingRole', 'individual');
-      sessionStorage.setItem('pendingCity', city);
-      toast.loading(language === 'am' ? 'እባክዎ ወደ ስርዓት ይግቡ...' : 'Please login to join City VIP...');
-      router.push('/login');
-      return;
-    }
-    setSelectedPoolType(poolType);
-    setSelectedSeats([]);
-    await fetchTakenSeats(city, poolType);
-    setShowSeatSelector(true);
-  };
-
-  const submitPayment = async (participantId, file) => {
+    
+    setIsSubmitting(true);
     const loadingToast = toast.loading(language === 'am' ? 'የክፍያ ማስረጃ በላይናላይ ላይ እየተሰቀለ ነው...' : 'Uploading payment screenshot...');
+    
     try {
-      const optimizedFile = await compressImage(file);
+      const compressedFile = await compressImage(selectedFile);
       const fileName = `city-payments/${participantId}/${Date.now()}.jpg`;
-      const { error: uploadError } = await supabase.storage.from('payment-proofs').upload(fileName, optimizedFile);
+      
+      const { error: uploadError } = await supabase.storage
+        .from('payment-proofs')
+        .upload(fileName, compressedFile);
+      
       if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
-      const { data: { publicUrl } } = supabase.storage.from('payment-proofs').getPublicUrl(fileName);
-      await supabase.from('city_vip_participants').update({ payment_status: 'pending_verification', payment_proof_url: publicUrl, payment_submitted_at: new Date().toISOString() }).eq('id', participantId);
-      const { data: updatedParticipant } = await supabase.from('city_vip_participants').select('*').eq('id', participantId).single();
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('payment-proofs')
+        .getPublicUrl(fileName);
+      
+      const { error: updateError } = await supabase
+        .from('city_vip_participants')
+        .update({
+          payment_status: 'pending_verification',
+          payment_proof_url: publicUrl,
+          payment_submitted_at: new Date().toISOString()
+        })
+        .eq('id', participantId);
+      
+      if (updateError) throw updateError;
+      
+      const { data: updatedParticipant } = await supabase
+        .from('city_vip_participants')
+        .select('*')
+        .eq('id', participantId)
+        .single();
+      
       setParticipantData(updatedParticipant);
-      setTicketType('unverified');
-      setShowTicket(true);
       setShowPayment(false);
-      setShowSeatSelector(false);
+      setShowTicket(true);
+      
       toast.success(language === 'am' ? 'ክፍያ ተልኳል! ያልተረጋገጠ ቲኬትዎ ዝግጁ ነው' : 'Payment submitted! Your unverified ticket is ready', { id: loadingToast });
+      
     } catch (error) {
-      toast.error(error.message || (language === 'am' ? 'ክፍያ መላክ አልተቻለም' : 'Failed to submit payment'), { id: loadingToast });
-      throw error;
+      console.error('Payment error:', error);
+      toast.error(error.message || language === 'am' ? 'ክፍያ መላክ አልተቻለም' : 'Failed to submit payment', { id: loadingToast });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const renderSeatSelector = () => {
-    if (!selectedPoolType) return null;
-    const pool = vipPools[selectedPoolType];
-    const entryFeeAmount = parseInt(pool.contribution);
-    const totalSeatsCount = pool.totalSeats;
-    const seatsPerRow = pool.seatsPerRow;
-    const rows = Math.ceil(totalSeatsCount / seatsPerRow);
-    const rowLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-    
-    const scrollToRow = (rowIndex) => {
-      setCurrentRow(rowIndex);
-      if (seatGridRef.current) {
-        const rowElement = document.getElementById(`row-${rowIndex}`);
-        if (rowElement) rowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    };
-    
-    const toggleSeat = (seatNum) => {
-      if (takenSeats.includes(seatNum)) { toast.error(language === 'am' ? `መቀመጫ ${seatNum} ተይዟል` : `Seat ${seatNum} is already taken`); return; }
-      if (selectedSeats.includes(seatNum)) setSelectedSeats(selectedSeats.filter(s => s !== seatNum));
-      else if (selectedSeats.length < maxSeats) setSelectedSeats([...selectedSeats, seatNum]);
-      else toast.error(language === 'am' ? `እስከ ${maxSeats} መቀመጫዎች ብቻ መምረጥ ይችላሉ` : `You can only select up to ${maxSeats} seats`);
-    };
-    
-    const totalAmount = selectedSeats.length * entryFeeAmount;
-    
-    const confirmSeats = async () => {
-      if (selectedSeats.length === 0) { toast.error(language === 'am' ? 'እባክዎ ቢያንስ አንድ መቀመጫ ይምረጡ' : 'Please select at least one seat'); return; }
-      setLoading(true);
-      try {
-        const ticketNumber = `CITY-${selectedPoolType.toUpperCase()}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-        const { data: participant, error } = await supabase.from('city_vip_participants').insert({
-          user_id: user.id, user_email: user.email, user_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-          pool_type: selectedPoolType, city: city, seat_numbers: selectedSeats, contribution_amount: totalAmount,
-          prize_amount: parseInt(pool.prize.replace(/[^0-9]/g, '')), payment_status: 'pending', ticket_number: ticketNumber,
-          status: 'active', created_at: new Date().toISOString()
-        }).select().single();
-        if (error) throw error;
-        setParticipantId(participant.id);
-        setShowSeatSelector(false);
-        setShowPayment(true);
-        toast.success(language === 'am' ? 'መቀመጫዎች ተይዘዋል! እባክዎ ክፍያ ይፈጽሙ' : 'Seats reserved! Please complete payment.');
-      } catch (error) { toast.error(language === 'am' ? 'መቀመጫዎችን ማስያዝ አልተቻለም' : 'Failed to create participant record'); }
-      finally { setLoading(false); }
-    };
-    
-    const seatRows = [];
-    for (let row = 0; row < rows; row++) {
-      const startSeat = row * seatsPerRow + 1;
-      const endSeat = Math.min(startSeat + seatsPerRow - 1, totalSeatsCount);
-      const rowSeats = [];
-      for (let seat = startSeat; seat <= endSeat; seat++) rowSeats.push(seat);
-      seatRows.push(rowSeats);
-    }
+  const handleCloseSeats = () => {
+    setShowSeats(false);
+    setShowTiers(true);
+  };
+
+  const handleClosePayment = () => {
+    setShowPayment(false);
+    setShowSeats(true);
+  };
+
+  const handleCloseTicket = () => {
+    setShowTicket(false);
+    router.push('/dashboard');
+  };
+
+  // Tier Selection UI
+  const renderTierSelection = () => {
+    const tiers = ['bronze', 'silver', 'gold', 'platinum'];
     
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-2">
-        <div className="bg-gray-100 rounded-2xl shadow-xl max-w-full w-full max-h-[98vh] overflow-hidden flex flex-col">
-          <div className="sticky top-0 bg-gray-100 border-b border-gray-200 p-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-bold text-gray-800">{language === 'am' ? 'መቀመጫዎችን ይምረጡ' : 'Select Your Seats'} (Max {maxSeats})</h2>
-              <div className="flex gap-2">
-                <button 
-                  onClick={refreshSeats} 
-                  disabled={isRefreshing}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-xs transition disabled:opacity-50 flex items-center gap-1"
-                >
-                  {isRefreshing ? (
-                    <>
-                      <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
-                      Refreshing...
-                    </>
-                  ) : (
-                    '🔄 Refresh Seats'
-                  )}
-                </button>
-                <button 
-                  onClick={() => { setShowSeatSelector(false); setSelectedPoolType(null); setSelectedSeats([]); }} 
-                  className="text-gray-500 hover:text-gray-700 text-2xl"
-                >
-                  ×
-                </button>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+        {tiers.map((tierId) => {
+          const tier = TIERS[tierId];
+          return (
+            <div
+              key={tierId}
+              className="bg-white rounded-2xl shadow-lg overflow-hidden transform transition hover:scale-105 cursor-pointer border-2 hover:border-green-500"
+              onClick={() => handleTierSelect(tierId)}
+            >
+              <div className={`bg-gradient-to-r ${tier.color} p-4 text-white text-center`}>
+                <div className="text-4xl mb-2">{tier.icon}</div>
+                <h3 className="font-bold text-xl">
+                  {language === 'am' ? tier.labelAm : tier.labelEn}
+                </h3>
+                <span className="text-xs opacity-80">
+                  {getDrawScheduleText(tierId, language)}
+                </span>
               </div>
-            </div>
-            <div className="flex overflow-x-auto gap-1 mt-3 pb-2">
-              {Array.from({ length: Math.min(rows, 20) }).map((_, idx) => (
-                <button key={idx} onClick={() => scrollToRow(idx)} className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap transition ${currentRow === idx ? 'bg-green-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-200'}`}>Row {rowLetters[idx] || (idx + 1)}</button>
-              ))}
-              {rows > 20 && <span className="px-2 py-1 text-xs text-gray-500">+{rows - 20} more</span>}
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="flex flex-wrap justify-center gap-4 mb-4 pb-3 border-b">
-              <div className="flex items-center gap-2"><div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center text-white text-[10px] font-bold">✓</div><span className="text-xs">{language === 'am' ? 'የእርስዎ ምርጫ' : 'Selected by You'}</span></div>
-              <div className="flex items-center gap-2"><div className="w-6 h-6 bg-gray-200 border border-gray-400 rounded"></div><span className="text-xs">{language === 'am' ? 'ክፍት' : 'Available'}</span></div>
-              <div className="flex items-center gap-2"><div className="w-6 h-6 bg-gray-400 rounded"></div><span className="text-xs">{language === 'am' ? 'የተያዙ' : 'Taken'}</span></div>
-            </div>
-            <div className="text-center mb-4"><div className="inline-block bg-gray-600 text-white text-[10px] px-4 py-1 rounded-full">🎬 SCREEN</div><div className="w-full h-px bg-gray-300 mt-2"></div></div>
-            <div ref={seatGridRef} className="space-y-2">
-              {/* FIXED: Show ALL rows (removed slice(0, 25)) */}
-              {seatRows.map((rowSeats, rowIndex) => (
-                <div key={rowIndex} id={`row-${rowIndex}`} className="flex flex-wrap items-center gap-1">
-                  <div className="w-8 text-[11px] font-mono font-semibold text-gray-500">{rowLetters[rowIndex] || (rowIndex + 1)}</div>
-                  <div className="flex flex-wrap gap-1 flex-1">
-                    {rowSeats.map(seatNum => {
-                      const isTaken = takenSeats.includes(seatNum);
-                      const isSelected = selectedSeats.includes(seatNum);
-                      let bgColor = 'bg-gray-200 border border-gray-400', textColor = 'text-gray-700';
-                      if (isSelected) { bgColor = 'bg-green-600 border-green-700'; textColor = 'text-white'; }
-                      if (isTaken) { bgColor = 'bg-gray-400 border-gray-500'; textColor = 'text-gray-600'; }
-                      return (
-                        <button key={seatNum} onClick={() => !isTaken && toggleSeat(seatNum)} disabled={isTaken}
-                          className={`w-8 h-8 rounded-lg text-xs font-semibold transition ${bgColor} ${textColor} ${isTaken ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-green-100'}`}
-                          title={isTaken ? `Seat ${seatNum} is taken` : `Select Seat ${seatNum}`}>{seatNum}</button>
-                      );
-                    })}
-                  </div>
+              
+              <div className="p-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">{language === 'am' ? 'ክፍያ' : 'Entry'}</span>
+                  <span className="font-semibold">ETB {tier.contribution.toLocaleString()}</span>
                 </div>
-              ))}
-            </div>
-            {rows > 25 && <p className="text-xs text-gray-400 text-center mt-4">{language === 'am' ? `ሁሉም ${totalSeatsCount.toLocaleString()} መቀመጫዎች እዚህ ይታያሉ` : `All ${totalSeatsCount.toLocaleString()} seats are shown here`}</p>}
-          </div>
-          {selectedSeats.length > 0 && (
-            <div className="sticky bottom-0 bg-gray-100 border-t border-gray-200 p-4">
-              <div className="flex justify-between items-center mb-3 flex-wrap gap-3">
-                <div><p className="text-xs text-gray-500">{language === 'am' ? 'የተመረጡ መቀመጫዎች' : 'Selected Seats'}</p><p className="font-bold">{selectedSeats.sort((a,b)=>a-b).join(', ')}</p></div>
-                <div className="text-right"><p className="text-xs text-gray-500">{language === 'am' ? 'ጠቅላላ ክፍያ' : 'Total Amount'}</p><p className="font-bold text-xl text-green-600">ETB {totalAmount.toLocaleString()}</p><p className="text-[10px] text-gray-400">({selectedSeats.length} {language === 'am' ? 'መቀመጫ ×' : 'seats ×'} {pool.contributionFormatted})</p></div>
-                <button onClick={confirmSeats} disabled={loading} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl font-semibold transition disabled:opacity-50">{loading ? (language === 'am' ? 'በሂደት ላይ...' : 'Processing...') : (language === 'am' ? 'አረጋግጥ እና ወደ ክፍያ ቀጥል' : 'Confirm & Proceed to Payment')}</button>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">{language === 'am' ? 'ሽልማት' : 'Prize'}</span>
+                  <span className="font-bold text-green-600">ETB {tier.prize.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">{language === 'am' ? 'መቀመጫዎች' : 'Seats'}</span>
+                  <span className="font-semibold">{tier.seats.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">{language === 'am' ? 'ኮሚሽን' : 'Commission'}</span>
+                  <span className="text-orange-600 font-semibold">ETB {tier.commission.toLocaleString()}</span>
+                </div>
+                
+                <button 
+                  className="w-full mt-3 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold text-sm transition"
+                  onClick={(e) => { e.stopPropagation(); handleTierSelect(tierId); }}
+                >
+                  {language === 'am' ? 'መቀመጫ ምረጥ' : 'Select Seats'}
+                </button>
               </div>
             </div>
-          )}
-        </div>
+          );
+        })}
       </div>
     );
   };
 
-  const renderPayment = () => {
-    if (!showPayment || !participantId || !selectedPoolType) return null;
-    const pool = vipPools[selectedPoolType];
-    const totalAmount = selectedSeats.length * parseInt(pool.contribution);
-    
-    const handleFileSelect = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      try { validateFile(file); setPreviewUrl(URL.createObjectURL(file)); setSelectedFile(file); toast.success(language === 'am' ? 'ፋይል ተመርጧል' : 'File selected'); }
-      catch (error) { toast.error(error.message); e.target.value = ''; }
-    };
-    
-    const handlePaymentSubmit = async () => {
-      if (!selectedFile) { toast.error(language === 'am' ? 'እባክዎ የክፍያ ማስረጃ ይስቀሉ' : 'Please upload payment screenshot'); return; }
-      setIsSubmitting(true);
-      try { await submitPayment(participantId, selectedFile); }
-      catch (error) { console.error('Payment error:', error); }
-      finally { setIsSubmitting(false); }
-    };
-    
+  if (!cityInfo) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-          <div className="sticky top-0 bg-white border-b p-5 flex justify-between">
-            <h2 className="text-xl font-bold">{language === 'am' ? 'ክፍያ ያጠናቅቁ' : 'Complete Payment'}</h2>
-            <button onClick={() => { setShowPayment(false); setSelectedPoolType(null); setParticipantId(null); }} className="text-2xl">×</button>
-          </div>
-          <div className="p-6">
-            <div className="bg-gray-50 rounded-lg p-4 mb-4 text-center">
-              <p>{language === 'am' ? 'ከተማ:' : 'City:'} {cityInfo?.name?.split('|')[0] || city}</p>
-              <p>{language === 'am' ? 'መቀመጫዎች:' : 'Seats:'} {selectedSeats.join(', ')}</p>
-              <p className="text-xl font-bold text-green-600">ETB {totalAmount.toLocaleString()}</p>
-            </div>
-            <p className="text-sm text-gray-600 mb-2">{language === 'am' ? 'እባክዎ ክፍያ ወደዚህ ይላኩ:' : 'Send payment to:'}</p>
-            <div className="bg-blue-50 rounded-lg p-3 mb-4">
-              <p className="font-semibold">📱 TeleBirr: 0913277922</p>
-              <p className="font-semibold">🏦 CBE Bank: 1000601091686</p>
-              <p className="text-sm text-gray-600">{language === 'am' ? 'የሂሳብ ባለቤት:' : 'Account:'} Negassa Hundessa</p>
-            </div>
-            <div className="border-2 border-dashed rounded-lg p-4 text-center mb-4">
-              <input type="file" accept="image/*" className="hidden" id="paymentScreenshot" onChange={handleFileSelect} />
-              <label htmlFor="paymentScreenshot" className="cursor-pointer">
-                {previewUrl ? <div><img src={previewUrl} className="max-h-32 mx-auto mb-2 rounded" /><p className="text-green-600">✓ {language === 'am' ? 'ማስረጃ ተመርጧል' : 'Screenshot selected'}</p></div> :
-                <div><svg className="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg><p className="text-gray-500 mt-2">{language === 'am' ? 'የክፍያ ማስረጃ ለመጫን ጠቅ ያድርጉ' : 'Click to upload payment screenshot'}</p></div>}
-              </label>
-            </div>
-            <button onClick={handlePaymentSubmit} disabled={isSubmitting} className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold mt-4 disabled:opacity-50">
-              {isSubmitting ? (language === 'am' ? 'በሂደት ላይ...' : 'Processing...') : (language === 'am' ? 'ክፍያ አስገባ እና ቲኬት አግኝ' : 'Submit Payment & Get Ticket')}
-            </button>
-          </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-500">{language === 'am' ? 'ከተማ በመጫን ላይ...' : 'Loading city...'}</p>
         </div>
       </div>
     );
-  };
-
-  const renderTicket = () => {
-    if (!showTicket || !participantData) return null;
-    const pool = vipPools[participantData.pool_type];
-    return (
-      <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4 overflow-y-auto">
-        <div className="bg-white rounded-2xl max-w-md w-full">
-          <div className="bg-gradient-to-r from-gray-800 to-gray-900 p-4 flex justify-between rounded-t-2xl">
-            <h3 className="text-white font-bold">{language === 'am' ? 'የእርስዎ ቲኬት' : 'Your Ticket'}</h3>
-            <button onClick={() => { setShowTicket(false); router.push('/dashboard'); }} className="text-white text-2xl">×</button>
-          </div>
-          <div className="p-6">
-            <TicketImage participant={participantData} pool={pool} isVerified={false} seatNumbers={selectedSeats} ticketNumber={participantData.ticket_number} amount={participantData.contribution_amount} createdAt={participantData.created_at} poolType="city" />
-            <button onClick={() => router.push('/dashboard')} className="mt-6 w-full bg-gray-600 text-white py-2 rounded-lg">{language === 'am' ? 'ወደ ዳሽቦርድ ሂድ' : 'Go to Dashboard'}</button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const PoolCard = ({ type, pool }) => {
-    const isActive = activeTab === type;
-    return (
-      <div className="bg-white rounded-2xl shadow-xl overflow-hidden transform transition hover:scale-105">
-        <div className={`bg-gradient-to-r ${pool.color} p-6 text-white`}>
-          <div className="flex justify-between items-start">
-            <div><p className="text-xs opacity-80">{pool.tier}</p><h3 className="text-2xl font-bold">{language === 'am' ? pool.nameAm : pool.nameEn}</h3></div>
-            <div className="text-5xl animate-bounce">{pool.icon}</div>
-          </div>
-          <div className="mt-4 flex justify-between">
-            <div><p className="text-sm opacity-80">{language === 'am' ? 'የመግቢያ ክፍያ' : 'Entry Fee'}</p><p className="text-2xl font-bold">{pool.contributionFormatted}</p></div>
-            <div className="text-right"><p className="text-sm opacity-80">{language === 'am' ? 'ሽልማት' : 'Prize'}</p><p className="text-2xl font-bold">{pool.prize}</p></div>
-          </div>
-        </div>
-        <div className="p-6">
-          <div className="space-y-2 mb-4">
-            <div className="flex items-center gap-2 text-gray-600 text-sm">📅 {language === 'am' ? 'የእጣ ቀን:' : 'Draw:'} {pool.time}</div>
-            <div className="flex items-center gap-2 text-gray-600 text-sm">💺 {language === 'am' ? 'ጠቅላላ መቀመጫዎች:' : 'Total Seats:'} {pool.totalSeats.toLocaleString()}</div>
-          </div>
-          <button onClick={() => handleJoinPool(type)} className={`w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2`}>
-            🎯 {language === 'am' ? 'መቀመጫ ምረጡ እና ይቀላቀሉ →' : 'Select Seat & Join →'}
-          </button>
-        </div>
-      </div>
-    );
-  };
-
-  if (!cityInfo) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600"></div></div>;
+  }
 
   return (
     <NoSSR>
       <>
-        <Head><title>{cityInfo.name.split('|')[0]} VIP - Win 1M Daily, 10M Weekly, 40M Monthly | Abbaa Carraa</title></Head>
+        <Head>
+          <title>{cityInfo.name.split('|')[0]} VIP - Win up to 10M ETB | Abbaa Carraa</title>
+        </Head>
+
         <nav className="sticky top-0 z-50 bg-gray-900 shadow-lg border-b border-gray-700">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-between h-16">
-              <Link href="/" className="flex items-center gap-2"><span className="text-2xl">🎫</span><span className="font-bold text-white text-lg">Abbaa Carraa</span></Link>
+              <Link href="/" className="flex items-center gap-2">
+                <span className="text-2xl">🎫</span>
+                <span className="font-bold text-white text-lg">Abbaa Carraa</span>
+              </Link>
               <div className="flex items-center gap-3">
-                <button onClick={toggleLanguage} className="bg-gray-700 text-white px-3 py-1 rounded-lg text-xs">{language === 'am' ? '🇬🇧 English' : '🇪🇹 አማርኛ'}</button>
+                <button onClick={toggleLanguage} className="bg-gray-700 text-white px-3 py-1 rounded-lg text-xs">
+                  {language === 'am' ? '🇬🇧 English' : '🇪🇹 አማርኛ'}
+                </button>
                 <TopCitySelector />
               </div>
             </div>
           </div>
         </nav>
+
         <div className="min-h-screen bg-gray-100">
           {/* Language Toggle - Mobile */}
           <div className="container mx-auto px-4 pt-4 flex justify-end md:hidden">
-            <button onClick={toggleLanguage} className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-xs font-medium">{language === 'am' ? '🇬🇧 English' : '🇪🇹 አማርኛ'}</button>
+            <button onClick={toggleLanguage} className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-xs font-medium">
+              {language === 'am' ? '🇬🇧 English' : '🇪🇹 አማርኛ'}
+            </button>
           </div>
 
           {/* City Selector */}
@@ -671,14 +472,22 @@ export default function CityVip() {
                     <div className="text-xs text-gray-500">{cityInfo.name.split('|')[1]}</div>
                   </div>
                 </div>
-                <svg className={`w-5 h-5 text-gray-400 transition-transform ${showCityDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                <svg className={`w-5 h-5 text-gray-400 transition-transform ${showCityDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
               </button>
               {showCityDropdown && (
                 <div className="absolute top-full left-0 mt-2 w-full md:w-96 bg-white rounded-2xl shadow-2xl border z-50 max-h-96 overflow-y-auto">
-                  <div className="sticky top-0 bg-white p-3 border-b"><input type="text" id="citySearch" placeholder={language === 'am' ? 'ከተማ ፈልግ...' : 'Search city...'} className="w-full border rounded-lg px-4 py-2" onKeyUp={(e) => { const term = e.target.value.toLowerCase(); document.querySelectorAll('.city-item').forEach(el => { el.style.display = el.textContent.toLowerCase().includes(term) ? 'flex' : 'none'; }); }} /></div>
+                  <div className="sticky top-0 bg-white p-3 border-b">
+                    <input type="text" id="citySearch" placeholder={language === 'am' ? 'ከተማ ፈልግ...' : 'Search city...'} className="w-full border rounded-lg px-4 py-2" onKeyUp={(e) => { const term = e.target.value.toLowerCase(); document.querySelectorAll('.city-item').forEach(el => { el.style.display = el.textContent.toLowerCase().includes(term) ? 'flex' : 'none'; }); }} />
+                  </div>
                   {cityList.map(c => (
                     <a key={c.id} href={`/cities/${c.id}`} className={`city-item flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b cursor-pointer ${city === c.id ? 'bg-gray-100' : ''}`}>
-                      <span className="text-2xl">{c.icon}</span><div><div className="font-medium text-gray-800">{c.name}</div><div className="text-xs text-gray-500">{c.nameEn}</div></div>
+                      <span className="text-2xl">{c.icon}</span>
+                      <div>
+                        <div className="font-medium text-gray-800">{c.name}</div>
+                        <div className="text-xs text-gray-500">{c.nameEn}</div>
+                      </div>
                       {city === c.id && <span className="ml-auto text-green-600 text-sm">✓</span>}
                     </a>
                   ))}
@@ -687,27 +496,149 @@ export default function CityVip() {
             </div>
           </div>
 
-          {/* Hero Section - SIMPLIFIED WITH ATTRACTIVE TEXT */}
+          {/* Hero Section */}
           <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-12 text-center mt-4 mx-4 rounded-2xl">
             <div className="text-6xl mb-3">{cityInfo.icon}</div>
             <h1 className="text-3xl md:text-4xl font-bold">{cityInfo.name.split('|')[0]} VIP</h1>
-            {/* ATTRACTIVE AMHARIC TEXT ADDED */}
             <div className="text-emerald-300 font-bold text-lg mt-2">
               {language === 'am' 
                 ? '✨ ዛሬ የከተማችንን ተሳታፊ ሚሊየነር እናድርገው! ✨'
                 : '✨ Let\'s make our city participant a millionaire today! ✨'}
             </div>
-            <p className="text-gray-200 mt-2">{language === 'am' ? 'እስከ 40 ሚሊዮን ብር ለማሸነፍ መቀመጫዎን ይምረጡ' : 'Select your seat to win up to 40 Million ETB'}</p>
+            <p className="text-gray-200 mt-2">
+              {language === 'am' ? 'እስከ 10 ሚሊዮን ብር ለማሸነፍ መቀመጫዎን ይምረጡ' : 'Select your seat to win up to 10 Million ETB'}
+            </p>
           </div>
-          {/* 3 COLORED TABS */}
-          <div className="container mx-auto px-4 py-8">
-            <div className="flex flex-wrap justify-center gap-3 mb-8">
-              <button onClick={() => setActiveTab('daily')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'daily' ? 'bg-blue-600 text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>⭐ {language === 'am' ? 'ዕለታዊ' : 'Daily'} (1M)</button>
-              <button onClick={() => setActiveTab('weekly')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'weekly' ? 'bg-green-600 text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>🏆 {language === 'am' ? 'ሳምንታዊ' : 'Weekly'} (10M)</button>
-              <button onClick={() => setActiveTab('monthly')} className={`px-6 py-3 rounded-full font-bold transition transform hover:scale-105 ${activeTab === 'monthly' ? 'bg-orange-600 text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>👑 {language === 'am' ? 'ወርሃዊ' : 'Monthly'} (40M)</button>
+
+          {/* Tier Selection */}
+          {showTiers && (
+            <div className="container mx-auto px-4 py-8">
+              <h2 className="text-2xl font-bold text-center mb-6">
+                {language === 'am' ? 'የእርስዎን ደረጃ ይምረጡ' : 'Select Your Tier'}
+              </h2>
+              <p className="text-center text-gray-500 mb-8">
+                {language === 'am' 
+                  ? 'በጀትዎ እና በሚፈልጉት ሽልማት ላይ በመመስረት ይምረጡ' 
+                  : 'Choose based on your budget and desired prize'}
+              </p>
+              {renderTierSelection()}
             </div>
-            <div className="max-w-4xl mx-auto"><PoolCard type={activeTab} pool={vipPools[activeTab]} /></div>
-          </div>
+          )}
+
+          {/* Seat Selector */}
+          {showSeats && selectedTier && (
+            <SeatSelector
+              isOpen={showSeats}
+              onClose={handleCloseSeats}
+              onCancel={handleCloseSeats}
+              programType="city"
+              city={cityInfo?.name?.split('|')[0] || city || 'Unknown City'}
+              tierId={selectedTierId}
+              entryFee={selectedTier.contribution}
+              totalSeats={selectedTier.seats}
+              maxSeats={5}
+              language={language}
+              onSeatsSelected={handleSeatsSelected}
+              poolInfo={{ prize: selectedTier.prize }}
+            />
+          )}
+
+          {/* Payment */}
+          {showPayment && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+                <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
+                  <h2 className="text-xl font-bold">{language === 'am' ? 'ክፍያ ያጠናቅቁ' : 'Complete Payment'}</h2>
+                  <button onClick={handleClosePayment} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                </div>
+                <div className="p-6">
+                  <div className="bg-gray-50 rounded-lg p-4 mb-4 text-center">
+                    <p className="text-sm text-gray-600">{language === 'am' ? 'የተመረጡ መቀመጫዎች' : 'Selected Seats'}</p>
+                    <p className="font-bold">{selectedSeats.join(', ')}</p>
+                    <p className="text-xl font-bold text-green-600 mt-2">
+                      ETB {(selectedSeats.length * selectedTier.contribution).toLocaleString()}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {selectedSeats.length} {language === 'am' ? 'መቀመጫ ×' : 'seats ×'} ETB {selectedTier.contribution.toLocaleString()}
+                    </p>
+                  </div>
+                  
+                  <p className="text-sm text-gray-600 mb-2">{language === 'am' ? 'ክፍያ ወደዚህ ይላኩ:' : 'Send payment to:'}</p>
+                  <div className="bg-blue-50 rounded-lg p-3 mb-4">
+                    <p className="font-semibold">📱 TeleBirr: 0913277922</p>
+                    <p className="font-semibold mt-2">🏦 CBE Bank: 1000601091686</p>
+                    <p className="text-sm text-gray-600 mt-2">{language === 'am' ? 'የሂሳብ ባለቤት:' : 'Account:'} Negassa Hundessa</p>
+                  </div>
+                  
+                  <div className="border-2 border-dashed rounded-lg p-4 text-center mb-4 hover:border-green-500 transition">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      id="paymentFile" 
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) { 
+                          setSelectedFile(file); 
+                          setPreviewUrl(URL.createObjectURL(file)); 
+                        }
+                      }} 
+                    />
+                    <label htmlFor="paymentFile" className="cursor-pointer block">
+                      {previewUrl ? (
+                        <div>
+                          <img src={previewUrl} className="max-h-32 mx-auto mb-2 rounded" />
+                          <p className="text-green-600 text-sm">✓ {language === 'am' ? 'ማስረጃ ተመርጧል' : 'Screenshot selected'}</p>
+                        </div>
+                      ) : (
+                        <div>
+                          <svg className="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <p className="text-gray-500 mt-2">{language === 'am' ? 'የክፍያ ማስረጃ ለመጫን ጠቅ ያድርጉ' : 'Click to upload payment screenshot'}</p>
+                          <p className="text-xs text-gray-400">JPEG, PNG (Max 5MB)</p>
+                        </div>
+                      )}
+                    </label>
+                  </div>
+                  
+                  <button 
+                    onClick={handlePaymentSubmit} 
+                    disabled={isSubmitting || !selectedFile} 
+                    className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50"
+                  >
+                    {isSubmitting ? 
+                      (language === 'am' ? 'በሂደት ላይ...' : 'Processing...') : 
+                      (language === 'am' ? 'ክፍያ አስገባ እና ቲኬት አግኝ' : 'Submit Payment & Get Ticket')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Ticket */}
+          {showTicket && participantData && (
+            <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4 overflow-y-auto">
+              <div className="bg-white rounded-2xl max-w-md w-full">
+                <div className="bg-gradient-to-r from-gray-800 to-gray-900 p-4 flex justify-between rounded-t-2xl">
+                  <h3 className="text-white font-bold">
+                    {language === 'am' ? 'የእርስዎ ቲኬት' : 'Your Ticket'}
+                  </h3>
+                  <button onClick={handleCloseTicket} className="text-white text-2xl">×</button>
+                </div>
+                <div className="p-6">
+                  <CityTicket 
+                    participant={participantData}
+                    pool={selectedTier}
+                    cityInfo={cityInfo}
+                    type="unverified"
+                    tierId={selectedTierId}
+                    language={language}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Become an Agent Section */}
           <div className="container mx-auto px-4 py-12">
@@ -716,12 +647,22 @@ export default function CityVip() {
                 <div className="flex items-center gap-4">
                   <span className="text-5xl">🤝</span>
                   <div>
-                    <h3 className="text-2xl font-bold">{language === 'am' ? `የ${cityInfo.name.split('|')[0]} ወኪል ይሁኑ` : `Become an Agent for ${cityInfo.name.split('|')[0]}`}</h3>
-                    <p className="text-gray-300">{language === 'am' ? 'በሚያመጧቸው ደንበኞች ሁሉ 10% ኮሚሽን ያግኙ!' : 'Earn 10% commission on every successful contribution!'}</p>
-                    <div className="flex gap-2 mt-2"><span className="text-xs bg-green-600/30 rounded-full px-2 py-1">✓ Regular Pools</span><span className="text-xs bg-purple-600/30 rounded-full px-2 py-1">✓ City VIP</span><span className="text-xs bg-yellow-600/30 rounded-full px-2 py-1">✓ Merkato VIP</span></div>
+                    <h3 className="text-2xl font-bold">
+                      {language === 'am' ? `የ${cityInfo.name.split('|')[0]} ወኪል ይሁኑ` : `Become an Agent for ${cityInfo.name.split('|')[0]}`}
+                    </h3>
+                    <p className="text-gray-300">
+                      {language === 'am' ? 'በሚያመጧቸው ደንበኞች ሁሉ 10% ኮሚሽን ያግኙ!' : 'Earn 10% commission on every successful contribution!'}
+                    </p>
+                    <div className="flex gap-2 mt-2">
+                      <span className="text-xs bg-green-600/30 rounded-full px-2 py-1">✓ Regular Pools</span>
+                      <span className="text-xs bg-purple-600/30 rounded-full px-2 py-1">✓ City VIP</span>
+                      <span className="text-xs bg-yellow-600/30 rounded-full px-2 py-1">✓ Merkato VIP</span>
+                    </div>
                   </div>
                 </div>
-                <button onClick={() => setShowAgentApplication(true)} className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-xl font-semibold flex items-center gap-2">{language === 'am' ? 'እንደ ወኪል ያመልክቱ →' : 'Apply as Agent →'}</button>
+                <button onClick={() => setShowAgentApplication(true)} className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-xl font-semibold flex items-center gap-2">
+                  {language === 'am' ? 'እንደ ወኪል ያመልክቱ →' : 'Apply as Agent →'}
+                </button>
               </div>
               <div className="mt-6 pt-6 border-t border-gray-700 grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
                 <div><div className="text-2xl">💰</div><p className="font-semibold">{language === 'am' ? '10% ኮሚሽን' : '10% Commission'}</p></div>
@@ -731,10 +672,15 @@ export default function CityVip() {
             </div>
           </div>
         </div>
-        {renderSeatSelector()}
-        {renderPayment()}
-        {renderTicket()}
-        {showAgentApplication && <UnifiedAgentApplication onClose={() => setShowAgentApplication(false)} preSelectedCity={city} preSelectedProgram="city_vip" />}
+
+        {/* Agent Application Modal */}
+        {showAgentApplication && (
+          <UnifiedAgentApplication 
+            onClose={() => setShowAgentApplication(false)} 
+            preSelectedCity={cityInfo?.name?.split('|')[0] || city || 'Unknown City'} 
+            preSelectedProgram="city_vip" 
+          />
+        )}
       </>
     </NoSSR>
   );
