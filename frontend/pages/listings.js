@@ -22,7 +22,7 @@ export default function Listings() {
     category: 'all',
     sort: 'newest'
   });
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [viewMode, setViewMode] = useState('grid');
 
   useEffect(() => {
     const savedLang = localStorage.getItem('appLanguage');
@@ -109,7 +109,6 @@ export default function Listings() {
   const getFilteredPools = () => {
     let filtered = [...pools];
 
-    // Search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(pool =>
@@ -118,14 +117,12 @@ export default function Listings() {
       );
     }
 
-    // Category filter
     if (filters.category !== 'all') {
       filtered = filtered.filter(pool =>
         pool.category === filters.category
       );
     }
 
-    // Sort
     switch (filters.sort) {
       case 'newest':
         filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -150,8 +147,6 @@ export default function Listings() {
   };
 
   const filteredPools = getFilteredPools();
-
-  // Get unique categories for filter
   const categories = ['all', ...new Set(pools.map(p => p.category).filter(Boolean))];
 
   return (
@@ -175,10 +170,8 @@ export default function Listings() {
           toggleLanguage={toggleLanguage}
           show3D={is3D}
         >
-          {/* Controls Bar */}
           <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
             <div className="flex items-center gap-3">
-              {/* 3D Toggle */}
               <button
                 onClick={toggle3D}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
@@ -189,16 +182,12 @@ export default function Listings() {
               >
                 {is3D ? '🔄 3D ON' : '🔄 3D OFF'}
               </button>
-
-              {/* View Toggle */}
               <button
                 onClick={toggleView}
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-200 hover:bg-gray-300 text-gray-700 transition"
               >
                 {viewMode === 'grid' ? '📋 List View' : '📱 Grid View'}
               </button>
-
-              {/* Refresh Button */}
               <button
                 onClick={loadPools}
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-600 hover:bg-green-700 text-white transition"
@@ -207,7 +196,6 @@ export default function Listings() {
               </button>
             </div>
 
-            {/* Search */}
             <div className="flex-1 max-w-sm">
               <input
                 type="text"
@@ -219,7 +207,6 @@ export default function Listings() {
             </div>
           </div>
 
-          {/* Filter Bar */}
           <div className="flex flex-wrap items-center gap-3 mb-6">
             <span className="text-sm font-medium text-gray-600">
               {language === 'am' ? 'ምድብ:' : 'Category:'}
@@ -250,14 +237,12 @@ export default function Listings() {
               <option value="popular">{language === 'am' ? 'ታዋቂ' : 'Popular'}</option>
             </select>
 
-            {/* Results count */}
             <span className="text-sm text-gray-500 ml-auto">
               {filteredPools.length} {language === 'am' ? 'ፑሎች' : 'pools'}
               {searchTerm && ` (${language === 'am' ? 'ተገኘ' : 'found'})`}
             </span>
           </div>
 
-          {/* Main Content with 3D Effect */}
           <div 
             className="transition-all duration-500"
             style={{
@@ -304,7 +289,7 @@ export default function Listings() {
                     key={pool.id} 
                     pool={pool} 
                     featured={pool.is_featured === true} 
-                    language={language} // ✅ Pass language prop
+                    language={language}
                   />
                 ))}
               </div>
@@ -348,7 +333,6 @@ export default function Listings() {
             )}
           </div>
 
-          {/* Footer Stats */}
           <div className="mt-8 bg-white rounded-2xl shadow-md p-4 text-center">
             <p className="text-sm text-gray-500">
               {language === 'am' 
