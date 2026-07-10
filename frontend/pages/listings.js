@@ -1,4 +1,4 @@
-// pages/listings.js - REGULAR POOLS ONLY (No Merkato or City VIP)
+// pages/listings.js - COMPLETE WITH FIXED POOL LOADING
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import Link from 'next/link';
@@ -75,17 +75,33 @@ export default function Listings() {
   async function loadPools() {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      console.log('🔄 Loading pools...');
+      
+      // ✅ First, check if pools table exists and has data
+      const { data, error, count } = await supabase
         .from('pools')
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('status', 'active')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Pools query error:', error);
+        toast.error(language === 'am' ? 'ፑሎችን መጫን አልተቻለም' : 'Failed to load pools');
+        setPools([]);
+        setLoading(false);
+        return;
+      }
+
+      console.log(`✅ Loaded ${data?.length || 0} pools`);
       setPools(data || []);
+      
+      if (data?.length === 0) {
+        toast.info(language === 'am' ? 'ምንም ንቁ ፑሎች የሉም' : 'No active pools available');
+      }
     } catch (error) {
-      console.error('Error loading pools:', error);
+      console.error('❌ Error loading pools:', error);
       toast.error(language === 'am' ? 'ፑሎችን መጫን አልተቻለም' : 'Failed to load pools');
+      setPools([]);
     } finally {
       setLoading(false);
     }
@@ -182,6 +198,14 @@ export default function Listings() {
               >
                 {viewMode === 'grid' ? '📋 List View' : '📱 Grid View'}
               </button>
+
+              {/* Refresh Button */}
+              <button
+                onClick={loadPools}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-600 hover:bg-green-700 text-white transition"
+              >
+                🔄 Refresh
+              </button>
             </div>
 
             {/* Search */}
@@ -194,14 +218,6 @@ export default function Listings() {
                 className="w-full border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-green-500"
               />
             </div>
-
-            {/* Refresh */}
-            <button
-              onClick={loadPools}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-600 hover:bg-green-700 text-white transition"
-            >
-              🔄 Refresh
-            </button>
           </div>
 
           {/* Filter Bar */}
@@ -275,11 +291,18 @@ export default function Listings() {
                     {language === 'am' ? 'ፍለጋን አጽዳ' : 'Clear search'}
                   </button>
                 )}
+                {/* ✅ Add manual refresh option */}
+                <button
+                  onClick={loadPools}
+                  className="mt-4 ml-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition"
+                >
+                  🔄 {language === 'am' ? 'እንደገና ይሞክሩ' : 'Try Again'}
+                </button>
               </div>
             ) : viewMode === 'grid' ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {filteredPools.map((pool) => (
-                  <PoolCard key={pool.id} pool={pool} featured={pool.is_featured === true} />
+                  <PoolCard key={pool.id} pool={pool} featured={pool.is_featured === true} language={language} />
                 ))}
               </div>
             ) : (
