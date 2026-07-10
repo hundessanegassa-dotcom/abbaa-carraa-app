@@ -1,4 +1,4 @@
-// components/SeatSelector.js - COMPLETE WITH PROPER EXPORTS & FIXED SEAT AVAILABILITY
+// components/SeatSelector.js - COMPLETE WITH PROPER EXPORTS & NO COMMISSION DISPLAY
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -166,7 +166,7 @@ export default function SeatSelector({
     }
   }, [selectedSeats, entryFee, tier]);
 
-  // ✅ FIXED: Properly fetch booked seats
+  // Fetch booked seats - FIXED
   const fetchBookedSeats = async () => {
     try {
       let data;
@@ -209,7 +209,6 @@ export default function SeatSelector({
         }
       }
       
-      // ✅ FIX: Check if data exists and has seat_numbers
       const allBookedSeats = [];
       if (data && data.length > 0) {
         data.forEach(participant => {
@@ -219,7 +218,6 @@ export default function SeatSelector({
         });
       }
       
-      // ✅ Remove duplicates
       const uniqueBookedSeats = [...new Set(allBookedSeats)];
       
       if (isMounted.current) {
@@ -253,7 +251,6 @@ export default function SeatSelector({
         return;
       }
       
-      // For VIP programs, check reservations table
       const { data, error } = await supabase
         .from('vip_seat_reservations')
         .select('seat_number, expires_at')
@@ -315,7 +312,6 @@ export default function SeatSelector({
         }
       }
       
-      // Set timer to release seats after 10 minutes
       if (reservationTimer) clearTimeout(reservationTimer);
       const timer = setTimeout(() => {
         releaseUserReservations();
@@ -519,7 +515,6 @@ export default function SeatSelector({
               <button onClick={onClose || onCancel} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
             </div>
           </div>
-          {/* Row Navigator */}
           {rows > 10 && (
             <div className="flex overflow-x-auto gap-1 mt-3 pb-2">
               {Array.from({ length: Math.min(rows, 20) }).map((_, idx) => (
