@@ -1,4 +1,4 @@
-// pages/merkato-vip.js - FIXED LOGIN LOOP
+// pages/merkato-vip.js - COMPLETE WITH 4 TIERS & NO COMMISSION DISPLAY
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
@@ -51,15 +51,12 @@ export default function MerkatoVIP() {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
       
-      // ✅ Check if there's a tier in the URL (from login redirect)
       const { tier } = router.query;
       if (user && tier && TIERS[tier]) {
-        // User is logged in and there's a tier param - auto select
         setSelectedTierId(tier);
         setSelectedTier(TIERS[tier]);
         setShowTiers(false);
         setShowSeats(true);
-        // Clean up URL
         router.replace('/merkato-vip', undefined, { shallow: true });
       }
     } catch (error) {
@@ -83,8 +80,6 @@ export default function MerkatoVIP() {
     setShowTiers(false);
     setShowSeats(true);
   };
-
-  // ... rest of functions (handleSeatsSelected, compressImage, handlePaymentSubmit, etc.)
 
   const handleSeatsSelected = async ({ seats, totalAmount, seatCount, tier }) => {
     const tierConfig = TIERS[tier];
@@ -230,7 +225,6 @@ export default function MerkatoVIP() {
     router.push('/dashboard');
   };
 
-  // Tier Selection UI
   const renderTierSelection = () => {
     if (!TIERS) {
       return (
@@ -289,10 +283,7 @@ export default function MerkatoVIP() {
                   <span className="text-gray-500">{language === 'am' ? 'መቀመጫዎች' : 'Seats'}</span>
                   <span className="font-semibold">{tier.seats.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{language === 'am' ? 'ኮሚሽን' : 'Commission'}</span>
-                  <span className="text-orange-600 font-semibold">ETB {tier.commission.toLocaleString()}</span>
-                </div>
+                {/* ❌ Commission NOT displayed to public */}
                 
                 <button 
                   className="w-full mt-3 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold text-sm transition"
@@ -344,7 +335,6 @@ export default function MerkatoVIP() {
         </nav>
 
         <div className="min-h-screen bg-gray-100">
-          {/* Hero */}
           <div className="bg-gradient-to-r from-gray-800 via-gray-900 to-gray-800 text-white py-12 text-center mx-4 mt-4 rounded-2xl shadow-2xl">
             <div className="text-6xl mb-3">🏪</div>
             <h1 className="text-4xl md:text-5xl font-bold">Merkato VIP</h1>
@@ -360,7 +350,6 @@ export default function MerkatoVIP() {
             </p>
           </div>
 
-          {/* Tier Selection */}
           {showTiers && (
             <div className="container mx-auto px-4 py-8">
               <h2 className="text-2xl font-bold text-center mb-6">
@@ -375,7 +364,6 @@ export default function MerkatoVIP() {
             </div>
           )}
 
-          {/* Seat Selector */}
           {showSeats && selectedTier && (
             <SeatSelector
               isOpen={showSeats}
@@ -392,7 +380,6 @@ export default function MerkatoVIP() {
             />
           )}
 
-          {/* Payment */}
           {showPayment && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -465,7 +452,6 @@ export default function MerkatoVIP() {
             </div>
           )}
 
-          {/* Ticket */}
           {showTicket && participantData && (
             <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4 overflow-y-auto">
               <div className="bg-white rounded-2xl max-w-md w-full">
