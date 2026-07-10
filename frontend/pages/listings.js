@@ -1,4 +1,4 @@
-// pages/listings.js - COMPLETE WITH FIXED POOL LOADING
+// pages/listings.js - REGULAR POOLS ONLY (No Merkato or City VIP)
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import Link from 'next/link';
@@ -77,10 +77,9 @@ export default function Listings() {
     try {
       console.log('🔄 Loading pools...');
       
-      // ✅ First, check if pools table exists and has data
-      const { data, error, count } = await supabase
+      const { data, error } = await supabase
         .from('pools')
-        .select('*', { count: 'exact' })
+        .select('*')
         .eq('status', 'active')
         .order('created_at', { ascending: false });
 
@@ -291,7 +290,6 @@ export default function Listings() {
                     {language === 'am' ? 'ፍለጋን አጽዳ' : 'Clear search'}
                   </button>
                 )}
-                {/* ✅ Add manual refresh option */}
                 <button
                   onClick={loadPools}
                   className="mt-4 ml-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition"
@@ -302,7 +300,12 @@ export default function Listings() {
             ) : viewMode === 'grid' ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {filteredPools.map((pool) => (
-                  <PoolCard key={pool.id} pool={pool} featured={pool.is_featured === true} language={language} />
+                  <PoolCard 
+                    key={pool.id} 
+                    pool={pool} 
+                    featured={pool.is_featured === true} 
+                    language={language} // ✅ Pass language prop
+                  />
                 ))}
               </div>
             ) : (
