@@ -1,4 +1,4 @@
-// pages/index.js - Complete with 6 Tiers & Correct Seat Counts
+// pages/index.js - Complete with 6 Tiers & Telegram Integration
 // 100K: 1200 seats | 500K: 1200 seats | 1M: 2400 seats | 2M: 2400 seats | 5M: 2400 seats | 10M: 2400 seats
 import Head from 'next/head';
 import Link from 'next/link';
@@ -16,6 +16,9 @@ import toast from 'react-hot-toast';
 import { useUIMode } from '../hooks/useUIMode';
 import BankingStyleView from '../components/BankingStyleView';
 
+// ✅ Import Telegram hook
+import { useTelegram } from '../hooks/useTelegram';
+
 const MovingAd = dynamic(() => import('../components/MovingAd'), { ssr: false, loading: () => null });
 const Testimonials = dynamic(() => import('../components/Testimonials'), { ssr: false, loading: () => null });
 const NewsletterSubscribe = dynamic(() => import('../components/NewsletterSubscribe'), { ssr: false, loading: () => null });
@@ -30,6 +33,10 @@ export async function getServerSideProps() {
 export default function Home() {
   const router = useRouter();
   const { mode, toggleMode } = useUIMode();
+  
+  // ✅ Telegram integration
+  const { isInTelegram, user: telegramUser, showAlert, showConfirm } = useTelegram();
+  
   const [language, setLanguage] = useState('am');
   const [pools, setPools] = useState([]);
   const [featuredPools, setFeaturedPools] = useState([]);
@@ -57,6 +64,34 @@ export default function Home() {
   });
   const [activeView, setActiveView] = useState('app');
   const [showModeDrawer, setShowModeDrawer] = useState(false);
+
+  // ✅ Auto-login with Telegram
+  useEffect(() => {
+    if (isInTelegram && telegramUser) {
+      console.log('📱 Telegram user detected:', telegramUser);
+      
+      // Auto-login with Telegram user data
+      const initData = sessionStorage.getItem('telegram_init_data');
+      if (initData) {
+        fetch('/api/auth/telegram', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            initData, 
+            user: telegramUser 
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            console.log('✅ Telegram auto-login successful');
+            toast.success('Welcome via Telegram! 🎉');
+          }
+        })
+        .catch(err => console.error('Telegram auto-login error:', err));
+      }
+    }
+  }, [isInTelegram, telegramUser]);
 
   // Load language preference
   useEffect(() => {
@@ -592,6 +627,19 @@ export default function Home() {
           {/* MOVING MARQUEE */}
           <MovingMarquee />
 
+          {/* ✅ TELEGRAM HEADER BADGE */}
+          {isInTelegram && (
+            <div className="bg-blue-600 text-white px-4 py-1.5 text-center text-xs flex items-center justify-center gap-2 shadow-md">
+              <span>📱</span>
+              <span>Connected via Telegram</span>
+              {telegramUser && (
+                <span className="bg-blue-700 px-2 py-0.5 rounded-full text-[10px]">
+                  @{telegramUser.username || telegramUser.id}
+                </span>
+              )}
+            </div>
+          )}
+
           {/* TOP APP BAR - LIGHT GREEN BACKGROUNDS */}
           <header className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-100 px-3 md:px-4 py-2.5 md:py-3">
             <div className="flex items-center justify-between">
@@ -624,7 +672,10 @@ export default function Home() {
           {/* WELCOME SECTION */}
           <div className="px-3 md:px-4 py-3 md:py-4 bg-white border-b border-gray-100">
             <p className="text-xs md:text-sm text-gray-500">Welcome back,</p>
-            <p className="text-lg md:text-xl font-bold text-gray-800">Guest</p>
+            <p className="text-lg md:text-xl font-bold text-gray-800">
+              {telegramUser?.first_name || 'Guest'}
+              {isInTelegram && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">📱 Telegram</span>}
+            </p>
             <div className="flex flex-wrap gap-1.5 md:gap-2 mt-1.5 md:mt-2">
               <span className="bg-green-100 text-green-700 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full font-medium">⭐ {stats.total_pools} Active</span>
               <span className="bg-yellow-100 text-yellow-700 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full font-medium">🏆 {stats.total_winners} Winners</span>
