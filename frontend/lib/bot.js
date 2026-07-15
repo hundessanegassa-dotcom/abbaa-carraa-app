@@ -1,14 +1,19 @@
 // lib/bot.js - COMPLETE WORKING BOT WITH FULL LANGUAGE SUPPORT
-import { Telegraf } from 'telegraf';
 import { supabase } from './supabase';
+
+// Only import Telegraf if token exists
+let Telegraf;
+try {
+  const telegramModule = require('telegraf');
+  Telegraf = telegramModule.Telegraf;
+} catch (e) {
+  console.log('⚠️ Telegraf not installed, bot features disabled');
+}
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
-if (!BOT_TOKEN) {
-  console.warn('⚠️ TELEGRAM_BOT_TOKEN not set. Bot features will not work.');
-}
-
-export const bot = BOT_TOKEN ? new Telegraf(BOT_TOKEN) : null;
+// Only create bot if token exists and Telegraf is available
+export const bot = (BOT_TOKEN && Telegraf) ? new Telegraf(BOT_TOKEN) : null;
 
 // ============================================
 // COMPLETE TRANSLATIONS - ENGLISH
@@ -18,7 +23,7 @@ const TRANSLATIONS = {
     language_select: "🌐 *Choose Your Language*\n\nPlease select your preferred language:",
     language_set: "✅ Language set to English",
     welcome: {
-      title: (name) => `👋 *Welcome to Abbaa Carraa, ${name}!*`,
+      title: (name) => "👋 *Welcome to Abbaa Carraa, " + name + "!*",
       subtitle: "🏆 *Ethiopia's Premier Prize Platform*",
       prompt: "🎯 *What You Can Do:*\n\n🏪 Merkato VIP - Win Cash up to 10M ETB\n🏙️ City VIP - Win Cash in 94 Cities\n🏊 Regular Pools - Win Cars, Houses & More",
       action: "📱 *All actions happen inside the app!*\n\n🔽 *Press the button below to get started!*"
@@ -125,13 +130,13 @@ const TRANSLATIONS = {
   },
 
   // ============================================
-  // AMHARIC TRANSLATIONS
+  // AMHARIC TRANSLATIONS - COMPLETE
   // ============================================
   am: {
     language_select: "🌐 *ቋንቋዎን ይምረጡ*\n\nእባክዎ የሚመርጡትን ቋንቋ ይምረጡ:",
     language_set: "✅ ቋንቋ ወደ አማርኛ ተቀይሯል",
     welcome: {
-      title: (name) => `👋 *እንኳን ወደ Abbaa Carraa በደህና መጡ, ${name}!*`,
+      title: (name) => "👋 *እንኳን ወደ Abbaa Carraa በደህና መጡ, " + name + "!*",
       subtitle: "🏆 *የኢትዮጵያ ቀዳሚ የሽልማት መድረክ*",
       prompt: "🎯 *ምን ማድረግ ይፈልጋሉ:*\n\n🏪 መርካቶ ቪአይፒ - እስከ 10M ብር ያሸንፉ\n🏙️ ከተማ ቪአይፒ - በ94 ከተሞች ያሸንፉ\n🏊 መደበኛ የእጣ መደቦች - መኪና፣ ቤት እና ሌሎች",
       action: "📱 *ሁሉም ተግባራት በመተግበሪያው ውስጥ ይከናወናሉ!*\n\n🔽 *ለመጀመር ከታች ያለውን ቁልፍ ይጫኑ!*"
@@ -238,14 +243,14 @@ const TRANSLATIONS = {
   },
 
   // ============================================
-  // AFAN OROMO TRANSLATIONS
+  // AFAN OROMO TRANSLATIONS - COMPLETE
   // ============================================
   om: {
     language_select: "🌐 *Afaan Filadhu*\n\nMaaloo afaan barbaddaan filadha:",
     language_set: "✅ Afaan Afaan Oromootti jijjiirame",
     welcome: {
-      title: (name) => `👋 *Gara Abbaa Carraatti, ${name}! Baga nagaan dhufte!*`,
-      subtitle: "🏆 *Itoophiyaatti Dirree Badhaasaa Olaanaa *",
+      title: (name) => "👋 *Gara Abbaa Carraatti, " + name + "! Baga nagaan dhufte!*",
+      subtitle: "🏆 *Itoophiyaatti Dirree Badhaasaa Olaanaa*",
       prompt: "🎯 *Maal hirmaachu barbaaddu:*\n\n🏪 Merkato VIP - Maallaqa hanga miliyoona 10 ta'u argadha\n🏙️ VIP Magaalaa - Magaalaa 94 keessatti Maallaqa hanga miliyoona 10n mo'aadha\n🏊 carraa idilee - Konkoolataa, Mana, Mashinoota fi Elektirooniksii fkkf mo'aadha",
       action: "📱 *Gochaaleen hundi appii keessatti raawwatamu!*\n\n🔽 *geesituu armaan gadii cuqasuun eegala!*"
     },
@@ -308,7 +313,7 @@ const TRANSLATIONS = {
       title: "🎯 *Tarkaanfiiwwan Argaman*",
       subtitle: "Tarkaanfiiwwan armaan gadii keessaa filadhu:",
       merkato: "🏪 *Merkato VIP* - Maallaqa hanga miliyoona 10 ta'u mo'aadhu",
-      city: "🏙️ *VIP Magaalaa * - Magaalaa 94 keessatti Maallaqaan mo'aadhu",
+      city: "🏙️ *VIP Magaalaa* - Magaalaa 94 keessatti Maallaqaan mo'aadhu",
       regular: "🏊 *carraawwaan idilee* - Konkoolataa, Mana, Mashiniin & Elektirooniksii mo'aadhu",
       commission: "💰 *Komishinii %20* bakka buutotaa fi partinarootaaf",
       health: "💚 *2% Fayyaaf* Dhibamtoota Kalee fi Onnee gargaaruuf oola",
@@ -331,7 +336,7 @@ const TRANSLATIONS = {
       open_app: "🚀 Abbaa Carraa Bani",
       dashboard: "📊 Daashboorardii Koo",
       merkato: "🏪 Merkato VIP",
-      city: "🏙️ VIP Magaalaa ",
+      city: "🏙️ VIP Magaalaa",
       pools: "🏊 carraawwaan idilee",
       register: "📝 Galmaa'i",
       winners: "🏆 Mo'attoota",
@@ -343,7 +348,7 @@ const TRANSLATIONS = {
       get_started: "🚀 Eegali",
       live_chat: "💬 Marii sarara irraa",
       faq: "❓ FAQ",
-      hall_of_fame: "🏆Galma Guddoota ",
+      hall_of_fame: "🏆Galma Guddoota",
       how_it_works: "📖 Akkam Hojiirra Oola",
       support: "📞 Nu Qunnamuu",
       help: "ℹ️ Gargaarsa"
@@ -360,6 +365,43 @@ const VIP_TIERS = [
   { id: 'royal', icon: '👑', name_en: 'Royal', name_am: 'ንጉሣዊ', name_om: 'Royal', prize: '5M ETB', seats: 2400 },
   { id: 'emperor', icon: '🏆', name_en: 'Emperor', name_am: 'ንጉሠ ነገሥት', name_om: 'Emperor', prize: '10M ETB', seats: 2400 }
 ];
+
+// ============================================
+// GET USER LANGUAGE FUNCTION
+// ============================================
+async function getUserLanguage(userId) {
+  try {
+    const { data } = await supabase
+      .from('profiles')
+      .select('language')
+      .eq('telegram_id', userId)
+      .single();
+    
+    return data?.language || 'en';
+  } catch (error) {
+    return 'en';
+  }
+}
+
+// ============================================
+// BUILD MENU FUNCTION
+// ============================================
+function buildMainMenu(lang) {
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com';
+  
+  return {
+    inline_keyboard: [
+      [{ text: t.buttons.open_app, web_app: { url: appUrl } }],
+      [{ text: t.buttons.dashboard, web_app: { url: appUrl + '/dashboard' } }],
+      [{ text: t.buttons.merkato, web_app: { url: appUrl + '/merkato-vip' } }],
+      [{ text: t.buttons.city, web_app: { url: appUrl + '/cities' } }],
+      [{ text: t.buttons.pools, web_app: { url: appUrl + '/listings' } }],
+      [{ text: t.buttons.register, web_app: { url: appUrl + '/register' } }],
+      [{ text: t.buttons.winners, web_app: { url: appUrl + '/winners' } }]
+    ]
+  };
+}
 
 // ============================================
 // BOT COMMAND HANDLERS
@@ -397,49 +439,7 @@ export async function handleBotMessages() {
   });
 
   // ============================================
-  // GET USER LANGUAGE FUNCTION
-  // ============================================
-  async function getUserLanguage(userId) {
-    try {
-      const { data } = await supabase
-        .from('profiles')
-        .select('language')
-        .eq('telegram_id', userId)
-        .single();
-      
-      return data?.language || 'en';
-    } catch (error) {
-      return 'en';
-    }
-  }
-
-  // ============================================
-  // BUILD PROGRAMS MENU
-  // ============================================
-  function buildProgramsMenu(lang) {
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com';
-    
-    return {
-      inline_keyboard: [
-        [{ text: t.buttons.merkato, web_app: { url: `${appUrl}/merkato-vip` } }],
-        [{ text: t.buttons.city, web_app: { url: `${appUrl}/cities` } }],
-        [{ text: t.buttons.pools, web_app: { url: `${appUrl}/listings` } }],
-        [{ text: t.buttons.open_app, web_app: { url: appUrl } }],
-        [{ text: t.buttons.dashboard, web_app: { url: `${appUrl}/dashboard` } }],
-        [{ text: t.buttons.register, web_app: { url: `${appUrl}/register` } }],
-        [{ text: t.buttons.winners, web_app: { url: `${appUrl}/winners` } }],
-        [{ text: t.buttons.how_it_works, web_app: { url: `${appUrl}/how-it-works` } }],
-        [{ text: t.buttons.support, web_app: { url: `${appUrl}/contact` } }],
-        [{ text: t.buttons.language_english, callback_data: 'lang_en' }],
-        [{ text: t.buttons.language_amharic, callback_data: 'lang_am' }],
-        [{ text: t.buttons.language_oromo, callback_data: 'lang_om' }]
-      ]
-    };
-  }
-
-  // ============================================
-  // START COMMAND - LANGUAGE FIRST
+  // START COMMAND
   // ============================================
   bot.start(async (ctx) => {
     const user = ctx.from;
@@ -459,8 +459,8 @@ export async function handleBotMessages() {
           .insert({
             telegram_id: user.id,
             telegram_username: user.username,
-            full_name: `${user.first_name} ${user.last_name || ''}`.trim(),
-            email: `${user.username || user.id}@telegram.user`,
+            full_name: (user.first_name + ' ' + (user.last_name || '')).trim(),
+            email: (user.username || user.id) + '@telegram.user',
             language: 'en',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
@@ -477,9 +477,9 @@ export async function handleBotMessages() {
     // STEP 1: LANGUAGE SELECTION FIRST
     const langKeyboard = {
       inline_keyboard: [
-        [{ text: t.buttons.language_english, callback_data: 'lang_en' }],
-        [{ text: t.buttons.language_amharic, callback_data: 'lang_am' }],
-        [{ text: t.buttons.language_oromo, callback_data: 'lang_om' }]
+        [{ text: '🇬🇧 English', callback_data: 'lang_en' }],
+        [{ text: '🇪🇹 አማርኛ', callback_data: 'lang_am' }],
+        [{ text: '🌍 Afaan Oromo', callback_data: 'lang_om' }]
       ]
     };
 
@@ -490,19 +490,19 @@ export async function handleBotMessages() {
 
     // STEP 2: WELCOME WITH PROGRAMS
     const welcomeMessage = 
-      `${t.welcome.title(name)}\n\n` +
-      `${t.welcome.subtitle}\n\n` +
-      `${t.programs.title}\n\n` +
-      `${t.programs.merkato}\n` +
-      `${t.programs.city}\n` +
-      `${t.programs.regular}\n\n` +
-      `${t.programs.commission}\n` +
-      `${t.programs.health}\n\n` +
-      `${t.programs.action}`;
+      t.welcome.title(name) + '\n\n' +
+      t.welcome.subtitle + '\n\n' +
+      t.programs.title + '\n\n' +
+      t.programs.merkato + '\n' +
+      t.programs.city + '\n' +
+      t.programs.regular + '\n\n' +
+      t.programs.commission + '\n' +
+      t.programs.health + '\n\n' +
+      t.programs.action;
 
     await ctx.reply(welcomeMessage, {
       parse_mode: 'Markdown',
-      reply_markup: buildProgramsMenu(lang)
+      reply_markup: buildMainMenu(lang)
     });
   });
 
@@ -526,19 +526,19 @@ export async function handleBotMessages() {
       
       // Show welcome with programs in new language
       const welcomeMessage = 
-        `${t.welcome.title(name)}\n\n` +
-        `${t.welcome.subtitle}\n\n` +
-        `${t.programs.title}\n\n` +
-        `${t.programs.merkato}\n` +
-        `${t.programs.city}\n` +
-        `${t.programs.regular}\n\n` +
-        `${t.programs.commission}\n` +
-        `${t.programs.health}\n\n` +
-        `${t.programs.action}`;
+        t.welcome.title(name) + '\n\n' +
+        t.welcome.subtitle + '\n\n' +
+        t.programs.title + '\n\n' +
+        t.programs.merkato + '\n' +
+        t.programs.city + '\n' +
+        t.programs.regular + '\n\n' +
+        t.programs.commission + '\n' +
+        t.programs.health + '\n\n' +
+        t.programs.action;
 
       await ctx.reply(welcomeMessage, {
         parse_mode: 'Markdown',
-        reply_markup: buildProgramsMenu(lang)
+        reply_markup: buildMainMenu(lang)
       });
       
       await ctx.answerCbQuery();
@@ -549,47 +549,186 @@ export async function handleBotMessages() {
   });
 
   // ============================================
+  // HELP COMMAND
+  // ============================================
+  bot.help(async (ctx) => {
+    const lang = await getUserLanguage(ctx.from.id);
+    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+    
+    await ctx.reply(
+      t.help.title + '\n\n' +
+      t.help.subtitle + '\n' +
+      t.help.commands + '\n\n' +
+      t.help.footer,
+      { 
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: t.buttons.back_to_menu, callback_data: 'main_menu' }]
+          ]
+        }
+      }
+    );
+  });
+
+  // ============================================
   // PROGRAMS COMMAND
   // ============================================
   bot.command('programs', async (ctx) => {
     const lang = await getUserLanguage(ctx.from.id);
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    
+
     let tiersText = '';
-    VIP_TIERS.forEach(tier => {
-      const name = lang === 'am' ? tier.name_am : (lang === 'om' ? tier.name_om : tier.name_en);
-      tiersText += `${tier.icon} ${name}: ${tier.prize} - ${tier.seats.toLocaleString()} Seats\n`;
+    VIP_TIERS.forEach(function(tier) {
+      var name = '';
+      if (lang === 'am') {
+        name = tier.name_am;
+      } else if (lang === 'om') {
+        name = tier.name_om;
+      } else {
+        name = tier.name_en;
+      }
+      tiersText = tiersText + tier.icon + ' ' + name + ': ' + tier.prize + ' - ' + tier.seats.toLocaleString() + ' Seats\n';
     });
 
     const message = 
-      `${t.programs.title}\n\n` +
-      `${t.programs.merkato}\n` +
-      `${t.programs.city}\n` +
-      `${t.programs.regular}\n\n` +
-      `${t.vip_tiers.title}\n${tiersText}\n` +
-      `${t.programs.commission}\n` +
-      `${t.programs.health}\n\n` +
-      `${t.programs.action}`;
+      t.programs.title + '\n\n' +
+      t.programs.merkato + '\n' +
+      t.programs.city + '\n' +
+      t.programs.regular + '\n\n' +
+      t.vip_tiers.title + '\n' + tiersText + '\n' +
+      t.programs.commission + '\n' +
+      t.programs.health + '\n\n' +
+      t.programs.action;
 
     await ctx.reply(message, {
       parse_mode: 'Markdown',
-      reply_markup: buildProgramsMenu(lang)
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: t.buttons.merkato, web_app: { url: (process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com') + '/merkato-vip' } }],
+          [{ text: t.buttons.city, web_app: { url: (process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com') + '/cities' } }],
+          [{ text: t.buttons.pools, web_app: { url: (process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com') + '/listings' } }],
+          [{ text: t.buttons.back_to_menu, callback_data: 'main_menu' }]
+        ]
+      }
     });
   });
 
   // ============================================
-  // HELP COMMAND
+  // LANGUAGE COMMAND
   // ============================================
-  bot.command('help', async (ctx) => {
+  bot.command('language', async (ctx) => {
     const lang = await getUserLanguage(ctx.from.id);
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     
+    const langKeyboard = {
+      inline_keyboard: [
+        [{ text: t.buttons.language_english, callback_data: 'lang_en' }],
+        [{ text: t.buttons.language_amharic, callback_data: 'lang_am' }],
+        [{ text: t.buttons.language_oromo, callback_data: 'lang_om' }],
+        [{ text: t.buttons.back_to_menu, callback_data: 'main_menu' }]
+      ]
+    };
+
+    await ctx.reply(t.language_select, {
+      parse_mode: 'Markdown',
+      reply_markup: langKeyboard
+    });
+  });
+
+  // ============================================
+  // SUPPORT COMMAND
+  // ============================================
+  bot.command('support', async (ctx) => {
+    const lang = await getUserLanguage(ctx.from.id);
+    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com';
+    
     await ctx.reply(
-      `${t.help.title}\n\n${t.help.subtitle}\n${t.help.commands}\n\n${t.help.footer}`,
-      { 
+      t.support.title + '\n\n' +
+      t.support.subtitle + '\n\n' +
+      t.support.ways + '\n' +
+      t.support.email + '\n' +
+      t.support.phone + '\n\n' +
+      t.support.help,
+      {
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [
+            [{ text: t.buttons.live_chat, web_app: { url: appUrl + '/contact' } }],
+            [{ text: t.buttons.faq, web_app: { url: appUrl + '/faq' } }],
+            [{ text: t.buttons.back_to_menu, callback_data: 'main_menu' }]
+          ]
+        }
+      }
+    );
+  });
+
+  // ============================================
+  // WINNERS COMMAND
+  // ============================================
+  bot.command('winners', async (ctx) => {
+    const lang = await getUserLanguage(ctx.from.id);
+    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com';
+    
+    try {
+      const { data: winners } = await supabase
+        .from('pools')
+        .select('*')
+        .eq('status', 'completed')
+        .not('winner_id', 'is', null)
+        .order('updated_at', { ascending: false })
+        .limit(5);
+
+      let winnersText = '';
+      if (winners && winners.length > 0) {
+        winners.forEach(function(w, i) {
+          winnersText = winnersText + (i + 1) + '. 🏆 ' + (w.title || 'Prize') + '\n';
+          winnersText = winnersText + '   💰 ' + (w.prize_amount || 'N/A') + '\n\n';
+        });
+      } else {
+        winnersText = t.winners.no_winners;
+      }
+
+      await ctx.reply(
+        t.winners.title + '\n' + winnersText + '\n' + t.winners.footer,
+        {
+          parse_mode: 'Markdown',
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: t.buttons.hall_of_fame, web_app: { url: appUrl + '/winners' } }],
+              [{ text: t.buttons.back_to_menu, callback_data: 'main_menu' }]
+            ]
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Error fetching winners:', error);
+      await ctx.reply('⚠️ Failed to fetch winners. Please try again later.');
+    }
+  });
+
+  // ============================================
+  // HOW IT WORKS COMMAND
+  // ============================================
+  bot.command('howitworks', async (ctx) => {
+    const lang = await getUserLanguage(ctx.from.id);
+    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com';
+    
+    await ctx.reply(
+      t.how_it_works.title + '\n\n' +
+      t.how_it_works.step1 + '\n\n' +
+      t.how_it_works.step2 + '\n\n' +
+      t.how_it_works.step3 + '\n\n' +
+      t.how_it_works.health + '\n\n' +
+      t.how_it_works.footer,
+      {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: t.buttons.get_started, web_app: { url: appUrl } }],
             [{ text: t.buttons.back_to_menu, callback_data: 'main_menu' }]
           ]
         }
@@ -641,37 +780,51 @@ export async function handleBotMessages() {
           .limit(3)
       ]);
 
-      const allTickets = [
-        ...(merkatoTickets.data || []).map(t => ({ ...t, type: 'Merkato VIP' })),
-        ...(cityTickets.data || []).map(t => ({ ...t, type: 'City VIP' })),
-        ...(regularTickets.data || []).map(t => ({ ...t, type: 'Regular Pool' }))
-      ];
+      var allTickets = [];
+      
+      if (merkatoTickets.data) {
+        merkatoTickets.data.forEach(function(t) {
+          allTickets.push({ ...t, type: 'Merkato VIP' });
+        });
+      }
+      if (cityTickets.data) {
+        cityTickets.data.forEach(function(t) {
+          allTickets.push({ ...t, type: 'City VIP' });
+        });
+      }
+      if (regularTickets.data) {
+        regularTickets.data.forEach(function(t) {
+          allTickets.push({ ...t, type: 'Regular Pool' });
+        });
+      }
 
       if (allTickets.length === 0) {
         await ctx.reply(t.tickets.no_tickets, { parse_mode: 'Markdown' });
         return;
       }
 
-      let message = t.tickets.title;
-      allTickets.slice(0, 5).forEach((ticket, i) => {
-        const status = ticket.payment_status === 'verified' ? t.tickets.status_verified : t.tickets.status_pending;
-        message += `${i + 1}. 🏆 ${ticket.type}\n`;
-        message += `   💺 ${ticket.seat_numbers?.join(', ') || 'N/A'}\n`;
-        message += `   ${status}\n`;
-        message += `   #${ticket.ticket_number || 'N/A'}\n\n`;
+      var message = t.tickets.title;
+      var count = 0;
+      allTickets.slice(0, 5).forEach(function(ticket) {
+        var status = ticket.payment_status === 'verified' ? t.tickets.status_verified : t.tickets.status_pending;
+        message = message + (count + 1) + '. 🏆 ' + ticket.type + '\n';
+        message = message + '   💺 ' + (ticket.seat_numbers ? ticket.seat_numbers.join(', ') : 'N/A') + '\n';
+        message = message + '   ' + status + '\n';
+        message = message + '   #' + (ticket.ticket_number || 'N/A') + '\n\n';
+        count = count + 1;
       });
 
       if (allTickets.length > 5) {
-        message += `*And ${allTickets.length - 5} more...*\n\n`;
+        message = message + '*And ' + (allTickets.length - 5) + ' more...*\n\n';
       }
 
-      message += t.tickets.footer;
+      message = message + t.tickets.footer;
       
       await ctx.reply(message, {
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [
-            [{ text: t.buttons.dashboard, web_app: { url: `${appUrl}/dashboard` } }],
+            [{ text: t.buttons.dashboard, web_app: { url: appUrl + '/dashboard' } }],
             [{ text: t.buttons.back_to_menu, callback_data: 'main_menu' }]
           ]
         }
@@ -683,128 +836,6 @@ export async function handleBotMessages() {
   });
 
   // ============================================
-  // LANGUAGE COMMAND
-  // ============================================
-  bot.command('language', async (ctx) => {
-    const lang = await getUserLanguage(ctx.from.id);
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    
-    const langKeyboard = {
-      inline_keyboard: [
-        [{ text: t.buttons.language_english, callback_data: 'lang_en' }],
-        [{ text: t.buttons.language_amharic, callback_data: 'lang_am' }],
-        [{ text: t.buttons.language_oromo, callback_data: 'lang_om' }],
-        [{ text: t.buttons.back_to_menu, callback_data: 'main_menu' }]
-      ]
-    };
-
-    await ctx.reply(t.language_select, {
-      parse_mode: 'Markdown',
-      reply_markup: langKeyboard
-    });
-  });
-
-  // ============================================
-  // SUPPORT COMMAND
-  // ============================================
-  bot.command('support', async (ctx) => {
-    const lang = await getUserLanguage(ctx.from.id);
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com';
-    
-    await ctx.reply(
-      `${t.support.title}\n\n` +
-      `${t.support.subtitle}\n\n` +
-      `${t.support.ways}\n` +
-      `${t.support.email}\n` +
-      `${t.support.phone}\n\n` +
-      `${t.support.help}`,
-      {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: t.buttons.live_chat, web_app: { url: `${appUrl}/contact` } }],
-            [{ text: t.buttons.faq, web_app: { url: `${appUrl}/faq` } }],
-            [{ text: t.buttons.back_to_menu, callback_data: 'main_menu' }]
-          ]
-        }
-      }
-    );
-  });
-
-  // ============================================
-  // WINNERS COMMAND
-  // ============================================
-  bot.command('winners', async (ctx) => {
-    const lang = await getUserLanguage(ctx.from.id);
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com';
-    
-    try {
-      const { data: winners } = await supabase
-        .from('pools')
-        .select('*')
-        .eq('status', 'completed')
-        .not('winner_id', 'is', null)
-        .order('updated_at', { ascending: false })
-        .limit(5);
-
-      let winnersText = '';
-      if (winners && winners.length > 0) {
-        winners.forEach((w, i) => {
-          winnersText += `${i + 1}. 🏆 ${w.title || 'Prize'}\n`;
-          winnersText += `   💰 ${w.prize_amount || 'N/A'}\n\n`;
-        });
-      } else {
-        winnersText = t.winners.no_winners;
-      }
-
-      await ctx.reply(
-        `${t.winners.title}\n${winnersText}\n${t.winners.footer}`,
-        {
-          parse_mode: 'Markdown',
-          reply_markup: {
-            inline_keyboard: [
-              [{ text: t.buttons.hall_of_fame, web_app: { url: `${appUrl}/winners` } }],
-              [{ text: t.buttons.back_to_menu, callback_data: 'main_menu' }]
-            ]
-          }
-        }
-      );
-    } catch (error) {
-      console.error('Error fetching winners:', error);
-      await ctx.reply('⚠️ Failed to fetch winners. Please try again later.');
-    }
-  });
-
-  // ============================================
-  // HOW IT WORKS COMMAND
-  // ============================================
-  bot.command('howitworks', async (ctx) => {
-    const lang = await getUserLanguage(ctx.from.id);
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com';
-    
-    await ctx.reply(
-      `${t.how_it_works.title}\n\n` +
-      `${t.how_it_works.step1}\n\n` +
-      `${t.how_it_works.step2}\n\n` +
-      `${t.how_it_works.step3}\n\n` +
-      `${t.how_it_works.health}\n\n` +
-      `${t.how_it_works.footer}`,
-      {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: t.buttons.get_started, web_app: { url: appUrl } }],
-            [{ text: t.buttons.back_to_menu, callback_data: 'main_menu' }]
-          ]
-        }
-      }
-    );
-  });
-
-  // ============================================
   // MAIN MENU CALLBACK
   // ============================================
   bot.action('main_menu', async (ctx) => {
@@ -813,19 +844,19 @@ export async function handleBotMessages() {
     const name = ctx.from.first_name || 'User';
     
     const welcomeMessage = 
-      `${t.welcome.title(name)}\n\n` +
-      `${t.welcome.subtitle}\n\n` +
-      `${t.programs.title}\n\n` +
-      `${t.programs.merkato}\n` +
-      `${t.programs.city}\n` +
-      `${t.programs.regular}\n\n` +
-      `${t.programs.commission}\n` +
-      `${t.programs.health}\n\n` +
-      `${t.programs.action}`;
+      t.welcome.title(name) + '\n\n' +
+      t.welcome.subtitle + '\n\n' +
+      t.programs.title + '\n\n' +
+      t.programs.merkato + '\n' +
+      t.programs.city + '\n' +
+      t.programs.regular + '\n\n' +
+      t.programs.commission + '\n' +
+      t.programs.health + '\n\n' +
+      t.programs.action;
 
     await ctx.editMessageText(welcomeMessage, {
       parse_mode: 'Markdown',
-      reply_markup: buildProgramsMenu(lang)
+      reply_markup: buildMainMenu(lang)
     });
     await ctx.answerCbQuery();
   });
@@ -835,54 +866,53 @@ export async function handleBotMessages() {
   // ============================================
   bot.on('text', async (ctx) => {
     const text = ctx.message.text.toLowerCase();
-    const lang = await getUserLanguage(ctx.from.id);
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com';
     
     if (text.includes('hello') || text.includes('hi') || text.includes('ሰላም') || text.includes('salam')) {
       await ctx.reply(
-        `👋 Hello! Welcome to Abbaa Carraa.\n\n` +
-        `Type /start to begin or /help for assistance.`
+        '👋 Hello! Welcome to Abbaa Carraa.\n\n' +
+        'Type /start to begin or /help for assistance.'
       );
     } else if (text.includes('ticket') || text.includes('ቲኬት')) {
       await ctx.reply(
-        `🎫 *Tickets*\n\n` +
-        `Use /mytickets to view your tickets.\n` +
-        `Or visit the app: ${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/dashboard`,
+        '🎫 *Tickets*\n\n' +
+        'Use /mytickets to view your tickets.\n' +
+        'Or visit the app: ' + appUrl + '/dashboard',
         { parse_mode: 'Markdown' }
       );
     } else if (text.includes('program') || text.includes('ፕሮግራም') || text.includes('sagantaa')) {
       await ctx.reply(
-        `🎯 *Programs*\n\n` +
-        `Use /programs to see all available programs.\n` +
-        `Or visit the app: ${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}`,
+        '🎯 *Programs*\n\n' +
+        'Use /programs to see all available programs.\n' +
+        'Or visit the app: ' + appUrl,
         { parse_mode: 'Markdown' }
       );
-    } else if (text.includes('winner') || text.includes('አሸናፊ') || text.includes('mo'atta')) {
+    } else if (text.includes('winner') || text.includes('አሸናፊ') || text.includes('mo\'atta')) {
       await ctx.reply(
-        `🏆 *Winners*\n\n` +
-        `Use /winners to see recent winners.\n` +
-        `Or visit the app: ${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/winners`,
+        '🏆 *Winners*\n\n' +
+        'Use /winners to see recent winners.\n' +
+        'Or visit the app: ' + appUrl + '/winners',
         { parse_mode: 'Markdown' }
       );
     } else if (text.includes('how') || text.includes('እንዴት') || text.includes('akkam')) {
       await ctx.reply(
-        `📖 *How It Works*\n\n` +
-        `Use /howitworks to learn more.\n` +
-        `Or visit the app: ${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}`,
+        '📖 *How It Works*\n\n' +
+        'Use /howitworks to learn more.\n' +
+        'Or visit the app: ' + appUrl,
         { parse_mode: 'Markdown' }
       );
     } else {
       await ctx.reply(
-        `🤔 I didn't understand that.\n\n` +
-        `Try one of these commands:\n` +
-        `/start - Welcome message\n` +
-        `/help - Help information\n` +
-        `/mytickets - View your tickets\n` +
-        `/programs - View available programs\n` +
-        `/language - Change language\n` +
-        `/support - Contact support\n` +
-        `/winners - View recent winners\n` +
-        `/howitworks - How it works`,
+        '🤔 I didn\'t understand that.\n\n' +
+        'Try one of these commands:\n' +
+        '/start - Welcome message\n' +
+        '/help - Help information\n' +
+        '/mytickets - View your tickets\n' +
+        '/programs - View available programs\n' +
+        '/language - Change language\n' +
+        '/support - Contact support\n' +
+        '/winners - View recent winners\n' +
+        '/howitworks - How it works',
         { parse_mode: 'Markdown' }
       );
     }
