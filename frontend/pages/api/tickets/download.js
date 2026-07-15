@@ -1,4 +1,4 @@
-// pages/api/tickets/download.js - NEW
+// pages/api/tickets/download.js
 import { supabase } from '../../../lib/supabase';
 import { generateTicketImage } from '../../../lib/ticketGenerator';
 
@@ -59,10 +59,14 @@ export default async function handler(req, res) {
     }
 
     // Update download count
+    const tableName = programType === 'merkato' ? 'merkato_vip_participants' : 
+                      programType === 'city' ? 'city_vip_participants' : 
+                      'regular_pool_participants';
+
     await supabase
-      .from(`${programType}_vip_participants`)
+      .from(tableName)
       .update({
-        png_download_count: supabase.sql`png_download_count + 1`,
+        png_download_count: supabase.raw('png_download_count + 1'),
         last_download_at: new Date().toISOString()
       })
       .eq('ticket_number', ticketNumber);
@@ -76,7 +80,7 @@ export default async function handler(req, res) {
       ticketNumber: ticket.ticket_number,
       amount: ticket.contribution_amount,
       prize: ticket.prize_amount,
-      language: 'am'
+      isVerified: ticket.payment_status === 'verified'
     });
 
     const contentType = format === 'png' ? 'image/png' : 'image/jpeg';
