@@ -1,4 +1,4 @@
-// pages/_app.js - OPTIMIZED WITH PWA, SEO, PERFORMANCE (FIXED)
+// pages/_app.js - OPTIMIZED WITH PWA, SEO, PERFORMANCE & TELEGRAM INTEGRATION
 import '../styles/globals.css';
 import { useState, useEffect, useTransition } from 'react';
 import dynamic from 'next/dynamic';
@@ -11,6 +11,9 @@ import Head from 'next/head';
 import useMediaQuery from '../hooks/useMediaQuery';
 import LoadingScreen from '../components/LoadingScreen';
 import SEO from '../components/SEO';
+
+// ✅ Import Telegram Bot Client
+import TelegramBotClient from '../components/TelegramBotClient';
 
 // Dynamic imports with error boundaries and no SSR to prevent hydration issues
 const Navbar = dynamic(() => import('../components/Navbar').catch(() => () => <div className="h-16 bg-gray-100 animate-pulse" />), { 
@@ -40,8 +43,42 @@ function MyApp({ Component, pageProps }) {
   const [routerLoading, setRouterLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [showInitialLoading, setShowInitialLoading] = useState(true);
+  const [isTelegram, setIsTelegram] = useState(false);
+  const [telegramUser, setTelegramUser] = useState(null);
   const router = useRouter();
   const isMobile = useMediaQuery('(max-width: 768px)');
+
+  // ✅ Check if running inside Telegram
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Check for Telegram WebApp
+      if (window.Telegram?.WebApp) {
+        const webApp = window.Telegram.WebApp;
+        const user = webApp.initDataUnsafe?.user;
+        setIsTelegram(true);
+        if (user) {
+          setTelegramUser(user);
+          // Save to sessionStorage for other components
+          sessionStorage.setItem('telegram_user', JSON.stringify(user));
+          sessionStorage.setItem('telegram_init_data', webApp.initData);
+          sessionStorage.setItem('telegram_user_id', user.id);
+        }
+        // Expand the WebApp
+        webApp.expand();
+        console.log('📱 Running inside Telegram WebApp');
+      }
+      
+      // Check URL params for Telegram (fallback)
+      const urlParams = new URLSearchParams(window.location.search);
+      const tgStart = urlParams.get('startapp');
+      if (tgStart && tgStart.startsWith('telegram_')) {
+        const tgUserId = tgStart.replace('telegram_', '');
+        setIsTelegram(true);
+        sessionStorage.setItem('telegram_user_id', tgUserId);
+        console.log('📱 Telegram startapp param detected:', tgUserId);
+      }
+    }
+  }, []);
 
   // Register Service Worker for PWA
   useEffect(() => {
@@ -100,7 +137,6 @@ function MyApp({ Component, pageProps }) {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(function(registrations) {
         for(let registration of registrations) {
-          // Only unregister if it's not the latest version
           registration.unregister();
         }
       });
@@ -133,7 +169,7 @@ function MyApp({ Component, pageProps }) {
       '/cities': 'City VIP Programs',
       '/cities/seat': 'Select Seats - City VIP',
       '/payment/merkato': 'Payment - Merkato VIP',
-      // ✅ ADDED: Admin pages
+      // ✅ Admin pages
       '/admin/dashboard': 'Admin Dashboard',
       '/admin/analytics': 'Admin Analytics',
       '/admin/draw-winner': 'Draw Winner',
@@ -181,61 +217,76 @@ function MyApp({ Component, pageProps }) {
   // Use SEO component for better meta tags
   const seoTitle = title === 'Home' ? undefined : title;
 
+  // ✅ Wrap everything with TelegramBotClient
   return (
     <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={i18n}>
-        <>
-          <SEO title={seoTitle} />
-          <div className="min-h-screen flex flex-col bg-gray-50">
-            {!isAuthPage && (
-              <>
-                {isMobile ? <MobileHeader title={title} /> : <Navbar />}
-              </>
+        <TelegramBotClient>
+          <>
+            <SEO title={seoTitle} />
+            {/* ✅ Telegram Header Badge */}
+            {isTelegram && (
+              <div className="telegram-header bg-blue-600 text-white px-4 py-1.5 text-center text-xs flex items-center justify-center gap-2 shadow-md">
+                <span>📱</span>
+                <span>Connected via Telegram</span>
+                {telegramUser && (
+                  <span className="bg-blue-700 px-2 py-0.5 rounded-full text-[10px]">
+                    @{telegramUser.username || telegramUser.id}
+                  </span>
+                )}
+              </div>
             )}
-            <main className={`flex-grow ${isMobile && !isAuthPage ? 'pb-20' : ''}`}>
-              <Component {...pageProps} />
-            </main>
-            {!isAuthPage && (
-              <>
-                <Footer />
-                <LanguageToggle />
-                <ChatBot />
-                {isMobile && <MobileBottomNav />}
-              </>
-            )}
-            <Toaster 
-              position="top-right" 
-              toastOptions={{ 
-                duration: 4000,
-                style: {
-                  background: '#363636',
-                  color: '#fff',
-                  borderRadius: '12px',
-                },
-                success: {
-                  duration: 3000,
-                  iconTheme: {
-                    primary: '#10b981',
-                    secondary: '#fff',
-                  },
-                  style: {
-                    background: '#10b981',
-                  },
-                },
-                error: {
+            <div className="min-h-screen flex flex-col bg-gray-50">
+              {!isAuthPage && (
+                <>
+                  {isMobile ? <MobileHeader title={title} /> : <Navbar />}
+                </>
+              )}
+              <main className={`flex-grow ${isMobile && !isAuthPage ? 'pb-20' : ''}`}>
+                <Component {...pageProps} />
+              </main>
+              {!isAuthPage && (
+                <>
+                  <Footer />
+                  <LanguageToggle />
+                  <ChatBot />
+                  {isMobile && <MobileBottomNav />}
+                </>
+              )}
+              <Toaster 
+                position="top-right" 
+                toastOptions={{ 
                   duration: 4000,
-                  iconTheme: {
-                    primary: '#ef4444',
-                    secondary: '#fff',
-                  },
                   style: {
-                    background: '#ef4444',
+                    background: '#363636',
+                    color: '#fff',
+                    borderRadius: '12px',
                   },
-                },
-              }} 
-            />
-          </div>
-        </>
+                  success: {
+                    duration: 3000,
+                    iconTheme: {
+                      primary: '#10b981',
+                      secondary: '#fff',
+                    },
+                    style: {
+                      background: '#10b981',
+                    },
+                  },
+                  error: {
+                    duration: 4000,
+                    iconTheme: {
+                      primary: '#ef4444',
+                      secondary: '#fff',
+                    },
+                    style: {
+                      background: '#ef4444',
+                    },
+                  },
+                }} 
+              />
+            </div>
+          </>
+        </TelegramBotClient>
       </I18nextProvider>
     </QueryClientProvider>
   );
