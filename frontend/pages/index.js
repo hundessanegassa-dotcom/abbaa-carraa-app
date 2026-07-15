@@ -1,4 +1,5 @@
-// pages/index.js - Updated with Light Green Backgrounds & Green Borders
+// pages/index.js - Complete with 6 Tiers & Correct Seat Counts
+// 100K: 1200 seats | 500K: 1200 seats | 1M: 2400 seats | 2M: 2400 seats | 5M: 2400 seats | 10M: 2400 seats
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -71,112 +72,228 @@ export default function Home() {
     localStorage.setItem('appLanguage', newLang);
   };
 
-  // ALL 94 ETHIOPIAN CITIES - Complete list
+  // MERKATO VIP TIERS with Seat Counts & Premium Naming
+  // 100K: 1200 seats | 500K: 1200 seats | 1M: 2400 seats | 2M: 2400 seats | 5M: 2400 seats | 10M: 2400 seats
+  const merkatoVipTiers = [
+    { 
+      id: 'merkato-100k', 
+      name: '100K ETB', 
+      nameAm: 'መርካቶ 100K', 
+      displayName: 'Silver', 
+      displayNameAm: 'ብር', 
+      icon: '🥈', 
+      prize: '100K ETB', 
+      seats: 1200, 
+      tier: 1,
+      color: 'from-gray-400 to-gray-500',
+      badge: 'Silver'
+    },
+    { 
+      id: 'merkato-500k', 
+      name: '500K ETB', 
+      nameAm: 'መርካቶ 500K', 
+      displayName: 'Gold', 
+      displayNameAm: 'ወርቅ', 
+      icon: '🥇', 
+      prize: '500K ETB', 
+      seats: 1200, 
+      tier: 2,
+      color: 'from-yellow-400 to-yellow-600',
+      badge: 'Gold'
+    },
+    { 
+      id: 'merkato-1m', 
+      name: '1M ETB', 
+      nameAm: 'መርካቶ 1M', 
+      displayName: 'Platinum', 
+      displayNameAm: 'ፕላቲኒየም', 
+      icon: '💎', 
+      prize: '1M ETB', 
+      seats: 2400, 
+      tier: 3,
+      color: 'from-gray-300 to-blue-400',
+      badge: 'Platinum'
+    },
+    { 
+      id: 'merkato-2m', 
+      name: '2M ETB', 
+      nameAm: 'መርካቶ 2M', 
+      displayName: 'Diamond', 
+      displayNameAm: 'አልማዝ', 
+      icon: '💠', 
+      prize: '2M ETB', 
+      seats: 2400, 
+      tier: 4,
+      color: 'from-blue-400 to-cyan-400',
+      badge: 'Diamond'
+    },
+    { 
+      id: 'merkato-5m', 
+      name: '5M ETB', 
+      nameAm: 'መርካቶ 5M', 
+      displayName: 'Royal', 
+      displayNameAm: 'ንጉሣዊ', 
+      icon: '👑', 
+      prize: '5M ETB', 
+      seats: 2400, 
+      tier: 5,
+      color: 'from-purple-500 to-pink-500',
+      badge: 'Royal'
+    },
+    { 
+      id: 'merkato-10m', 
+      name: '10M ETB', 
+      nameAm: 'መርካቶ 10M', 
+      displayName: 'Emperor', 
+      displayNameAm: 'ንጉሠ ነገሥት', 
+      icon: '🏆', 
+      prize: '10M ETB', 
+      seats: 2400, 
+      tier: 6,
+      color: 'from-red-500 to-orange-600',
+      badge: 'Emperor'
+    }
+  ];
+
+  // ALL 94 ETHIOPIAN CITIES with Seat Counts & Premium Naming
+  // 100K: 1200 seats | 500K: 1200 seats | 1M+: 2400 seats
   const allCityVipPrograms = [
-    { id: 'addis-ababa', name: 'አዲስ አበባ', nameEn: 'Addis Ababa', region: 'Central', icon: '🏙️', prize: '40M ETB' },
-    { id: 'shaggar', name: 'ሸገር', nameEn: 'Shaggar City', region: 'Oromia', icon: '🏗️', prize: '40M ETB' },
-    { id: 'dire-dawa', name: 'ድሬ ዳዋ', nameEn: 'Dire Dawa', region: 'Dire Dawa', icon: '🚂', prize: '40M ETB' },
-    { id: 'mekelle', name: 'መቀሌ', nameEn: 'Mekelle', region: 'Tigray', icon: '🏭', prize: '40M ETB' },
-    { id: 'axum', name: 'አክሱም', nameEn: 'Axum', region: 'Tigray', icon: '🏛️', prize: '40M ETB' },
-    { id: 'adigrat', name: 'አዲግራት', nameEn: 'Adigrat', region: 'Tigray', icon: '🏔️', prize: '40M ETB' },
-    { id: 'shire', name: 'ሽሬ', nameEn: 'Shire', region: 'Tigray', icon: '🏔️', prize: '40M ETB' },
-    { id: 'mekoni', name: 'መቆኒ', nameEn: 'Mekoni', region: 'Tigray', icon: '🏔️', prize: '40M ETB' },
-    { id: 'maychew', name: 'ማይጨው', nameEn: 'Maychew', region: 'Tigray', icon: '🏔️', prize: '40M ETB' },
-    { id: 'abiy-addi', name: 'አቢይ አዲ', nameEn: 'Abiy Addi', region: 'Tigray', icon: '🏔️', prize: '40M ETB' },
-    { id: 'wukro', name: 'ውቅሮ', nameEn: 'Wukro', region: 'Tigray', icon: '🏔️', prize: '40M ETB' },
-    { id: 'gondar', name: 'ጎንደር', nameEn: 'Gondar', region: 'Amhara', icon: '🏰', prize: '40M ETB' },
-    { id: 'bahir-dar', name: 'ባህር ዳር', nameEn: 'Bahir Dar', region: 'Amhara', icon: '🏞️', prize: '40M ETB' },
-    { id: 'dessie', name: 'ደሴ', nameEn: 'Dessie', region: 'Amhara', icon: '🏔️', prize: '40M ETB' },
-    { id: 'debre-markos', name: 'ደብረ ማርቆስ', nameEn: 'Debre Markos', region: 'Amhara', icon: '⛪', prize: '40M ETB' },
-    { id: 'finote-selam', name: 'ፍኖተ ሰላም', nameEn: 'Finote Selam', region: 'Amhara', icon: '🌅', prize: '40M ETB' },
-    { id: 'woldia', name: 'ወልዲያ', nameEn: 'Woldia', region: 'Amhara', icon: '🎓', prize: '40M ETB' },
-    { id: 'debre-birhan', name: 'ደብረ ብርሃን', nameEn: 'Debre Birhan', region: 'Amhara', icon: '⭐', prize: '40M ETB' },
-    { id: 'kombolcha', name: 'ኮምቦልቻ', nameEn: 'Kombolcha', region: 'Amhara', icon: '🏭', prize: '40M ETB' },
-    { id: 'sekota', name: 'ሰቆጣ', nameEn: 'Sekota', region: 'Amhara', icon: '🏔️', prize: '40M ETB' },
-    { id: 'aykal', name: 'አይከል', nameEn: 'Aykal', region: 'Amhara', icon: '🏔️', prize: '40M ETB' },
-    { id: 'metema', name: 'ሜተማ', nameEn: 'Metema', region: 'Amhara', icon: '🛣️', prize: '40M ETB' },
-    { id: 'debre-tabor', name: 'ደብረ ታቦር', nameEn: 'Debre Tabor', region: 'Amhara', icon: '⛪', prize: '40M ETB' },
-    { id: 'bati', name: 'ባቲ', nameEn: 'Bati', region: 'Amhara', icon: '🏔️', prize: '40M ETB' },
-    { id: 'kemise', name: 'ቀሚሴ', nameEn: 'Kemise', region: 'Amhara', icon: '🏔️', prize: '40M ETB' },
-    { id: 'injibara', name: 'እንጅባራ', nameEn: 'Injibara', region: 'Amhara', icon: '🏔️', prize: '40M ETB' },
-    { id: 'lalibela', name: 'ላሊበላ', nameEn: 'Lalibela', region: 'Amhara', icon: '⛪', prize: '40M ETB' },
-    { id: 'adama', name: 'አዳማ', nameEn: 'Adama', region: 'Oromia', icon: '🏭', prize: '40M ETB' },
-    { id: 'jimma', name: 'ጅማ', nameEn: 'Jimma', region: 'Oromia', icon: '☕', prize: '40M ETB' },
-    { id: 'bishoftu', name: 'ቢሾፍቱ', nameEn: 'Bishoftu', region: 'Oromia', icon: '✈️', prize: '40M ETB' },
-    { id: 'asella', name: 'አሰላ', nameEn: 'Asella', region: 'Oromia', icon: '🏔️', prize: '40M ETB' },
-    { id: 'shashemene', name: 'ሻሸመኔ', nameEn: 'Shashemene', region: 'Oromia', icon: '🛍️', prize: '40M ETB' },
-    { id: 'robe', name: 'ሮቤ', nameEn: 'Robe', region: 'Oromia', icon: '🌄', prize: '40M ETB' },
-    { id: 'ginir', name: 'ጊኒር', nameEn: 'Ginir', region: 'Oromia', icon: '🏞️', prize: '40M ETB' },
-    { id: 'yabelo', name: 'ያቤሎ', nameEn: 'Yabelo', region: 'Oromia', icon: '🐪', prize: '40M ETB' },
-    { id: 'moyale', name: 'ሞያሌ', nameEn: 'Moyale', region: 'Oromia', icon: '🛣️', prize: '40M ETB' },
-    { id: 'chiro', name: 'ቺሮ', nameEn: 'Chiro', region: 'Oromia', icon: '🏔️', prize: '40M ETB' },
-    { id: 'fiche', name: 'ፊጬ', nameEn: 'Fiche', region: 'Oromia', icon: '🌾', prize: '40M ETB' },
-    { id: 'woliso', name: 'ወሊሶ', nameEn: 'Woliso', region: 'Oromia', icon: '💧', prize: '40M ETB' },
-    { id: 'ambo', name: 'አምቦ', nameEn: 'Ambo', region: 'Oromia', icon: '💧', prize: '40M ETB' },
-    { id: 'nekemte', name: 'ነቀምቴ', nameEn: 'Nekemte', region: 'Oromia', icon: '☕', prize: '40M ETB' },
-    { id: 'gimbi', name: 'ጊምቢ', nameEn: 'Gimbi', region: 'Oromia', icon: '🏔️', prize: '40M ETB' },
-    { id: 'dembi-dollo', name: 'ደምቢ ዶሎ', nameEn: 'Dembi Dollo', region: 'Oromia', icon: '💰', prize: '40M ETB' },
-    { id: 'shambu', name: 'ሻምቡ', nameEn: 'Shambu', region: 'Oromia', icon: '🌾', prize: '40M ETB' },
-    { id: 'metu', name: 'መቱ', nameEn: 'Metu', region: 'Oromia', icon: '🌿', prize: '40M ETB' },
-    { id: 'bedele', name: 'በደሌ', nameEn: 'Bedele', region: 'Oromia', icon: '🍺', prize: '40M ETB' },
-    { id: 'bule-hora', name: 'ቡሌ ሆራ', nameEn: 'Bule Hora', region: 'Oromia', icon: '🎓', prize: '40M ETB' },
-    { id: 'negele-borana', name: 'ነገሌ ቦረና', nameEn: 'Negele Borana', region: 'Oromia', icon: '🐪', prize: '40M ETB' },
-    { id: 'ziway', name: 'ዚዋይ', nameEn: 'Ziway', region: 'Oromia', icon: '🐟', prize: '40M ETB' },
-    { id: 'mojo', name: 'ሞጆ', nameEn: 'Mojo', region: 'Oromia', icon: '🚛', prize: '40M ETB' },
-    { id: 'dodola', name: 'ዶዶላ', nameEn: 'Dodola', region: 'Oromia', icon: '🏔️', prize: '40M ETB' },
-    { id: 'gera', name: 'ጌራ', nameEn: 'Gera', region: 'Oromia', icon: '☕', prize: '40M ETB' },
-    { id: 'agaro', name: 'አጋሮ', nameEn: 'Agaro', region: 'Oromia', icon: '☕', prize: '40M ETB' },
-    { id: 'lemu', name: 'ለሙ', nameEn: 'Lemu', region: 'Oromia', icon: '🌾', prize: '40M ETB' },
-    { id: 'hagere-mariam', name: 'ሀገረ ማርያም', nameEn: 'Hagere Mariam', region: 'Oromia', icon: '🏔️', prize: '40M ETB' },
-    { id: 'shakiso', name: 'ሻኪሶ', nameEn: 'Shakiso', region: 'Oromia', icon: '💰', prize: '40M ETB' },
-    { id: 'kibre-mengist', name: 'ቅብረ መንግስት', nameEn: 'Kibre Mengist', region: 'Oromia', icon: '🏔️', prize: '40M ETB' },
-    { id: 'wachile', name: 'ዋቺሌ', nameEn: 'Wachile', region: 'Oromia', icon: '🐪', prize: '40M ETB' },
-    { id: 'goba', name: 'ጎባ', nameEn: 'Goba', region: 'Oromia', icon: '🏔️', prize: '40M ETB' },
-    { id: 'sinana', name: 'ሲናና', nameEn: 'Sinana', region: 'Oromia', icon: '🌾', prize: '40M ETB' },
-    { id: 'dinsho', name: 'ዲንሾ', nameEn: 'Dinsho', region: 'Oromia', icon: '🏞️', prize: '40M ETB' },
-    { id: 'jijiga', name: 'ጅጅጋ', nameEn: 'Jijiga', region: 'Somali', icon: '🐪', prize: '40M ETB' },
-    { id: 'degehabur', name: 'ደገሃቡር', nameEn: 'Degehabur', region: 'Somali', icon: '🏔️', prize: '40M ETB' },
-    { id: 'kebri-dehar', name: 'ቀብሪ ደሃር', nameEn: 'Kebri Dehar', region: 'Somali', icon: '🏔️', prize: '40M ETB' },
-    { id: 'gode', name: 'ጎዴ', nameEn: 'Gode', region: 'Somali', icon: '🏔️', prize: '40M ETB' },
-    { id: 'warder', name: 'ዋርደር', nameEn: 'Warder', region: 'Somali', icon: '🐪', prize: '40M ETB' },
-    { id: 'shilabo', name: 'ሺላቦ', nameEn: 'Shilabo', region: 'Somali', icon: '🐪', prize: '40M ETB' },
-    { id: 'kelafo', name: 'ከላፎ', nameEn: 'Kelafo', region: 'Somali', icon: '🏔️', prize: '40M ETB' },
-    { id: 'mustahil', name: 'ሙስታሂል', nameEn: 'Mustahil', region: 'Somali', icon: '🏔️', prize: '40M ETB' },
-    { id: 'ferfer', name: 'ፌርፌር', nameEn: 'Ferfer', region: 'Somali', icon: '🛣️', prize: '40M ETB' },
-    { id: 'harar', name: 'ሀረር', nameEn: 'Harar', region: 'Harari', icon: '🏛️', prize: '40M ETB' },
-    { id: 'hawassa', name: 'ሀዋሳ', nameEn: 'Hawassa', region: 'Sidama', icon: '🏞️', prize: '40M ETB' },
-    { id: 'yirgalem', name: 'ይርጋለም', nameEn: 'Yirgalem', region: 'Sidama', icon: '☕', prize: '40M ETB' },
-    { id: 'awassa', name: 'አዋሳ', nameEn: 'Awassa', region: 'Sidama', icon: '🏞️', prize: '40M ETB' },
-    { id: 'arba-minch', name: 'አርባ ምንጭ', nameEn: 'Arba Minch', region: 'South', icon: '🏞️', prize: '40M ETB' },
-    { id: 'sodo', name: 'ሶዶ', nameEn: 'Sodo', region: 'South', icon: '🛍️', prize: '40M ETB' },
-    { id: 'dilla', name: 'ዲላ', nameEn: 'Dilla', region: 'South', icon: '☕', prize: '40M ETB' },
-    { id: 'sawla', name: 'ሳውላ', nameEn: 'Sawla', region: 'South', icon: '🏔️', prize: '40M ETB' },
-    { id: 'jinka', name: 'ጂንካ', nameEn: 'Jinka', region: 'South', icon: '🏔️', prize: '40M ETB' },
-    { id: 'konso', name: 'ኮንሶ', nameEn: 'Konso', region: 'South', icon: '🏔️', prize: '40M ETB' },
-    { id: 'karat', name: 'ካራት', nameEn: 'Karat', region: 'South', icon: '🏔️', prize: '40M ETB' },
-    { id: 'bonga', name: 'ቦንጋ', nameEn: 'Bonga', region: 'South', icon: '☕', prize: '40M ETB' },
-    { id: 'mizan-teferi', name: 'ሚዛን ተፈሪ', nameEn: 'Mizan Teferi', region: 'South', icon: '🏔️', prize: '40M ETB' },
-    { id: 'teppi', name: 'ቴፒ', nameEn: 'Teppi', region: 'South', icon: '🌿', prize: '40M ETB' },
-    { id: 'gereb', name: 'ገሬብ', nameEn: 'Gereb', region: 'South', icon: '🏔️', prize: '40M ETB' },
-    { id: 'key-afar', name: 'ቀይ አፋር', nameEn: 'Key Afar', region: 'South', icon: '🏔️', prize: '40M ETB' },
-    { id: 'bako', name: 'ባኮ', nameEn: 'Bako', region: 'South', icon: '🏔️', prize: '40M ETB' },
-    { id: 'welkite', name: 'ወልቂጤ', nameEn: 'Welkite', region: 'South', icon: '🏔️', prize: '40M ETB' },
-    { id: 'assosa', name: 'አሶሳ', nameEn: 'Assosa', region: 'Benishangul', icon: '🌿', prize: '40M ETB' },
-    { id: 'gilgel-beles', name: 'ግልገል በለስ', nameEn: 'Gilgel Beles', region: 'Benishangul', icon: '💧', prize: '40M ETB' },
-    { id: 'kamashi', name: 'ካማሺ', nameEn: 'Kamashi', region: 'Benishangul', icon: '🏔️', prize: '40M ETB' },
-    { id: 'metekel', name: 'ሜተከል', nameEn: 'Metekel', region: 'Benishangul', icon: '🏔️', prize: '40M ETB' },
-    { id: 'dibate', name: 'ዲባቴ', nameEn: 'Dibate', region: 'Benishangul', icon: '🏔️', prize: '40M ETB' },
-    { id: 'gambella', name: 'ጋምቤላ', nameEn: 'Gambella', region: 'Gambella', icon: '🏞️', prize: '40M ETB' },
-    { id: 'meti', name: 'ሜቲ', nameEn: 'Meti', region: 'Gambella', icon: '🏔️', prize: '40M ETB' },
-    { id: 'fugnido', name: 'ፉኝዶ', nameEn: 'Fugnido', region: 'Gambella', icon: '🏞️', prize: '40M ETB' },
-    { id: 'itur', name: 'ኢቱር', nameEn: 'Itur', region: 'Gambella', icon: '🏔️', prize: '40M ETB' },
-    { id: 'semera', name: 'ሰሜራ', nameEn: 'Semera', region: 'Afar', icon: '🐪', prize: '40M ETB' },
-    { id: 'asaita', name: 'አሳይታ', nameEn: 'Asaita', region: 'Afar', icon: '🏔️', prize: '40M ETB' },
-    { id: 'logiya', name: 'ሎጊያ', nameEn: 'Logiya', region: 'Afar', icon: '🛣️', prize: '40M ETB' },
-    { id: 'abila', name: 'አቢላ', nameEn: 'Abila', region: 'Afar', icon: '🐪', prize: '40M ETB' },
-    { id: 'dubti', name: 'ዱብቲ', nameEn: 'Dubti', region: 'Afar', icon: '🏔️', prize: '40M ETB' },
-    { id: 'elidar', name: 'ኤልዳር', nameEn: 'Elidar', region: 'Afar', icon: '🏔️', prize: '40M ETB' },
-    { id: 'chifra', name: 'ቺፍራ', nameEn: 'Chifra', region: 'Afar', icon: '🏔️', prize: '40M ETB' }
+    // Tier 1: Silver - 100K ETB - 1200 seats each
+    { id: 'addis-ababa', name: 'አዲስ አበባ', nameEn: 'Addis Ababa', region: 'Central', icon: '🏙️', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'shaggar', name: 'ሸገር', nameEn: 'Shaggar City', region: 'Oromia', icon: '🏗️', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'dire-dawa', name: 'ድሬ ዳዋ', nameEn: 'Dire Dawa', region: 'Dire Dawa', icon: '🚂', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'mekelle', name: 'መቀሌ', nameEn: 'Mekelle', region: 'Tigray', icon: '🏭', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'axum', name: 'አክሱም', nameEn: 'Axum', region: 'Tigray', icon: '🏛️', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'adigrat', name: 'አዲግራት', nameEn: 'Adigrat', region: 'Tigray', icon: '🏔️', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'shire', name: 'ሽሬ', nameEn: 'Shire', region: 'Tigray', icon: '🏔️', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'mekoni', name: 'መቆኒ', nameEn: 'Mekoni', region: 'Tigray', icon: '🏔️', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'maychew', name: 'ማይጨው', nameEn: 'Maychew', region: 'Tigray', icon: '🏔️', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'abiy-addi', name: 'አቢይ አዲ', nameEn: 'Abiy Addi', region: 'Tigray', icon: '🏔️', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'wukro', name: 'ውቅሮ', nameEn: 'Wukro', region: 'Tigray', icon: '🏔️', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'gondar', name: 'ጎንደር', nameEn: 'Gondar', region: 'Amhara', icon: '🏰', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'bahir-dar', name: 'ባህር ዳር', nameEn: 'Bahir Dar', region: 'Amhara', icon: '🏞️', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'dessie', name: 'ደሴ', nameEn: 'Dessie', region: 'Amhara', icon: '🏔️', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'debre-markos', name: 'ደብረ ማርቆስ', nameEn: 'Debre Markos', region: 'Amhara', icon: '⛪', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'finote-selam', name: 'ፍኖተ ሰላም', nameEn: 'Finote Selam', region: 'Amhara', icon: '🌅', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'woldia', name: 'ወልዲያ', nameEn: 'Woldia', region: 'Amhara', icon: '🎓', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'debre-birhan', name: 'ደብረ ብርሃን', nameEn: 'Debre Birhan', region: 'Amhara', icon: '⭐', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'kombolcha', name: 'ኮምቦልቻ', nameEn: 'Kombolcha', region: 'Amhara', icon: '🏭', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'sekota', name: 'ሰቆጣ', nameEn: 'Sekota', region: 'Amhara', icon: '🏔️', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'aykal', name: 'አይከል', nameEn: 'Aykal', region: 'Amhara', icon: '🏔️', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'metema', name: 'ሜተማ', nameEn: 'Metema', region: 'Amhara', icon: '🛣️', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'debre-tabor', name: 'ደብረ ታቦር', nameEn: 'Debre Tabor', region: 'Amhara', icon: '⛪', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'bati', name: 'ባቲ', nameEn: 'Bati', region: 'Amhara', icon: '🏔️', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'kemise', name: 'ቀሚሴ', nameEn: 'Kemise', region: 'Amhara', icon: '🏔️', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'injibara', name: 'እንጅባራ', nameEn: 'Injibara', region: 'Amhara', icon: '🏔️', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    { id: 'lalibela', name: 'ላሊበላ', nameEn: 'Lalibela', region: 'Amhara', icon: '⛪', prize: '100K ETB', seats: 1200, tier: 1, badge: 'Silver' },
+    
+    // Tier 2: Gold - 500K ETB - 1200 seats each
+    { id: 'adama', name: 'አዳማ', nameEn: 'Adama', region: 'Oromia', icon: '🏭', prize: '500K ETB', seats: 1200, tier: 2, badge: 'Gold' },
+    { id: 'jimma', name: 'ጅማ', nameEn: 'Jimma', region: 'Oromia', icon: '☕', prize: '500K ETB', seats: 1200, tier: 2, badge: 'Gold' },
+    { id: 'bishoftu', name: 'ቢሾፍቱ', nameEn: 'Bishoftu', region: 'Oromia', icon: '✈️', prize: '500K ETB', seats: 1200, tier: 2, badge: 'Gold' },
+    { id: 'asella', name: 'አሰላ', nameEn: 'Asella', region: 'Oromia', icon: '🏔️', prize: '500K ETB', seats: 1200, tier: 2, badge: 'Gold' },
+    { id: 'shashemene', name: 'ሻሸመኔ', nameEn: 'Shashemene', region: 'Oromia', icon: '🛍️', prize: '500K ETB', seats: 1200, tier: 2, badge: 'Gold' },
+    { id: 'robe', name: 'ሮቤ', nameEn: 'Robe', region: 'Oromia', icon: '🌄', prize: '500K ETB', seats: 1200, tier: 2, badge: 'Gold' },
+    { id: 'ginir', name: 'ጊኒር', nameEn: 'Ginir', region: 'Oromia', icon: '🏞️', prize: '500K ETB', seats: 1200, tier: 2, badge: 'Gold' },
+    { id: 'yabelo', name: 'ያቤሎ', nameEn: 'Yabelo', region: 'Oromia', icon: '🐪', prize: '500K ETB', seats: 1200, tier: 2, badge: 'Gold' },
+    { id: 'moyale', name: 'ሞያሌ', nameEn: 'Moyale', region: 'Oromia', icon: '🛣️', prize: '500K ETB', seats: 1200, tier: 2, badge: 'Gold' },
+    { id: 'chiro', name: 'ቺሮ', nameEn: 'Chiro', region: 'Oromia', icon: '🏔️', prize: '500K ETB', seats: 1200, tier: 2, badge: 'Gold' },
+    { id: 'fiche', name: 'ፊጬ', nameEn: 'Fiche', region: 'Oromia', icon: '🌾', prize: '500K ETB', seats: 1200, tier: 2, badge: 'Gold' },
+    { id: 'woliso', name: 'ወሊሶ', nameEn: 'Woliso', region: 'Oromia', icon: '💧', prize: '500K ETB', seats: 1200, tier: 2, badge: 'Gold' },
+    { id: 'ambo', name: 'አምቦ', nameEn: 'Ambo', region: 'Oromia', icon: '💧', prize: '500K ETB', seats: 1200, tier: 2, badge: 'Gold' },
+    { id: 'nekemte', name: 'ነቀምቴ', nameEn: 'Nekemte', region: 'Oromia', icon: '☕', prize: '500K ETB', seats: 1200, tier: 2, badge: 'Gold' },
+    { id: 'gimbi', name: 'ጊምቢ', nameEn: 'Gimbi', region: 'Oromia', icon: '🏔️', prize: '500K ETB', seats: 1200, tier: 2, badge: 'Gold' },
+    { id: 'dembi-dollo', name: 'ደምቢ ዶሎ', nameEn: 'Dembi Dollo', region: 'Oromia', icon: '💰', prize: '500K ETB', seats: 1200, tier: 2, badge: 'Gold' },
+    { id: 'shambu', name: 'ሻምቡ', nameEn: 'Shambu', region: 'Oromia', icon: '🌾', prize: '500K ETB', seats: 1200, tier: 2, badge: 'Gold' },
+    { id: 'metu', name: 'መቱ', nameEn: 'Metu', region: 'Oromia', icon: '🌿', prize: '500K ETB', seats: 1200, tier: 2, badge: 'Gold' },
+    { id: 'bedele', name: 'በደሌ', nameEn: 'Bedele', region: 'Oromia', icon: '🍺', prize: '500K ETB', seats: 1200, tier: 2, badge: 'Gold' },
+    { id: 'bule-hora', name: 'ቡሌ ሆራ', nameEn: 'Bule Hora', region: 'Oromia', icon: '🎓', prize: '500K ETB', seats: 1200, tier: 2, badge: 'Gold' },
+    
+    // Tier 3: Platinum - 1M ETB - 2400 seats each
+    { id: 'negele-borana', name: 'ነገሌ ቦረና', nameEn: 'Negele Borana', region: 'Oromia', icon: '🐪', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'ziway', name: 'ዚዋይ', nameEn: 'Ziway', region: 'Oromia', icon: '🐟', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'mojo', name: 'ሞጆ', nameEn: 'Mojo', region: 'Oromia', icon: '🚛', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'dodola', name: 'ዶዶላ', nameEn: 'Dodola', region: 'Oromia', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'gera', name: 'ጌራ', nameEn: 'Gera', region: 'Oromia', icon: '☕', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'agaro', name: 'አጋሮ', nameEn: 'Agaro', region: 'Oromia', icon: '☕', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'lemu', name: 'ለሙ', nameEn: 'Lemu', region: 'Oromia', icon: '🌾', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'hagere-mariam', name: 'ሀገረ ማርያም', nameEn: 'Hagere Mariam', region: 'Oromia', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'shakiso', name: 'ሻኪሶ', nameEn: 'Shakiso', region: 'Oromia', icon: '💰', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'kibre-mengist', name: 'ቅብረ መንግስት', nameEn: 'Kibre Mengist', region: 'Oromia', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'wachile', name: 'ዋቺሌ', nameEn: 'Wachile', region: 'Oromia', icon: '🐪', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'goba', name: 'ጎባ', nameEn: 'Goba', region: 'Oromia', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'sinana', name: 'ሲናና', nameEn: 'Sinana', region: 'Oromia', icon: '🌾', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'dinsho', name: 'ዲንሾ', nameEn: 'Dinsho', region: 'Oromia', icon: '🏞️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'jijiga', name: 'ጅጅጋ', nameEn: 'Jijiga', region: 'Somali', icon: '🐪', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'degehabur', name: 'ደገሃቡር', nameEn: 'Degehabur', region: 'Somali', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'kebri-dehar', name: 'ቀብሪ ደሃር', nameEn: 'Kebri Dehar', region: 'Somali', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'gode', name: 'ጎዴ', nameEn: 'Gode', region: 'Somali', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'warder', name: 'ዋርደር', nameEn: 'Warder', region: 'Somali', icon: '🐪', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'shilabo', name: 'ሺላቦ', nameEn: 'Shilabo', region: 'Somali', icon: '🐪', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'kelafo', name: 'ከላፎ', nameEn: 'Kelafo', region: 'Somali', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'mustahil', name: 'ሙስታሂል', nameEn: 'Mustahil', region: 'Somali', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'ferfer', name: 'ፌርፌር', nameEn: 'Ferfer', region: 'Somali', icon: '🛣️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'harar', name: 'ሀረር', nameEn: 'Harar', region: 'Harari', icon: '🏛️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'hawassa', name: 'ሀዋሳ', nameEn: 'Hawassa', region: 'Sidama', icon: '🏞️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'yirgalem', name: 'ይርጋለም', nameEn: 'Yirgalem', region: 'Sidama', icon: '☕', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'awassa', name: 'አዋሳ', nameEn: 'Awassa', region: 'Sidama', icon: '🏞️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'arba-minch', name: 'አርባ ምንጭ', nameEn: 'Arba Minch', region: 'South', icon: '🏞️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'sodo', name: 'ሶዶ', nameEn: 'Sodo', region: 'South', icon: '🛍️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'dilla', name: 'ዲላ', nameEn: 'Dilla', region: 'South', icon: '☕', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'sawla', name: 'ሳውላ', nameEn: 'Sawla', region: 'South', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'jinka', name: 'ጂንካ', nameEn: 'Jinka', region: 'South', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'konso', name: 'ኮንሶ', nameEn: 'Konso', region: 'South', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'karat', name: 'ካራት', nameEn: 'Karat', region: 'South', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'bonga', name: 'ቦንጋ', nameEn: 'Bonga', region: 'South', icon: '☕', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'mizan-teferi', name: 'ሚዛን ተፈሪ', nameEn: 'Mizan Teferi', region: 'South', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'teppi', name: 'ቴፒ', nameEn: 'Teppi', region: 'South', icon: '🌿', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'gereb', name: 'ገሬብ', nameEn: 'Gereb', region: 'South', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'key-afar', name: 'ቀይ አፋር', nameEn: 'Key Afar', region: 'South', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'bako', name: 'ባኮ', nameEn: 'Bako', region: 'South', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'welkite', name: 'ወልቂጤ', nameEn: 'Welkite', region: 'South', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'assosa', name: 'አሶሳ', nameEn: 'Assosa', region: 'Benishangul', icon: '🌿', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'gilgel-beles', name: 'ግልገል በለስ', nameEn: 'Gilgel Beles', region: 'Benishangul', icon: '💧', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'kamashi', name: 'ካማሺ', nameEn: 'Kamashi', region: 'Benishangul', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'metekel', name: 'ሜተከል', nameEn: 'Metekel', region: 'Benishangul', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'dibate', name: 'ዲባቴ', nameEn: 'Dibate', region: 'Benishangul', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'gambella', name: 'ጋምቤላ', nameEn: 'Gambella', region: 'Gambella', icon: '🏞️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'meti', name: 'ሜቲ', nameEn: 'Meti', region: 'Gambella', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'fugnido', name: 'ፉኝዶ', nameEn: 'Fugnido', region: 'Gambella', icon: '🏞️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'itur', name: 'ኢቱር', nameEn: 'Itur', region: 'Gambella', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'semera', name: 'ሰሜራ', nameEn: 'Semera', region: 'Afar', icon: '🐪', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'asaita', name: 'አሳይታ', nameEn: 'Asaita', region: 'Afar', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'logiya', name: 'ሎጊያ', nameEn: 'Logiya', region: 'Afar', icon: '🛣️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'abila', name: 'አቢላ', nameEn: 'Abila', region: 'Afar', icon: '🐪', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'dubti', name: 'ዱብቲ', nameEn: 'Dubti', region: 'Afar', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'elidar', name: 'ኤልዳር', nameEn: 'Elidar', region: 'Afar', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    { id: 'chifra', name: 'ቺፍራ', nameEn: 'Chifra', region: 'Afar', icon: '🏔️', prize: '1M ETB', seats: 2400, tier: 3, badge: 'Platinum' },
+    
+    // Tier 4: Diamond - 2M ETB - 2400 seats each
+    { id: 'bahir-dar-2m', name: 'ባህር ዳር 2M', nameEn: 'Bahir Dar 2M', region: 'Amhara', icon: '💠', prize: '2M ETB', seats: 2400, tier: 4, badge: 'Diamond' },
+    { id: 'gondar-2m', name: 'ጎንደር 2M', nameEn: 'Gondar 2M', region: 'Amhara', icon: '💠', prize: '2M ETB', seats: 2400, tier: 4, badge: 'Diamond' },
+    { id: 'dessie-2m', name: 'ደሴ 2M', nameEn: 'Dessie 2M', region: 'Amhara', icon: '💠', prize: '2M ETB', seats: 2400, tier: 4, badge: 'Diamond' },
+    { id: 'adama-2m', name: 'አዳማ 2M', nameEn: 'Adama 2M', region: 'Oromia', icon: '💠', prize: '2M ETB', seats: 2400, tier: 4, badge: 'Diamond' },
+    { id: 'jimma-2m', name: 'ጅማ 2M', nameEn: 'Jimma 2M', region: 'Oromia', icon: '💠', prize: '2M ETB', seats: 2400, tier: 4, badge: 'Diamond' },
+    { id: 'hawassa-2m', name: 'ሀዋሳ 2M', nameEn: 'Hawassa 2M', region: 'Sidama', icon: '💠', prize: '2M ETB', seats: 2400, tier: 4, badge: 'Diamond' },
+    { id: 'mekelle-2m', name: 'መቀሌ 2M', nameEn: 'Mekelle 2M', region: 'Tigray', icon: '💠', prize: '2M ETB', seats: 2400, tier: 4, badge: 'Diamond' },
+    { id: 'dire-dawa-2m', name: 'ድሬ ዳዋ 2M', nameEn: 'Dire Dawa 2M', region: 'Dire Dawa', icon: '💠', prize: '2M ETB', seats: 2400, tier: 4, badge: 'Diamond' },
+    { id: 'harar-2m', name: 'ሀረር 2M', nameEn: 'Harar 2M', region: 'Harari', icon: '💠', prize: '2M ETB', seats: 2400, tier: 4, badge: 'Diamond' },
+    
+    // Tier 5: Royal - 5M ETB - 2400 seats each
+    { id: 'addis-ababa-5m', name: 'አዲስ አበባ 5M', nameEn: 'Addis Ababa 5M', region: 'Central', icon: '👑', prize: '5M ETB', seats: 2400, tier: 5, badge: 'Royal' },
+    { id: 'shaggar-5m', name: 'ሸገር 5M', nameEn: 'Shaggar 5M', region: 'Oromia', icon: '👑', prize: '5M ETB', seats: 2400, tier: 5, badge: 'Royal' },
+    { id: 'bahir-dar-5m', name: 'ባህር ዳር 5M', nameEn: 'Bahir Dar 5M', region: 'Amhara', icon: '👑', prize: '5M ETB', seats: 2400, tier: 5, badge: 'Royal' },
+    { id: 'gondar-5m', name: 'ጎንደር 5M', nameEn: 'Gondar 5M', region: 'Amhara', icon: '👑', prize: '5M ETB', seats: 2400, tier: 5, badge: 'Royal' },
+    { id: 'hawassa-5m', name: 'ሀዋሳ 5M', nameEn: 'Hawassa 5M', region: 'Sidama', icon: '👑', prize: '5M ETB', seats: 2400, tier: 5, badge: 'Royal' },
+    { id: 'mekelle-5m', name: 'መቀሌ 5M', nameEn: 'Mekelle 5M', region: 'Tigray', icon: '👑', prize: '5M ETB', seats: 2400, tier: 5, badge: 'Royal' },
+    { id: 'dire-dawa-5m', name: 'ድሬ ዳዋ 5M', nameEn: 'Dire Dawa 5M', region: 'Dire Dawa', icon: '👑', prize: '5M ETB', seats: 2400, tier: 5, badge: 'Royal' },
+    { id: 'adama-5m', name: 'አዳማ 5M', nameEn: 'Adama 5M', region: 'Oromia', icon: '👑', prize: '5M ETB', seats: 2400, tier: 5, badge: 'Royal' },
+    
+    // Tier 6: Emperor - 10M ETB - 2400 seats each
+    { id: 'addis-ababa-10m', name: 'አዲስ አበባ 10M', nameEn: 'Addis Ababa 10M', region: 'Central', icon: '🏆', prize: '10M ETB', seats: 2400, tier: 6, badge: 'Emperor' },
+    { id: 'shaggar-10m', name: 'ሸገር 10M', nameEn: 'Shaggar 10M', region: 'Oromia', icon: '🏆', prize: '10M ETB', seats: 2400, tier: 6, badge: 'Emperor' },
+    { id: 'bahir-dar-10m', name: 'ባህር ዳር 10M', nameEn: 'Bahir Dar 10M', region: 'Amhara', icon: '🏆', prize: '10M ETB', seats: 2400, tier: 6, badge: 'Emperor' },
+    { id: 'hawassa-10m', name: 'ሀዋሳ 10M', nameEn: 'Hawassa 10M', region: 'Sidama', icon: '🏆', prize: '10M ETB', seats: 2400, tier: 6, badge: 'Emperor' }
   ];
 
   const uniqueCities = allCityVipPrograms.filter((city, index, self) => 
@@ -348,7 +465,7 @@ export default function Home() {
 
   // ========== MOVING MARQUEE ==========
   const MovingMarquee = () => {
-    const marqueeText = `🏆 በAbbaa Carraa ወርቃማ እድልን ያሸንፉ! • 🏪 መርካቶ ቪአይፒ: እስከ 10M ብር ጥሬ ገንዘብ ያሸንፉ • 🏙️ ከተማ ቪአይፒ: በ94 ከተሞች ጥሬ ገንዘብ ያሸንፉ • 🏊 መደበኛ የእጣ መደቦች: መኪና፣ ቤት፣ ማሽነሪ እና ኤሌክትሮኒክስ ያሸንፉ • 💚 2% ለጤና ይውላል • ይቀላቀሉ እና ዛሬ ማሸነፍ ይጀምሩ! 🎯 || 🏆 WIN BIG WITH ABBAA CARRAA • 🏪 Merkato VIP: Win Cash up to 10M ETB • 🏙️ City VIP: Win Cash in 94 Cities • 🏊 Regular Pools: Win Cars, Houses, Machinery & Electronics • 💚 2% Supports Health • Join & Start Winning Today! 🎯`;
+    const marqueeText = `🏆 በAbbaa Carraa ወርቃማ እድልን ያሸንፉ! • 🥈 Silver: 100K ETB (1200 Seats) • 🥇 Gold: 500K ETB (1200 Seats) • 💎 Platinum: 1M ETB (2400 Seats) • 💠 Diamond: 2M ETB (2400 Seats) • 👑 Royal: 5M ETB (2400 Seats) • 🏆 Emperor: 10M ETB (2400 Seats) • 🏪 Merkato VIP & 🏙️ City VIP Available! • 💚 2% Supports Health • Join & Start Winning Today! 🎯`;
 
     return (
       <div className="w-full overflow-hidden bg-gradient-to-r from-green-600 to-teal-600 py-2.5 md:py-3 shadow-inner">
@@ -461,7 +578,7 @@ export default function Home() {
     );
   }
 
-  // ========== APP MODE - UPDATED WITH LIGHT GREEN BACKGROUNDS ==========
+  // ========== APP MODE ==========
   if (activeView === 'app') {
     return (
       <>
@@ -472,10 +589,10 @@ export default function Home() {
         </Head>
 
         <div className="min-h-screen bg-gray-50 pb-20">
-          {/* === MOVING MARQUEE === */}
+          {/* MOVING MARQUEE */}
           <MovingMarquee />
 
-          {/* === TOP APP BAR - LIGHT GREEN BACKGROUNDS === */}
+          {/* TOP APP BAR - LIGHT GREEN BACKGROUNDS */}
           <header className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-100 px-3 md:px-4 py-2.5 md:py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 md:gap-2">
@@ -483,21 +600,15 @@ export default function Home() {
                 <span className="font-bold text-sm md:text-lg text-gray-800">Abbaa Carraa</span>
               </div>
               <div className="flex items-center gap-1.5 md:gap-2">
-                {/* View Button - Light Green */}
                 <button className="hidden sm:block text-[10px] md:text-xs bg-green-100 text-green-700 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full hover:bg-green-200 transition font-medium">
                   👁️ View
                 </button>
-                
-                {/* Login - Light Green */}
                 <Link href="/login" className="text-[10px] md:text-xs bg-green-100 text-green-700 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full hover:bg-green-200 transition font-medium">
                   Login
                 </Link>
-                
-                {/* Register - Light Green */}
                 <button onClick={() => setShowRegisterModal(true)} className="text-[10px] md:text-xs bg-green-100 text-green-700 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full hover:bg-green-200 transition font-medium">
                   Register
                 </button>
-                
                 <button className="relative p-1">
                   <span className="text-lg md:text-xl">🔔</span>
                   <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 md:w-4 md:h-4 bg-red-500 text-white text-[7px] md:text-[9px] rounded-full flex items-center justify-center">3</span>
@@ -505,14 +616,12 @@ export default function Home() {
                 <Link href="/profile" className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-gradient-to-r from-green-500 to-teal-500 flex items-center justify-center text-white font-bold text-xs md:text-sm">
                   U
                 </Link>
-
-                {/* ModeDrawer moved here for better alignment */}
                 <ModeDrawer />
               </div>
             </div>
           </header>
 
-          {/* === WELCOME SECTION === */}
+          {/* WELCOME SECTION */}
           <div className="px-3 md:px-4 py-3 md:py-4 bg-white border-b border-gray-100">
             <p className="text-xs md:text-sm text-gray-500">Welcome back,</p>
             <p className="text-lg md:text-xl font-bold text-gray-800">Guest</p>
@@ -523,52 +632,32 @@ export default function Home() {
             </div>
           </div>
 
-          {/* === QUICK STATS - WITH GREEN BORDERS === */}
-          <div className="grid grid-cols-3 gap-2 md:gap-3 px-3 md:px-4 py-3 md:py-4">
-            <div className="bg-white rounded-xl shadow-sm p-2.5 md:p-3 text-center border-2 border-green-500">
-              <div className="text-xl md:text-2xl mb-0.5 md:mb-1">💰</div>
-              <div className="font-bold text-sm md:text-base text-gray-800">{counterInView ? <CountUp start={0} end={Math.floor(stats.total_raised / 1000)} duration={2} separator="," /> : '0'}K+</div>
-              <div className="text-[8px] md:text-[10px] text-gray-400 font-medium">Total Raised</div>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm p-2.5 md:p-3 text-center border-2 border-green-500">
-              <div className="text-xl md:text-2xl mb-0.5 md:mb-1">🎯</div>
-              <div className="font-bold text-sm md:text-base text-gray-800">{stats.total_pools}</div>
-              <div className="text-[8px] md:text-[10px] text-gray-400 font-medium">Active Pools</div>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm p-2.5 md:p-3 text-center border-2 border-green-500">
-              <div className="text-xl md:text-2xl mb-0.5 md:mb-1">🏆</div>
-              <div className="font-bold text-sm md:text-base text-gray-800">{stats.total_winners}</div>
-              <div className="text-[8px] md:text-[10px] text-gray-400 font-medium">Winners</div>
-            </div>
-          </div>
+          {/* COUNTERS REMOVED */}
 
-          {/* === CATEGORIES SECTION - ALL GREEN BORDERS === */}
+          {/* CATEGORIES SECTION - ALL GREEN BORDERS */}
           <div className="px-3 md:px-4 py-2">
             <h2 className="text-[10px] md:text-sm font-bold text-gray-500 uppercase tracking-wider mb-2 md:mb-3">
               {language === 'am' ? 'ምድቦች' : 'Categories'}
             </h2>
             <div className="grid grid-cols-4 gap-2 md:gap-4">
-              {/* Regular Pools - GREEN BORDER */}
               <Link href="/listings" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border-2 border-green-500 hover:shadow-md transition">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">🏊</span>
                 <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">Regular Pools</span>
                 <span className="text-[6px] md:text-[8px] text-gray-400 mt-0.5">Cars • Houses</span>
               </Link>
 
-              {/* Merkato VIP - GREEN BORDER */}
               <Link href="/merkato-vip" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border-2 border-green-500 hover:shadow-md transition">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">🏪</span>
                 <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">Merkato VIP</span>
-                <span className="text-[6px] md:text-[8px] text-gray-400 mt-0.5">Cash up to 10M</span>
+                <span className="text-[6px] md:text-[8px] text-gray-400 mt-0.5">6 Tiers • Cash</span>
               </Link>
 
-              {/* City VIP - GREEN BORDER */}
               <button onClick={() => setShowCityDropdown(!showCityDropdown)} className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border-2 border-green-500 hover:shadow-md transition relative">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">🏙️</span>
                 <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">City VIP</span>
-                <span className="text-[6px] md:text-[8px] text-gray-400 mt-0.5">94 Cities • Cash</span>
+                <span className="text-[6px] md:text-[8px] text-gray-400 mt-0.5">6 Tiers • Cash</span>
                 {showCityDropdown && (
-                  <div className="absolute bottom-full left-0 mb-2 w-56 md:w-64 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
+                  <div className="absolute bottom-full left-0 mb-2 w-64 md:w-72 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
                     <div className="p-2 md:p-3 bg-gray-50 border-b">
                       <input type="text" placeholder="🔍 Search city..." value={citySearchTerm} onChange={(e) => setCitySearchTerm(e.target.value)} className="w-full px-2 md:px-3 py-1.5 md:py-2 border rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-green-500" autoFocus />
                     </div>
@@ -579,40 +668,43 @@ export default function Home() {
                             <span className="text-base md:text-lg">{city.icon}</span>
                             <span className="text-xs md:text-sm font-medium text-gray-800">{city.name}</span>
                             <span className="text-[8px] md:text-xs text-gray-400">{city.nameEn}</span>
+                            <span className="ml-auto text-[8px] md:text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold">{city.badge}</span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[8px] md:text-[10px] text-gray-500">{city.prize}</span>
+                            <span className="text-[8px] md:text-[10px] text-green-600">• {city.seats} Seats</span>
                           </div>
                         </Link>
                       ))}
+                    </div>
+                    <div className="p-2 text-center text-[8px] md:text-[10px] text-gray-400 bg-gray-50 border-t">
+                      {uniqueCities.length}+ Cities • 6 Premium Tiers • Up to 10M ETB
                     </div>
                   </div>
                 )}
               </button>
 
-              {/* Winners - GREEN BORDER */}
               <Link href="/winners" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border-2 border-green-500 hover:shadow-md transition">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">🏆</span>
                 <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">Winners</span>
                 <span className="text-[6px] md:text-[8px] text-gray-400 mt-0.5">Hall of Fame</span>
               </Link>
 
-              {/* How It Works - GREEN BORDER */}
               <Link href="/how-it-works" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border-2 border-green-500 hover:shadow-md transition">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">📖</span>
                 <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">How It Works</span>
               </Link>
 
-              {/* About - GREEN BORDER */}
               <Link href="/about" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border-2 border-green-500 hover:shadow-md transition">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">ℹ️</span>
                 <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">About</span>
               </Link>
 
-              {/* Contact - GREEN BORDER */}
               <Link href="/contact" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border-2 border-green-500 hover:shadow-md transition">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">📞</span>
                 <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">Contact</span>
               </Link>
 
-              {/* Register - GREEN BACKGROUND (kept as is) */}
               <button onClick={() => setShowRegisterModal(true)} className="flex flex-col items-center bg-gradient-to-r from-green-500 to-teal-500 rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 text-white hover:shadow-md transition">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">📝</span>
                 <span className="text-[9px] md:text-xs font-bold text-center leading-tight">Register</span>
@@ -620,7 +712,24 @@ export default function Home() {
             </div>
           </div>
 
-          {/* === FEATURED POOLS === */}
+          {/* VIP TIERS QUICK VIEW - GREEN BORDER CARDS */}
+          <div className="px-3 md:px-4 py-2">
+            <h2 className="text-[10px] md:text-sm font-bold text-gray-500 uppercase tracking-wider mb-2 md:mb-3">
+              {language === 'am' ? 'የVIP ደረጃዎች' : 'VIP Tiers'}
+            </h2>
+            <div className="grid grid-cols-3 gap-2 md:gap-3">
+              {merkatoVipTiers.map((tier) => (
+                <Link key={tier.id} href="/merkato-vip" className={`bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-3 border-2 border-green-500 hover:shadow-md transition text-center`}>
+                  <div className="text-2xl md:text-3xl">{tier.icon}</div>
+                  <div className="text-[8px] md:text-[10px] font-bold text-gray-800">{tier.displayName}</div>
+                  <div className="text-[7px] md:text-[9px] text-green-600 font-semibold">{tier.prize}</div>
+                  <div className="text-[6px] md:text-[8px] text-gray-400">{tier.seats} Seats</div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* FEATURED POOLS */}
           {featuredPools.length > 0 && (
             <div className="px-3 md:px-4 py-3 md:py-4">
               <div className="flex justify-between items-center mb-2 md:mb-3">
@@ -637,7 +746,7 @@ export default function Home() {
             </div>
           )}
 
-          {/* === REGULAR POOLS === */}
+          {/* REGULAR POOLS */}
           <div className="px-3 md:px-4 py-3 md:py-4">
             <div className="flex justify-between items-center mb-2 md:mb-3">
               <h2 className="text-[10px] md:text-sm font-bold text-gray-500 uppercase tracking-wider">🏊 Regular Pools</h2>
@@ -661,7 +770,7 @@ export default function Home() {
             )}
           </div>
 
-          {/* === CHARITY BANNER === */}
+          {/* CHARITY BANNER */}
           <div className="mx-3 md:mx-4 p-3 md:p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl md:rounded-2xl border border-red-100 mb-3 md:mb-4">
             <div className="flex items-center gap-2 md:gap-3">
               <span className="text-2xl md:text-3xl">💚</span>
@@ -672,7 +781,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* === BOTTOM NAVIGATION === */}
+          {/* BOTTOM NAVIGATION */}
           <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center py-1.5 md:py-2 px-2 md:px-4 z-40 shadow-lg">
             <Link href="/" className="flex flex-col items-center text-green-600">
               <span className="text-xl md:text-2xl">🏠</span>
@@ -734,18 +843,34 @@ export default function Home() {
                     </svg>
                   </button>
                   {programsDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-64 bg-gray-800 rounded-xl shadow-2xl border border-gray-700 z-50 overflow-hidden">
-                      <button onClick={() => scrollToSection('merkato-vip')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3">
-                        <span className="text-xl">🏪</span><div><div className="font-medium">Merkato VIP</div><div className="text-xs text-gray-400">Win Cash up to 10M ETB</div></div>
+                    <div className="absolute top-full left-0 mt-2 w-72 bg-gray-800 rounded-xl shadow-2xl border border-gray-700 z-50 overflow-hidden">
+                      <Link href="/merkato-vip" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-b border-gray-700">
+                        <span className="text-xl">🏪</span>
+                        <div>
+                          <div className="font-medium">Merkato VIP</div>
+                          <div className="text-xs text-gray-400">6 Tiers • Up to 10M ETB</div>
+                        </div>
+                      </Link>
+                      <Link href="/city-vip" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-b border-gray-700">
+                        <span className="text-xl">🏙️</span>
+                        <div>
+                          <div className="font-medium">City VIP</div>
+                          <div className="text-xs text-gray-400">94 Cities • 6 Tiers</div>
+                        </div>
+                      </Link>
+                      <button onClick={() => scrollToSection('regular-pools')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-b border-gray-700">
+                        <span className="text-xl">🏊</span>
+                        <div>
+                          <div className="font-medium">Regular Pools</div>
+                          <div className="text-xs text-gray-400">Cars, Houses & More</div>
+                        </div>
                       </button>
-                      <button onClick={() => scrollToSection('city-vip')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-t border-gray-700">
-                        <span className="text-xl">🏙️</span><div><div className="font-medium">City VIP</div><div className="text-xs text-gray-400">Win Cash in 94 Cities</div></div>
-                      </button>
-                      <button onClick={() => scrollToSection('regular-pools')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-t border-gray-700">
-                        <span className="text-xl">🏊</span><div><div className="font-medium">Regular Pools</div><div className="text-xs text-gray-400">Cars, Houses & More</div></div>
-                      </button>
-                      <Link href="/dashboard" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-t border-gray-700">
-                        <span className="text-xl">📊</span><div><div className="font-medium">Dashboard</div><div className="text-xs text-gray-400">Track your tickets</div></div>
+                      <Link href="/dashboard" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3">
+                        <span className="text-xl">📊</span>
+                        <div>
+                          <div className="font-medium">Dashboard</div>
+                          <div className="text-xs text-gray-400">Track your tickets</div>
+                        </div>
                       </Link>
                     </div>
                   )}
@@ -772,12 +897,12 @@ export default function Home() {
                   <button onClick={() => { setShowRegisterModal(true); setMobileMenuOpen(false); }} className="flex-1 text-center px-3 py-2 bg-green-600 text-white rounded-lg text-xs">📝 Register</button>
                   <button className="flex-1 text-center px-3 py-2 bg-green-600 text-white rounded-lg text-xs">👁️ View</button>
                 </div>
-                <button onClick={() => scrollToSection('merkato-vip')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
-                  <span className="text-xl">🏪</span><div><div>Merkato VIP</div><div className="text-xs text-gray-400">Cash up to 10M</div></div>
-                </button>
-                <button onClick={() => scrollToSection('city-vip')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
-                  <span className="text-xl">🏙️</span><div><div>City VIP</div><div className="text-xs text-gray-400">94 Cities • Cash</div></div>
-                </button>
+                <Link href="/merkato-vip" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
+                  <span className="text-xl">🏪</span><div><div>Merkato VIP</div><div className="text-xs text-gray-400">6 Tiers • Up to 10M</div></div>
+                </Link>
+                <Link href="/city-vip" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
+                  <span className="text-xl">🏙️</span><div><div>City VIP</div><div className="text-xs text-gray-400">94 Cities • 6 Tiers</div></div>
+                </Link>
                 <button onClick={() => scrollToSection('regular-pools')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
                   <span className="text-xl">🏊</span><div><div>Regular Pools</div><div className="text-xs text-gray-400">Cars, Houses & More</div></div>
                 </button>
@@ -817,12 +942,12 @@ export default function Home() {
               <span className="text-green-700 font-medium">2% supports kidney & heart disease patients</span>
             </div>
             <div className="flex flex-wrap justify-center gap-4 mt-8">
-              <button onClick={() => scrollToSection('merkato-vip')} className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2">
+              <Link href="/merkato-vip" className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2">
                 <span>🏪</span> Join Merkato VIP <span>→</span>
-              </button>
-              <button onClick={() => scrollToSection('city-vip')} className="bg-gradient-to-r from-gray-700 to-gray-900 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2">
+              </Link>
+              <Link href="/city-vip" className="bg-gradient-to-r from-gray-700 to-gray-900 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2">
                 <span>🏙️</span> Join City VIP <span>→</span>
-              </button>
+              </Link>
               <button onClick={() => scrollToSection('regular-pools')} className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2">
                 <span>🏊</span> Join Regular Pools <span>→</span>
               </button>
@@ -853,9 +978,21 @@ export default function Home() {
           <h2 className="text-3xl font-bold text-center mb-4">Available Opportunities</h2>
           <p className="text-center text-gray-500 mb-8">Choose from VIP programs or regular pools</p>
 
+          {/* VIP TIERS QUICK REFERENCE */}
+          <div className="mb-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {merkatoVipTiers.map((tier) => (
+              <div key={tier.id} className={`bg-gradient-to-r ${tier.color} rounded-xl p-3 text-center text-white shadow-lg`}>
+                <div className="text-2xl">{tier.icon}</div>
+                <div className="text-xs font-bold uppercase">{tier.displayName}</div>
+                <div className="text-xs font-semibold">{tier.prize}</div>
+                <div className="text-[10px] opacity-80">{tier.seats} Seats</div>
+              </div>
+            ))}
+          </div>
+
           {/* Merkato VIP */}
           <div id="merkato-vip" className="mb-12 scroll-mt-20">
-            <div onClick={() => router.push('/merkato-vip')} className="relative bg-gradient-to-r from-yellow-500 via-orange-500 to-red-600 rounded-2xl p-6 md:p-8 text-white transform hover:scale-105 transition-all duration-500 shadow-2xl overflow-hidden group cursor-pointer">
+            <Link href="/merkato-vip" className="block relative bg-gradient-to-r from-yellow-500 via-orange-500 to-red-600 rounded-2xl p-6 md:p-8 text-white transform hover:scale-105 transition-all duration-500 shadow-2xl overflow-hidden group cursor-pointer">
               <div className="absolute inset-0 opacity-20">
                 <div className="absolute -top-10 -left-10 text-8xl animate-bounce">🏪</div>
                 <div className="absolute -bottom-10 -right-10 text-8xl animate-pulse">💰</div>
@@ -866,14 +1003,16 @@ export default function Home() {
                     <div className="text-5xl md:text-6xl animate-bounce">🏪</div>
                     <div>
                       <div className="font-bold text-2xl md:text-3xl">መርካቶ VIP</div>
-                      <div className="text-xs md:text-sm opacity-90">Win Cash up to 10M ETB</div>
+                      <div className="text-xs md:text-sm opacity-90">6 Premium Tiers • Win Cash up to 10M ETB</div>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <div className="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-xs md:text-sm font-bold shadow-lg">⭐ 100K ETB</div>
-                    <div className="bg-purple-500 text-white px-3 py-1 rounded-full text-xs md:text-sm font-bold shadow-lg">🏆 500K ETB</div>
-                    <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs md:text-sm font-bold shadow-lg">👑 2M ETB</div>
-                    <div className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs md:text-sm font-bold shadow-lg">💎 10M ETB</div>
+                    <div className="bg-gray-400 text-white px-2 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg">🥈 Silver</div>
+                    <div className="bg-yellow-400 text-gray-900 px-2 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg">🥇 Gold</div>
+                    <div className="bg-blue-300 text-gray-900 px-2 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg">💎 Platinum</div>
+                    <div className="bg-cyan-400 text-gray-900 px-2 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg">💠 Diamond</div>
+                    <div className="bg-purple-500 text-white px-2 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg">👑 Royal</div>
+                    <div className="bg-orange-500 text-white px-2 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg">🏆 Emperor</div>
                   </div>
                   <div className="bg-white text-gray-900 px-5 py-2 rounded-full font-bold hover:bg-gray-100 transition transform hover:scale-105 shadow-xl flex items-center gap-2 text-sm md:text-base">
                     <span>🎯</span><span>Join Now</span><span>→</span>
@@ -884,7 +1023,7 @@ export default function Home() {
                   <p className="text-xs md:text-sm opacity-80 mt-1">"Today, this week, and this month - let's make one participant a millionaire"</p>
                 </div>
               </div>
-            </div>
+            </Link>
           </div>
 
           {/* City VIP */}
@@ -895,7 +1034,7 @@ export default function Home() {
                   <span className="text-4xl">🏙️</span>
                   <div>
                     <h3 className="text-xl font-bold text-white">City VIP Programs</h3>
-                    <p className="text-sm text-gray-300">Win Cash in your city - {uniqueCities.length}+ Ethiopian cities available!</p>
+                    <p className="text-sm text-gray-300">6 Premium Tiers • {uniqueCities.length}+ Ethiopian cities available!</p>
                   </div>
                 </div>
                 <div className="relative">
@@ -916,25 +1055,56 @@ export default function Home() {
                           <a key={city.id} href={`/cities/${city.id}`} onClick={(e) => { e.preventDefault(); setShowCityDropdown(false); setCitySearchTerm(''); window.location.href = `/cities/${city.id}`; }} className="w-full text-left px-4 py-3 hover:bg-gray-50 transition border-b last:border-0 flex items-center gap-3 cursor-pointer group">
                             <span className="text-2xl">{city.icon}</span>
                             <div className="flex-1">
-                              <div className="font-medium text-gray-800 group-hover:text-green-600 transition">{city.name} <span className="text-gray-400 text-xs">| {city.nameEn}</span></div>
-                              <div className="text-xs text-gray-500">{city.region}</div>
-                              <div className="text-[10px] text-green-600 font-semibold mt-0.5">🏆 Win Cash {city.prize}</div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-gray-800 group-hover:text-green-600 transition">{city.name}</span>
+                                <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold">{city.badge}</span>
+                              </div>
+                              <div className="text-xs text-gray-500">{city.nameEn} • {city.region}</div>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-[10px] text-green-600 font-semibold">🏆 {city.prize}</span>
+                                <span className="text-[10px] text-gray-400">• {city.seats} Seats</span>
+                              </div>
                             </div>
                             <span className="text-green-600 text-xs font-medium opacity-0 group-hover:opacity-100 transition flex items-center gap-1">Join <span>→</span></span>
                           </a>
                         ))}
                       </div>
-                      <div className="p-2 text-center text-xs text-gray-400 bg-gray-50">{uniqueCities.length}+ Ethiopian cities available • Win Cash up to 10M ETB</div>
+                      <div className="p-2 text-center text-xs text-gray-400 bg-gray-50">{uniqueCities.length}+ Ethiopian cities • 6 Premium Tiers • Up to 10M ETB</div>
                     </div>
                   )}
                 </div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-6 pt-4 border-t border-gray-700">
-                <div className="text-center"><div className="text-2xl">🏆</div><div className="text-white font-bold text-sm">100K ETB</div><div className="text-[10px] text-gray-400">Daily Cash</div></div>
-                <div className="text-center"><div className="text-2xl">⭐</div><div className="text-white font-bold text-sm">500K ETB</div><div className="text-[10px] text-gray-400">Daily Cash</div></div>
-                <div className="text-center"><div className="text-2xl">👑</div><div className="text-white font-bold text-sm">2M ETB</div><div className="text-[10px] text-gray-400">Weekly Cash</div></div>
-                <div className="text-center"><div className="text-2xl">💎</div><div className="text-white font-bold text-sm">10M ETB</div><div className="text-[10px] text-gray-400">Monthly Cash</div></div>
-                <div className="text-center"><div className="text-2xl">📍</div><div className="text-white font-bold text-sm">{uniqueCities.length}+</div><div className="text-[10px] text-gray-400">Cities</div></div>
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mt-6 pt-4 border-t border-gray-700">
+                <div className="text-center bg-gray-800 rounded-lg p-2">
+                  <div className="text-2xl">🥈</div>
+                  <div className="text-white font-bold text-xs">100K</div>
+                  <div className="text-[8px] text-gray-400">1,200 Seats</div>
+                </div>
+                <div className="text-center bg-gray-800 rounded-lg p-2">
+                  <div className="text-2xl">🥇</div>
+                  <div className="text-white font-bold text-xs">500K</div>
+                  <div className="text-[8px] text-gray-400">1,200 Seats</div>
+                </div>
+                <div className="text-center bg-gray-800 rounded-lg p-2">
+                  <div className="text-2xl">💎</div>
+                  <div className="text-white font-bold text-xs">1M</div>
+                  <div className="text-[8px] text-gray-400">2,400 Seats</div>
+                </div>
+                <div className="text-center bg-gray-800 rounded-lg p-2">
+                  <div className="text-2xl">💠</div>
+                  <div className="text-white font-bold text-xs">2M</div>
+                  <div className="text-[8px] text-gray-400">2,400 Seats</div>
+                </div>
+                <div className="text-center bg-gray-800 rounded-lg p-2">
+                  <div className="text-2xl">👑</div>
+                  <div className="text-white font-bold text-xs">5M</div>
+                  <div className="text-[8px] text-gray-400">2,400 Seats</div>
+                </div>
+                <div className="text-center bg-gray-800 rounded-lg p-2">
+                  <div className="text-2xl">🏆</div>
+                  <div className="text-white font-bold text-xs">10M</div>
+                  <div className="text-[8px] text-gray-400">2,400 Seats</div>
+                </div>
               </div>
             </div>
           </div>
