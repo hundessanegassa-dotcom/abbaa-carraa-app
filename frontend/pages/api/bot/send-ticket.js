@@ -1,4 +1,4 @@
-// pages/api/bot/send-ticket.js - NEW
+// pages/api/bot/send-ticket.js
 import { bot } from '../../../lib/bot';
 import { supabase } from '../../../lib/supabase';
 import { generateTicketImage } from '../../../lib/ticketGenerator';
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Generate ticket image using TicketImage component
+    // Generate ticket image using sharp
     const ticketImageBuffer = await generateTicketImage({
       participant,
       programType,
@@ -34,7 +34,8 @@ export default async function handler(req, res) {
       ticketNumber,
       amount,
       prize,
-      language
+      language,
+      isVerified: true
     });
 
     // Get translations
@@ -80,7 +81,6 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('Error sending ticket:', error);
     
-    // Log failure
     await supabase
       .from('ticket_delivery_logs')
       .insert({
@@ -95,10 +95,6 @@ export default async function handler(req, res) {
     res.status(500).json({ error: 'Failed to send ticket' });
   }
 }
-
-// ============================================
-// HELPERS
-// ============================================
 
 function getTranslations(language) {
   const translations = {
