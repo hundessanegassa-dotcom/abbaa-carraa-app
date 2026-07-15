@@ -1,59 +1,38 @@
-// pages/api/bot/webhook.js - COMPLETE WORKING
+// pages/api/bot/webhook.js
 import { bot, setupBotCommands, handleBotMessages } from '../../../lib/bot';
 
-// Setup bot on first run
 let isBotSetup = false;
 
 export default async function handler(req, res) {
-  // Only allow POST requests
+  // ✅ 1. Always respond to POST requests from Telegram
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    // Setup bot only once
+    // ✅ 2. Setup bot only once
     if (!isBotSetup && bot) {
       await setupBotCommands();
       await handleBotMessages();
       isBotSetup = true;
-      
-      // Set webhook
-      const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/api/bot/webhook`;
-      await bot.telegram.setWebhook(webhookUrl);
-      console.log('✅ Webhook set to:', webhookUrl);
     }
 
-    // ✅ Parse the raw body
-    const update = await parseRawBody(req);
-    
-    // Handle update with parsed body
-    await bot?.handleUpdate(update);
-    res.status(200).json({ success: true });
+    // ✅ 3. Parse the incoming update from Telegram
+    const update = req.body; // bodyParser is ON by default in Next.js API routes
+
+    // ✅ 4. Process the update with your bot
+    if (bot) {
+      await bot.handleUpdate(update);
+    }
+
+    // ✅ 5. Always return 200 OK to Telegram
+    res.status(200).json({ ok: true });
   } catch (error) {
-    console.error('Webhook error:', error);
-    res.status(500).json({ error: 'Webhook processing failed' });
+    console.error('❌ Webhook error:', error);
+    // ✅ 6. Even on error, return 200 to prevent Telegram from retrying
+    res.status(200).json({ ok: true });
   }
 }
 
-// Disable bodyParser for webhook (needed for raw body)
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-// Helper to parse raw body
-function parseRawBody(req) {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    req.on('data', chunk => data += chunk);
-    req.on('end', () => {
-      try {
-        resolve(JSON.parse(data));
-      } catch (error) {
-        reject(error);
-      }
-    });
-    req.on('error', reject);
-  });
-}
+// ✅ Note: Do NOT disable bodyParser for this simple version
+// export const config = { api: { bodyParser: true } }; // This is the default
