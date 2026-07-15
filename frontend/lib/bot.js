@@ -1,4 +1,4 @@
-// lib/bot.js - COMPLETE WORKING BOT WITH LANGUAGE FIRST, THEN PROGRAMS
+// lib/bot.js - COMPLETE WORKING BOT WITH FULL LANGUAGE SUPPORT
 import { Telegraf } from 'telegraf';
 import { supabase } from './supabase';
 
@@ -414,38 +414,6 @@ export async function handleBotMessages() {
   }
 
   // ============================================
-  // BUILD MAIN MENU FUNCTION - PROGRAMS FIRST
-  // ============================================
-  function buildMainMenu(lang) {
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com';
-    
-    return {
-      inline_keyboard: [
-        // PROGRAMS SECTION - FIRST
-        [{ text: t.buttons.merkato, web_app: { url: `${appUrl}/merkato-vip` } }],
-        [{ text: t.buttons.city, web_app: { url: `${appUrl}/cities` } }],
-        [{ text: t.buttons.pools, web_app: { url: `${appUrl}/listings` } }],
-        // APP ACTIONS
-        [{ text: t.buttons.open_app, web_app: { url: appUrl } }],
-        [{ text: t.buttons.dashboard, web_app: { url: `${appUrl}/dashboard` } }],
-        [{ text: t.buttons.register, web_app: { url: `${appUrl}/register` } }],
-        // SUPPORT & INFO
-        [{ text: t.buttons.winners, web_app: { url: `${appUrl}/winners` } }],
-        [{ text: t.buttons.how_it_works, web_app: { url: `${appUrl}/how-it-works` } }],
-        [{ text: t.buttons.support, web_app: { url: `${appUrl}/contact` } }],
-        [{ text: t.buttons.live_chat, web_app: { url: `${appUrl}/contact` } }],
-        [{ text: t.buttons.faq, web_app: { url: `${appUrl}/faq` } }],
-        // LANGUAGE SELECTION
-        [{ text: t.buttons.language_english, callback_data: 'lang_en' }],
-        [{ text: t.buttons.language_amharic, callback_data: 'lang_am' }],
-        [{ text: t.buttons.language_oromo, callback_data: 'lang_om' }],
-        [{ text: t.buttons.help, callback_data: 'help' }]
-      ]
-    };
-  }
-
-  // ============================================
   // BUILD PROGRAMS MENU
   // ============================================
   function buildProgramsMenu(lang) {
@@ -457,7 +425,15 @@ export async function handleBotMessages() {
         [{ text: t.buttons.merkato, web_app: { url: `${appUrl}/merkato-vip` } }],
         [{ text: t.buttons.city, web_app: { url: `${appUrl}/cities` } }],
         [{ text: t.buttons.pools, web_app: { url: `${appUrl}/listings` } }],
-        [{ text: t.buttons.back_to_menu, callback_data: 'main_menu' }]
+        [{ text: t.buttons.open_app, web_app: { url: appUrl } }],
+        [{ text: t.buttons.dashboard, web_app: { url: `${appUrl}/dashboard` } }],
+        [{ text: t.buttons.register, web_app: { url: `${appUrl}/register` } }],
+        [{ text: t.buttons.winners, web_app: { url: `${appUrl}/winners` } }],
+        [{ text: t.buttons.how_it_works, web_app: { url: `${appUrl}/how-it-works` } }],
+        [{ text: t.buttons.support, web_app: { url: `${appUrl}/contact` } }],
+        [{ text: t.buttons.language_english, callback_data: 'lang_en' }],
+        [{ text: t.buttons.language_amharic, callback_data: 'lang_am' }],
+        [{ text: t.buttons.language_oromo, callback_data: 'lang_om' }]
       ]
     };
   }
@@ -578,7 +554,6 @@ export async function handleBotMessages() {
   bot.command('programs', async (ctx) => {
     const lang = await getUserLanguage(ctx.from.id);
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com';
     
     let tiersText = '';
     VIP_TIERS.forEach(tier => {
@@ -605,7 +580,7 @@ export async function handleBotMessages() {
   // ============================================
   // HELP COMMAND
   // ============================================
-  bot.help(async (ctx) => {
+  bot.command('help', async (ctx) => {
     const lang = await getUserLanguage(ctx.from.id);
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     
@@ -852,27 +827,6 @@ export async function handleBotMessages() {
       parse_mode: 'Markdown',
       reply_markup: buildProgramsMenu(lang)
     });
-    await ctx.answerCbQuery();
-  });
-
-  // ============================================
-  // HELP CALLBACK
-  // ============================================
-  bot.action('help', async (ctx) => {
-    const lang = await getUserLanguage(ctx.from.id);
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    
-    await ctx.reply(
-      `${t.help.title}\n\n${t.help.subtitle}\n${t.help.commands}\n\n${t.help.footer}`,
-      { 
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: t.buttons.back_to_menu, callback_data: 'main_menu' }]
-          ]
-        }
-      }
-    );
     await ctx.answerCbQuery();
   });
 
