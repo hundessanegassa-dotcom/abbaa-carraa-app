@@ -1,4 +1,4 @@
-// pages/telegram-app.js - NEW (Mini App Entry Point)
+// pages/telegram-app.js - COMPLETE WITH ALL 94 CITIES + ADD NEW CITY
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -7,8 +7,137 @@ import NoSSR from '../components/NoSSR';
 import TelegramBotClient, { useTelegram } from '../components/TelegramBotClient';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
-import TopCitySelector from '../components/TopCitySelector';
 import PoolCard from '../components/PoolCard';
+
+// ============================================
+// ALL 94 ETHIOPIAN CITIES - COMPLETE LIST
+// ============================================
+const allCityVipPrograms = [
+  // ===================== CENTRAL & MAJOR CITIES =====================
+  { id: 'addis-ababa', name: 'አዲስ አበባ', nameEn: 'Addis Ababa', region: 'Central', icon: '🏙️', prize: '40M ETB' },
+  { id: 'shaggar', name: 'ሸገር', nameEn: 'Shaggar City', region: 'Oromia', icon: '🏗️', prize: '40M ETB' },
+  { id: 'dire-dawa', name: 'ድሬ ዳዋ', nameEn: 'Dire Dawa', region: 'Dire Dawa', icon: '🚂', prize: '40M ETB' },
+  
+  // ===================== TIGRAY REGION =====================
+  { id: 'mekelle', name: 'መቀሌ', nameEn: 'Mekelle', region: 'Tigray', icon: '🏭', prize: '40M ETB' },
+  { id: 'axum', name: 'አክሱም', nameEn: 'Axum', region: 'Tigray', icon: '🏛️', prize: '40M ETB' },
+  { id: 'adigrat', name: 'አዲግራት', nameEn: 'Adigrat', region: 'Tigray', icon: '🏔️', prize: '40M ETB' },
+  { id: 'shire', name: 'ሽሬ', nameEn: 'Shire', region: 'Tigray', icon: '🏔️', prize: '40M ETB' },
+  { id: 'mekoni', name: 'መቆኒ', nameEn: 'Mekoni', region: 'Tigray', icon: '🏔️', prize: '40M ETB' },
+  { id: 'maychew', name: 'ማይጨው', nameEn: 'Maychew', region: 'Tigray', icon: '🏔️', prize: '40M ETB' },
+  { id: 'abiy-addi', name: 'አቢይ አዲ', nameEn: 'Abiy Addi', region: 'Tigray', icon: '🏔️', prize: '40M ETB' },
+  { id: 'wukro', name: 'ውቅሮ', nameEn: 'Wukro', region: 'Tigray', icon: '🏔️', prize: '40M ETB' },
+  
+  // ===================== AMHARA REGION =====================
+  { id: 'gondar', name: 'ጎንደር', nameEn: 'Gondar', region: 'Amhara', icon: '🏰', prize: '40M ETB' },
+  { id: 'bahir-dar', name: 'ባህር ዳር', nameEn: 'Bahir Dar', region: 'Amhara', icon: '🏞️', prize: '40M ETB' },
+  { id: 'dessie', name: 'ደሴ', nameEn: 'Dessie', region: 'Amhara', icon: '🏔️', prize: '40M ETB' },
+  { id: 'debre-markos', name: 'ደብረ ማርቆስ', nameEn: 'Debre Markos', region: 'Amhara', icon: '⛪', prize: '40M ETB' },
+  { id: 'finote-selam', name: 'ፍኖተ ሰላም', nameEn: 'Finote Selam', region: 'Amhara', icon: '🌅', prize: '40M ETB' },
+  { id: 'woldia', name: 'ወልዲያ', nameEn: 'Woldia', region: 'Amhara', icon: '🎓', prize: '40M ETB' },
+  { id: 'debre-birhan', name: 'ደብረ ብርሃን', nameEn: 'Debre Birhan', region: 'Amhara', icon: '⭐', prize: '40M ETB' },
+  { id: 'kombolcha', name: 'ኮምቦልቻ', nameEn: 'Kombolcha', region: 'Amhara', icon: '🏭', prize: '40M ETB' },
+  { id: 'sekota', name: 'ሰቆጣ', nameEn: 'Sekota', region: 'Amhara', icon: '🏔️', prize: '40M ETB' },
+  { id: 'aykal', name: 'አይከል', nameEn: 'Aykal', region: 'Amhara', icon: '🏔️', prize: '40M ETB' },
+  { id: 'metema', name: 'ሜተማ', nameEn: 'Metema', region: 'Amhara', icon: '🛣️', prize: '40M ETB' },
+  { id: 'debre-tabor', name: 'ደብረ ታቦር', nameEn: 'Debre Tabor', region: 'Amhara', icon: '⛪', prize: '40M ETB' },
+  { id: 'bati', name: 'ባቲ', nameEn: 'Bati', region: 'Amhara', icon: '🏔️', prize: '40M ETB' },
+  { id: 'kemise', name: 'ቀሚሴ', nameEn: 'Kemise', region: 'Amhara', icon: '🏔️', prize: '40M ETB' },
+  { id: 'injibara', name: 'እንጅባራ', nameEn: 'Injibara', region: 'Amhara', icon: '🏔️', prize: '40M ETB' },
+  { id: 'lalibela', name: 'ላሊበላ', nameEn: 'Lalibela', region: 'Amhara', icon: '⛪', prize: '40M ETB' },
+  
+  // ===================== OROMIA REGION =====================
+  { id: 'adama', name: 'አዳማ', nameEn: 'Adama', region: 'Oromia', icon: '🏭', prize: '40M ETB' },
+  { id: 'jimma', name: 'ጅማ', nameEn: 'Jimma', region: 'Oromia', icon: '☕', prize: '40M ETB' },
+  { id: 'bishoftu', name: 'ቢሾፍቱ', nameEn: 'Bishoftu', region: 'Oromia', icon: '✈️', prize: '40M ETB' },
+  { id: 'asella', name: 'አሰላ', nameEn: 'Asella', region: 'Oromia', icon: '🏔️', prize: '40M ETB' },
+  { id: 'shashemene', name: 'ሻሸመኔ', nameEn: 'Shashemene', region: 'Oromia', icon: '🛍️', prize: '40M ETB' },
+  { id: 'robe', name: 'ሮቤ', nameEn: 'Robe', region: 'Oromia', icon: '🌄', prize: '40M ETB' },
+  { id: 'ginir', name: 'ጊኒር', nameEn: 'Ginir', region: 'Oromia', icon: '🏞️', prize: '40M ETB' },
+  { id: 'yabelo', name: 'ያቤሎ', nameEn: 'Yabelo', region: 'Oromia', icon: '🐪', prize: '40M ETB' },
+  { id: 'moyale', name: 'ሞያሌ', nameEn: 'Moyale', region: 'Oromia', icon: '🛣️', prize: '40M ETB' },
+  { id: 'chiro', name: 'ቺሮ', nameEn: 'Chiro', region: 'Oromia', icon: '🏔️', prize: '40M ETB' },
+  { id: 'fiche', name: 'ፊጬ', nameEn: 'Fiche', region: 'Oromia', icon: '🌾', prize: '40M ETB' },
+  { id: 'woliso', name: 'ወሊሶ', nameEn: 'Woliso', region: 'Oromia', icon: '💧', prize: '40M ETB' },
+  { id: 'ambo', name: 'አምቦ', nameEn: 'Ambo', region: 'Oromia', icon: '💧', prize: '40M ETB' },
+  { id: 'nekemte', name: 'ነቀምቴ', nameEn: 'Nekemte', region: 'Oromia', icon: '☕', prize: '40M ETB' },
+  { id: 'gimbi', name: 'ጊምቢ', nameEn: 'Gimbi', region: 'Oromia', icon: '🏔️', prize: '40M ETB' },
+  { id: 'dembi-dollo', name: 'ደምቢ ዶሎ', nameEn: 'Dembi Dollo', region: 'Oromia', icon: '💰', prize: '40M ETB' },
+  { id: 'shambu', name: 'ሻምቡ', nameEn: 'Shambu', region: 'Oromia', icon: '🌾', prize: '40M ETB' },
+  { id: 'metu', name: 'መቱ', nameEn: 'Metu', region: 'Oromia', icon: '🌿', prize: '40M ETB' },
+  { id: 'bedele', name: 'በደሌ', nameEn: 'Bedele', region: 'Oromia', icon: '🍺', prize: '40M ETB' },
+  { id: 'bule-hora', name: 'ቡሌ ሆራ', nameEn: 'Bule Hora', region: 'Oromia', icon: '🎓', prize: '40M ETB' },
+  { id: 'negele-borana', name: 'ነገሌ ቦረና', nameEn: 'Negele Borana', region: 'Oromia', icon: '🐪', prize: '40M ETB' },
+  { id: 'ziway', name: 'ዚዋይ', nameEn: 'Ziway', region: 'Oromia', icon: '🐟', prize: '40M ETB' },
+  { id: 'mojo', name: 'ሞጆ', nameEn: 'Mojo', region: 'Oromia', icon: '🚛', prize: '40M ETB' },
+  { id: 'dodola', name: 'ዶዶላ', nameEn: 'Dodola', region: 'Oromia', icon: '🏔️', prize: '40M ETB' },
+  { id: 'gera', name: 'ጌራ', nameEn: 'Gera', region: 'Oromia', icon: '☕', prize: '40M ETB' },
+  { id: 'agaro', name: 'አጋሮ', nameEn: 'Agaro', region: 'Oromia', icon: '☕', prize: '40M ETB' },
+  { id: 'lemu', name: 'ለሙ', nameEn: 'Lemu', region: 'Oromia', icon: '🌾', prize: '40M ETB' },
+  { id: 'hagere-mariam', name: 'ሀገረ ማርያም', nameEn: 'Hagere Mariam', region: 'Oromia', icon: '🏔️', prize: '40M ETB' },
+  { id: 'shakiso', name: 'ሻኪሶ', nameEn: 'Shakiso', region: 'Oromia', icon: '💰', prize: '40M ETB' },
+  { id: 'kibre-mengist', name: 'ቅብረ መንግስት', nameEn: 'Kibre Mengist', region: 'Oromia', icon: '🏔️', prize: '40M ETB' },
+  { id: 'wachile', name: 'ዋቺሌ', nameEn: 'Wachile', region: 'Oromia', icon: '🐪', prize: '40M ETB' },
+  { id: 'goba', name: 'ጎባ', nameEn: 'Goba', region: 'Oromia', icon: '🏔️', prize: '40M ETB' },
+  { id: 'sinana', name: 'ሲናና', nameEn: 'Sinana', region: 'Oromia', icon: '🌾', prize: '40M ETB' },
+  { id: 'dinsho', name: 'ዲንሾ', nameEn: 'Dinsho', region: 'Oromia', icon: '🏞️', prize: '40M ETB' },
+  
+  // ===================== SOMALI REGION =====================
+  { id: 'jijiga', name: 'ጅጅጋ', nameEn: 'Jijiga', region: 'Somali', icon: '🐪', prize: '40M ETB' },
+  { id: 'degehabur', name: 'ደገሃቡር', nameEn: 'Degehabur', region: 'Somali', icon: '🏔️', prize: '40M ETB' },
+  { id: 'kebri-dehar', name: 'ቀብሪ ደሃር', nameEn: 'Kebri Dehar', region: 'Somali', icon: '🏔️', prize: '40M ETB' },
+  { id: 'gode', name: 'ጎዴ', nameEn: 'Gode', region: 'Somali', icon: '🏔️', prize: '40M ETB' },
+  { id: 'warder', name: 'ዋርደር', nameEn: 'Warder', region: 'Somali', icon: '🐪', prize: '40M ETB' },
+  { id: 'shilabo', name: 'ሺላቦ', nameEn: 'Shilabo', region: 'Somali', icon: '🐪', prize: '40M ETB' },
+  { id: 'kelafo', name: 'ከላፎ', nameEn: 'Kelafo', region: 'Somali', icon: '🏔️', prize: '40M ETB' },
+  { id: 'mustahil', name: 'ሙስታሂል', nameEn: 'Mustahil', region: 'Somali', icon: '🏔️', prize: '40M ETB' },
+  { id: 'ferfer', name: 'ፌርፌር', nameEn: 'Ferfer', region: 'Somali', icon: '🛣️', prize: '40M ETB' },
+  
+  // ===================== HARARI REGION =====================
+  { id: 'harar', name: 'ሀረር', nameEn: 'Harar', region: 'Harari', icon: '🏛️', prize: '40M ETB' },
+  
+  // ===================== SIDAMA REGION =====================
+  { id: 'hawassa', name: 'ሀዋሳ', nameEn: 'Hawassa', region: 'Sidama', icon: '🏞️', prize: '40M ETB' },
+  { id: 'yirgalem', name: 'ይርጋለም', nameEn: 'Yirgalem', region: 'Sidama', icon: '☕', prize: '40M ETB' },
+  
+  // ===================== SOUTH ETHIOPIA REGION =====================
+  { id: 'arba-minch', name: 'አርባ ምንጭ', nameEn: 'Arba Minch', region: 'South', icon: '🏞️', prize: '40M ETB' },
+  { id: 'sodo', name: 'ሶዶ', nameEn: 'Sodo', region: 'South', icon: '🛍️', prize: '40M ETB' },
+  { id: 'dilla', name: 'ዲላ', nameEn: 'Dilla', region: 'South', icon: '☕', prize: '40M ETB' },
+  { id: 'sawla', name: 'ሳውላ', nameEn: 'Sawla', region: 'South', icon: '🏔️', prize: '40M ETB' },
+  { id: 'jinka', name: 'ጂንካ', nameEn: 'Jinka', region: 'South', icon: '🏔️', prize: '40M ETB' },
+  { id: 'konso', name: 'ኮንሶ', nameEn: 'Konso', region: 'South', icon: '🏔️', prize: '40M ETB' },
+  { id: 'karat', name: 'ካራት', nameEn: 'Karat', region: 'South', icon: '🏔️', prize: '40M ETB' },
+  { id: 'bonga', name: 'ቦንጋ', nameEn: 'Bonga', region: 'South', icon: '☕', prize: '40M ETB' },
+  { id: 'mizan-teferi', name: 'ሚዛን ተፈሪ', nameEn: 'Mizan Teferi', region: 'South', icon: '🏔️', prize: '40M ETB' },
+  { id: 'teppi', name: 'ቴፒ', nameEn: 'Teppi', region: 'South', icon: '🌿', prize: '40M ETB' },
+  { id: 'gereb', name: 'ገሬብ', nameEn: 'Gereb', region: 'South', icon: '🏔️', prize: '40M ETB' },
+  { id: 'key-afar', name: 'ቀይ አፋር', nameEn: 'Key Afar', region: 'South', icon: '🏔️', prize: '40M ETB' },
+  { id: 'bako', name: 'ባኮ', nameEn: 'Bako', region: 'South', icon: '🏔️', prize: '40M ETB' },
+  { id: 'welkite', name: 'ወልቂጤ', nameEn: 'Welkite', region: 'South', icon: '🏔️', prize: '40M ETB' },
+  
+  // ===================== BENISHANGUL-GUMUZ REGION =====================
+  { id: 'assosa', name: 'አሶሳ', nameEn: 'Assosa', region: 'Benishangul', icon: '🌿', prize: '40M ETB' },
+  { id: 'gilgel-beles', name: 'ግልገል በለስ', nameEn: 'Gilgel Beles', region: 'Benishangul', icon: '💧', prize: '40M ETB' },
+  { id: 'kamashi', name: 'ካማሺ', nameEn: 'Kamashi', region: 'Benishangul', icon: '🏔️', prize: '40M ETB' },
+  { id: 'metekel', name: 'ሜተከል', nameEn: 'Metekel', region: 'Benishangul', icon: '🏔️', prize: '40M ETB' },
+  { id: 'dibate', name: 'ዲባቴ', nameEn: 'Dibate', region: 'Benishangul', icon: '🏔️', prize: '40M ETB' },
+  
+  // ===================== GAMBELLA REGION =====================
+  { id: 'gambella', name: 'ጋምቤላ', nameEn: 'Gambella', region: 'Gambella', icon: '🏞️', prize: '40M ETB' },
+  { id: 'meti', name: 'ሜቲ', nameEn: 'Meti', region: 'Gambella', icon: '🏔️', prize: '40M ETB' },
+  { id: 'fugnido', name: 'ፉኝዶ', nameEn: 'Fugnido', region: 'Gambella', icon: '🏞️', prize: '40M ETB' },
+  { id: 'itur', name: 'ኢቱር', nameEn: 'Itur', region: 'Gambella', icon: '🏔️', prize: '40M ETB' },
+  
+  // ===================== AFAR REGION =====================
+  { id: 'semera', name: 'ሰሜራ', nameEn: 'Semera', region: 'Afar', icon: '🐪', prize: '40M ETB' },
+  { id: 'asaita', name: 'አሳይታ', nameEn: 'Asaita', region: 'Afar', icon: '🏔️', prize: '40M ETB' },
+  { id: 'logiya', name: 'ሎጊያ', nameEn: 'Logiya', region: 'Afar', icon: '🛣️', prize: '40M ETB' },
+  { id: 'abila', name: 'አቢላ', nameEn: 'Abila', region: 'Afar', icon: '🐪', prize: '40M ETB' },
+  { id: 'dubti', name: 'ዱብቲ', nameEn: 'Dubti', region: 'Afar', icon: '🏔️', prize: '40M ETB' },
+  { id: 'elidar', name: 'ኤልዳር', nameEn: 'Elidar', region: 'Afar', icon: '🏔️', prize: '40M ETB' },
+  { id: 'chifra', name: 'ቺፍራ', nameEn: 'Chifra', region: 'Afar', icon: '🏔️', prize: '40M ETB' }
+];
 
 export default function TelegramApp() {
   const router = useRouter();
@@ -18,6 +147,12 @@ export default function TelegramApp() {
   const [pools, setPools] = useState([]);
   const [featuredPools, setFeaturedPools] = useState([]);
   const [language, setLanguage] = useState('am');
+  const [showAddCity, setShowAddCity] = useState(false);
+  const [newCityName, setNewCityName] = useState('');
+  const [newCityNameEn, setNewCityNameEn] = useState('');
+  const [newCityRegion, setNewCityRegion] = useState('');
+  const [cities, setCities] = useState(allCityVipPrograms);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Load language preference
   useEffect(() => {
@@ -25,6 +160,8 @@ export default function TelegramApp() {
     if (savedLang === 'am' || savedLang === 'en') {
       setLanguage(savedLang);
     }
+    // Load custom cities from localStorage
+    loadCustomCities();
   }, []);
 
   // Authenticate user when Telegram user is available
@@ -32,7 +169,6 @@ export default function TelegramApp() {
     if (isReady && tgUser) {
       authenticateUser(tgUser);
     } else if (isReady && !tgUser) {
-      // Not in Telegram context, redirect to main app
       router.push('/');
     }
   }, [isReady, tgUser]);
@@ -43,6 +179,30 @@ export default function TelegramApp() {
       loadPools();
     }
   }, [user]);
+
+  const loadCustomCities = () => {
+    try {
+      const saved = localStorage.getItem('customCities');
+      if (saved) {
+        const customCities = JSON.parse(saved);
+        setCities([...allCityVipPrograms, ...customCities]);
+      }
+    } catch (error) {
+      console.error('Error loading custom cities:', error);
+    }
+  };
+
+  const saveCustomCity = (city) => {
+    try {
+      const saved = localStorage.getItem('customCities');
+      let customCities = saved ? JSON.parse(saved) : [];
+      customCities.push(city);
+      localStorage.setItem('customCities', JSON.stringify(customCities));
+      setCities([...allCityVipPrograms, ...customCities]);
+    } catch (error) {
+      console.error('Error saving custom city:', error);
+    }
+  };
 
   const authenticateUser = async (tgUser) => {
     try {
@@ -61,7 +221,6 @@ export default function TelegramApp() {
       if (error) throw error;
       setUser(data);
       
-      // Check if user has pending actions from URL
       const { tier, program } = router.query;
       if (tier && program) {
         router.push(`/${program}?tier=${tier}`);
@@ -96,6 +255,36 @@ export default function TelegramApp() {
     setLanguage(newLang);
     localStorage.setItem('appLanguage', newLang);
   };
+
+  const handleAddCity = () => {
+    if (!newCityName.trim()) {
+      toast.error(language === 'am' ? 'እባክዎ የከተማ ስም ያስገቡ' : 'Please enter city name');
+      return;
+    }
+
+    const cityId = newCityName.toLowerCase().replace(/\s+/g, '-');
+    const newCity = {
+      id: cityId,
+      name: newCityName.trim(),
+      nameEn: newCityNameEn.trim() || newCityName.trim(),
+      region: newCityRegion.trim() || 'Ethiopia',
+      icon: '🏙️',
+      prize: '40M ETB',
+      isCustom: true
+    };
+
+    saveCustomCity(newCity);
+    setShowAddCity(false);
+    setNewCityName('');
+    setNewCityNameEn('');
+    setNewCityRegion('');
+    toast.success(language === 'am' ? 'አዲስ ከተማ ተጨምሯል! ✅' : 'New city added! ✅');
+  };
+
+  const filteredCities = cities.filter(city =>
+    city.name.includes(searchTerm) || 
+    city.nameEn.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -153,10 +342,13 @@ export default function TelegramApp() {
               <span className="text-3xl block mb-1">🏪</span>
               <span className="text-xs font-bold text-gray-700">Merkato VIP</span>
             </Link>
-            <Link href="/cities" className="bg-white rounded-xl shadow-sm p-4 text-center border border-gray-100 hover:shadow-md transition">
+            <button 
+              onClick={() => setShowAddCity(!showAddCity)}
+              className="bg-white rounded-xl shadow-sm p-4 text-center border-2 border-green-500 hover:shadow-md transition"
+            >
               <span className="text-3xl block mb-1">🏙️</span>
-              <span className="text-xs font-bold text-gray-700">City VIP</span>
-            </Link>
+              <span className="text-xs font-bold text-green-600">City VIP</span>
+            </button>
             <Link href="/listings" className="bg-white rounded-xl shadow-sm p-4 text-center border border-gray-100 hover:shadow-md transition">
               <span className="text-3xl block mb-1">🏊</span>
               <span className="text-xs font-bold text-gray-700">Regular Pools</span>
@@ -165,6 +357,122 @@ export default function TelegramApp() {
               <span className="text-3xl block mb-1">📊</span>
               <span className="text-xs font-bold text-gray-700">My Tickets</span>
             </Link>
+          </div>
+
+          {/* Add City Modal */}
+          {showAddCity && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold text-gray-800">
+                    {language === 'am' ? 'አዲስ ከተማ ያስገቡ' : 'Add New City'}
+                  </h2>
+                  <button onClick={() => setShowAddCity(false)} className="text-gray-500 text-2xl">×</button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {language === 'am' ? 'የከተማ ስም (አማርኛ)' : 'City Name (Amharic)'}
+                    </label>
+                    <input
+                      type="text"
+                      value={newCityName}
+                      onChange={(e) => setNewCityName(e.target.value)}
+                      placeholder={language === 'am' ? 'ለምሳሌ: ባህር ዳር' : 'e.g., Bahir Dar'}
+                      className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {language === 'am' ? 'የከተማ ስም (እንግሊዝኛ)' : 'City Name (English)'}
+                    </label>
+                    <input
+                      type="text"
+                      value={newCityNameEn}
+                      onChange={(e) => setNewCityNameEn(e.target.value)}
+                      placeholder={language === 'am' ? 'ለምሳሌ: Bahir Dar' : 'e.g., Bahir Dar'}
+                      className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {language === 'am' ? 'ክልል' : 'Region'}
+                    </label>
+                    <input
+                      type="text"
+                      value={newCityRegion}
+                      onChange={(e) => setNewCityRegion(e.target.value)}
+                      placeholder={language === 'am' ? 'ለምሳሌ: አማራ' : 'e.g., Amhara'}
+                      className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                  
+                  <button
+                    onClick={handleAddCity}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition"
+                  >
+                    {language === 'am' ? 'ከተማ ያስገቡ →' : 'Add City →'}
+                  </button>
+                  
+                  <p className="text-xs text-gray-400 text-center">
+                    {language === 'am' 
+                      ? '💡 ከተማዎ ከላይ ካልተዘረዘረ እዚህ ያስገቡት' 
+                      : '💡 If your city is not listed above, add it here'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* City VIP Section */}
+          <div className="px-4 py-4">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider">🏙️ City VIP Programs</h2>
+              <span className="text-xs text-green-600 font-medium">{cities.length} Cities</span>
+            </div>
+            
+            {/* Search */}
+            <div className="mb-3">
+              <input
+                type="text"
+                placeholder={language === 'am' ? '🔍 ከተማ ፈልግ...' : '🔍 Search city...'}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+            
+            {/* Cities Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              {filteredCities.map((city) => (
+                <Link key={city.id} href={`/cities/${city.id}`}>
+                  <div className={`bg-white rounded-xl p-3 shadow-sm border hover:shadow-md transition ${city.isCustom ? 'border-green-500 ring-1 ring-green-500' : 'border-gray-100'}`}>
+                    <div className="text-3xl mb-0.5">{city.icon}</div>
+                    <h3 className="font-bold text-gray-800 text-sm">{city.name}</h3>
+                    <p className="text-xs text-gray-500">{city.nameEn}</p>
+                    <p className="text-xs text-green-600 mt-1">🏆 {city.prize}</p>
+                    {city.isCustom && (
+                      <span className="text-[8px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full mt-1 inline-block">⭐ New</span>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+            
+            {filteredCities.length === 0 && (
+              <div className="text-center py-8">
+                <p className="text-gray-500 text-sm">{language === 'am' ? 'ምንም ከተማ አልተገኘም' : 'No cities found'}</p>
+                <button 
+                  onClick={() => setShowAddCity(true)}
+                  className="mt-3 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg text-sm font-semibold transition"
+                >
+                  {language === 'am' ? '➕ አዲስ ከተማ ያስገቡ' : '➕ Add New City'}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Featured Pools */}
