@@ -8,7 +8,12 @@
     "start": "next start",
     "lint": "next lint",
     "analyze": "ANALYZE=true next build",
-    "postbuild": "next-sitemap"
+    "postbuild": "next-sitemap",
+    "bot": "node -e \"import('./lib/bot.js').then(({handleBotMessages}) => { handleBotMessages(); console.log('🤖 Bot started in polling mode'); })\"",
+    "bot:setup": "node scripts/setup-bot.js",
+    "bot:webhook": "node -e \"import('./lib/bot.js').then(({bot}) => { const url = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'; bot.telegram.setWebhook(`${url}/api/bot/webhook`).then(() => console.log('✅ Webhook set')).catch(e => console.error('❌ Webhook failed:', e)); })\"",
+    "bot:info": "node -e \"import('./lib/bot.js').then(({bot}) => { bot.telegram.getWebhookInfo().then(info => console.log('📡 Webhook Info:', info)).catch(e => console.error('❌ Failed:', e)); })\"",
+    "bot:delete": "node -e \"import('./lib/bot.js').then(({bot}) => { bot.telegram.deleteWebhook().then(() => console.log('✅ Webhook deleted')).catch(e => console.error('❌ Failed:', e)); })\""
   },
   "dependencies": {
     "@heroicons/react": "^2.0.18",
