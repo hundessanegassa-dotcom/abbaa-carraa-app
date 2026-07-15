@@ -1,4 +1,4 @@
-// pages/index.js - Complete with Always-Visible Marquee & Green Buttons
+// pages/index.js - Complete with Bold Text, Green Borders, "Categories" instead of "Explore"
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -346,9 +346,8 @@ export default function Home() {
     </div>
   );
 
-  // ========== MOVING MARQUEE - UPDATED WITH TODAY'S MODIFICATIONS ==========
+  // ========== MOVING MARQUEE ==========
   const MovingMarquee = () => {
-    // Updated marquee text - Amharic first, then English
     const marqueeText = `🏆 በAbbaa Carraa ወርቃማ እድልን ያሸንፉ! • 🏪 መርካቶ ቪአይፒ: እስከ 10M ብር ጥሬ ገንዘብ ያሸንፉ • 🏙️ ከተማ ቪአይፒ: በ94 ከተሞች ጥሬ ገንዘብ ያሸንፉ • 🏊 መደበኛ የእጣ መደቦች: መኪና፣ ቤት፣ ማሽነሪ እና ኤሌክትሮኒክስ ያሸንፉ • 💚 2% ለጤና ይውላል • ይቀላቀሉ እና ዛሬ ማሸነፍ ይጀምሩ! 🎯 || 🏆 WIN BIG WITH ABBAA CARRAA • 🏪 Merkato VIP: Win Cash up to 10M ETB • 🏙️ City VIP: Win Cash in 94 Cities • 🏊 Regular Pools: Win Cars, Houses, Machinery & Electronics • 💚 2% Supports Health • Join & Start Winning Today! 🎯`;
 
     return (
@@ -442,7 +441,6 @@ export default function Home() {
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
         </Head>
         
-        {/* Always show marquee on top */}
         <MovingMarquee />
         
         <div className="fixed top-4 right-4 z-50">
@@ -463,7 +461,7 @@ export default function Home() {
     );
   }
 
-  // ========== APP MODE ==========
+  // ========== APP MODE - UPDATED WITH "CATEGORIES" & GREEN BORDERS ==========
   if (activeView === 'app') {
     return (
       <>
@@ -474,10 +472,10 @@ export default function Home() {
         </Head>
 
         <div className="min-h-screen bg-gray-50 pb-20">
-          {/* === MOVING MARQUEE - ALWAYS VISIBLE === */}
+          {/* === MOVING MARQUEE === */}
           <MovingMarquee />
 
-          {/* TOP APP BAR - With Green Buttons */}
+          {/* === TOP APP BAR - With Green Buttons === */}
           <header className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-100 px-3 md:px-4 py-2.5 md:py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 md:gap-2">
@@ -513,53 +511,60 @@ export default function Home() {
             </div>
           </header>
 
-          {/* WELCOME SECTION */}
+          {/* === WELCOME SECTION === */}
           <div className="px-3 md:px-4 py-3 md:py-4 bg-white border-b border-gray-100">
             <p className="text-xs md:text-sm text-gray-500">Welcome back,</p>
             <p className="text-lg md:text-xl font-bold text-gray-800">Guest</p>
             <div className="flex flex-wrap gap-1.5 md:gap-2 mt-1.5 md:mt-2">
-              <span className="bg-green-100 text-green-700 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full">⭐ {stats.total_pools} Active</span>
-              <span className="bg-yellow-100 text-yellow-700 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full">🏆 {stats.total_winners} Winners</span>
-              <span className="bg-blue-100 text-blue-700 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full">🏙️ {uniqueCities.length} Cities</span>
+              <span className="bg-green-100 text-green-700 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full font-medium">⭐ {stats.total_pools} Active</span>
+              <span className="bg-yellow-100 text-yellow-700 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full font-medium">🏆 {stats.total_winners} Winners</span>
+              <span className="bg-blue-100 text-blue-700 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full font-medium">🏙️ {uniqueCities.length} Cities</span>
             </div>
           </div>
 
-          {/* QUICK STATS */}
+          {/* === QUICK STATS - WITH GREEN BORDERS === */}
           <div className="grid grid-cols-3 gap-2 md:gap-3 px-3 md:px-4 py-3 md:py-4">
-            <div className="bg-white rounded-xl shadow-sm p-2.5 md:p-3 text-center border border-gray-100">
+            <div className="bg-white rounded-xl shadow-sm p-2.5 md:p-3 text-center border-2 border-green-500">
               <div className="text-xl md:text-2xl mb-0.5 md:mb-1">💰</div>
               <div className="font-bold text-sm md:text-base text-gray-800">{counterInView ? <CountUp start={0} end={Math.floor(stats.total_raised / 1000)} duration={2} separator="," /> : '0'}K+</div>
-              <div className="text-[8px] md:text-[10px] text-gray-400">Total Raised</div>
+              <div className="text-[8px] md:text-[10px] text-gray-400 font-medium">Total Raised</div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm p-2.5 md:p-3 text-center border border-gray-100">
+            <div className="bg-white rounded-xl shadow-sm p-2.5 md:p-3 text-center border-2 border-green-500">
               <div className="text-xl md:text-2xl mb-0.5 md:mb-1">🎯</div>
               <div className="font-bold text-sm md:text-base text-gray-800">{stats.total_pools}</div>
-              <div className="text-[8px] md:text-[10px] text-gray-400">Active Pools</div>
+              <div className="text-[8px] md:text-[10px] text-gray-400 font-medium">Active Pools</div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm p-2.5 md:p-3 text-center border border-gray-100">
+            <div className="bg-white rounded-xl shadow-sm p-2.5 md:p-3 text-center border-2 border-green-500">
               <div className="text-xl md:text-2xl mb-0.5 md:mb-1">🏆</div>
               <div className="font-bold text-sm md:text-base text-gray-800">{stats.total_winners}</div>
-              <div className="text-[8px] md:text-[10px] text-gray-400">Winners</div>
+              <div className="text-[8px] md:text-[10px] text-gray-400 font-medium">Winners</div>
             </div>
           </div>
 
-          {/* CATEGORY GRID */}
+          {/* === CATEGORIES SECTION - "Categories" instead of "Explore" === */}
           <div className="px-3 md:px-4 py-2">
-            <h2 className="text-[10px] md:text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 md:mb-3">Explore</h2>
+            <h2 className="text-[10px] md:text-sm font-bold text-gray-500 uppercase tracking-wider mb-2 md:mb-3">
+              {language === 'am' ? 'ምድቦች' : 'Categories'}
+            </h2>
             <div className="grid grid-cols-4 gap-2 md:gap-4">
-              <Link href="/listings" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border border-gray-100 hover:shadow-md transition">
+              {/* Regular Pools - GREEN BORDER */}
+              <Link href="/listings" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border-2 border-green-500 hover:shadow-md transition">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">🏊</span>
-                <span className="text-[9px] md:text-xs font-medium text-gray-700 text-center leading-tight">Regular Pools</span>
+                <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">Regular Pools</span>
                 <span className="text-[6px] md:text-[8px] text-gray-400 mt-0.5">Cars • Houses</span>
               </Link>
-              <Link href="/merkato-vip" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border border-gray-100 hover:shadow-md transition">
+
+              {/* Merkato VIP - GREEN BORDER */}
+              <Link href="/merkato-vip" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border-2 border-green-500 hover:shadow-md transition">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">🏪</span>
-                <span className="text-[9px] md:text-xs font-medium text-gray-700 text-center leading-tight">Merkato VIP</span>
+                <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">Merkato VIP</span>
                 <span className="text-[6px] md:text-[8px] text-gray-400 mt-0.5">Cash up to 10M</span>
               </Link>
-              <button onClick={() => setShowCityDropdown(!showCityDropdown)} className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border border-gray-100 hover:shadow-md transition relative">
+
+              {/* City VIP - GREEN BORDER */}
+              <button onClick={() => setShowCityDropdown(!showCityDropdown)} className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border-2 border-green-500 hover:shadow-md transition relative">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">🏙️</span>
-                <span className="text-[9px] md:text-xs font-medium text-gray-700 text-center leading-tight">City VIP</span>
+                <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">City VIP</span>
                 <span className="text-[6px] md:text-[8px] text-gray-400 mt-0.5">94 Cities • Cash</span>
                 {showCityDropdown && (
                   <div className="absolute bottom-full left-0 mb-2 w-56 md:w-64 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
@@ -580,35 +585,45 @@ export default function Home() {
                   </div>
                 )}
               </button>
-              <Link href="/winners" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border border-gray-100 hover:shadow-md transition">
+
+              {/* Winners - GREEN BORDER */}
+              <Link href="/winners" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border-2 border-green-500 hover:shadow-md transition">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">🏆</span>
-                <span className="text-[9px] md:text-xs font-medium text-gray-700 text-center leading-tight">Winners</span>
+                <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">Winners</span>
                 <span className="text-[6px] md:text-[8px] text-gray-400 mt-0.5">Hall of Fame</span>
               </Link>
-              <Link href="/how-it-works" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border border-gray-100 hover:shadow-md transition">
+
+              {/* How It Works - GREEN BORDER */}
+              <Link href="/how-it-works" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border-2 border-green-500 hover:shadow-md transition">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">📖</span>
-                <span className="text-[9px] md:text-xs font-medium text-gray-700 text-center leading-tight">How It Works</span>
+                <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">How It Works</span>
               </Link>
-              <Link href="/about" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border border-gray-100 hover:shadow-md transition">
+
+              {/* About - GREEN BORDER */}
+              <Link href="/about" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border-2 border-green-500 hover:shadow-md transition">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">ℹ️</span>
-                <span className="text-[9px] md:text-xs font-medium text-gray-700 text-center leading-tight">About</span>
+                <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">About</span>
               </Link>
-              <Link href="/contact" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border border-gray-100 hover:shadow-md transition">
+
+              {/* Contact - GREEN BORDER */}
+              <Link href="/contact" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border-2 border-green-500 hover:shadow-md transition">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">📞</span>
-                <span className="text-[9px] md:text-xs font-medium text-gray-700 text-center leading-tight">Contact</span>
+                <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">Contact</span>
               </Link>
+
+              {/* Register - GREEN BACKGROUND */}
               <button onClick={() => setShowRegisterModal(true)} className="flex flex-col items-center bg-gradient-to-r from-green-500 to-teal-500 rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 text-white hover:shadow-md transition">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">📝</span>
-                <span className="text-[9px] md:text-xs font-medium text-center leading-tight">Register</span>
+                <span className="text-[9px] md:text-xs font-bold text-center leading-tight">Register</span>
               </button>
             </div>
           </div>
 
-          {/* FEATURED POOLS - Horizontal Scroll */}
+          {/* === FEATURED POOLS === */}
           {featuredPools.length > 0 && (
             <div className="px-3 md:px-4 py-3 md:py-4">
               <div className="flex justify-between items-center mb-2 md:mb-3">
-                <h2 className="text-[10px] md:text-sm font-semibold text-gray-500 uppercase tracking-wider">⭐ Featured Pools</h2>
+                <h2 className="text-[10px] md:text-sm font-bold text-gray-500 uppercase tracking-wider">⭐ Featured Pools</h2>
                 <Link href="/listings" className="text-[10px] md:text-xs text-green-600 font-medium">See All</Link>
               </div>
               <div className="flex overflow-x-auto gap-3 md:gap-4 pb-3 snap-x snap-mandatory scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
@@ -621,10 +636,10 @@ export default function Home() {
             </div>
           )}
 
-          {/* REGULAR POOLS - Horizontal Scroll */}
+          {/* === REGULAR POOLS === */}
           <div className="px-3 md:px-4 py-3 md:py-4">
             <div className="flex justify-between items-center mb-2 md:mb-3">
-              <h2 className="text-[10px] md:text-sm font-semibold text-gray-500 uppercase tracking-wider">🏊 Regular Pools</h2>
+              <h2 className="text-[10px] md:text-sm font-bold text-gray-500 uppercase tracking-wider">🏊 Regular Pools</h2>
               <Link href="/listings" className="text-[10px] md:text-xs text-green-600 font-medium">View All</Link>
             </div>
             
@@ -645,7 +660,7 @@ export default function Home() {
             )}
           </div>
 
-          {/* CHARITY BANNER */}
+          {/* === CHARITY BANNER === */}
           <div className="mx-3 md:mx-4 p-3 md:p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl md:rounded-2xl border border-red-100 mb-3 md:mb-4">
             <div className="flex items-center gap-2 md:gap-3">
               <span className="text-2xl md:text-3xl">💚</span>
@@ -656,23 +671,23 @@ export default function Home() {
             </div>
           </div>
 
-          {/* BOTTOM NAVIGATION */}
+          {/* === BOTTOM NAVIGATION === */}
           <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center py-1.5 md:py-2 px-2 md:px-4 z-40 shadow-lg">
             <Link href="/" className="flex flex-col items-center text-green-600">
               <span className="text-xl md:text-2xl">🏠</span>
-              <span className="text-[8px] md:text-[10px] font-medium">Home</span>
+              <span className="text-[8px] md:text-[10px] font-bold">Home</span>
             </Link>
             <Link href="/listings" className="flex flex-col items-center text-gray-400 hover:text-gray-600">
               <span className="text-xl md:text-2xl">🎁</span>
-              <span className="text-[8px] md:text-[10px] font-medium">Pools</span>
+              <span className="text-[8px] md:text-[10px] font-bold">Pools</span>
             </Link>
             <Link href="/winners" className="flex flex-col items-center text-gray-400 hover:text-gray-600">
               <span className="text-xl md:text-2xl">🏆</span>
-              <span className="text-[8px] md:text-[10px] font-medium">Winners</span>
+              <span className="text-[8px] md:text-[10px] font-bold">Winners</span>
             </Link>
             <Link href="/dashboard" className="flex flex-col items-center text-gray-400 hover:text-gray-600">
               <span className="text-xl md:text-2xl">👤</span>
-              <span className="text-[8px] md:text-[10px] font-medium">Profile</span>
+              <span className="text-[8px] md:text-[10px] font-bold">Profile</span>
             </Link>
           </nav>
 
@@ -696,7 +711,6 @@ export default function Home() {
       </Head>
 
       <div className="min-h-screen bg-white w-full">
-        {/* === MOVING MARQUEE - ALWAYS VISIBLE === */}
         <MovingMarquee />
 
         <div className="fixed top-4 right-4 z-50">
@@ -740,11 +754,8 @@ export default function Home() {
               </div>
               <div className="hidden md:flex items-center gap-2">
                 <TopCitySelector />
-                {/* LOGIN - GREEN */}
                 <Link href="/login" className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium shadow-sm">Login</Link>
-                {/* REGISTER - GREEN */}
                 <button onClick={() => setShowRegisterModal(true)} className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium shadow-sm">Register</button>
-                {/* VIEW BUTTON - GREEN */}
                 <button className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium shadow-sm">👁️ View</button>
               </div>
               <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition">
@@ -927,7 +938,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Regular Pools - No Filters, Grid on Desktop */}
+          {/* Regular Pools */}
           <div id="regular-pools" className="mb-12 scroll-mt-20">
             <button onClick={() => setShowRegularPools(!showRegularPools)} className="w-full bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white rounded-2xl p-6 transition-all duration-300 shadow-lg group">
               <div className="flex flex-col items-center text-center">
