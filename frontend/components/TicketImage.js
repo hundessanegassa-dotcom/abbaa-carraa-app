@@ -1,7 +1,8 @@
-// components/TicketImage.js - COMPLETE REDESIGNED (No 3D, Unified Design)
+// components/TicketImage.js - MERGED (Combines best of both)
 import { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import toast from 'react-hot-toast';
+import QRCode from 'qrcode.react';
 
 export default function TicketImage({
   participant,
@@ -12,12 +13,90 @@ export default function TicketImage({
   amount,
   createdAt,
   poolType = 'regular',
-  onClose
+  onClose,
+  language = 'am',
+  cityInfo
 }) {
   const ticketRef = useRef(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // Get program-specific colors
+  // ============================================
+  // LANGUAGE TRANSLATIONS
+  // ============================================
+  const translations = {
+    am: {
+      verified: 'የተረጋገጠ',
+      unverified: 'ያልተረጋገጠ',
+      verifiedDesc: 'ለሽልማት እጣ ብቁ',
+      unverifiedDesc: 'ክፍያ በማረጋገጥ ላይ',
+      ticketNo: 'የቲኬት ቁጥር',
+      issued: 'የተሰጠ',
+      youCouldWin: 'ሊያሸንፉት ይችላሉ',
+      participant: 'ተሳታፊ',
+      drawDate: 'የእጣ ቀን',
+      seats: 'መቀመጫዎች',
+      amountPaid: 'የክፍያ መጠን',
+      prizeListed: 'የሽልማት ቀን',
+      terms: 'ውሎች እና ሁኔታዎች ይሠራሉ',
+      scanToVerify: 'ለማረጋገጥ ይስካኑ',
+      proofParticipation: 'ይህ ቲኬት የተሳትፎ ማስረጃ ነው',
+      downloadPNG: 'PNG አውርድ',
+      downloadJPEG: 'JPEG አውርድ',
+      share: 'አጋራ',
+      close: 'ዝጋ',
+      pendingVerification: 'ክፍያ በማረጋገጥ ላይ',
+    },
+    en: {
+      verified: 'VERIFIED',
+      unverified: 'UNVERIFIED',
+      verifiedDesc: 'Eligible for prize draw',
+      unverifiedDesc: 'Pending payment verification',
+      ticketNo: 'Ticket Number',
+      issued: 'Issued',
+      youCouldWin: 'You Could Win',
+      participant: 'Participant',
+      drawDate: 'Draw Date',
+      seats: 'Seats',
+      amountPaid: 'Amount Paid',
+      prizeListed: 'Prize Listed Date',
+      terms: 'Terms & conditions apply',
+      scanToVerify: 'Scan to verify',
+      proofParticipation: 'This ticket is proof of participation',
+      downloadPNG: 'Download PNG',
+      downloadJPEG: 'Download JPEG',
+      share: 'Share',
+      close: 'Close',
+      pendingVerification: 'Pending payment verification'
+    },
+    om: {
+      verified: 'MIRKANEEFFAME',
+      unverified: 'HIN MIRKANEEFFANNE',
+      verifiedDesc: 'Buzuuraaf malu',
+      unverifiedDesc: 'Kaffaltii eegaa',
+      ticketNo: 'Lakkoofsa Tikkeettii',
+      issued: 'Kenname',
+      youCouldWin: 'Mo'achuu Dandeessu',
+      participant: 'Abba'aa',
+      drawDate: 'Guyyaa Buzuuraa',
+      seats: 'Barcuma',
+      amountPaid: 'Kaffaltii',
+      prizeListed: 'Guyyaa Badhaasaa',
+      terms: 'Shartiiwwan fi haalotni ni hojiiru',
+      scanToVerify: 'Mirkaneessuu qabdu',
+      proofParticipation: 'Kun ragaa hirmaachuu',
+      downloadPNG: 'PNG Buufadhu',
+      downloadJPEG: 'JPEG Buufadhu',
+      share: 'Hirmaachisi',
+      close: 'Cufi',
+      pendingVerification: 'Kaffaltii eegamaa jira'
+    }
+  };
+
+  const t = translations[language] || translations.en;
+
+  // ============================================
+  // PROGRAM COLORS
+  // ============================================
   const getProgramColors = () => {
     if (poolType === 'merkato') {
       return {
@@ -25,7 +104,8 @@ export default function TicketImage({
         secondary: 'bg-yellow-50 border-yellow-200',
         accent: 'text-yellow-700',
         light: 'bg-yellow-50/30',
-        label: 'MERKATO VIP'
+        label: 'MERKATO VIP',
+        icon: '🏪'
       };
     } else if (poolType === 'city') {
       return {
@@ -33,7 +113,8 @@ export default function TicketImage({
         secondary: 'bg-blue-50 border-blue-200',
         accent: 'text-blue-700',
         light: 'bg-blue-50/30',
-        label: 'CITY VIP'
+        label: 'CITY VIP',
+        icon: '🏙️'
       };
     } else {
       return {
@@ -41,13 +122,17 @@ export default function TicketImage({
         secondary: 'bg-emerald-50 border-emerald-200',
         accent: 'text-emerald-700',
         light: 'bg-emerald-50/30',
-        label: 'REGULAR POOL'
+        label: 'REGULAR POOL',
+        icon: '🎯'
       };
     }
   };
 
   const colors = getProgramColors();
 
+  // ============================================
+  // DOWNLOAD FUNCTIONS
+  // ============================================
   const handleDownloadImage = async (format = 'png') => {
     if (!ticketRef.current) return;
 
@@ -84,6 +169,9 @@ export default function TicketImage({
     }
   };
 
+  // ============================================
+  // SHARE FUNCTION
+  // ============================================
   const handleShareTicket = async () => {
     if (!ticketRef.current) return;
 
@@ -105,11 +193,9 @@ export default function TicketImage({
           files: [file],
         });
       } else {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `ticket-${ticketNumber}.png`;
-        link.click();
-        toast.success('Ticket downloaded! Share it manually.');
+        // Fallback: Share via Telegram
+        const message = `🎫 *My Abbaa Carraa Ticket*\n\n🏆 Pool: ${getProgramName()}\n💺 Seats: ${seatNumbers?.join(', ') || 'N/A'}\n💰 Amount: ETB ${amount?.toLocaleString()}\n📅 Date: ${formatDate(createdAt)}`;
+        window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.origin)}&text=${encodeURIComponent(message)}`, '_blank');
       }
     } catch (error) {
       if (error.name !== 'AbortError') {
@@ -118,37 +204,13 @@ export default function TicketImage({
     }
   };
 
-  const getStatusBadge = () => {
-    if (isVerified) {
-      return (
-        <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg p-2 text-center mb-3 shadow-md">
-          <span className="text-white text-sm font-bold flex items-center justify-center gap-2">
-            <span className="text-lg">✅</span> VERIFIED TICKET
-          </span>
-          <p className="text-green-100 text-xs mt-1">Eligible for prize draw</p>
-        </div>
-      );
-    }
-    return (
-      <div className="bg-gradient-to-r from-yellow-500 to-amber-500 rounded-lg p-2 text-center mb-3 shadow-md">
-        <span className="text-white text-sm font-bold flex items-center justify-center gap-2">
-          <span className="text-lg">⏳</span> UNVERIFIED TICKET
-        </span>
-        <p className="text-yellow-100 text-xs mt-1">Pending payment verification</p>
-      </div>
-    );
-  };
-
+  // ============================================
+  // HELPER FUNCTIONS
+  // ============================================
   const getProgramName = () => {
     if (poolType === 'merkato') return 'Merkato VIP Program';
-    if (poolType === 'city') return `${participant?.city || 'City'} VIP Program`;
+    if (poolType === 'city') return `${participant?.city || cityInfo?.name?.split('|')[0] || 'City'} VIP Program`;
     return 'Regular Prize Pool';
-  };
-
-  const getProgramIcon = () => {
-    if (poolType === 'merkato') return '🏪';
-    if (poolType === 'city') return '🏙️';
-    return '🎯';
   };
 
   const formatDate = (date) => {
@@ -174,7 +236,6 @@ export default function TicketImage({
     return pool?.drawDate || pool?.draw_time || pool?.end_date || 'TBD';
   };
 
-  // Generate a subtle pattern for background
   const getPatternStyle = () => {
     const patterns = [
       'linear-gradient(135deg, rgba(255,255,255,0.05) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.05) 75%, transparent 75%, transparent)',
@@ -185,6 +246,22 @@ export default function TicketImage({
     return patterns[index];
   };
 
+  // QR Code data
+  const getQRData = () => {
+    return JSON.stringify({
+      ticketNumber: ticketNumber,
+      participant: participant?.user_email || 'N/A',
+      program: poolType,
+      tier: participant?.tier || pool?.tier || 'N/A',
+      seats: seatNumbers || [],
+      status: isVerified ? 'verified' : 'unverified',
+      issuedAt: createdAt || new Date().toISOString()
+    });
+  };
+
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <div className="space-y-4">
       {/* Action Buttons */}
@@ -194,27 +271,27 @@ export default function TicketImage({
           disabled={isDownloading}
           className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-700 transition disabled:opacity-50 flex items-center gap-2"
         >
-          <span>📸</span> Download PNG
+          <span>📸</span> {t.downloadPNG}
         </button>
         <button
           onClick={() => handleDownloadImage('jpg')}
           disabled={isDownloading}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition disabled:opacity-50 flex items-center gap-2"
         >
-          <span>🖼️</span> Download JPEG
+          <span>🖼️</span> {t.downloadJPEG}
         </button>
         <button
           onClick={handleShareTicket}
           className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-purple-700 transition flex items-center gap-2"
         >
-          <span>📤</span> Share
+          <span>📤</span> {t.share}
         </button>
         {onClose && (
           <button
             onClick={onClose}
             className="bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-700 transition flex items-center gap-2"
           >
-            <span>✕</span> Close
+            <span>✕</span> {t.close}
           </button>
         )}
       </div>
@@ -224,7 +301,7 @@ export default function TicketImage({
         ref={ticketRef}
         className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200 max-w-md mx-auto"
       >
-        {/* Header with Program-Specific Color */}
+        {/* Header */}
         <div className={`bg-gradient-to-r ${colors.primary} text-white p-5 text-center relative overflow-hidden`}>
           <div
             className="absolute inset-0 opacity-10"
@@ -234,34 +311,44 @@ export default function TicketImage({
             }}
           />
           <div className="relative z-10">
-            <div className="text-5xl mb-2">{getProgramIcon()}</div>
+            <div className="text-5xl mb-2">{colors.icon}</div>
             <h2 className="text-2xl font-bold tracking-wider">ABBAA CARRAA</h2>
             <p className="text-sm opacity-90 mt-1 font-medium">{getProgramName()}</p>
-            <div className="mt-2 flex justify-center gap-2">
+            <div className="mt-2 flex justify-center gap-2 flex-wrap">
               <span className="bg-white/20 px-3 py-0.5 rounded-full text-xs font-semibold">
                 {colors.label}
               </span>
-              <span className="bg-white/20 px-3 py-0.5 rounded-full text-xs font-semibold">
-                {isVerified ? '✅ VERIFIED' : '⏳ PENDING'}
+              <span className={`px-3 py-0.5 rounded-full text-xs font-semibold ${
+                isVerified ? 'bg-green-500/30 text-green-100' : 'bg-yellow-500/30 text-yellow-100'
+              }`}>
+                {isVerified ? '✅ ' + t.verified : '⏳ ' + t.unverified}
               </span>
             </div>
           </div>
         </div>
 
         {/* Status Badge */}
-        {getStatusBadge()}
+        <div className={`${isVerified ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gradient-to-r from-yellow-500 to-amber-500'} rounded-lg p-2 text-center mx-4 mt-3 shadow-md`}>
+          <span className="text-white text-sm font-bold flex items-center justify-center gap-2">
+            <span className="text-lg">{isVerified ? '✅' : '⏳'}</span>
+            {isVerified ? t.verified : t.unverified} {ticketNumber ? `#${ticketNumber}` : ''}
+          </span>
+          <p className={`text-xs mt-1 ${isVerified ? 'text-green-100' : 'text-yellow-100'}`}>
+            {isVerified ? t.verifiedDesc : t.unverifiedDesc}
+          </p>
+        </div>
 
         <div className="p-5 space-y-4">
-          {/* Ticket Number */}
+          {/* Ticket Number & Date */}
           <div className="text-center border-b border-dashed border-gray-200 pb-3">
-            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Ticket Number</p>
+            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">{t.ticketNo}</p>
             <p className="font-mono font-bold text-xl tracking-wider text-gray-800">{ticketNumber || 'N/A'}</p>
-            <p className="text-xs text-gray-400 mt-1">Issued: {formatDate(createdAt)}</p>
+            <p className="text-xs text-gray-400 mt-1">{t.issued}: {formatDate(createdAt)}</p>
           </div>
 
           {/* Prize Amount */}
           <div className={`bg-gradient-to-r ${colors.secondary} rounded-xl p-4 text-center border ${colors.secondary}`}>
-            <p className={`text-xs font-medium uppercase tracking-wider ${colors.accent}`}>🏆 You Could Win</p>
+            <p className={`text-xs font-medium uppercase tracking-wider ${colors.accent}`}>🏆 {t.youCouldWin}</p>
             <p className="font-bold text-3xl text-gray-800">
               ETB {getPrizeAmount().toLocaleString()}
             </p>
@@ -271,74 +358,76 @@ export default function TicketImage({
           {/* Participant & Draw Info */}
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-gray-50 rounded-lg p-3 text-center border border-gray-200">
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">👤 Participant</p>
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">👤 {t.participant}</p>
               <p className="font-semibold text-gray-800 text-sm truncate">
-                {participant?.user_name || 'N/A'}
+                {participant?.user_name || participant?.full_name || 'N/A'}
               </p>
               <p className="text-[10px] text-gray-400 mt-0.5">{participant?.user_email || 'N/A'}</p>
             </div>
             <div className="bg-gray-50 rounded-lg p-3 text-center border border-gray-200">
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">📍 Draw Date</p>
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">📍 {t.drawDate}</p>
               <p className="font-semibold text-gray-800 text-sm">
                 {getDrawDate()}
               </p>
               <p className="text-[10px] text-gray-400 mt-0.5">
                 {poolType === 'merkato' ? 'Merkato VIP' :
-                 poolType === 'city' ? `${participant?.city || 'City'} VIP` :
+                 poolType === 'city' ? `${participant?.city || cityInfo?.name?.split('|')[0] || 'City'} VIP` :
                  'Regular Pool'}
               </p>
             </div>
           </div>
 
-          {/* Seat Numbers & Amount Paid */}
+          {/* Seats & Amount */}
           <div className="grid grid-cols-2 gap-3">
             <div className={`bg-gradient-to-r ${colors.light} rounded-lg p-3 text-center border ${colors.secondary}`}>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">💺 Seats</p>
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">💺 {t.seats}</p>
               <p className="font-bold text-lg text-gray-800">
                 {seatNumbers?.sort((a, b) => a - b).join(', ') || 'N/A'}
               </p>
               <p className="text-xs text-gray-400 mt-1">{seatNumbers?.length || 0} seat(s)</p>
             </div>
             <div className={`bg-gradient-to-r ${colors.light} rounded-lg p-3 text-center border ${colors.secondary}`}>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">💰 Amount Paid</p>
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">💰 {t.amountPaid}</p>
               <p className="font-bold text-lg text-gray-800">ETB {amount?.toLocaleString() || 0}</p>
-              <p className="text-xs text-gray-400 mt-1">Paid</p>
+              <p className="text-xs text-gray-400 mt-1">{isVerified ? t.verified : t.pendingVerification}</p>
             </div>
           </div>
 
-          {/* Prize Listed Date */}
-          <div className="bg-gray-50 rounded-lg p-2 text-center border border-gray-200">
-            <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">📅 Prize Listed Date</p>
-            <p className="text-sm font-medium text-gray-700">
-              {formatDate(createdAt)}
-            </p>
+          {/* QR Code */}
+          <div className="flex justify-center py-2 border-t border-b border-gray-200">
+            <div className="bg-white p-2 rounded-lg shadow-sm">
+              <QRCode 
+                value={getQRData()} 
+                size={100} 
+                level="H"
+                renderAs="svg"
+              />
+            </div>
           </div>
 
-          {/* Footer with QR Placeholder */}
+          {/* Footer */}
           <div className="flex justify-between items-center border-t border-dashed border-gray-200 pt-3">
             <div className="text-[10px] text-gray-400">
               <span className="block">🎫 Abbaa Carraa</span>
-              <span className="block mt-0.5">Terms & conditions apply</span>
+              <span className="block mt-0.5">{t.terms}</span>
             </div>
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs font-mono border border-gray-300">
-                QR
-              </div>
-              <span className="text-[8px] text-gray-400 mt-1">Scan to verify</span>
+            <div className="text-[8px] text-gray-400 text-right">
+              <span className="block">{t.scanToVerify}</span>
+              <span className="block mt-0.5">v1.0</span>
             </div>
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Footer Bar */}
         <div className={`bg-gradient-to-r ${colors.primary} p-3 text-center text-white text-[10px] opacity-90`}>
-          <span className="font-medium">✓ This ticket is proof of participation</span>
+          <span className="font-medium">✓ {t.proofParticipation}</span>
           <span className="block mt-0.5">Abbaa Carraa • {new Date().getFullYear()}</span>
         </div>
       </div>
 
       {/* Info */}
       <div className="text-center text-xs text-gray-400">
-        <span>📌 Download or share your ticket</span>
+        <span>📌 {language === 'am' ? 'ቲኬትዎን ያውርዱ ወይም ያጋሩ' : language === 'om' ? 'Tikkeettii keessan buufadhaa ykn hirmaachisaa' : 'Download or share your ticket'}</span>
       </div>
     </div>
   );
