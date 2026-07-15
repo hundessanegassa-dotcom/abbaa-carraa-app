@@ -1,4 +1,4 @@
-// pages/cities/[cityId].js - COMPLETE WITH 4 TIERS, ALL 94 CITIES & NO COMMISSION DISPLAY
+// pages/cities/[cityId].js - COMPLETE WITH 5 TIERS (100, 500, 1000, 2500, 5000 BIRR) & NO COMMISSION DISPLAY
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -8,9 +8,84 @@ import toast from 'react-hot-toast';
 import NoSSR from '../../components/NoSSR';
 import TopCitySelector from '../../components/TopCitySelector';
 import UnifiedAgentApplication from '../../components/UnifiedAgentApplication';
-import { TIERS, getDrawScheduleText } from '../../components/SeatSelector';
 import SeatSelector from '../../components/SeatSelector';
 import CityTicket from '../../components/CityTicket';
+
+// ✅ 5 TIERS FOR CITY VIP - 100, 500, 1000, 2500, 5000 BIRR
+export const CITY_VIP_TIERS = {
+  silver: {
+    id: 'silver',
+    labelEn: 'Silver',
+    labelAm: 'ብር',
+    icon: '🥈',
+    contribution: 100,
+    prize: 100000,
+    seats: 1200,
+    color: 'from-gray-400 to-gray-500',
+    badge: 'Silver',
+    tier: 1
+  },
+  gold: {
+    id: 'gold',
+    labelEn: 'Gold',
+    labelAm: 'ወርቅ',
+    icon: '🥇',
+    contribution: 500,
+    prize: 500000,
+    seats: 1200,
+    color: 'from-yellow-400 to-yellow-600',
+    badge: 'Gold',
+    tier: 2
+  },
+  platinum: {
+    id: 'platinum',
+    labelEn: 'Platinum',
+    labelAm: 'ፕላቲኒየም',
+    icon: '💎',
+    contribution: 1000,
+    prize: 1000000,
+    seats: 2400,
+    color: 'from-gray-300 to-blue-400',
+    badge: 'Platinum',
+    tier: 3
+  },
+  diamond: {
+    id: 'diamond',
+    labelEn: 'Diamond',
+    labelAm: 'አልማዝ',
+    icon: '💠',
+    contribution: 2500,
+    prize: 2000000,
+    seats: 2400,
+    color: 'from-blue-400 to-cyan-400',
+    badge: 'Diamond',
+    tier: 4
+  },
+  royal: {
+    id: 'royal',
+    labelEn: 'Royal',
+    labelAm: 'ንጉሣዊ',
+    icon: '👑',
+    contribution: 5000,
+    prize: 5000000,
+    seats: 2400,
+    color: 'from-purple-500 to-pink-500',
+    badge: 'Royal',
+    tier: 5
+  }
+};
+
+// Helper function to get draw schedule text
+function getDrawScheduleText(tierId, language) {
+  const schedules = {
+    silver: { en: 'Daily Draw', am: 'ዕለታዊ እጣ' },
+    gold: { en: 'Daily Draw', am: 'ዕለታዊ እጣ' },
+    platinum: { en: 'Weekly Draw', am: 'ሳምንታዊ እጣ' },
+    diamond: { en: 'Weekly Draw', am: 'ሳምንታዊ እጣ' },
+    royal: { en: 'Monthly Draw', am: 'ወርሃዊ እጣ' }
+  };
+  return schedules[tierId]?.[language] || schedules.silver[language];
+}
 
 // ============================================
 // COMPLETE CITY DATA - ALL 94 ETHIOPIAN CITIES
@@ -142,6 +217,26 @@ const cityData = {
   'chifra': { name: 'ቺፍራ | Chifra', slogan: 'የአፋር ክልል ከተማ', businesses: '2,000+', workers: '8,000+', color: 'from-gray-700 to-gray-900', icon: '🏔️', product: 'ንግድ, እንስሳት', description: 'የአፋር ክልል ከተማ', population: '30K+', region: 'Afar' }
 };
 
+// ✅ FUNCTION TO ADD UNLISTED CITY
+export function addUnlistedCity(cityId, cityDataObj) {
+  if (cityData[cityId]) {
+    console.warn(`City "${cityId}" already exists. Use updateCityData to modify.`);
+    return false;
+  }
+  cityData[cityId] = cityDataObj;
+  return true;
+}
+
+// ✅ FUNCTION TO UPDATE EXISTING CITY
+export function updateCityData(cityId, updates) {
+  if (!cityData[cityId]) {
+    console.warn(`City "${cityId}" does not exist. Use addUnlistedCity to create.`);
+    return false;
+  }
+  cityData[cityId] = { ...cityData[cityId], ...updates };
+  return true;
+}
+
 const cityList = Object.keys(cityData).map(key => ({
   id: key,
   name: cityData[key].name.split('|')[0].trim(),
@@ -151,7 +246,7 @@ const cityList = Object.keys(cityData).map(key => ({
 
 export default function CityVip() {
   const router = useRouter();
-  const { city } = router.query;
+  const { cityId } = router.query;
   const [language, setLanguage] = useState('am');
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -178,19 +273,31 @@ export default function CityVip() {
     if (savedLang === 'am' || savedLang === 'en') {
       setLanguage(savedLang);
     }
-    if (city) {
-      const data = cityData[city];
-      if (data) setCityInfo(data);
-      else setCityInfo({ 
-        name: city.replace(/-/g, ' '), 
-        icon: '🏙️', 
-        slogan: 'አንድ ብሔር አንድ እድል',
-        region: 'Ethiopia',
-        description: 'አዲስ ከተማ | New City'
-      });
+    if (cityId) {
+      const data = cityData[cityId];
+      if (data) {
+        setCityInfo(data);
+      } else {
+        // Handle unlisted city - use the ID as the name
+        const formattedName = cityId.split('-').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+        setCityInfo({ 
+          name: formattedName + ' | ' + formattedName,
+          slogan: 'አንድ ብሔር አንድ እድል | One Nation, One Opportunity',
+          businesses: 'N/A',
+          workers: 'N/A',
+          color: 'from-gray-700 to-gray-900',
+          icon: '🏙️',
+          product: 'ንግድ እና አገልግሎት | Trade & Services',
+          description: 'አዲስ ከተማ | New City',
+          population: 'N/A',
+          region: 'Ethiopia'
+        });
+      }
     }
     checkUser();
-  }, [city]);
+  }, [cityId]);
 
   const toggleLanguage = () => {
     const newLang = language === 'am' ? 'en' : 'am';
@@ -205,12 +312,12 @@ export default function CityVip() {
       setUser(user);
       
       const { tier } = router.query;
-      if (user && tier && TIERS[tier]) {
+      if (user && tier && CITY_VIP_TIERS[tier]) {
         setSelectedTierId(tier);
-        setSelectedTier(TIERS[tier]);
+        setSelectedTier(CITY_VIP_TIERS[tier]);
         setShowTiers(false);
         setShowSeats(true);
-        router.replace(`/cities/${city}`, undefined, { shallow: true });
+        router.replace(`/cities/${cityId}`, undefined, { shallow: true });
       }
     } catch (error) {
       console.error('Error checking user:', error);
@@ -221,7 +328,7 @@ export default function CityVip() {
 
   const handleTierSelect = (tierId) => {
     if (!user) {
-      const redirectUrl = `/cities/${city}?tier=${tierId}`;
+      const redirectUrl = `/cities/${cityId}?tier=${tierId}`;
       localStorage.setItem('abbaa_redirect_after_login', redirectUrl);
       sessionStorage.setItem('redirectAfterLogin', redirectUrl);
       toast.loading(language === 'am' ? 'እባክዎ ወደ ስርዓት ይግቡ...' : 'Please login...');
@@ -229,13 +336,13 @@ export default function CityVip() {
       return;
     }
     setSelectedTierId(tierId);
-    setSelectedTier(TIERS[tierId]);
+    setSelectedTier(CITY_VIP_TIERS[tierId]);
     setShowTiers(false);
     setShowSeats(true);
   };
 
   const handleSeatsSelected = async ({ seats, totalAmount, seatCount, tier }) => {
-    const tierConfig = TIERS[tier];
+    const tierConfig = CITY_VIP_TIERS[tier];
     setLoading(true);
     
     try {
@@ -247,7 +354,7 @@ export default function CityVip() {
           user_id: user.id,
           user_email: user.email,
           user_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-          city: cityInfo?.name?.split('|')[0] || city || 'Unknown City',
+          city: cityInfo?.name?.split('|')[0] || cityId || 'Unknown City',
           tier: tier,
           pool_type: tier,
           seat_numbers: seats,
@@ -327,7 +434,7 @@ export default function CityVip() {
         .from('payment-proofs')
         .upload(fileName, compressedFile);
       
-      if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
+      if (uploadError) throw new Error('Upload failed: ' + uploadError.message);
       
       const { data: { publicUrl } } = supabase.storage
         .from('payment-proofs')
@@ -358,7 +465,7 @@ export default function CityVip() {
       
     } catch (error) {
       console.error('Payment error:', error);
-      toast.error(error.message || language === 'am' ? 'ክፍያ መላክ አልተቻለም' : 'Failed to submit payment', { id: loadingToast });
+      toast.error(error.message || (language === 'am' ? 'ክፍያ መላክ አልተቻለም' : 'Failed to submit payment'), { id: loadingToast });
     } finally {
       setIsSubmitting(false);
     }
@@ -380,32 +487,12 @@ export default function CityVip() {
   };
 
   const renderTierSelection = () => {
-    if (!TIERS) {
-      return (
-        <div className="text-center py-12 bg-white rounded-2xl shadow-md">
-          <div className="text-5xl mb-4">⚠️</div>
-          <p className="text-red-600 font-semibold">
-            {language === 'am' ? 'ስህተት: የደረጃ መረጃ አልተገኘም' : 'Error: Tier data not found'}
-          </p>
-          <p className="text-gray-500 text-sm mt-2">
-            {language === 'am' ? 'እባክዎ ገፁን እንደገና ያድሱ' : 'Please refresh the page'}
-          </p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
-          >
-            🔄 {language === 'am' ? 'ያድሱ' : 'Refresh'}
-          </button>
-        </div>
-      );
-    }
-
-    const tiers = ['bronze', 'silver', 'gold', 'platinum'];
+    const tierIds = ['silver', 'gold', 'platinum', 'diamond', 'royal'];
     
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
-        {tiers.map((tierId) => {
-          const tier = TIERS[tierId];
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 max-w-7xl mx-auto">
+        {tierIds.map((tierId) => {
+          const tier = CITY_VIP_TIERS[tierId];
           if (!tier) return null;
           
           return (
@@ -414,7 +501,7 @@ export default function CityVip() {
               className="bg-white rounded-2xl shadow-lg overflow-hidden transform transition hover:scale-105 cursor-pointer border-2 hover:border-green-500"
               onClick={() => handleTierSelect(tierId)}
             >
-              <div className={`bg-gradient-to-r ${tier.color} p-4 text-white text-center`}>
+              <div className={'bg-gradient-to-r ' + tier.color + ' p-4 text-white text-center'}>
                 <div className="text-4xl mb-2">{tier.icon}</div>
                 <h3 className="font-bold text-xl">
                   {language === 'am' ? tier.labelAm : tier.labelEn}
@@ -468,7 +555,7 @@ export default function CityVip() {
     <NoSSR>
       <>
         <Head>
-          <title>{cityInfo.name.split('|')[0]} VIP - Win up to 10M ETB | Abbaa Carraa</title>
+          <title>{cityInfo.name.split('|')[0]} VIP - Win up to 5M ETB | Abbaa Carraa</title>
         </Head>
 
         <nav className="sticky top-0 z-50 bg-gray-900 shadow-lg border-b border-gray-700">
@@ -505,25 +592,27 @@ export default function CityVip() {
                     <div className="text-xs text-gray-500">{cityInfo.name.split('|')[1]}</div>
                   </div>
                 </div>
-                <svg className={`w-5 h-5 text-gray-400 transition-transform ${showCityDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={'w-5 h-5 text-gray-400 transition-transform ' + (showCityDropdown ? 'rotate-180' : '')} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
               {showCityDropdown && (
                 <div className="absolute top-full left-0 mt-2 w-full md:w-96 bg-white rounded-2xl shadow-2xl border z-50 max-h-96 overflow-y-auto">
                   <div className="sticky top-0 bg-white p-3 border-b">
-                    <input type="text" id="citySearch" placeholder={language === 'am' ? 'ከተማ ፈልግ...' : 'Search city...'} className="w-full border rounded-lg px-4 py-2" onKeyUp={(e) => { const term = e.target.value.toLowerCase(); document.querySelectorAll('.city-item').forEach(el => { el.style.display = el.textContent.toLowerCase().includes(term) ? 'flex' : 'none'; }); }} />
+                    <input type="text" id="citySearch" placeholder={language === 'am' ? 'ከተማ ፈልግ...' : 'Search city...'} className="w-full border rounded-lg px-4 py-2" onKeyUp={(e) => { var term = e.target.value.toLowerCase(); var items = document.querySelectorAll('.city-item'); for (var i = 0; i < items.length; i++) { var el = items[i]; el.style.display = el.textContent.toLowerCase().indexOf(term) > -1 ? 'flex' : 'none'; } }} />
                   </div>
-                  {cityList.map(c => (
-                    <a key={c.id} href={`/cities/${c.id}`} className={`city-item flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b cursor-pointer ${city === c.id ? 'bg-gray-100' : ''}`}>
-                      <span className="text-2xl">{c.icon}</span>
-                      <div>
-                        <div className="font-medium text-gray-800">{c.name}</div>
-                        <div className="text-xs text-gray-500">{c.nameEn}</div>
-                      </div>
-                      {city === c.id && <span className="ml-auto text-green-600 text-sm">✓</span>}
-                    </a>
-                  ))}
+                  {cityList.map(function(c) {
+                    return (
+                      <a key={c.id} href={'/cities/' + c.id} className={'city-item flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b cursor-pointer ' + (cityId === c.id ? 'bg-gray-100' : '')}>
+                        <span className="text-2xl">{c.icon}</span>
+                        <div>
+                          <div className="font-medium text-gray-800">{c.name}</div>
+                          <div className="text-xs text-gray-500">{c.nameEn}</div>
+                        </div>
+                        {cityId === c.id && <span className="ml-auto text-green-600 text-sm">✓</span>}
+                      </a>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -538,7 +627,7 @@ export default function CityVip() {
                 : '✨ Let\'s make our city participant a millionaire today! ✨'}
             </div>
             <p className="text-gray-200 mt-2">
-              {language === 'am' ? 'እስከ 10 ሚሊዮን ብር ለማሸነፍ መቀመጫዎን ይምረጡ' : 'Select your seat to win up to 10 Million ETB'}
+              {language === 'am' ? 'እስከ 5 ሚሊዮን ብር ለማሸነፍ መቀመጫዎን ይምረጡ' : 'Select your seat to win up to 5 Million ETB'}
             </p>
           </div>
 
@@ -562,7 +651,7 @@ export default function CityVip() {
               onClose={handleCloseSeats}
               onCancel={handleCloseSeats}
               programType="city"
-              city={cityInfo?.name?.split('|')[0] || city || 'Unknown City'}
+              city={cityInfo?.name?.split('|')[0] || cityId || 'Unknown City'}
               tierId={selectedTierId}
               entryFee={selectedTier.contribution}
               totalSeats={selectedTier.seats}
@@ -606,7 +695,7 @@ export default function CityVip() {
                       className="hidden" 
                       id="paymentFile" 
                       onChange={(e) => {
-                        const file = e.target.files[0];
+                        var file = e.target.files[0];
                         if (file) { 
                           setSelectedFile(file); 
                           setPreviewUrl(URL.createObjectURL(file)); 
@@ -675,7 +764,7 @@ export default function CityVip() {
                   <span className="text-5xl">🤝</span>
                   <div>
                     <h3 className="text-2xl font-bold">
-                      {language === 'am' ? `የ${cityInfo.name.split('|')[0]} ወኪል ይሁኑ` : `Become an Agent for ${cityInfo.name.split('|')[0]}`}
+                      {language === 'am' ? 'የ' + cityInfo.name.split('|')[0] + ' ወኪል ይሁኑ' : 'Become an Agent for ' + cityInfo.name.split('|')[0]}
                     </h3>
                     <p className="text-gray-300">
                       {language === 'am' ? 'በሚያመጧቸው ደንበኞች ሁሉ 10% ኮሚሽን ያግኙ!' : 'Earn 10% commission on every successful contribution!'}
@@ -703,7 +792,7 @@ export default function CityVip() {
         {showAgentApplication && (
           <UnifiedAgentApplication 
             onClose={() => setShowAgentApplication(false)} 
-            preSelectedCity={cityInfo?.name?.split('|')[0] || city || 'Unknown City'} 
+            preSelectedCity={cityInfo?.name?.split('|')[0] || cityId || 'Unknown City'} 
             preSelectedProgram="city_vip" 
           />
         )}
