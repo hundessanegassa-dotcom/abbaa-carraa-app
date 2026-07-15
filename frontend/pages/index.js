@@ -1,4 +1,4 @@
-// pages/index.js - Complete with 6 Tiers & Telegram Integration
+// pages/index.js - Updated: REMOVED VIP TIERS QUICK VIEW, City VIP already has green border
 // 100K: 1200 seats | 500K: 1200 seats | 1M: 2400 seats | 2M: 2400 seats | 5M: 2400 seats | 10M: 2400 seats
 import Head from 'next/head';
 import Link from 'next/link';
@@ -763,22 +763,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* VIP TIERS QUICK VIEW - GREEN BORDER CARDS */}
-          <div className="px-3 md:px-4 py-2">
-            <h2 className="text-[10px] md:text-sm font-bold text-gray-500 uppercase tracking-wider mb-2 md:mb-3">
-              {language === 'am' ? 'የVIP ደረጃዎች' : 'VIP Tiers'}
-            </h2>
-            <div className="grid grid-cols-3 gap-2 md:gap-3">
-              {merkatoVipTiers.map((tier) => (
-                <Link key={tier.id} href="/merkato-vip" className={`bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-3 border-2 border-green-500 hover:shadow-md transition text-center`}>
-                  <div className="text-2xl md:text-3xl">{tier.icon}</div>
-                  <div className="text-[8px] md:text-[10px] font-bold text-gray-800">{tier.displayName}</div>
-                  <div className="text-[7px] md:text-[9px] text-green-600 font-semibold">{tier.prize}</div>
-                  <div className="text-[6px] md:text-[8px] text-gray-400">{tier.seats} Seats</div>
-                </Link>
-              ))}
-            </div>
-          </div>
+          {/* ✅ VIP TIERS QUICK VIEW - REMOVED (Now inside Merkato VIP and City VIP pages) */}
 
           {/* FEATURED POOLS */}
           {featuredPools.length > 0 && (
@@ -1029,17 +1014,7 @@ export default function Home() {
           <h2 className="text-3xl font-bold text-center mb-4">Available Opportunities</h2>
           <p className="text-center text-gray-500 mb-8">Choose from VIP programs or regular pools</p>
 
-          {/* VIP TIERS QUICK REFERENCE */}
-          <div className="mb-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            {merkatoVipTiers.map((tier) => (
-              <div key={tier.id} className={`bg-gradient-to-r ${tier.color} rounded-xl p-3 text-center text-white shadow-lg`}>
-                <div className="text-2xl">{tier.icon}</div>
-                <div className="text-xs font-bold uppercase">{tier.displayName}</div>
-                <div className="text-xs font-semibold">{tier.prize}</div>
-                <div className="text-[10px] opacity-80">{tier.seats} Seats</div>
-              </div>
-            ))}
-          </div>
+          {/* ✅ VIP TIERS QUICK REFERENCE - REMOVED (Now inside Merkato VIP and City VIP pages) */}
 
           {/* Merkato VIP */}
           <div id="merkato-vip" className="mb-12 scroll-mt-20">
