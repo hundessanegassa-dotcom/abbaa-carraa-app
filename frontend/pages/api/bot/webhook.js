@@ -1,4 +1,4 @@
-// pages/api/bot/webhook.js - NEW
+// pages/api/bot/webhook.js - FIXED
 import { bot, setupBotCommands, handleBotMessages } from '../../../lib/bot';
 
 // Setup bot on first run
@@ -17,13 +17,16 @@ export default async function handler(req, res) {
       isBotSetup = true;
       
       // Set webhook
-      const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/bot/webhook`;
+      const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/api/bot/webhook`;
       await bot.telegram.setWebhook(webhookUrl);
       console.log('✅ Webhook set to:', webhookUrl);
     }
 
-    // Handle update
-    await bot?.handleUpdate(req.body);
+    // ✅ FIX: Parse the raw body
+    const rawBody = await parseRawBody(req);
+    
+    // Handle update with parsed body
+    await bot?.handleUpdate(rawBody);
     res.status(200).json({ success: true });
   } catch (error) {
     console.error('Webhook error:', error);
@@ -40,15 +43,16 @@ export const config = {
 
 // Helper to parse raw body
 function parseRawBody(req) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     let data = '';
     req.on('data', chunk => data += chunk);
     req.on('end', () => {
       try {
         resolve(JSON.parse(data));
-      } catch {
-        resolve({});
+      } catch (error) {
+        reject(error);
       }
     });
+    req.on('error', reject);
   });
 }
