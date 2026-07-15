@@ -1,4 +1,4 @@
-// pages/merkato-vip.js - COMPLETE WITH 4 TIERS & NO COMMISSION DISPLAY
+// pages/merkato-vip.js - COMPLETE WITH 5 TIERS (100, 500, 1000, 2500, 5000 BIRR)
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
@@ -7,9 +7,82 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import NoSSR from '../components/NoSSR';
 import TopCitySelector from '../components/TopCitySelector';
-import { TIERS, getDrawScheduleText } from '../components/SeatSelector';
-import SeatSelector from '../components/SeatSelector';
-import CityTicket from '../components/CityTicket';
+
+// ✅ 5 TIERS FOR MERKATO VIP - 100, 500, 1000, 2500, 5000 BIRR
+export const MERKATO_TIERS = {
+  silver: {
+    id: 'silver',
+    labelEn: 'Silver',
+    labelAm: 'ብር',
+    icon: '🥈',
+    contribution: 100,
+    prize: 100000,
+    seats: 1200,
+    color: 'from-gray-400 to-gray-500',
+    badge: 'Silver',
+    tier: 1
+  },
+  gold: {
+    id: 'gold',
+    labelEn: 'Gold',
+    labelAm: 'ወርቅ',
+    icon: '🥇',
+    contribution: 500,
+    prize: 500000,
+    seats: 1200,
+    color: 'from-yellow-400 to-yellow-600',
+    badge: 'Gold',
+    tier: 2
+  },
+  platinum: {
+    id: 'platinum',
+    labelEn: 'Platinum',
+    labelAm: 'ፕላቲኒየም',
+    icon: '💎',
+    contribution: 1000,
+    prize: 1000000,
+    seats: 2400,
+    color: 'from-gray-300 to-blue-400',
+    badge: 'Platinum',
+    tier: 3
+  },
+  diamond: {
+    id: 'diamond',
+    labelEn: 'Diamond',
+    labelAm: 'አልማዝ',
+    icon: '💠',
+    contribution: 2500,
+    prize: 2000000,
+    seats: 2400,
+    color: 'from-blue-400 to-cyan-400',
+    badge: 'Diamond',
+    tier: 4
+  },
+  royal: {
+    id: 'royal',
+    labelEn: 'Royal',
+    labelAm: 'ንጉሣዊ',
+    icon: '👑',
+    contribution: 5000,
+    prize: 5000000,
+    seats: 2400,
+    color: 'from-purple-500 to-pink-500',
+    badge: 'Royal',
+    tier: 5
+  }
+};
+
+// Helper function to get draw schedule text
+function getDrawScheduleText(tierId, language) {
+  const schedules = {
+    silver: { en: 'Daily Draw', am: 'ዕለታዊ እጣ' },
+    gold: { en: 'Daily Draw', am: 'ዕለታዊ እጣ' },
+    platinum: { en: 'Weekly Draw', am: 'ሳምንታዊ እጣ' },
+    diamond: { en: 'Weekly Draw', am: 'ሳምንታዊ እጣ' },
+    royal: { en: 'Monthly Draw', am: 'ወርሃዊ እጣ' }
+  };
+  return schedules[tierId]?.[language] || schedules.silver[language];
+}
 
 export default function MerkatoVIP() {
   const router = useRouter();
@@ -52,9 +125,9 @@ export default function MerkatoVIP() {
       setUser(user);
       
       const { tier } = router.query;
-      if (user && tier && TIERS[tier]) {
+      if (user && tier && MERKATO_TIERS[tier]) {
         setSelectedTierId(tier);
-        setSelectedTier(TIERS[tier]);
+        setSelectedTier(MERKATO_TIERS[tier]);
         setShowTiers(false);
         setShowSeats(true);
         router.replace('/merkato-vip', undefined, { shallow: true });
@@ -76,13 +149,13 @@ export default function MerkatoVIP() {
       return;
     }
     setSelectedTierId(tierId);
-    setSelectedTier(TIERS[tierId]);
+    setSelectedTier(MERKATO_TIERS[tierId]);
     setShowTiers(false);
     setShowSeats(true);
   };
 
   const handleSeatsSelected = async ({ seats, totalAmount, seatCount, tier }) => {
-    const tierConfig = TIERS[tier];
+    const tierConfig = MERKATO_TIERS[tier];
     setLoading(true);
     
     try {
@@ -226,32 +299,12 @@ export default function MerkatoVIP() {
   };
 
   const renderTierSelection = () => {
-    if (!TIERS) {
-      return (
-        <div className="text-center py-12 bg-white rounded-2xl shadow-md">
-          <div className="text-5xl mb-4">⚠️</div>
-          <p className="text-red-600 font-semibold">
-            {language === 'am' ? 'ስህተት: የደረጃ መረጃ አልተገኘም' : 'Error: Tier data not found'}
-          </p>
-          <p className="text-gray-500 text-sm mt-2">
-            {language === 'am' ? 'እባክዎ ገፁን እንደገና ያድሱ' : 'Please refresh the page'}
-          </p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
-          >
-            🔄 {language === 'am' ? 'ያድሱ' : 'Refresh'}
-          </button>
-        </div>
-      );
-    }
-
-    const tiers = ['bronze', 'silver', 'gold', 'platinum'];
+    const tierIds = ['silver', 'gold', 'platinum', 'diamond', 'royal'];
     
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
-        {tiers.map((tierId) => {
-          const tier = TIERS[tierId];
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 max-w-7xl mx-auto">
+        {tierIds.map((tierId) => {
+          const tier = MERKATO_TIERS[tierId];
           if (!tier) return null;
           
           return (
@@ -283,7 +336,6 @@ export default function MerkatoVIP() {
                   <span className="text-gray-500">{language === 'am' ? 'መቀመጫዎች' : 'Seats'}</span>
                   <span className="font-semibold">{tier.seats.toLocaleString()}</span>
                 </div>
-                {/* ❌ Commission NOT displayed to public */}
                 
                 <button 
                   className="w-full mt-3 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold text-sm transition"
@@ -314,7 +366,7 @@ export default function MerkatoVIP() {
     <NoSSR>
       <>
         <Head>
-          <title>Merkato VIP - Win up to 10M ETB | Abbaa Carraa</title>
+          <title>Merkato VIP - Win up to 5M ETB | Abbaa Carraa</title>
         </Head>
 
         <nav className="sticky top-0 z-50 bg-gray-900 shadow-lg border-b border-gray-700">
@@ -345,8 +397,8 @@ export default function MerkatoVIP() {
             </div>
             <p className="text-gray-300 mt-3 text-lg">
               {language === 'am' 
-                ? 'እስከ 10 ሚሊዮን ብር ለማሸነፍ መቀመጫዎን ይምረጡ' 
-                : 'Select your seat to win up to 10 Million ETB'}
+                ? 'እስከ 5 ሚሊዮን ብር ለማሸነፍ መቀመጫዎን ይምረጡ' 
+                : 'Select your seat to win up to 5 Million ETB'}
             </p>
           </div>
 
@@ -365,19 +417,88 @@ export default function MerkatoVIP() {
           )}
 
           {showSeats && selectedTier && (
-            <SeatSelector
-              isOpen={showSeats}
-              onClose={handleCloseSeats}
-              onCancel={handleCloseSeats}
-              programType="merkato"
-              tierId={selectedTierId}
-              entryFee={selectedTier.contribution}
-              totalSeats={selectedTier.seats}
-              maxSeats={5}
-              language={language}
-              onSeatsSelected={handleSeatsSelected}
-              poolInfo={{ prize: selectedTier.prize }}
-            />
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
+                  <h3 className="font-bold text-lg">
+                    {language === 'am' ? 'መቀመጫ ምረጥ' : 'Select Seats'}
+                  </h3>
+                  <button onClick={handleCloseSeats} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                </div>
+                <div className="p-6">
+                  <div className="text-center mb-4">
+                    <p className="text-2xl">{selectedTier.icon}</p>
+                    <p className="font-bold text-xl">
+                      {language === 'am' ? selectedTier.labelAm : selectedTier.labelEn}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {language === 'am' ? 'እያንዳንዱ መቀመጫ' : 'Each seat'} ETB {selectedTier.contribution.toLocaleString()}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {language === 'am' ? 'ሽልማት' : 'Prize'} ETB {selectedTier.prize.toLocaleString()}
+                    </p>
+                  </div>
+                  
+                  <div className="border-t pt-4 mt-2">
+                    <p className="text-center text-gray-500 text-sm">
+                      {language === 'am' 
+                        ? 'ለማስያዝ በቀጥታ መቀመጫ ቁጥሮችን ይተይቡ (ከ1 እስከ ' + selectedTier.seats + ')' 
+                        : 'Enter seat numbers to reserve (1 to ' + selectedTier.seats + ')'}
+                    </p>
+                    
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        {language === 'am' ? 'የመቀመጫ ቁጥሮች (በነጠላ ሰረዝ ይለያዩ)' : 'Seat Numbers (comma separated)'}
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500"
+                        placeholder={language === 'am' ? 'ለምሳሌ: 5, 12, 23' : 'Example: 5, 12, 23'}
+                        onChange={(e) => {
+                          const numbers = e.target.value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+                          setSelectedSeats(numbers);
+                        }}
+                      />
+                      <p className="text-xs text-gray-400 mt-1">
+                        {language === 'am' ? 'ከፍተኛ 5 መቀመጫዎች' : 'Maximum 5 seats'}
+                      </p>
+                    </div>
+                    
+                    <div className="mt-4 bg-gray-50 rounded-lg p-4">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">{language === 'am' ? 'የተመረጡ መቀመጫዎች' : 'Selected Seats'}</span>
+                        <span className="font-semibold">{selectedSeats.length > 0 ? selectedSeats.join(', ') : '-'}</span>
+                      </div>
+                      <div className="flex justify-between text-sm mt-2">
+                        <span className="text-gray-600">{language === 'am' ? 'ጠቅላላ ክፍያ' : 'Total Amount'}</span>
+                        <span className="font-bold text-green-600">
+                          ETB {(selectedSeats.length * selectedTier.contribution).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <button
+                      className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50"
+                      disabled={selectedSeats.length === 0}
+                      onClick={() => {
+                        if (selectedSeats.length === 0) {
+                          toast.error(language === 'am' ? 'እባክዎ ቢያንስ አንድ መቀመጫ ይምረጡ' : 'Please select at least one seat');
+                          return;
+                        }
+                        handleSeatsSelected({
+                          seats: selectedSeats,
+                          totalAmount: selectedSeats.length * selectedTier.contribution,
+                          seatCount: selectedSeats.length,
+                          tier: selectedTierId
+                        });
+                      }}
+                    >
+                      {language === 'am' ? 'መቀመጫዎችን አስይዝ' : 'Reserve Seats'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
           {showPayment && (
@@ -462,14 +583,35 @@ export default function MerkatoVIP() {
                   <button onClick={handleCloseTicket} className="text-white text-2xl">×</button>
                 </div>
                 <div className="p-6">
-                  <CityTicket 
-                    participant={participantData}
-                    pool={selectedTier}
-                    cityInfo={{ name: 'Merkato VIP', icon: '🏪' }}
-                    type="unverified"
-                    tierId={selectedTierId}
-                    language={language}
-                  />
+                  <div className="text-center">
+                    <div className="text-6xl mb-3">🏪</div>
+                    <h3 className="font-bold text-2xl">Merkato VIP</h3>
+                    <div className="mt-2 text-sm text-gray-500">
+                      {language === 'am' ? 'ቲኬት ቁጥር' : 'Ticket Number'}: <span className="font-bold text-gray-800">{participantData.ticket_number}</span>
+                    </div>
+                    <div className="mt-1 text-sm text-gray-500">
+                      {language === 'am' ? 'ደረጃ' : 'Tier'}: <span className="font-bold text-gray-800">
+                        {language === 'am' ? selectedTier.labelAm : selectedTier.labelEn}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-sm text-gray-500">
+                      {language === 'am' ? 'መቀመጫዎች' : 'Seats'}: <span className="font-bold text-gray-800">{selectedSeats.join(', ')}</span>
+                    </div>
+                    <div className="mt-1 text-sm text-gray-500">
+                      {language === 'am' ? 'ሽልማት' : 'Prize'}: <span className="font-bold text-green-600">ETB {selectedTier.prize.toLocaleString()}</span>
+                    </div>
+                    <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                      <p className="text-xs text-yellow-800">
+                        ⏳ {language === 'am' ? 'ቲኬትዎ ክፍያ እስኪረጋገጥ ድረስ ያልተረጋገጠ ነው' : 'Your ticket is unverified until payment is confirmed'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleCloseTicket}
+                      className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition"
+                    >
+                      {language === 'am' ? 'ወደ ዳሽቦርድ' : 'Go to Dashboard'}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
