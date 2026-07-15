@@ -1,4 +1,4 @@
-// lib/bot.js - NEW
+// lib/bot.js - COMPLETE WORKING BOT
 import { Telegraf } from 'telegraf';
 import { supabase } from './supabase';
 
@@ -18,12 +18,12 @@ export async function setupBotCommands() {
 
   try {
     await bot.telegram.setMyCommands([
-      { command: 'start', description: 'Start the bot' },
-      { command: 'help', description: 'Get help' },
-      { command: 'mytickets', description: 'View your tickets' },
-      { command: 'programs', description: 'View available programs' },
-      { command: 'language', description: 'Change language' },
-      { command: 'support', description: 'Contact support' },
+      { command: 'start', description: '🚀 Start the bot' },
+      { command: 'help', description: '📖 Get help' },
+      { command: 'mytickets', description: '🎫 View your tickets' },
+      { command: 'programs', description: '🎯 View available programs' },
+      { command: 'language', description: '🌐 Change language' },
+      { command: 'support', description: '📞 Contact support' },
     ]);
     console.log('✅ Bot commands set successfully');
   } catch (error) {
@@ -39,6 +39,7 @@ export async function handleBotMessages() {
   // ============================================
   bot.start(async (ctx) => {
     const user = ctx.from;
+    const name = user.first_name || 'User';
     
     // Save user to database
     try {
@@ -55,34 +56,28 @@ export async function handleBotMessages() {
       console.error('Error saving user:', error);
     }
 
-    const name = user.first_name || 'User';
-    await ctx.reply(
+    const welcomeMessage = 
       `👋 *Welcome to Abbaa Carraa, ${name}!*\n\n` +
-      `🏆 Ethiopia's Premier Prize Platform\n\n` +
-      `🎯 *What We Offer:*\n` +
+      `🏆 *Ethiopia's Premier Prize Platform*\n\n` +
+      `🎯 *What You Can Do:*\n` +
       `🏪 Merkato VIP - Win Cash up to 10M ETB\n` +
       `🏙️ City VIP - Win Cash in 94 Cities\n` +
       `🏊 Regular Pools - Win Cars, Houses & More\n\n` +
-      `💰 20% Commission for Agents & Partners\n` +
-      `💚 2% Supports Kidney & Heart Patients\n\n` +
-      `🚀 *Get Started:*\n` +
-      `1. Select a program below\n` +
-      `2. Choose your tier and seat\n` +
-      `3. Make payment and get your ticket\n\n` +
-      `📱 All actions happen inside the app!`,
-      {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: '🚀 Open Abbaa Carraa', web_app: { url: process.env.NEXT_PUBLIC_APP_URL } }],
-            [{ text: '📊 My Tickets', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard` } }],
-            [{ text: '🏪 Merkato VIP', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL}/merkato-vip` } }],
-            [{ text: '🏙️ City VIP', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL}/cities` } }],
-            [{ text: '🏊 Regular Pools', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL}/listings` } }]
-          ]
-        }
+      `📱 *All actions happen inside the app!*\n\n` +
+      `*🔽 Press the button below to get started!*`;
+
+    await ctx.reply(welcomeMessage, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '🚀 Open Abbaa Carraa', web_app: { url: process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com' } }],
+          [{ text: '📊 My Tickets', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/dashboard` } }],
+          [{ text: '🏪 Merkato VIP', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/merkato-vip` } }],
+          [{ text: '🏙️ City VIP', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/cities` } }],
+          [{ text: '🏊 Regular Pools', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/listings` } }]
+        ]
       }
-    );
+    });
   });
 
   // ============================================
@@ -90,17 +85,17 @@ export async function handleBotMessages() {
   // ============================================
   bot.help(async (ctx) => {
     await ctx.reply(
-      `ℹ️ *Help & Support*\n\n` +
+      `📖 *Help & Support*\n\n` +
       `🤖 *Available Commands:*\n` +
-      `/start - Welcome message\n` +
-      `/help - This help message\n` +
-      `/mytickets - View your tickets\n` +
-      `/programs - View available programs\n` +
-      `/language - Change language\n` +
-      `/support - Contact support\n\n` +
+      `/start - 🚀 Welcome message\n` +
+      `/help - 📖 This help message\n` +
+      `/mytickets - 🎫 View your tickets\n` +
+      `/programs - 🎯 View available programs\n` +
+      `/language - 🌐 Change language\n` +
+      `/support - 📞 Contact support\n\n` +
       `📱 *Need Help?*\n` +
       `Contact our support team 24/7\n\n` +
-      `💬 Live chat: ${process.env.NEXT_PUBLIC_APP_URL}/contact`,
+      `💬 Live chat: ${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/contact`,
       { parse_mode: 'Markdown' }
     );
   });
@@ -151,9 +146,9 @@ export async function handleBotMessages() {
             parse_mode: 'Markdown',
             reply_markup: {
               inline_keyboard: [
-                [{ text: '🏪 Merkato VIP', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL}/merkato-vip` } }],
-                [{ text: '🏙️ City VIP', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL}/cities` } }],
-                [{ text: '🏊 Regular Pools', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL}/listings` } }]
+                [{ text: '🏪 Merkato VIP', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/merkato-vip` } }],
+                [{ text: '🏙️ City VIP', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/cities` } }],
+                [{ text: '🏊 Regular Pools', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/listings` } }]
               ]
             }
           }
@@ -178,7 +173,7 @@ export async function handleBotMessages() {
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [
-            [{ text: '📊 View All Tickets', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard` } }]
+            [{ text: '📊 View All Tickets', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/dashboard` } }]
           ]
         }
       });
@@ -202,14 +197,16 @@ export async function handleBotMessages() {
       `4 Tiers: Bronze, Silver, Gold, Platinum\n\n` +
       `🏊 *Regular Pools*\n` +
       `Win Cars, Houses, Machinery & Electronics\n\n` +
+      `💰 *20% Commission* for Agents & Partners\n` +
+      `💚 *2% Supports* Kidney & Heart Patients\n\n` +
       `Select a program below:`,
       {
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [
-            [{ text: '🏪 Merkato VIP', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL}/merkato-vip` } }],
-            [{ text: '🏙️ City VIP', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL}/cities` } }],
-            [{ text: '🏊 Regular Pools', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL}/listings` } }]
+            [{ text: '🏪 Merkato VIP', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/merkato-vip` } }],
+            [{ text: '🏙️ City VIP', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/cities` } }],
+            [{ text: '🏊 Regular Pools', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/listings` } }]
           ]
         }
       }
@@ -272,7 +269,7 @@ export async function handleBotMessages() {
       `📞 *Contact Support*\n\n` +
       `Our team is here to help you 24/7.\n\n` +
       `📱 *Ways to reach us:*\n` +
-      `1. Live Chat: ${process.env.NEXT_PUBLIC_APP_URL}/contact\n` +
+      `1. Live Chat: ${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/contact\n` +
       `2. Email: support@abbaacarraa.com\n` +
       `3. Phone: +251 913 277 922\n\n` +
       `💬 *Quick Help:*\n` +
@@ -283,8 +280,8 @@ export async function handleBotMessages() {
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [
-            [{ text: '💬 Live Chat', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL}/contact` } }],
-            [{ text: '❓ FAQ', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL}/faq` } }]
+            [{ text: '💬 Live Chat', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/contact` } }],
+            [{ text: '❓ FAQ', web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/faq` } }]
           ]
         }
       }
@@ -301,6 +298,33 @@ export async function handleBotMessages() {
       await ctx.reply(
         `👋 Hello! Welcome to Abbaa Carraa.\n\n` +
         `Type /start to begin or /help for assistance.`
+      );
+    } else if (text.includes('ticket') || text.includes('ቲኬት')) {
+      await ctx.reply(
+        `🎫 *Tickets*\n\n` +
+        `Use /mytickets to view your tickets.\n` +
+        `Or visit the app: ${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/dashboard`,
+        { parse_mode: 'Markdown' }
+      );
+    } else if (text.includes('program') || text.includes('ፕሮግራም')) {
+      await ctx.reply(
+        `🎯 *Programs*\n\n` +
+        `Use /programs to see all available programs.\n` +
+        `Or visit the app: ${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}`,
+        { parse_mode: 'Markdown' }
+      );
+    } else {
+      // Default response
+      await ctx.reply(
+        `🤔 I didn't understand that.\n\n` +
+        `Try one of these commands:\n` +
+        `/start - Welcome message\n` +
+        `/help - Help information\n` +
+        `/mytickets - View your tickets\n` +
+        `/programs - View available programs\n` +
+        `/language - Change language\n` +
+        `/support - Contact support`,
+        { parse_mode: 'Markdown' }
       );
     }
   });
