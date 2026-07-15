@@ -1,4 +1,4 @@
-// components/TicketImage.js - MERGED (Combines best of both)
+// components/TicketImage.js - MERGED (Complete)
 import { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import toast from 'react-hot-toast';
@@ -45,6 +45,7 @@ export default function TicketImage({
       share: 'አጋራ',
       close: 'ዝጋ',
       pendingVerification: 'ክፍያ በማረጋገጥ ላይ',
+      charity: '2% የኩላሊት እና የልብ ህሙማንን ይደግፋል',
     },
     en: {
       verified: 'VERIFIED',
@@ -66,7 +67,8 @@ export default function TicketImage({
       downloadJPEG: 'Download JPEG',
       share: 'Share',
       close: 'Close',
-      pendingVerification: 'Pending payment verification'
+      pendingVerification: 'Pending payment verification',
+      charity: '2% supports kidney & heart disease patients',
     },
     om: {
       verified: 'MIRKANEEFFAME',
@@ -75,8 +77,8 @@ export default function TicketImage({
       unverifiedDesc: 'Kaffaltii eegaa',
       ticketNo: 'Lakkoofsa Tikkeettii',
       issued: 'Kenname',
-      youCouldWin: 'Mo'achuu Dandeessu',
-      participant: 'Abba'aa',
+      youCouldWin: 'Mo\'achuu Dandeessu',
+      participant: 'Abba\'aa',
       drawDate: 'Guyyaa Buzuuraa',
       seats: 'Barcuma',
       amountPaid: 'Kaffaltii',
@@ -88,7 +90,8 @@ export default function TicketImage({
       downloadJPEG: 'JPEG Buufadhu',
       share: 'Hirmaachisi',
       close: 'Cufi',
-      pendingVerification: 'Kaffaltii eegamaa jira'
+      pendingVerification: 'Kaffaltii eegamaa jira',
+      charity: 'Sassabii hunda keessaa %2 dhukkubsatoota kalee fi onneef oola',
     }
   };
 
@@ -427,7 +430,7 @@ export default function TicketImage({
 
       {/* Info */}
       <div className="text-center text-xs text-gray-400">
-        <span>📌 {language === 'am' ? 'ቲኬትዎን ያውርዱ ወይም ያጋሩ' : language === 'om' ? 'Tikkeettii keessan buufadhaa ykn hirmaachisaa' : 'Download or share your ticket'}</span>
+        <span>💚 {t.charity}</span>
       </div>
     </div>
   );
