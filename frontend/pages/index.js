@@ -1,4 +1,4 @@
-// pages/index.js - Complete with Bold Text, Green Borders, "Categories" instead of "Explore"
+// pages/index.js - Updated with Light Green Backgrounds & Green Borders
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -461,7 +461,7 @@ export default function Home() {
     );
   }
 
-  // ========== APP MODE - UPDATED WITH "CATEGORIES" & GREEN BORDERS ==========
+  // ========== APP MODE - UPDATED WITH LIGHT GREEN BACKGROUNDS ==========
   if (activeView === 'app') {
     return (
       <>
@@ -475,7 +475,7 @@ export default function Home() {
           {/* === MOVING MARQUEE === */}
           <MovingMarquee />
 
-          {/* === TOP APP BAR - With Green Buttons === */}
+          {/* === TOP APP BAR - LIGHT GREEN BACKGROUNDS === */}
           <header className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-100 px-3 md:px-4 py-2.5 md:py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 md:gap-2">
@@ -483,20 +483,18 @@ export default function Home() {
                 <span className="font-bold text-sm md:text-lg text-gray-800">Abbaa Carraa</span>
               </div>
               <div className="flex items-center gap-1.5 md:gap-2">
-                <ModeDrawer />
-                
-                {/* VIEW BUTTON - GREEN */}
-                <button className="hidden sm:block text-[10px] md:text-xs bg-green-600 text-white px-2.5 md:px-3 py-1 md:py-1.5 rounded-full hover:bg-green-700 transition font-medium shadow-sm">
+                {/* View Button - Light Green */}
+                <button className="hidden sm:block text-[10px] md:text-xs bg-green-100 text-green-700 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full hover:bg-green-200 transition font-medium">
                   👁️ View
                 </button>
                 
-                {/* LOGIN - GREEN */}
-                <Link href="/login" className="text-[10px] md:text-xs bg-green-600 text-white px-2.5 md:px-3 py-1 md:py-1.5 rounded-full hover:bg-green-700 transition font-medium shadow-sm">
+                {/* Login - Light Green */}
+                <Link href="/login" className="text-[10px] md:text-xs bg-green-100 text-green-700 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full hover:bg-green-200 transition font-medium">
                   Login
                 </Link>
                 
-                {/* REGISTER - GREEN */}
-                <button onClick={() => setShowRegisterModal(true)} className="text-[10px] md:text-xs bg-green-600 text-white px-2.5 md:px-3 py-1 md:py-1.5 rounded-full hover:bg-green-700 transition font-medium shadow-sm">
+                {/* Register - Light Green */}
+                <button onClick={() => setShowRegisterModal(true)} className="text-[10px] md:text-xs bg-green-100 text-green-700 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full hover:bg-green-200 transition font-medium">
                   Register
                 </button>
                 
@@ -507,6 +505,9 @@ export default function Home() {
                 <Link href="/profile" className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-gradient-to-r from-green-500 to-teal-500 flex items-center justify-center text-white font-bold text-xs md:text-sm">
                   U
                 </Link>
+
+                {/* ModeDrawer moved here for better alignment */}
+                <ModeDrawer />
               </div>
             </div>
           </header>
@@ -541,7 +542,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* === CATEGORIES SECTION - "Categories" instead of "Explore" === */}
+          {/* === CATEGORIES SECTION - ALL GREEN BORDERS === */}
           <div className="px-3 md:px-4 py-2">
             <h2 className="text-[10px] md:text-sm font-bold text-gray-500 uppercase tracking-wider mb-2 md:mb-3">
               {language === 'am' ? 'ምድቦች' : 'Categories'}
@@ -611,7 +612,7 @@ export default function Home() {
                 <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">Contact</span>
               </Link>
 
-              {/* Register - GREEN BACKGROUND */}
+              {/* Register - GREEN BACKGROUND (kept as is) */}
               <button onClick={() => setShowRegisterModal(true)} className="flex flex-col items-center bg-gradient-to-r from-green-500 to-teal-500 rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 text-white hover:shadow-md transition">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">📝</span>
                 <span className="text-[9px] md:text-xs font-bold text-center leading-tight">Register</span>
