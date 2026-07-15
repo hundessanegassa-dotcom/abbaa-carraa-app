@@ -1,10 +1,11 @@
-// pages/api/bot/webhook.js - FIXED
+// pages/api/bot/webhook.js - COMPLETE WORKING
 import { bot, setupBotCommands, handleBotMessages } from '../../../lib/bot';
 
 // Setup bot on first run
 let isBotSetup = false;
 
 export default async function handler(req, res) {
+  // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -22,11 +23,11 @@ export default async function handler(req, res) {
       console.log('✅ Webhook set to:', webhookUrl);
     }
 
-    // ✅ FIX: Parse the raw body
-    const rawBody = await parseRawBody(req);
+    // ✅ Parse the raw body
+    const update = await parseRawBody(req);
     
     // Handle update with parsed body
-    await bot?.handleUpdate(rawBody);
+    await bot?.handleUpdate(update);
     res.status(200).json({ success: true });
   } catch (error) {
     console.error('Webhook error:', error);
