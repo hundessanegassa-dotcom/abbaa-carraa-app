@@ -32,7 +32,16 @@ export async function setupBotCommands() {
 }
 
 export async function handleBotMessages() {
-  if (!bot) return;
+  if (!bot) {
+    console.log('⚠️ Bot not initialized');
+    return;
+  }
+
+  // ✅ Global error handler
+  bot.catch((err, ctx) => {
+    console.error('Bot error:', err);
+    ctx.reply('⚠️ Something went wrong. Please try again later.');
+  });
 
   // ============================================
   // START COMMAND
@@ -107,7 +116,6 @@ export async function handleBotMessages() {
     const user = ctx.from;
     
     try {
-      // Fetch tickets from all programs
       const [merkatoTickets, cityTickets, regularTickets] = await Promise.all([
         supabase
           .from('merkato_vip_participants')
@@ -314,7 +322,6 @@ export async function handleBotMessages() {
         { parse_mode: 'Markdown' }
       );
     } else {
-      // Default response
       await ctx.reply(
         `🤔 I didn't understand that.\n\n` +
         `Try one of these commands:\n` +
