@@ -1,8 +1,7 @@
-// lib/ticketGenerator.js - Server-Compatible (Uses Sharp for Node.js)
+// lib/ticketGenerator.js - Server-Compatible with Sharp
 import sharp from 'sharp';
 import QRCode from 'qrcode';
 
-// Generate ticket image on server side
 export async function generateTicketImage({
   participant,
   programType,
@@ -25,7 +24,7 @@ export async function generateTicketImage({
     issuedAt: new Date().toISOString()
   });
 
-  // Generate QR code as SVG
+  // Generate QR code as PNG buffer
   const qrBuffer = await QRCode.toBuffer(qrData, { 
     width: 150,
     margin: 2,
@@ -34,6 +33,8 @@ export async function generateTicketImage({
       light: '#ffffff'
     }
   });
+
+  const qrBase64 = qrBuffer.toString('base64');
 
   // Get program colors
   const colors = getProgramColors(programType);
@@ -98,7 +99,7 @@ export async function generateTicketImage({
       <text x="430" y="378" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#1f2937">${participant?.drawDate || participant?.draw_time || participant?.end_date || 'TBD'}</text>
 
       <!-- QR Code -->
-      <image x="620" y="410" width="120" height="120" href="data:image/png;base64,${qrBuffer.toString('base64')}"/>
+      <image x="620" y="410" width="120" height="120" href="data:image/png;base64,${qrBase64}"/>
       <text x="680" y="545" font-family="Arial, sans-serif" font-size="10" fill="#9ca3af" text-anchor="middle">SCAN TO VERIFY</text>
 
       <!-- Footer -->
@@ -116,7 +117,6 @@ export async function generateTicketImage({
   return imageBuffer;
 }
 
-// Helper: Get program colors
 function getProgramColors(programType) {
   if (programType === 'merkato') {
     return {
