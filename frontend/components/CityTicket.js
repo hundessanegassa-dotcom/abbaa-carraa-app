@@ -1,10 +1,10 @@
-// components/CityTicket.js - COMPLETE WITH 4 TIERS SUPPORT
+// components/CityTicket.js - COMPLETE WITH 5 TIERS SUPPORT
 import { useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import toast from 'react-hot-toast';
-import { TIERS } from './SeatSelector';
+import { TIERS, getDrawScheduleText, getTierLabel } from './SeatSelector';
 
 export default function CityTicket({ 
   participant, 
@@ -66,11 +66,12 @@ export default function CityTicket({
     }
   };
 
-  // Get tier info
+  // Get tier info - supports 5 tiers
   const tier = tierId ? TIERS[tierId] : null;
   const seatNumbers = participant?.seat_numbers || [];
   const contributionAmount = participant?.contribution_amount || 0;
   const prizeAmount = participant?.prize_amount || (tier?.prize || 0);
+  const entryFee = tier?.contribution || 0;
   
   // Get status config
   const getStatusConfig = () => {
@@ -105,24 +106,23 @@ export default function CityTicket({
   // Get pool display info
   const getPoolDisplayInfo = () => {
     if (tier) {
+      const drawText = getDrawScheduleText(tierId, language);
       return {
-        frequency: tier.drawSchedule === 'daily' ? language === 'am' ? 'ዕለታዊ' : 'Daily' :
-                   tier.drawSchedule === 'weekly' ? language === 'am' ? 'ሳምንታዊ' : 'Weekly' :
-                   language === 'am' ? 'ወርሃዊ' : 'Monthly',
-        drawDate: tier.drawSchedule === 'daily' ? language === 'am' ? 'የዕለት ተዕለት እጣ' : 'Daily Draw' :
-                   tier.drawSchedule === 'weekly' ? language === 'am' ? 'ሳምንታዊ እጣ' : 'Weekly Draw' :
-                   language === 'am' ? 'ወርሃዊ እጣ' : 'Monthly Draw',
-        icon: tier.icon || '🎁'
+        frequency: drawText,
+        drawDate: drawText,
+        icon: tier.icon || '🎁',
+        tierLabel: getTierLabel(tierId, language)
       };
     }
     return {
-      frequency: poolType === 'daily' ? language === 'am' ? 'ዕለታዊ' : 'Daily' :
-                   poolType === 'weekly' ? language === 'am' ? 'ሳምንታዊ' : 'Weekly' :
-                   language === 'am' ? 'ወርሃዊ' : 'Monthly',
-      drawDate: poolType === 'daily' ? language === 'am' ? 'የዕለት ተዕለት እጣ' : 'Daily Draw' :
-                   poolType === 'weekly' ? language === 'am' ? 'ሳምንታዊ እጣ' : 'Weekly Draw' :
-                   language === 'am' ? 'ወርሃዊ እጣ' : 'Monthly Draw',
-      icon: '🎁'
+      frequency: poolType === 'daily' ? (language === 'am' ? 'ዕለታዊ' : 'Daily') :
+                   poolType === 'weekly' ? (language === 'am' ? 'ሳምንታዊ' : 'Weekly') :
+                   (language === 'am' ? 'ወርሃዊ' : 'Monthly'),
+      drawDate: poolType === 'daily' ? (language === 'am' ? 'የዕለት ተዕለት እጣ' : 'Daily Draw') :
+                   poolType === 'weekly' ? (language === 'am' ? 'ሳምንታዊ እጣ' : 'Weekly Draw') :
+                   (language === 'am' ? 'ወርሃዊ እጣ' : 'Monthly Draw'),
+      icon: '🎁',
+      tierLabel: poolType
     };
   };
 
@@ -153,7 +153,7 @@ export default function CityTicket({
     <div className="space-y-4">
       <div 
         ref={ticketRef}
-        className={`${statusConfig.bg} border-2 ${statusConfig.border} rounded-2xl p-6 max-w-2xl mx-auto shadow-xl`}
+        className={`${statusConfig.bg} border-2 ${statusConfig.border} rounded-2xl p-6 max-w-2xl mx-auto shadow-xl relative`}
         style={{ fontFamily: 'Arial, sans-serif' }}
       >
         {/* Ticket Header */}
@@ -179,7 +179,7 @@ export default function CityTicket({
           </h2>
           <p className="text-sm text-gray-600">
             {language === 'am' ? 'የሚሊየነር ቲኬት' : 'Millionaire Ticket'}
-            {tier && ` - ${language === 'am' ? tier.labelAm : tier.labelEn}`}
+            {tier && ` - ${poolDisplay.tierLabel}`}
           </p>
         </div>
 
@@ -187,7 +187,7 @@ export default function CityTicket({
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="bg-gray-100 p-2 rounded-lg">
             <p className="text-[10px] text-gray-500">{language === 'am' ? 'ተሳታፊ' : 'Participant'}</p>
-            <p className="font-semibold text-sm text-gray-800">{participantName}</p>
+            <p className="font-semibold text-sm text-gray-800 truncate">{participantName}</p>
           </div>
           <div className="bg-gray-100 p-2 rounded-lg">
             <p className="text-[10px] text-gray-500">Email</p>
@@ -199,9 +199,7 @@ export default function CityTicket({
           </div>
           <div className="bg-gray-100 p-2 rounded-lg">
             <p className="text-[10px] text-gray-500">{language === 'am' ? 'ደረጃ' : 'Tier'}</p>
-            <p className="font-semibold text-sm text-gray-800">
-              {tier ? (language === 'am' ? tier.labelAm : tier.labelEn) : poolType}
-            </p>
+            <p className="font-semibold text-sm text-gray-800">{poolDisplay.tierLabel}</p>
           </div>
           <div className="bg-gray-100 p-2 rounded-lg">
             <p className="text-[10px] text-gray-500">{language === 'am' ? 'መቀመጫዎች' : 'Seats'}</p>
@@ -217,7 +215,7 @@ export default function CityTicket({
         <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 mb-4">
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm text-gray-600">{language === 'am' ? 'የእያንዳንዱ መቀመጫ ክፍያ' : 'Entry Fee per Seat'}:</span>
-            <span className="font-semibold">ETB {formatNumber(contributionAmount / (seatNumbers.length || 1))}</span>
+            <span className="font-semibold">ETB {formatNumber(entryFee || (contributionAmount / (seatNumbers.length || 1)))}</span>
           </div>
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm text-gray-600">{language === 'am' ? 'የመቀመጫዎች ብዛት' : 'Number of Seats'}:</span>
@@ -271,11 +269,6 @@ export default function CityTicket({
           <p>Abbaa Carraa • {cityName} {language === 'am' ? 'ቪአይፒ ፕሮግራም' : 'VIP Program'}</p>
           <p className="mt-1">💚 {language === 'am' ? '2% በኢትዮጵያ ውስጥ የኩላሊት እና የልብ ህሙማንን ይደግፋል' : '2% supports kidney & heart disease patients in Ethiopia'}</p>
           <p className="text-[10px] mt-1">{language === 'am' ? 'ውሎች እና ሁኔታዎች ይሠራሉ • ለሽልማት ይህን ቲኬት ያስቀምጡ' : 'Terms & Conditions Apply • Keep this ticket safe for prize claims'}</p>
-        </div>
-
-        {/* Decorative elements */}
-        <div className="absolute bottom-2 right-2 opacity-20">
-          <div className="text-4xl">{cityInfo?.icon || '🏙️'}</div>
         </div>
       </div>
 
