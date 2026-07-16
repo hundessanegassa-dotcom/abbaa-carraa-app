@@ -1,78 +1,130 @@
-// components/SeatSelector.js - COMPLETE WITH PROPER EXPORTS & NO COMMISSION DISPLAY
+// components/SeatSelector.js - COMPLETE WITH 5 TIERS (Silver, Gold, Platinum, Diamond, Royal)
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
 // ============================================
-// TIER CONFIGURATION - 4 TIERS - MUST BE EXPORTED
+// TIER CONFIGURATION - 5 TIERS
 // ============================================
 export const TIERS = {
-  bronze: {
-    id: 'bronze',
-    labelAm: 'ብሮንዝ',
-    labelEn: 'Bronze',
+  silver: {
+    id: 'silver',
+    labelAm: 'ብር',
+    labelEn: 'Silver',
+    labelOm: 'Silver',
     contribution: 100,
     prize: 100000,
     seats: 1200,
     commission: 20000,
     totalCollection: 120000,
-    color: 'from-amber-600 to-amber-800',
-    badgeColor: 'bg-amber-500',
-    icon: '🥉',
-    drawSchedule: 'daily'
-  },
-  silver: {
-    id: 'silver',
-    labelAm: 'ሲልቨር',
-    labelEn: 'Silver',
-    contribution: 500,
-    prize: 500000,
-    seats: 1200,
-    commission: 100000,
-    totalCollection: 600000,
-    color: 'from-gray-400 to-gray-600',
+    color: 'from-gray-400 to-gray-500',
     badgeColor: 'bg-gray-500',
     icon: '🥈',
-    drawSchedule: 'daily'
+    drawSchedule: 'daily',
+    tier: 1
   },
   gold: {
     id: 'gold',
     labelAm: 'ወርቅ',
     labelEn: 'Gold',
+    labelOm: 'Gold',
+    contribution: 500,
+    prize: 500000,
+    seats: 1200,
+    commission: 100000,
+    totalCollection: 600000,
+    color: 'from-yellow-400 to-yellow-600',
+    badgeColor: 'bg-yellow-500',
+    icon: '🥇',
+    drawSchedule: 'daily',
+    tier: 2
+  },
+  platinum: {
+    id: 'platinum',
+    labelAm: 'ፕላቲኒየም',
+    labelEn: 'Platinum',
+    labelOm: 'Platinum',
     contribution: 1000,
     prize: 2000000,
     seats: 2400,
     commission: 400000,
     totalCollection: 2400000,
-    color: 'from-yellow-500 to-yellow-700',
-    badgeColor: 'bg-yellow-500',
-    icon: '🥇',
-    drawSchedule: 'weekly'
+    color: 'from-gray-300 to-blue-400',
+    badgeColor: 'bg-blue-500',
+    icon: '💎',
+    drawSchedule: 'weekly',
+    tier: 3
   },
-  platinum: {
-    id: 'platinum',
-    labelAm: 'ፕላቲነም',
-    labelEn: 'Platinum',
+  diamond: {
+    id: 'diamond',
+    labelAm: 'አልማዝ',
+    labelEn: 'Diamond',
+    labelOm: 'Diamond',
+    contribution: 2500,
+    prize: 5000000,
+    seats: 2400,
+    commission: 1000000,
+    totalCollection: 6000000,
+    color: 'from-blue-400 to-cyan-400',
+    badgeColor: 'bg-cyan-500',
+    icon: '💠',
+    drawSchedule: 'weekly',
+    tier: 4
+  },
+  royal: {
+    id: 'royal',
+    labelAm: 'ንጉሣዊ',
+    labelEn: 'Royal',
+    labelOm: 'Royal',
     contribution: 5000,
     prize: 10000000,
     seats: 2400,
     commission: 2000000,
     totalCollection: 12000000,
-    color: 'from-purple-500 to-purple-700',
+    color: 'from-purple-500 to-pink-500',
     badgeColor: 'bg-purple-500',
-    icon: '💎',
-    drawSchedule: 'monthly'
+    icon: '👑',
+    drawSchedule: 'monthly',
+    tier: 5
   }
 };
 
+// Get all tier IDs
+export const TIER_IDS = ['silver', 'gold', 'platinum', 'diamond', 'royal'];
+
+// Get draw schedule text
 export const getDrawScheduleText = (tierId, language = 'am') => {
-  const schedule = TIERS[tierId]?.drawSchedule;
+  const tier = TIERS[tierId];
+  if (!tier) return language === 'am' ? 'ዕለታዊ' : 'Daily';
+  
+  const schedule = tier.drawSchedule;
   if (language === 'am') {
     const map = { daily: 'ዕለታዊ እጣ', weekly: 'ሳምንታዊ እጣ', monthly: 'ወርሃዊ እጣ' };
     return map[schedule] || schedule;
   }
+  if (language === 'om') {
+    const map = { daily: 'Qodaa Guyyaa', weekly: 'Qodaa Torban', monthly: 'Qodaa Ji\'aa' };
+    return map[schedule] || schedule;
+  }
   const map = { daily: 'Daily Draw', weekly: 'Weekly Draw', monthly: 'Monthly Draw' };
   return map[schedule] || schedule;
+};
+
+// Get tier label in selected language
+export const getTierLabel = (tierId, language = 'am') => {
+  const tier = TIERS[tierId];
+  if (!tier) return tierId;
+  if (language === 'am') return tier.labelAm;
+  if (language === 'om') return tier.labelOm;
+  return tier.labelEn;
+};
+
+// Get tier by contribution amount (for backward compatibility)
+export const getTierByContribution = (amount) => {
+  for (const [key, tier] of Object.entries(TIERS)) {
+    if (tier.contribution === amount) return tier;
+  }
+  return null;
 };
 
 export default function SeatSelector({
@@ -85,7 +137,7 @@ export default function SeatSelector({
   seatsPerRow: propSeatsPerRow = 20,
   maxSeats = 5,
   poolInfo,
-  programType,
+  programType, // 'merkato', 'city', 'regular'
   city,
   language = 'am',
   onSeatsSelected,
@@ -166,62 +218,57 @@ export default function SeatSelector({
     }
   }, [selectedSeats, entryFee, tier]);
 
-  // Fetch booked seats - FIXED
   const fetchBookedSeats = async () => {
     try {
       let data;
       
       if (programType === 'merkato') {
-        const { data: d, error } = await supabase
+        const { data: d } = await supabase
           .from('merkato_vip_participants')
           .select('seat_numbers, payment_status')
-          .eq('tier', tierId || 'bronze')
+          .eq('tier', tierId || 'silver')
           .in('payment_status', ['verified', 'pending_verification']);
-        if (!error) data = d;
+        data = d;
       } else if (programType === 'city') {
-        const { data: d, error } = await supabase
+        const { data: d } = await supabase
           .from('city_vip_participants')
           .select('seat_numbers, payment_status')
           .eq('city', city)
-          .eq('tier', tierId || 'bronze')
+          .eq('tier', tierId || 'silver')
           .in('payment_status', ['verified', 'pending_verification']);
-        if (!error) data = d;
+        data = d;
       } else if (poolId) {
-        const { data: d, error } = await supabase
+        const { data: d } = await supabase
           .from('pool_seats')
           .select('seat_number, status, reserved_by')
           .eq('pool_id', poolId);
         
-        if (!error && d) {
-          const takenSeats = d
-            .filter(seat => seat.status === 'taken')
-            .map(seat => seat.seat_number);
-          const reservedByOthers = d
-            .filter(seat => seat.status === 'reserved' && seat.reserved_by !== currentUser?.id)
-            .map(seat => seat.seat_number);
-          const allBooked = [...new Set([...takenSeats, ...reservedByOthers])];
-          
-          if (isMounted.current) {
-            setBookedSeats(allBooked);
-            setLoading(false);
-          }
-          return;
+        const takenSeats = (d || [])
+          .filter(seat => seat.status === 'taken')
+          .map(seat => seat.seat_number);
+        const reservedByOthers = (d || [])
+          .filter(seat => seat.status === 'reserved' && seat.reserved_by !== currentUser?.id)
+          .map(seat => seat.seat_number);
+        const allBooked = [...new Set([...takenSeats, ...reservedByOthers])];
+        
+        if (isMounted.current) {
+          setBookedSeats(allBooked);
+          setLoading(false);
         }
+        return;
       }
       
       const allBookedSeats = [];
-      if (data && data.length > 0) {
+      if (data) {
         data.forEach(participant => {
-          if (participant.seat_numbers && Array.isArray(participant.seat_numbers) && participant.seat_numbers.length > 0) {
+          if (participant.seat_numbers && Array.isArray(participant.seat_numbers)) {
             allBookedSeats.push(...participant.seat_numbers);
           }
         });
       }
       
-      const uniqueBookedSeats = [...new Set(allBookedSeats)];
-      
       if (isMounted.current) {
-        setBookedSeats(uniqueBookedSeats);
+        setBookedSeats([...new Set(allBookedSeats)]);
         setLoading(false);
       }
     } catch (err) {
@@ -251,6 +298,7 @@ export default function SeatSelector({
         return;
       }
       
+      // For VIP programs, check reservations table
       const { data, error } = await supabase
         .from('vip_seat_reservations')
         .select('seat_number, expires_at')
@@ -312,6 +360,7 @@ export default function SeatSelector({
         }
       }
       
+      // Set timer to release seats after 10 minutes
       if (reservationTimer) clearTimeout(reservationTimer);
       const timer = setTimeout(() => {
         releaseUserReservations();
@@ -494,7 +543,7 @@ export default function SeatSelector({
               <div className="flex items-center gap-2 text-sm">
                 {tier && (
                   <span className={`px-2 py-0.5 rounded-full text-white text-xs ${tier.badgeColor}`}>
-                    {language === 'am' ? tier.labelAm : tier.labelEn}
+                    {language === 'am' ? tier.labelAm : (language === 'om' ? tier.labelOm : tier.labelEn)}
                   </span>
                 )}
                 <span className="text-gray-600">
@@ -515,6 +564,7 @@ export default function SeatSelector({
               <button onClick={onClose || onCancel} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
             </div>
           </div>
+          {/* Row Navigator */}
           {rows > 10 && (
             <div className="flex overflow-x-auto gap-1 mt-3 pb-2">
               {Array.from({ length: Math.min(rows, 20) }).map((_, idx) => (
