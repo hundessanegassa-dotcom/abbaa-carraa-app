@@ -3,7 +3,6 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useState } from 'react';
 import { getAllCities, getCityData } from '../../lib/cityData';
-
 // Get all cities dynamically
 const ethiopianCities = getAllCities();
 
