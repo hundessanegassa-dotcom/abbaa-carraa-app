@@ -1,4 +1,5 @@
-// lib/bot.js - COMPLETE TELEGRAM BOT WITH PHONE & NAME COLLECTION FIRST
+
+// lib/bot.js - COMPLETE TELEGRAM BOT WITH 3 LANGUAGES (English, Amharic, Afan Oromo)
 import { Telegraf } from 'telegraf';
 import { supabase } from './supabase';
 
@@ -11,14 +12,15 @@ if (!BOT_TOKEN) {
 export const bot = BOT_TOKEN ? new Telegraf(BOT_TOKEN) : null;
 
 // ============================================
-// USER SESSION STORAGE (In production, use Redis or database)
+// USER SESSION STORAGE
 // ============================================
 const userSessions = {};
 
 // ============================================
-// COMPLETE TRANSLATIONS
+// COMPLETE TRANSLATIONS - 3 LANGUAGES
 // ============================================
 const TRANSLATIONS = {
+  // ========== ENGLISH ==========
   en: {
     welcome: "👋 *Welcome to Abbaa Carraa!*\n\n🏆 Ethiopia's Premier Prize Platform\n\nPlease share your information to get started:",
     ask_name: "📝 *What is your full name?*\n\nPlease enter your full name:",
@@ -28,10 +30,8 @@ const TRANSLATIONS = {
     language_select: "🌐 *Choose Your Language*\n\nPlease select your preferred language:",
     language_set: "✅ Language set to English",
     
-    // Main Menu
     main_menu: "🎯 *Main Menu*\n\nWelcome back, {name}! Choose an option below:",
     
-    // Programs
     programs_title: "🎯 *Available Programs*\n\nChoose from our premium programs:",
     merkato_vip: "🏪 *Merkato VIP*\n💰 Win Cash up to 10M ETB\n🎟️ 5 Premium Tiers Available\n📅 Daily, Weekly & Monthly Draws",
     city_vip: "🏙️ *City VIP*\n📍 Win Cash in 94 Cities\n🎟️ 5 Premium Tiers Available\n📅 Daily, Weekly & Monthly Draws",
@@ -39,35 +39,27 @@ const TRANSLATIONS = {
     commission: "💰 *20% Commission* for Agents & Partners",
     health: "💚 *2% Supports* Kidney & Heart Patients",
     
-    // Merkato VIP Details
     merkato_details: "🏪 *Merkato VIP Details*\n\n💰 Win Cash up to 10M ETB!\n\n*5 Premium Tiers:*\n🥈 Silver: 100 ETB - 1,200 Seats - 100K ETB Prize\n🥇 Gold: 500 ETB - 1,200 Seats - 500K ETB Prize\n💎 Platinum: 1,000 ETB - 2,400 Seats - 2M ETB Prize\n💠 Diamond: 2,500 ETB - 2,400 Seats - 5M ETB Prize\n👑 Royal: 5,000 ETB - 2,400 Seats - 10M ETB Prize\n\n📱 Join now inside the app!",
     
-    // City VIP Details
     city_details: "🏙️ *City VIP Details*\n\n📍 Win Cash in 94 Ethiopian Cities!\n\n*5 Premium Tiers:*\n🥈 Silver: 100 ETB - 1,200 Seats - 100K ETB Prize\n🥇 Gold: 500 ETB - 1,200 Seats - 500K ETB Prize\n💎 Platinum: 1,000 ETB - 2,400 Seats - 2M ETB Prize\n💠 Diamond: 2,500 ETB - 2,400 Seats - 5M ETB Prize\n👑 Royal: 5,000 ETB - 2,400 Seats - 10M ETB Prize\n\n🌍 Available in all Ethiopian cities!\n📱 Join now inside the app!",
     
-    // Regular Pools Details
     regular_details: "🏊 *Regular Prize Pools*\n\n🎁 Win Amazing Prizes:\n\n🚗 *Cars* - Various Models\n🏠 *Houses* - Property Investments\n🏭 *Machinery* - Equipment & Tools\n💻 *Electronics* - Gadgets & Devices\n🎁 *Much More!*\n\n💰 Multiple prize pools available with different entry levels.\n📱 Join now inside the app!",
     
-    // Winners
     winners_title: "🏆 *Recent Winners*",
+    no_winners: "No recent winners to display. Be the first! 🎯",
     winners_footer: "📱 View all winners in the app:",
     
-    // How It Works
     how_it_works: "📖 *How It Works*\n\n1️⃣ *Find a Pool*\n• 🏪 Merkato VIP - Win Cash up to 10M ETB\n• 🏙️ City VIP - Win Cash in 94 Cities\n• 🏊 Regular Pools - Win Cars, Houses & More\n\n2️⃣ *Contribute*\n• Choose your tier (Silver, Gold, Platinum, Diamond, Royal)\n• Secure payment inside the app\n• Get your seat number\n\n3️⃣ *Win!*\n• Winners are announced regularly\n• Claim your prize\n• Join the Hall of Fame!\n\n💚 *2% Supports* Kidney & Heart Disease Patients",
     
-    // Support
     support_title: "📞 *Contact Support*\n\nOur team is here to help you 24/7.\n\n📱 *Ways to reach us:*\n📧 Email: hundessanegassa@gmail.com\n📱 Phone: 0930330323, 0913 277 922\n\n💬 *Quick Help:*\n• For payment issues: Use /mytickets\n• For program info: Use /programs\n• For general help: Visit our FAQ page",
     
-    // Help
     help_title: "📖 *Help & Support*\n\n🤖 *Available Commands:*\n/start - 🚀 Welcome message\n/help - 📖 This help message\n/mytickets - 🎫 View your tickets\n/programs - 🎯 View available programs\n/language - 🌐 Change language\n/support - 📞 Contact support\n/winners - 🏆 View recent winners\n/howitworks - 📖 How it works",
     
-    // Tickets
     tickets_title: "🎫 *Your Tickets*",
     no_tickets: "📭 *You don't have any tickets yet.*\n\nJoin a program to get started!",
     status_verified: "✅ Verified",
     status_pending: "⏳ Pending",
     
-    // Buttons
     back: "🔙 Back to Main Menu",
     open_app: "🚀 Open Abbaa Carraa",
     dashboard: "📊 My Dashboard",
@@ -84,7 +76,8 @@ const TRANSLATIONS = {
     view_pools: "🏊 View Regular Pools",
     join_now: "🎯 Join Now"
   },
-  
+
+  // ========== AMHARIC ==========
   am: {
     welcome: "👋 *እንኳን ወደ Abbaa Carraa በደህና መጡ!*\n\n🏆 የኢትዮጵያ ቀዳሚ የሽልማት መድረክ\n\nእባክዎ ለመጀመር መረጃዎን ያጋሩ:",
     ask_name: "📝 *ሙሉ ስምዎ ምንድነው?*\n\nእባክዎ ሙሉ ስምዎን ያስገቡ:",
@@ -110,6 +103,7 @@ const TRANSLATIONS = {
     regular_details: "🏊 *መደበኛ የሽልማት መደቦች*\n\n🎁 አስደናቂ ሽልማቶችን ያሸንፉ:\n\n🚗 *መኪናዎች* - የተለያዩ ሞዴሎች\n🏠 *ቤቶች* - የንብረት ኢንቨስትመንቶች\n🏭 *ማሽነሪዎች* - መሳሪያዎች እና ቁሳቁሶች\n💻 *ኤሌክትሮኒክስ* - ጋጄቶች እና መሳሪያዎች\n🎁 *እና ሌሎች ብዙ!*\n\n💰 የተለያዩ የመግቢያ ደረጃዎች ያላቸው በርካታ የሽልማት መደቦች ይገኛሉ።\n📱 አሁኑኑ በመተግበሪያው ውስጥ ይቀላቀሉ!",
     
     winners_title: "🏆 *የቅርብ ጊዜ አሸናፊዎች*",
+    no_winners: "ምንም አሸናፊዎች የሉም። የመጀመሪያው ይሁኑ! 🎯",
     winners_footer: "📱 ሁሉንም አሸናፊዎች በመተግበሪያው ውስጥ ይመልከቱ:",
     
     how_it_works: "📖 *እንዴት እንሳተፋለን?*\n\n1️⃣ *የእጣ መደብ ይምረጡ*\n• 🏪 መርካቶ ቪአይፒ - እስከ 10M ብር ያሸንፉ\n• 🏙️ ከተማ ቪአይፒ - በ94 ከተሞች ያሸንፉ\n• 🏊 መደበኛ የእጣ መደቦች - መኪና፣ ቤት እና ሌሎች\n\n2️⃣ *አስተዋፅኦ ያድርጉ*\n• ደረጃዎን ይምረጡ (ብር፣ ወርቅ፣ ፕላቲኒየም፣ አልማዝ፣ ንጉሣዊ)\n• በመተግበሪያው ውስጥ ደህንነቱ በተጠበቀ ሁኔታ ይክፈሉ\n• የመቀመጫ ቁጥርዎን ያግኙ\n\n3️⃣ *ያሸንፉ!*\n• አሸናፊዎች በየጊዜው ይገለፃሉ\n• ሽልማትዎን ይውሰዱ\n• የክብር አዳራሹን ይቀላቀሉ!\n\n💚 *2% ለጤና* የኩላሊት እና የልብ ህመምተኞችን ይደግፋል",
@@ -138,6 +132,63 @@ const TRANSLATIONS = {
     view_city: "🏙️ ከተማ ቪአይፒ ይመልከቱ",
     view_pools: "🏊 መደበኛ መደቦችን ይመልከቱ",
     join_now: "🎯 አሁን ይቀላቀሉ"
+  },
+
+  // ========== AFAN OROMO ==========
+  om: {
+    welcome: "👋 *Gara Abbaa Carraatti Baga nagaan dhufte!*\n\n🏆 Itoophiyaatti Dirree Badhaasaa Olaanaa\n\nMaaloo odeeffannoo keessan qoodaadhaan eegaltaa:",
+    ask_name: "📝 *Maqaa keessan guutuu maal?*\n\nMaaloo maqaa keessan guutuu galchaa:",
+    ask_phone: "📱 *Lakkoofsa bilbilaa keessan maal?*\n\nMaaloo lakkoofsa bilbilaa keessan galchaa (fakkeenyaaf: 0912345678):",
+    name_received: "✅ Galatoomaa! Maqaan keessan kuusameera.",
+    phone_received: "✅ Galatoomaa! Lakkoofsi bilbilaa keessan kuusameera.",
+    language_select: "🌐 *Afaan Filadhu*\n\nMaaloo afaan fedhitan filadha:",
+    language_set: "✅ Afaan Afaan Oromootti jijjiirame",
+    
+    main_menu: "🎯 *Menu Ijoo*\n\nBaga nagaan deebitan, {name}! Filannoowwan armaan gadii keessaa filadhaa:",
+    
+    programs_title: "🎯 *Tarkaanfiiwwan Argaman*\n\nTarkaanfiiwwan armaan gadii keessaa filadhaa:",
+    merkato_vip: "🏪 *Merkato VIP*\n💰 Maallaqa hanga 10M ETB ta'u argadhaa\n🎟️ Sadarkaa VIP 5 ni argamu\n📅 Qodaa Guyyaa, Torbanii fi Ji'aa",
+    city_vip: "🏙️ *VIP Magaalaa*\n📍 Magaalaa 94 keessatti Maallaqa argadhaa\n🎟️ Sadarkaa VIP 5 ni argamu\n📅 Qodaa Guyyaa, Torbanii fi Ji'aa",
+    regular_pools: "🏊 *Pooliiwwan Idilee*\n🚗 Konkoolataa mo'adhaa\n🏠 Mana mo'adhaa\n🏭 Mashiniin mo'adhaa\n💻 Elektirooniksii mo'adhaa\n🎁 Waan Bayeessa!",
+    commission: "💰 *Komishinii %20* Wakiliitootaaf & Hiriyaatootaaf",
+    health: "💚 *%2 Fayyaaf* Dhibamtoota Kalee & Onnee gargaara",
+    
+    merkato_details: "🏪 *Merkato VIP Ibsa*\n\n💰 Maallaqa hanga 10M ETB ta'u argadhaa!\n\n*Sadarkaa VIP 5:*\n🥈 Silver: 100 ETB - 1,200 Teessoo - 100K ETB Badhaasa\n🥇 Gold: 500 ETB - 1,200 Teessoo - 500K ETB Badhaasa\n💎 Platinum: 1,000 ETB - 2,400 Teessoo - 2M ETB Badhaasa\n💠 Diamond: 2,500 ETB - 2,400 Teessoo - 5M ETB Badhaasa\n👑 Royal: 5,000 ETB - 2,400 Teessoo - 10M ETB Badhaasa\n\n📱 Amma appii keessatti hirmaadhaa!",
+    
+    city_details: "🏙️ *VIP Magaalaa Ibsa*\n\n📍 Magaalaa 94 Itoophiyaa keessatti Maallaqa argadhaa!\n\n*Sadarkaa VIP 5:*\n🥈 Silver: 100 ETB - 1,200 Teessoo - 100K ETB Badhaasa\n🥇 Gold: 500 ETB - 1,200 Teessoo - 500K ETB Badhaasa\n💎 Platinum: 1,000 ETB - 2,400 Teessoo - 2M ETB Badhaasa\n💠 Diamond: 2,500 ETB - 2,400 Teessoo - 5M ETB Badhaasa\n👑 Royal: 5,000 ETB - 2,400 Teessoo - 10M ETB Badhaasa\n\n🌍 Magaalaa Itoophiyaa hunda keessatti argama!\n📱 Amma appii keessatti hirmaadhaa!",
+    
+    regular_details: "🏊 *Pooliiwwan Badhaasa Idilee*\n\n🎁 Badhaasawwan Dinqisiifatan mo'adhaa:\n\n🚗 *Konkoolataa* - Gosoota Addaddaa\n🏠 *Mana* - Investimantii Qabeenyaa\n🏭 *Mashiniin* - Meeshaalee fi Qodaa\n💻 *Elektirooniksii* - Gajetii fi Meeshaalee\n🎁 *Waan Bayeessa!*\n\n💰 Pooliiwwan badhaasa hedduu sadarkaa seenaa adda addaa ta'een ni argamu.\n📱 Amma appii keessatti hirmaadhaa!",
+    
+    winners_title: "🏆 *Mo'attoota Dhiyoo*",
+    no_winners: "Mo'attoon dhiyoo hin jiru. Isa jalqabaa ta'aa! 🎯",
+    winners_footer: "📱 Mo'attoota hundaa appii keessatti ilaali:",
+    
+    how_it_works: "📖 *Akkam Hojiirra Oola?*\n\n1️⃣ *Pool tokko barbaadhaa*\n• 🏪 Merkato VIP - Maallaqa hanga 10M ETB ta'u argadhaa\n• 🏙️ VIP Magaalaa - Magaalaa 94 keessatti Maallaqa argadhaa\n• 🏊 Pooliiwwan Idilee - Konkoolataa, Mana, fi Kan biroo mo'adhaa\n\n2️⃣ *Gumaachaa*\n• Sadarkaa keessan filadhaa (Silver, Gold, Platinum, Diamond, Royal)\n• Appii keessatti kaffaltii nagaa ta'e raawwadhaa\n• Lakkoofsa teessoo keessan argadhaa\n\n3️⃣ *Mo'adhaa!*\n• Mo'attaan yeroo yeroo lallabama\n• Badhaasa keessan fudhadhaa\n• Hall of Fame itti geessaa!\n\n💚 *%2 Fayyaaf* Dhibamtoota Kalee & Onnee gargaara",
+    
+    support_title: "📞 *Nu Qunnamuu*\n\nGareen keenya 24/7 isiin gargaaruuf qophiidha.\n\n📱 *Karaa ittiin nu qunnamuu dandeessan:*\n📧 Email: hundessanegassa@gmail.com\n📱 Bilbila: 0930330323, 0913 277 922\n\n💬 *Gargaarsa Saffisaa:*\n• Rakkoo kaffaltiitiif: /mytickets itti fayyadamaa\n• Odeeffannoo tarkaanfii: /programs itti fayyadamaa\n• Gargaarsa waliigalaaf: Fuula FAQ keenyarratti ilaalaa",
+    
+    help_title: "📖 *Gargaarsa fi Deeggarsa*\n\n🤖 *Ajajoota Jiraan:*\n/start - 🚀 Ergaa baga nagaan dhufte\n/help - 📖 Ergaa gargaarsaa kana\n/mytickets - 🎫 Tikkeetoota keessan ilaaluu\n/programs - 🎯 Tarkaanfiiwwan argaman ilaaluu\n/language - 🌐 Afaan jijjiiruu\n/support - 📞 Nu qunnamuu\n/winners - 🏆 Mo'attoota dhiyoo ilaaluu\n/howitworks - 📖 Akkam hojiirra oola",
+    
+    tickets_title: "🎫 *Tikkeetoota Keessan*",
+    no_tickets: "📭 *Tikkeetii tokko hin qabdu.*\n\nMaaloo tarkaanfii tokko itti argachuuf kennadhu!",
+    status_verified: "✅ Mirkanaa'e",
+    status_pending: "⏳ Eegachaa jira",
+    
+    back: "🔙 gara Menu Ijootti deebi'i",
+    open_app: "🚀 Abbaa Carraa Banuu",
+    dashboard: "📊 Daashboorardii Koo",
+    merkato: "🏪 Merkato VIP",
+    city: "🏙️ VIP Magaalaa",
+    pools: "🏊 Pooliiwwan Idilee",
+    register: "📝 Galmaa'i",
+    winners: "🏆 Mo'attoota",
+    how_it_works_btn: "📖 Akkam Hojiirra Oola",
+    support: "📞 Nu Qunnamuu",
+    help: "ℹ️ Gargaarsa",
+    view_merkato: "🏪 Merkato VIP Ilaali",
+    view_city: "🏙️ VIP Magaalaa Ilaali",
+    view_pools: "🏊 Pooliiwwan Idilee Ilaali",
+    join_now: "🎯 Amma hirmaadhu"
   }
 };
 
@@ -355,11 +406,12 @@ export async function handleBotMessages() {
         session.data.fullName
       );
       
-      // Show language selection
+      // Show language selection with 3 languages
       const langKeyboard = {
         inline_keyboard: [
           [{ text: '🇬🇧 English', callback_data: 'lang_en' }],
-          [{ text: '🇪🇹 አማርኛ', callback_data: 'lang_am' }]
+          [{ text: '🇪🇹 አማርኛ', callback_data: 'lang_am' }],
+          [{ text: '🌍 Afaan Oromo', callback_data: 'lang_om' }]
         ]
       };
       
@@ -375,42 +427,22 @@ export async function handleBotMessages() {
       delete userSessions[userId];
       return;
     }
-
-    // Handle regular text messages (not in registration flow)
-    const lang = await getUserLanguage(userId);
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    const name = session.data?.fullName || user.first_name || 'User';
-    
-    // Check for keywords
-    const lowerText = text.toLowerCase();
-    if (lowerText.includes('hello') || lowerText.includes('hi') || lowerText.includes('ሰላም')) {
-      await ctx.reply(
-        `👋 Hello! Welcome to Abbaa Carraa.\n\nType /start to begin or /help for assistance.`
-      );
-    } else if (lowerText.includes('program') || lowerText.includes('ፕሮግራም')) {
-      await ctx.reply(
-        t.programs_title,
-        {
-          parse_mode: 'Markdown',
-          reply_markup: buildProgramsMenu(lang)
-        }
-      );
-    } else {
-      await ctx.reply(
-        `🤔 I didn't understand that.\n\nTry one of these commands:\n/start - Welcome message\n/help - Help information\n/mytickets - View your tickets\n/programs - View available programs\n/language - Change language\n/support - Contact support\n/winners - View recent winners\n/howitworks - How it works`,
-        { parse_mode: 'Markdown' }
-      );
-    }
   });
 
   // ============================================
-  // CALLBACK HANDLERS
+  // CALLBACK HANDLERS - LANGUAGE SELECTION (3 LANGUAGES)
   // ============================================
   bot.action(/lang_(.+)/, async (ctx) => {
     const lang = ctx.match[1];
     const userId = ctx.from.id;
     const user = ctx.from;
     const name = user.first_name || 'User';
+    
+    // Only accept valid languages
+    if (!['en', 'am', 'om'].includes(lang)) {
+      await ctx.answerCbQuery('Invalid language selection');
+      return;
+    }
     
     await updateUserLanguage(userId, lang);
     
@@ -683,7 +715,7 @@ export async function handleBotMessages() {
   });
 
   // ============================================
-  // LANGUAGE COMMAND
+  // LANGUAGE COMMAND - WITH 3 LANGUAGES
   // ============================================
   bot.command('language', async (ctx) => {
     const userId = ctx.from.id;
@@ -694,6 +726,7 @@ export async function handleBotMessages() {
       inline_keyboard: [
         [{ text: '🇬🇧 English', callback_data: 'lang_en' }],
         [{ text: '🇪🇹 አማርኛ', callback_data: 'lang_am' }],
+        [{ text: '🌍 Afaan Oromo', callback_data: 'lang_om' }],
         [{ text: t.back, callback_data: 'main_menu' }]
       ]
     };
@@ -750,7 +783,7 @@ export async function handleBotMessages() {
           winnersText += `   💰 ${w.prize_amount || 'N/A'}\n\n`;
         });
       } else {
-        winnersText = t.no_winners || 'No recent winners to display. Be the first! 🎯\n\n';
+        winnersText = t.no_winners;
       }
 
       await ctx.reply(
@@ -878,7 +911,7 @@ export async function handleBotMessages() {
           winnersText += `   💰 ${w.prize_amount || 'N/A'}\n\n`;
         });
       } else {
-        winnersText = 'No recent winners to display. Be the first! 🎯\n\n';
+        winnersText = t.no_winners;
       }
 
       await ctx.editMessageText(
