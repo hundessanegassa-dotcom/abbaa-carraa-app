@@ -11,7 +11,6 @@ export default function CitiesIndex() {
   const [searchTerm, setSearchTerm] = useState('');
   const [regionFilter, setRegionFilter] = useState('all');
   const [showAllCities, setShowAllCities] = useState(false);
-  const [language, setLanguage] = useState('am');
 
   // Get unique regions for filter
   const regions = ['all', ...new Set(ethiopianCities.map(city => city.region || 'Ethiopia'))];
@@ -66,7 +65,7 @@ export default function CitiesIndex() {
               <div className="relative">
                 <input
                   type="text"
-                  placeholder={language === 'am' ? '🔍 ከተማ ፈልግ (አዲስ አበባ, Addis Ababa...)' : '🔍 Search city (Addis Ababa...)'}
+                  placeholder="🔍 Search city (Addis Ababa...)"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full border rounded-xl px-4 py-3 pl-10 focus:ring-2 focus:ring-green-500 outline-none"
