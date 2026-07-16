@@ -19,7 +19,7 @@ export const CITY_VIP_TIERS = {
     labelAm: 'ብር',
     icon: '🥈',
     contribution: 100,
-    prize: 100000,
+    prize: 100000,      // ✅ 100,000 ETB
     seats: 1200,
     color: 'from-gray-400 to-gray-500',
     badge: 'Silver',
@@ -31,7 +31,7 @@ export const CITY_VIP_TIERS = {
     labelAm: 'ወርቅ',
     icon: '🥇',
     contribution: 500,
-    prize: 500000,
+    prize: 500000,      // ✅ 500,000 ETB
     seats: 1200,
     color: 'from-yellow-400 to-yellow-600',
     badge: 'Gold',
@@ -43,7 +43,7 @@ export const CITY_VIP_TIERS = {
     labelAm: 'ፕላቲኒየም',
     icon: '💎',
     contribution: 1000,
-    prize: 1000000,
+    prize: 2000000,     // ✅ 2,000,000 ETB
     seats: 2400,
     color: 'from-gray-300 to-blue-400',
     badge: 'Platinum',
@@ -55,7 +55,7 @@ export const CITY_VIP_TIERS = {
     labelAm: 'አልማዝ',
     icon: '💠',
     contribution: 2500,
-    prize: 2000000,
+    prize: 5000000,     // ✅ 5,000,000 ETB
     seats: 2400,
     color: 'from-blue-400 to-cyan-400',
     badge: 'Diamond',
@@ -67,13 +67,14 @@ export const CITY_VIP_TIERS = {
     labelAm: 'ንጉሣዊ',
     icon: '👑',
     contribution: 5000,
-    prize: 5000000,
+    prize: 10000000,    // ✅ 10,000,000 ETB
     seats: 2400,
     color: 'from-purple-500 to-pink-500',
     badge: 'Royal',
     tier: 5
   }
 };
+
 
 // Helper function to get draw schedule text
 function getDrawScheduleText(tierId, language) {
