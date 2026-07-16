@@ -1,5 +1,4 @@
-
-// pages/cities/[city].js - COMPLETE WITH 5 TIERS & UNLISTED CITY SUPPORT
+// pages/cities/[city].js - FIXED LOADING ISSUE
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -20,7 +19,8 @@ const cityList = getAllCities();
 
 export default function CityVip() {
   const router = useRouter();
-  const { cityId } = router.query;
+  // ✅ FIX: The route is /cities/[city] so the param is 'city' not 'cityId'
+  const { city } = router.query;
   const [language, setLanguage] = useState('am');
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -48,12 +48,24 @@ export default function CityVip() {
     if (savedLang === 'am' || savedLang === 'en') {
       setLanguage(savedLang);
     }
-    if (cityId) {
-      const data = getCityData(cityId);
+  }, []);
+
+  // ✅ FIX: Separate useEffect for city data
+  useEffect(() => {
+    if (city) {
+      console.log('📍 City param:', city);
+      const data = getCityData(city);
+      console.log('📍 City data:', data);
       setCityInfo(data);
     }
-    checkUser();
-  }, [cityId]);
+  }, [city]);
+
+  // ✅ Check user after city is loaded
+  useEffect(() => {
+    if (cityInfo) {
+      checkUser();
+    }
+  }, [cityInfo]);
 
   const toggleLanguage = () => {
     const newLang = language === 'am' ? 'en' : 'am';
@@ -73,7 +85,7 @@ export default function CityVip() {
         setSelectedTier(TIERS[tier]);
         setShowTiers(false);
         setShowSeats(true);
-        router.replace(`/cities/${cityId}`, undefined, { shallow: true });
+        router.replace(`/cities/${city}`, undefined, { shallow: true });
       }
     } catch (error) {
       console.error('Error checking user:', error);
@@ -84,7 +96,7 @@ export default function CityVip() {
 
   const handleTierSelect = (tierId) => {
     if (!user) {
-      const redirectUrl = `/cities/${cityId}?tier=${tierId}`;
+      const redirectUrl = `/cities/${city}?tier=${tierId}`;
       localStorage.setItem('abbaa_redirect_after_login', redirectUrl);
       sessionStorage.setItem('redirectAfterLogin', redirectUrl);
       toast.loading(language === 'am' ? 'እባክዎ ወደ ስርዓት ይግቡ...' : 'Please login...');
@@ -110,7 +122,7 @@ export default function CityVip() {
           user_id: user.id,
           user_email: user.email,
           user_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-          city: cityInfo?.name?.split('|')[0] || cityId || 'Unknown City',
+          city: cityInfo?.name?.split('|')[0] || city || 'Unknown City',
           tier: tier,
           pool_type: tier,
           seat_numbers: seats,
@@ -295,6 +307,18 @@ export default function CityVip() {
     );
   };
 
+  // ✅ FIX: Show loading while city is being fetched
+  if (!city) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-500">{language === 'am' ? 'ከተማ በመጫን ላይ...' : 'Loading city...'}</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!cityInfo || checkingUser) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -307,7 +331,7 @@ export default function CityVip() {
   }
 
   const cityName = cityInfo.name.split('|')[0].trim();
-  const cityNameEn = cityInfo.name.split('|')[1]?.trim() || cityId;
+  const cityNameEn = cityInfo.name.split('|')[1]?.trim() || city;
 
   return (
     <NoSSR>
@@ -369,13 +393,13 @@ export default function CityVip() {
                                c.nameEn.toLowerCase().includes(citySearchTerm.toLowerCase()))
                     .slice(0, 20)
                     .map(c => (
-                      <Link key={c.id} href={`/cities/${c.id}`} className={`city-item flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b cursor-pointer ${cityId === c.id ? 'bg-gray-100' : ''}`}>
+                      <Link key={c.id} href={`/cities/${c.id}`} className={`city-item flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b cursor-pointer ${city === c.id ? 'bg-gray-100' : ''}`}>
                         <span className="text-2xl">{c.icon}</span>
                         <div>
                           <div className="font-medium text-gray-800">{c.name}</div>
                           <div className="text-xs text-gray-500">{c.nameEn}</div>
                         </div>
-                        {cityId === c.id && <span className="ml-auto text-green-600 text-sm">✓</span>}
+                        {city === c.id && <span className="ml-auto text-green-600 text-sm">✓</span>}
                       </Link>
                     ))}
                 </div>
@@ -457,7 +481,7 @@ export default function CityVip() {
               onClose={handleCloseSeats}
               onCancel={handleCloseSeats}
               programType="city"
-              city={cityName || cityId || 'Unknown City'}
+              city={cityName || city || 'Unknown City'}
               tierId={selectedTierId}
               entryFee={selectedTier.contribution}
               totalSeats={selectedTier.seats}
@@ -599,7 +623,7 @@ export default function CityVip() {
         {showAgentApplication && (
           <UnifiedAgentApplication 
             onClose={() => setShowAgentApplication(false)} 
-            preSelectedCity={cityName || cityId || 'Unknown City'} 
+            preSelectedCity={cityName || city || 'Unknown City'} 
             preSelectedProgram="city_vip" 
           />
         )}
