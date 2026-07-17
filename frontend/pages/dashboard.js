@@ -1,4 +1,4 @@
-// pages/dashboard.js - Fixed Telegram Authentication
+// pages/dashboard.js - Complete Dashboard with Fixed Telegram Authentication
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
@@ -128,13 +128,26 @@ export default function Dashboard() {
       
       if (!signInError && signInData.user) {
         console.log('✅ User already exists, logged in successfully');
+        // Update Telegram data in profile using the RPC function
+        const { error: updateError } = await supabase.rpc('get_or_create_telegram_profile', {
+          p_user_id: signInData.user.id,
+          p_telegram_id: userId,
+          p_telegram_username: telegramUser.username || '',
+          p_full_name: fullName,
+          p_email: email,
+          p_photo_url: telegramUser.photo_url || ''
+        });
+        
+        if (updateError) {
+          console.warn('⚠️ Profile update warning:', updateError);
+        }
+        
         return signInData.user;
       }
       
       // ✅ STEP 2: User doesn't exist, create them
       console.log('👤 Creating new user in Supabase Auth...');
       
-      // Generate a secure password
       const password = `telegram_${userId}_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
       
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
@@ -145,7 +158,7 @@ export default function Dashboard() {
             full_name: fullName,
             telegram_id: userId,
             telegram_username: telegramUser.username || '',
-            email_verified: true, // Mark as verified since it's from Telegram
+            email_verified: true,
           }
         }
       });
@@ -153,7 +166,7 @@ export default function Dashboard() {
       if (signUpError) {
         console.error('❌ Sign up error:', signUpError);
         
-        // If user already exists but signIn failed, try to sign in again with a different approach
+        // If user already exists but signIn failed, try to sign in again
         if (signUpError.message.includes('already registered')) {
           const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
             email: email,
@@ -166,8 +179,6 @@ export default function Dashboard() {
           }
         }
         
-        // If all fails, try to create user with admin API (if you have server access)
-        // Or throw error to be handled by caller
         throw new Error(`Failed to create user: ${signUpError.message}`);
       }
       
@@ -177,25 +188,38 @@ export default function Dashboard() {
       
       console.log('✅ User created in Supabase Auth:', signUpData.user.id);
       
-      // ✅ STEP 3: Create the profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: signUpData.user.id,
-          email: email,
-          full_name: fullName,
-          role: 'individual',
-          telegram_id: userId,
-          telegram_username: telegramUser.username || '',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
+      // ✅ STEP 3: Create the profile using the RPC function
+      const { data: profileData, error: profileError } = await supabase.rpc('get_or_create_telegram_profile', {
+        p_user_id: signUpData.user.id,
+        p_telegram_id: userId,
+        p_telegram_username: telegramUser.username || '',
+        p_full_name: fullName,
+        p_email: email,
+        p_photo_url: telegramUser.photo_url || ''
+      });
       
       if (profileError) {
         console.error('❌ Profile creation error:', profileError);
-        // Continue anyway - we can try to create profile later
+        // Try direct insert as fallback
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: signUpData.user.id,
+            email: email,
+            full_name: fullName,
+            telegram_id: userId,
+            telegram_username: telegramUser.username || '',
+            role: 'individual',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+        
+        if (insertError) {
+          console.error('❌ Direct insert also failed:', insertError);
+          // Continue anyway - we have the user
+        }
       } else {
-        console.log('✅ Profile created successfully');
+        console.log('✅ Profile created successfully via RPC');
       }
       
       return signUpData.user;
@@ -229,6 +253,7 @@ export default function Dashboard() {
           
           if (!userId) {
             console.error('❌ No user ID found');
+            toast.error('Invalid Telegram user data');
             router.push('/login');
             return;
           }
@@ -252,7 +277,7 @@ export default function Dashboard() {
           setIsTelegramUser(true);
           setUser(supabaseUser);
           
-          // ✅ STEP 4: Get or create profile
+          // ✅ STEP 4: Get profile
           let { data: profile, error: findError } = await supabase
             .from('profiles')
             .select('*')
@@ -263,52 +288,45 @@ export default function Dashboard() {
             console.error('❌ Error finding profile:', findError);
           }
           
-          // If profile doesn't exist, create it
+          // If profile doesn't exist, try to create it via RPC
           if (!profile) {
-            console.log('👤 Creating profile for user...');
-            const { data: newProfile, error: insertError } = await supabase
-              .from('profiles')
-              .insert({
-                id: supabaseUser.id,
-                email: supabaseUser.email || telegramUser.email || `${userId}@telegram.user`,
-                full_name: telegramUser.full_name || supabaseUser.user_metadata?.full_name || 'Telegram User',
-                role: 'individual',
-                telegram_id: userId,
-                telegram_username: telegramUser.username || '',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              })
-              .select()
-              .single();
+            console.log('👤 Creating profile via RPC...');
+            const { data: rpcProfile, error: rpcError } = await supabase.rpc('get_or_create_telegram_profile', {
+              p_user_id: supabaseUser.id,
+              p_telegram_id: userId,
+              p_telegram_username: telegramUser.username || '',
+              p_full_name: telegramUser.full_name || 'Telegram User',
+              p_email: supabaseUser.email || `${userId}@telegram.user`,
+              p_photo_url: telegramUser.photo_url || ''
+            });
             
-            if (insertError) {
-              console.error('❌ Profile insert error:', insertError);
-              // Try upsert as fallback
-              const { data: upsertProfile, error: upsertError } = await supabase
+            if (rpcError) {
+              console.error('❌ RPC profile creation error:', rpcError);
+              // Try direct insert
+              const { data: newProfile, error: insertError } = await supabase
                 .from('profiles')
-                .upsert({
+                .insert({
                   id: supabaseUser.id,
-                  email: supabaseUser.email || telegramUser.email || `${userId}@telegram.user`,
-                  full_name: telegramUser.full_name || supabaseUser.user_metadata?.full_name || 'Telegram User',
+                  email: supabaseUser.email || `${userId}@telegram.user`,
+                  full_name: telegramUser.full_name || 'Telegram User',
                   role: 'individual',
                   telegram_id: userId,
                   telegram_username: telegramUser.username || '',
+                  created_at: new Date().toISOString(),
                   updated_at: new Date().toISOString()
                 })
                 .select()
                 .single();
               
-              if (upsertError) {
-                console.error('❌ Upsert also failed:', upsertError);
-                // Continue anyway - we'll try to create profile later
+              if (insertError) {
+                console.error('❌ Insert error:', insertError);
+                // Use minimal profile
                 profile = { id: supabaseUser.id, full_name: 'Telegram User' };
               } else {
-                console.log('✅ Profile created via upsert:', upsertProfile);
-                profile = upsertProfile;
+                profile = newProfile;
               }
             } else {
-              console.log('✅ Profile created:', newProfile);
-              profile = newProfile;
+              profile = rpcProfile?.[0] || { id: supabaseUser.id, full_name: 'Telegram User' };
             }
           }
           
