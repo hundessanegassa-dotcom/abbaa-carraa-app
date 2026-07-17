@@ -1,11 +1,8 @@
-// lib/bot.js - COMPLETE WITH CORRECT BOT USERNAME & PRODUCTION URL
+// lib/bot.js - COMPLETE WITH LOGIN HANDLER
 import { Telegraf } from 'telegraf';
 import { supabase } from './supabase';
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-
-// ✅ CORRECT BOT USERNAME
-const BOT_USERNAME = 'abaa_carraa_ethiopia_bot';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaa-carraa-ethiopia.vercel.app';
 
 if (!BOT_TOKEN) {
@@ -177,44 +174,56 @@ async function saveUserProfile(userId, username, firstName, lastName, phone, ful
   }
 }
 
+// ============================================
+// LOGIN FLOW HANDLER
+// ============================================
 async function handleLoginFlow(ctx) {
   const user = ctx.from;
   const userId = user.id;
   
-  // Get user's language preference
-  const lang = await getUserLanguage(userId);
-  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  console.log('🔐 Starting login flow for user:', userId);
   
   try {
-    // Generate a secure login token
-    const loginToken = Buffer.from(JSON.stringify({
+    // Generate a simple token
+    const token = Buffer.from(JSON.stringify({
       userId: user.id,
-      username: user.username,
-      firstName: user.first_name,
-      lastName: user.last_name,
-      timestamp: Date.now(),
-      expires: Date.now() + 300000 // 5 minutes expiry
+      username: user.username || 'unknown',
+      firstName: user.first_name || 'User',
+      lastName: user.last_name || '',
+      timestamp: Date.now()
     })).toString('base64');
     
-    // Store the token temporarily
+    console.log('✅ Token generated:', token.substring(0, 30) + '...');
+    
+    // Store the token
     const { error } = await supabase
       .from('login_tokens')
       .insert({
-        token: loginToken,
+        token: token,
         telegram_id: user.id,
         username: user.username || null,
         first_name: user.first_name || null,
         last_name: user.last_name || null,
-        expires_at: new Date(Date.now() + 300000).toISOString()
+        expires_at: new Date(Date.now() + 300000).toISOString() // 5 minutes
       });
     
     if (error) {
-      console.error('Error storing login token:', error);
+      console.error('❌ Database insert error:', error);
       await ctx.reply('⚠️ Login failed. Please try again.');
       return;
     }
     
-    // Send login success message with deep link back to app
+    console.log('✅ Token stored in database');
+    
+    // Send login success with button
+    const redirectUrl = `${APP_URL}/auth/callback?token=${encodeURIComponent(token)}&telegram_id=${user.id}`;
+    
+    console.log('🔗 Redirect URL:', redirectUrl);
+    
+    // Get user's language
+    const lang = await getUserLanguage(userId);
+    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+    
     await ctx.reply(
       t.login_success.replace('{name}', user.first_name || 'User'),
       {
@@ -223,17 +232,17 @@ async function handleLoginFlow(ctx) {
           inline_keyboard: [
             [{ 
               text: t.return_to_app, 
-              url: `${APP_URL}/auth/callback?token=${loginToken}&telegram_id=${user.id}`
+              url: redirectUrl
             }]
           ]
         }
       }
     );
     
-    console.log(`✅ Login token generated for user ${user.id}`);
+    console.log('✅ Login message sent to user');
     
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('❌ Login error:', error);
     await ctx.reply('⚠️ Login failed. Please try again.');
   }
 }
@@ -329,11 +338,10 @@ export async function handleBotMessages() {
     const user = ctx.from;
     const userId = user.id;
     
-    // ✅ Check if this is a login request
-    const startPayload = ctx.payload; // Value after ?start= in the link
+    // Check if this is a login request
+    const startPayload = ctx.payload;
     console.log('📱 Start payload:', startPayload);
     
-    // Check for login in multiple ways
     const isLogin = startPayload === 'login' || 
                     startPayload?.startsWith('login') ||
                     startPayload?.includes('login');
@@ -344,20 +352,14 @@ export async function handleBotMessages() {
       return;
     }
     
-    // ============================================
-    // NORMAL START FLOW
-    // ============================================
-    
-    // Initialize session
+    // Normal start flow
     userSessions[userId] = { 
       step: 'language',
       data: {} 
     };
     
-    // 1. Welcome Message
     await ctx.reply(TRANSLATIONS.en.welcome, { parse_mode: 'Markdown' });
     
-    // 2. Language Selection
     await ctx.reply(TRANSLATIONS.en.language_select, {
       parse_mode: 'Markdown',
       reply_markup: {
@@ -381,10 +383,8 @@ export async function handleBotMessages() {
     
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     
-    // 1. Language confirmed
     await ctx.reply(t.language_set, { parse_mode: 'Markdown' });
     
-    // 2. Update session
     if (userSessions[userId]) {
       userSessions[userId].step = 'ask_name';
       userSessions[userId].language = lang;
@@ -396,7 +396,6 @@ export async function handleBotMessages() {
       };
     }
     
-    // 3. Ask for name
     await ctx.reply(t.ask_name, { parse_mode: 'Markdown' });
     
     await ctx.answerCbQuery();
