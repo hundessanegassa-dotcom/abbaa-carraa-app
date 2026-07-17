@@ -1,10 +1,9 @@
-// pages/api/auth/telegram-login.js
-import { supabase } from '../../../lib/supabase';
+// pages/api/auth/telegram-login.js - COMPLETE WITH SUPABASE CHECKS
+import { supabase, isSupabaseConfigured } from '../../../lib/supabase';
 
 export default async function handler(req, res) {
   console.log('📡 Telegram login API called');
   console.log('📡 Method:', req.method);
-  console.log('📡 Body:', req.body);
 
   // Handle preflight request
   if (req.method === 'OPTIONS') {
@@ -22,6 +21,15 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     console.log('❌ Wrong method:', req.method);
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // ✅ Check if Supabase is configured
+  if (!supabase || !isSupabaseConfigured()) {
+    console.error('❌ Supabase not configured!');
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Supabase configuration missing' 
+    });
   }
 
   try {
