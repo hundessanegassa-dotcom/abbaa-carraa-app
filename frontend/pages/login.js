@@ -1,26 +1,35 @@
-// pages/login.js - COMPLETE WITH TELEGRAM & PARTNER LOGIN
+// pages/login.js - COMPLETE FIXED VERSION WITH TELEGRAM INTEGRATION
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { useTelegram } from '../hooks/useTelegram';
+import { useTelegram } from '../components/TelegramBotClient';
+import TelegramLoginButton from '../components/TelegramLoginButton';
+import GoogleLoginButton from '../components/GoogleLoginButton';
 
 export default function Login() {
   const router = useRouter();
-  const { redirect, partner } = router.query;
+  const { redirect } = router.query;
   const [loading, setLoading] = useState(false);
   const [showPartnerLogin, setShowPartnerLogin] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [partnerLoading, setPartnerLoading] = useState(false);
   
-  // Telegram integration
+  // ✅ Telegram integration
   const { isInTelegram, user: telegramUser } = useTelegram();
 
-  // Auto-login with Telegram if in Telegram WebApp
+  // ✅ Check if already logged in via Telegram
   useEffect(() => {
+    const sessionToken = sessionStorage.getItem('telegram_session_token');
+    if (sessionToken) {
+      const redirectPath = redirect || '/dashboard';
+      router.push(redirectPath);
+      return;
+    }
+    
+    // Check for Telegram WebApp auto-login
     if (isInTelegram && telegramUser) {
       handleTelegramLogin(telegramUser);
     }
@@ -44,9 +53,9 @@ export default function Login() {
       const result = await response.json();
       
       if (result.success) {
+        sessionStorage.setItem('telegram_session_token', result.sessionToken);
         toast.success(`Welcome ${telegramUser.first_name}! 🎉`);
         
-        // Check for redirect
         const redirectPath = redirect || 
                            sessionStorage.getItem('redirectAfterLogin') || 
                            '/dashboard';
@@ -67,13 +76,11 @@ export default function Login() {
     setLoading(true);
     
     try {
-      // Store the intended redirect URL if provided
       if (redirect) {
         localStorage.setItem('abbaa_redirect_after_login', redirect);
         sessionStorage.setItem('redirectAfterLogin', redirect);
       }
       
-      // Set role to individual for login
       localStorage.setItem('pendingRole', 'individual');
       sessionStorage.setItem('pendingRole', 'individual');
       
@@ -109,7 +116,6 @@ export default function Login() {
 
       if (error) throw error;
 
-      // Check if user is a partner
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
@@ -123,7 +129,6 @@ export default function Login() {
       }
 
       toast.success('Welcome back partner! 🎉');
-      
       const redirectPath = redirect || '/dashboard';
       router.push(redirectPath);
 
@@ -179,32 +184,13 @@ export default function Login() {
                 </span>
               </button>
 
-              {/* Telegram Login */}
-              {!isInTelegram && (
-                <button
-                  onClick={() => {
-                    // Open Telegram login widget or redirect to bot
-                    window.open('https://t.me/abbaacarraa_bot', '_blank');
-                    toast.info('Please open the Telegram bot to login');
-                  }}
-                  disabled={loading}
-                  className="w-full mt-3 bg-[#0088cc] hover:bg-[#0077b3] text-white rounded-lg py-3 px-4 flex items-center justify-center gap-3 transition shadow-sm disabled:opacity-50"
-                >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-                  </svg>
-                  <span className="font-medium">Continue with Telegram</span>
-                </button>
-              )}
-
-              {isInTelegram && (
-                <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3 text-center">
-                  <p className="text-green-700 text-sm">
-                    📱 You're in Telegram! Logging in automatically...
-                  </p>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600 mx-auto mt-2"></div>
-                </div>
-              )}
+              {/* Telegram Login Button */}
+              <div className="mt-3">
+                <TelegramLoginButton onSuccess={() => {
+                  const redirectPath = redirect || '/dashboard';
+                  router.push(redirectPath);
+                }} />
+              </div>
 
               {/* Divider */}
               <div className="relative my-6">
