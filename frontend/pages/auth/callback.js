@@ -1,4 +1,4 @@
-// pages/auth/callback.js - COMPLETE FIXED VERSION
+// pages/auth/callback.js - COMPLETE WITH TELEGRAM LOGIN SUPPORT
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
@@ -119,6 +119,50 @@ export default function AuthCallback() {
     }
   }, []);
 
+  // ✅ Handle Telegram Login
+  const handleTelegramLogin = useCallback(async (token, telegramId) => {
+    console.log('📱 Processing Telegram login...');
+    
+    try {
+      // Verify token with backend
+      const response = await fetch('/api/auth/telegram-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, telegram_id: telegramId })
+      });
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Telegram login failed');
+      }
+
+      // Store session token
+      sessionStorage.setItem('telegram_session_token', result.sessionToken);
+      sessionStorage.setItem('telegram_user', JSON.stringify({
+        id: telegramId,
+        ...result.user
+      }));
+
+      toast.success('Login successful! 🎉');
+      
+      // Check for redirect URL
+      const redirectUrl = getStoredRedirectUrl();
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+        return;
+      }
+      
+      // Redirect to dashboard
+      router.push('/dashboard');
+      
+    } catch (error) {
+      console.error('Telegram login error:', error);
+      toast.error(error.message || 'Telegram login failed');
+      router.push('/login');
+    }
+  }, [router]);
+
   // Process individual user (no agreement needed)
   const processIndividualUser = useCallback(async (session, redirectUrl, isPoolVip) => {
     console.log('👤 Processing INDIVIDUAL user - No agreement needed');
@@ -196,7 +240,16 @@ export default function AuthCallback() {
 
     const handleCallback = async () => {
       try {
-        // Get redirect URL from storage FIRST
+        // ✅ Check for Telegram login token first
+        const { token, telegram_id } = router.query;
+        
+        if (token && telegram_id) {
+          console.log('📱 Telegram login detected');
+          await handleTelegramLogin(token, telegram_id);
+          return;
+        }
+
+        // Get redirect URL from storage
         const redirectUrl = getStoredRedirectUrl();
         const isPoolVip = isPoolOrVipRedirect(redirectUrl);
         
@@ -283,12 +336,14 @@ export default function AuthCallback() {
       }
     };
 
-    handleCallback();
+    if (router.isReady) {
+      handleCallback();
+    }
 
     return () => {
       isMounted = false;
     };
-  }, [router, processIndividualUser, processPartnerUser, processingComplete]);
+  }, [router, router.isReady, router.query, processIndividualUser, processPartnerUser, handleTelegramLogin, processingComplete]);
 
   if (error) {
     return (
