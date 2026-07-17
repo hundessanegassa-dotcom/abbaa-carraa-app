@@ -1,12 +1,12 @@
-// pages/login.js - COMPLETE FIXED VERSION WITH TELEGRAM INTEGRATION
+// pages/login.js - FIXED VERSION
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { useTelegram } from '../components/TelegramBotClient';
 import TelegramLoginButton from '../components/TelegramLoginButton';
-import GoogleLoginButton from '../components/GoogleLoginButton';
 
 export default function Login() {
   const router = useRouter();
@@ -17,10 +17,9 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [partnerLoading, setPartnerLoading] = useState(false);
   
-  // ✅ Telegram integration
   const { isInTelegram, user: telegramUser } = useTelegram();
 
-  // ✅ Check if already logged in via Telegram
+  // Check if already logged in via Telegram
   useEffect(() => {
     const sessionToken = sessionStorage.getItem('telegram_session_token');
     if (sessionToken) {
@@ -29,7 +28,6 @@ export default function Login() {
       return;
     }
     
-    // Check for Telegram WebApp auto-login
     if (isInTelegram && telegramUser) {
       handleTelegramLogin(telegramUser);
     }
@@ -149,7 +147,6 @@ export default function Login() {
       
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
-          {/* Logo & Title */}
           <div className="text-center mb-8">
             <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
               <span className="text-4xl">🎁</span>
@@ -165,7 +162,6 @@ export default function Login() {
           </div>
 
           {!showPartnerLogin ? (
-            // ==================== INDIVIDUAL LOGIN ====================
             <>
               {/* Google Login */}
               <button
@@ -186,13 +182,9 @@ export default function Login() {
 
               {/* Telegram Login Button */}
               <div className="mt-3">
-                <TelegramLoginButton onSuccess={() => {
-                  const redirectPath = redirect || '/dashboard';
-                  router.push(redirectPath);
-                }} />
+                <TelegramLoginButton />
               </div>
 
-              {/* Divider */}
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-300"></div>
@@ -202,7 +194,6 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* Partner Login Link */}
               <button
                 onClick={() => setShowPartnerLogin(true)}
                 className="w-full text-center text-sm text-green-600 hover:text-green-700 font-medium"
@@ -217,7 +208,6 @@ export default function Login() {
               </div>
             </>
           ) : (
-            // ==================== PARTNER LOGIN ====================
             <>
               <form onSubmit={handlePartnerLogin} className="space-y-4">
                 <div>
