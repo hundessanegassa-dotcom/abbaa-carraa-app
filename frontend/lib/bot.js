@@ -1,91 +1,142 @@
-// lib/bot.js - COMPLETE TELEGRAM BOT WITH PARTNER PROGRAM SUPPORT
+// lib/bot.js - SIMPLIFIED & ATTRACTIVE TELEGRAM BOT
 import { Telegraf } from 'telegraf';
 import { supabase } from './supabase';
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 if (!BOT_TOKEN) {
-  console.warn('⚠️ TELEGRAM_BOT_TOKEN not set. Bot features will not work.');
+  console.warn('⚠️ TELEGRAM_BOT_TOKEN not set');
 }
 
 export const bot = BOT_TOKEN ? new Telegraf(BOT_TOKEN) : null;
 
 // ============================================
-// USER SESSION STORAGE
-// ============================================
-const userSessions = {};
-
-// ============================================
-// COMPLETE TRANSLATIONS - 3 LANGUAGES
+// COMPLETE TRANSLATIONS
 // ============================================
 const TRANSLATIONS = {
-  // ... (Keep all existing translations from previous version)
-  // I'll show the new partner-related translations below
-};
-
-// ============================================
-// NEW PARTNER TRANSLATIONS
-// ============================================
-const PARTNER_TRANSLATIONS = {
   en: {
-    partner_menu: "🤝 *Partner Menu*\n\nWelcome {name}! You are registered as a {role}.\n\nChoose an option below:",
-    agent_dashboard: "🤝 *Agent Dashboard*\n\n📊 Your Stats:\n• Total Referrals: {referrals}\n• Total Commission: ETB {commission}\n• Status: {status}\n\n🔗 Your Referral Link: {link}\n📋 Your Referral Code: {code}",
-    vendor_dashboard: "🏪 *Vendor Dashboard*\n\n📊 Your Stats:\n• Pools Created: {pools}\n• Total Commission: ETB {commission}\n• Status: {status}",
-    org_dashboard: "🏢 *Organization Dashboard*\n\n📊 Your Stats:\n• Pools Created: {pools}\n• Members: {members}\n• Total Commission: ETB {commission}\n• Status: {status}",
-    partner_pending: "⏳ Your application is pending review. You'll be notified once approved.",
-    partner_approved: "✅ Your partner application is approved! You can now start earning commissions.",
-    partner_rejected: "❌ Your application was rejected. Please contact support for more information.",
-    not_partner: "You are not registered as a partner. Would you like to apply?",
-    apply_agent: "🤝 Apply as Agent",
-    apply_vendor: "🏪 Apply as Vendor", 
-    apply_org: "🏢 Apply as Organization",
-    partner_status: "📊 *Partner Status*\n\nRole: {role}\nStatus: {status}\nCommission Earned: ETB {commission}\nReferrals: {referrals}",
-    referral_code: "🔗 *Your Referral Code*\n\nCode: `{code}`\nLink: {link}\n\nShare this link with customers to earn commissions!",
-    commission_history: "💰 *Commission History*\n\n{history}\n\nTotal: ETB {total}",
-    no_commission: "No commission earned yet. Start referring customers to earn!",
-    partner_help: "📖 *Partner Help*\n\nAs a partner, you earn 10% commission on every successful contribution!\n\n• Agents: Share your referral link\n• Vendors: Create prize pools\n• Organizations: Create pools for members\n\nNeed help? Contact support."
+    welcome: "👋 *Welcome to Abbaa Carraa!*\n\n🏆 *Ethiopia's Premier Prize Platform*\n\nWin cars, houses, cash up to 10M ETB, and more!\n\n💚 *2% Supports* Kidney & Heart Patients\n\nLet's get started! 🚀",
+    language_select: "🌐 *Choose Your Language*\n\nPlease select your preferred language:",
+    language_set: "✅ Language set to English",
+    ask_name: "📝 *What is your full name?*",
+    ask_phone: "📱 *What is your phone number?*\n\nExample: 0912345678",
+    name_received: "✅ Got it! What's your phone number?",
+    phone_received: "✅ Thank you!",
+    main_menu: "👋 *Welcome back, {name}!*\n\n🎯 *Choose an option below:*",
+    
+    programs: "🎯 *Abbaa Carraa Programs*\n\nChoose your path to winning:",
+    
+    program_1: "🏪 *Join Regular Pools*\n🚗 Cars • 🏠 Houses • 🏭 Machinery • 💻 Electronics\n\n💵 Entry from 100 ETB\n🎁 Win amazing prizes!",
+    
+    program_2: "🏙️ *Join City VIP*\n📍 Your City, Your Chance!\n\n💰 Win Cash up to 10M ETB\n📅 Daily • Weekly • Monthly Draws\n🎟️ 5 Tiers Available",
+    
+    program_3: "🏪 *Join Merkato VIP*\n💰 Win Cash up to 10M ETB\n\n📅 Daily • Weekly • Monthly Draws\n🎟️ 5 Tiers Available\n🥈 Silver • 🥇 Gold • 💎 Platinum • 💠 Diamond • 👑 Royal",
+    
+    program_4: "🤝 *Join Partner Program*\n\nEarn 10% Commission!\n\n• 🤝 Agents: Refer customers\n• 🏪 Vendors: Create pools\n• 🏢 Organizations: Member pools\n\nStart earning today! 💰",
+    
+    join_regular: "🎯 *Regular Pools*\n\n🚗 Win Cars\n🏠 Win Houses\n🏭 Win Machinery\n💻 Win Electronics\n\n💵 From 100 ETB\n\n👇 Join now:",
+    join_city: "🎯 *City VIP*\n\n📍 Win in your city!\n💰 Up to 10M ETB\n📅 Daily/Weekly/Monthly\n\n👇 Join now:",
+    join_merkato: "🎯 *Merkato VIP*\n\n💰 Up to 10M ETB\n📅 Daily/Weekly/Monthly\n🎟️ 5 Tiers\n\n👇 Join now:",
+    join_partner: "🤝 *Partner Program*\n\n💰 Earn 10% Commission\n\n• Agents: Share referral link\n• Vendors: Create pools\n• Organizations: Member pools\n\n👇 Apply now:",
+    
+    winners: "🏆 *Recent Winners*",
+    how_it_works: "📖 *How It Works*\n\n1️⃣ Choose a program\n2️⃣ Pick your tier\n3️⃣ Select seats\n4️⃣ Pay & win! 🎉",
+    support: "📞 *Contact Support*\n\n📧 hundessanegassa@gmail.com\n📱 0930330323, 0913 277 922",
+    tickets: "🎫 *Your Tickets*",
+    no_tickets: "📭 No tickets yet.\n\nJoin a program to start winning! 🎯",
+    
+    back: "🔙 Back",
+    open_app: "🚀 Open App",
+    dashboard: "📊 Dashboard",
+    register: "📝 Register",
+    join_now: "🎯 Join Now",
+    apply_now: "🤝 Apply Now"
   },
+  
   am: {
-    partner_menu: "🤝 *የአጋር ምናሌ*\n\nእንኳን ደህና መጡ {name}! እንደ {role} ተመዝግበዋል።\n\nከታች ያለውን አማራጭ ይምረጡ:",
-    agent_dashboard: "🤝 *የወኪል ዳሽቦርድ*\n\n📊 የእርስዎ ስታቲስቲክስ:\n• ጠቅላላ ሪፈራል: {referrals}\n• ጠቅላላ ኮሚሽን: ETB {commission}\n• ሁኔታ: {status}\n\n🔗 የሪፈራል ሊንክ: {link}\n📋 የሪፈራል ኮድ: {code}",
-    vendor_dashboard: "🏪 *የነጋዴ ዳሽቦርድ*\n\n📊 የእርስዎ ስታቲስቲክስ:\n• የተፈጠሩ ፑሎች: {pools}\n• ጠቅላላ ኮሚሽን: ETB {commission}\n• ሁኔታ: {status}",
-    org_dashboard: "🏢 *የድርጅት ዳሽቦርድ*\n\n📊 የእርስዎ ስታቲስቲክስ:\n• የተፈጠሩ ፑሎች: {pools}\n• አባላት: {members}\n• ጠቅላላ ኮሚሽን: ETB {commission}\n• ሁኔታ: {status}",
-    partner_pending: "⏳ ማመልከቻዎ በግምገማ ላይ ነው። ከፀደቀ በኋላ ይነገሩዎታል።",
-    partner_approved: "✅ የአጋር ማመልከቻዎ ጸድቋል! ኮሚሽን ማግኘት መጀመር ይችላሉ።",
-    partner_rejected: "❌ ማመልከቻዎ ውድቅ ተደርጓል። ለበለጠ መረጃ ድጋፍን ያግኙ።",
-    not_partner: "እርስዎ እንደ አጋር አልተመዘገቡም። ማመልከት ይፈልጋሉ?",
-    apply_agent: "🤝 እንደ ወኪል ያመልክቱ",
-    apply_vendor: "🏪 እንደ ነጋዴ ያመልክቱ",
-    apply_org: "🏢 እንደ ድርጅት ያመልክቱ",
-    partner_status: "📊 *የአጋር ሁኔታ*\n\nሚና: {role}\nሁኔታ: {status}\nየተገኘ ኮሚሽን: ETB {commission}\nሪፈራል: {referrals}",
-    referral_code: "🔗 *የሪፈራል ኮድዎ*\n\nኮድ: `{code}`\nሊንክ: {link}\n\nይህን ሊንክ ለደንበኞች ያጋሩ ኮሚሽን ለማግኘት!",
-    commission_history: "💰 *የኮሚሽን ታሪክ*\n\n{history}\n\nጠቅላላ: ETB {total}",
-    no_commission: "እስካሁን ምንም ኮሚሽን አልተገኘም። ለመጀመር ደንበኞችን ያጋሩ!",
-    partner_help: "📖 *የአጋር እርዳታ*\n\nእንደ አጋር፣ በእያንዳንዱ ስኬታማ ተሳትፎ 10% ኮሚሽን ያገኛሉ!\n\n• ወኪሎች: የሪፈራል ሊንክዎን ያጋሩ\n• ነጋዴዎች: የሽልማት ፑሎች ይፍጠሩ\n• ድርጅቶች: ለአባላት ፑሎች ይፍጠሩ\n\nእርዳታ ያስፈልግዎታል? ድጋፍን ያግኙ።"
+    welcome: "👋 *እንኳን ወደ Abbaa Carraa በደህና መጡ!*\n\n🏆 *የኢትዮጵያ ቀዳሚ የሽልማት መድረክ*\n\nመኪና፣ ቤት፣ እስከ 10M ብር እና ሌሎች ያሸንፉ!\n\n💚 *2% ለጤና* የኩላሊት እና የልብ ህመምተኞችን ይደግፋል\n\nእንጀምር! 🚀",
+    language_select: "🌐 *ቋንቋዎን ይምረጡ*\n\nእባክዎ የሚመርጡትን ቋንቋ ይምረጡ:",
+    language_set: "✅ ቋንቋ ወደ አማርኛ ተቀይሯል",
+    ask_name: "📝 *ሙሉ ስምዎ ምንድነው?*",
+    ask_phone: "📱 *ስልክ ቁጥርዎ ምንድነው?*\n\nለምሳሌ: 0912345678",
+    name_received: "✅ እናመሰግናለን! ስልክ ቁጥርዎ ምንድነው?",
+    phone_received: "✅ እናመሰግናለን!",
+    main_menu: "👋 *እንኳን ደህና መጡ, {name}!*\n\n🎯 *ከታች ያለውን ይምረጡ:*",
+    
+    programs: "🎯 *የአባካራ ፕሮግራሞች*\n\nየማሸነፍ መንገድዎን ይምረጡ:",
+    
+    program_1: "🏪 *መደበኛ የእጣ መደቦች*\n🚗 መኪና • 🏠 ቤት • 🏭 ማሽነሪ • 💻 ኤሌክትሮኒክስ\n\n💵 ከ100 ብር ጀምሮ\n🎁 አስደናቂ ሽልማቶችን ያሸንፉ!",
+    
+    program_2: "🏙️ *የከተማ ቪአይፒ*\n📍 ከተማዎ, እድልዎ!\n\n💰 እስከ 10M ብር ጥሬ ገንዘብ\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ እጣዎች\n🎟️ 5 ደረጃዎች",
+    
+    program_3: "🏪 *መርካቶ ቪአይፒ*\n💰 እስከ 10M ብር ጥሬ ገንዘብ\n\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ እጣዎች\n🎟️ 5 ደረጃዎች\n🥈 ብር • 🥇 ወርቅ • 💎 ፕላቲኒየም • 💠 አልማዝ • 👑 ንጉሣዊ",
+    
+    program_4: "🤝 *የአጋር ፕሮግራም*\n\n10% ኮሚሽን ያግኙ!\n\n• 🤝 ወኪሎች: ደንበኞችን ያመልክቱ\n• 🏪 ነጋዴዎች: ፑሎች ይፍጠሩ\n• 🏢 ድርጅቶች: ለአባላት ፑሎች\n\nዛሬ ማግኘት ይጀምሩ! 💰",
+    
+    join_regular: "🎯 *መደበኛ የእጣ መደቦች*\n\n🚗 መኪናዎች ያሸንፉ\n🏠 ቤቶች ያሸንፉ\n🏭 ማሽነሪዎች ያሸንፉ\n💻 ኤሌክትሮኒክስ ያሸንፉ\n\n💵 ከ100 ብር ጀምሮ\n\n👇 አሁን ይቀላቀሉ:",
+    join_city: "🎯 *የከተማ ቪአይፒ*\n\n📍 በከተማዎ ያሸንፉ!\n💰 እስከ 10M ብር\n📅 ዕለታዊ/ሳምንታዊ/ወርሃዊ\n\n👇 አሁን ይቀላቀሉ:",
+    join_merkato: "🎯 *መርካቶ ቪአይፒ*\n\n💰 እስከ 10M ብር\n📅 ዕለታዊ/ሳምንታዊ/ወርሃዊ\n🎟️ 5 ደረጃዎች\n\n👇 አሁን ይቀላቀሉ:",
+    join_partner: "🤝 *የአጋር ፕሮግራም*\n\n💰 10% ኮሚሽን ያግኙ\n\n• ወኪሎች: ሪፈራል ሊንክ ያጋሩ\n• ነጋዴዎች: ፑሎች ይፍጠሩ\n• ድርጅቶች: ለአባላት ፑሎች\n\n👇 አሁን ያመልክቱ:",
+    
+    winners: "🏆 *የቅርብ ጊዜ አሸናፊዎች*",
+    how_it_works: "📖 *እንዴት እንሳተፋለን?*\n\n1️⃣ ፕሮግራም ይምረጡ\n2️⃣ ደረጃዎን ይምረጡ\n3️⃣ መቀመጫ ይምረጡ\n4️⃣ ይክፈሉ እና ያሸንፉ! 🎉",
+    support: "📞 *እኛን ያግኙ*\n\n📧 hundessanegassa@gmail.com\n📱 0930330323, 0913 277 922",
+    tickets: "🎫 *ቲኬቶችዎ*",
+    no_tickets: "📭 ምንም ቲኬቶች የሉዎትም.\n\nለመጀመር ፕሮግራም ይቀላቀሉ! 🎯",
+    
+    back: "🔙 ተመለስ",
+    open_app: "🚀 መተግበሪያ ይክፈቱ",
+    dashboard: "📊 ዳሽቦርድ",
+    register: "📝 ይመዝገቡ",
+    join_now: "🎯 አሁን ይቀላቀሉ",
+    apply_now: "🤝 አሁን ያመልክቱ"
   },
+  
   om: {
-    partner_menu: "🤝 *Menyuu Hiriyaa*\n\nBaga nagaan deebitan {name}! {role} taatanii galmaa'itan.\n\nFilannoo armaan gadii keessaa filadhaa:",
-    agent_dashboard: "🤝 *Daashboorardii Wakilii*\n\n📊 Tilmaamota Keessan:\n• Waliigala Referraala: {referrals}\n• Komishinii Waliigala: ETB {commission}\n• Haala: {status}\n\n🔗 Liinkii Referraala: {link}\n📋 Koodii Referraala: {code}",
-    vendor_dashboard: "🏪 *Daashboorardii Vendoorii*\n\n📊 Tilmaamota Keessan:\n• Pooliiwwan Uumaman: {pools}\n• Komishinii Waliigala: ETB {commission}\n• Haala: {status}",
-    org_dashboard: "🏢 *Daashboorardii Dhaabbataa*\n\n📊 Tilmaamota Keessan:\n• Pooliiwwan Uumaman: {pools}\n• Miseenson: {members}\n• Komishinii Waliigala: ETB {commission}\n• Haala: {status}",
-    partner_pending: "⏳ Ibsa keessan eegumsa jira. Ergamaammatameen erga mirkaneeffame booda beeksifamtu.",
-    partner_approved: "✅ Ibsi hiriyaa keessan mirkaneeffame! Amma komishinii argachuu eegaluu dandeessu.",
-    partner_rejected: "❌ Ibsi keessan didame. Odeeffannoo dabalataaf deeggarsa qunnamaa.",
-    not_partner: "Hiriyaa taatanii hin galmaa'in. Ibsachuu barbaaddu?",
-    apply_agent: "🤝 Wakilii ta'uuf ibsi",
-    apply_vendor: "🏪 Vendoorii ta'uuf ibsi",
-    apply_org: "🏢 Dhaabbataa ta'uuf ibsi",
-    partner_status: "📊 *Haala Hiriyaa*\n\nGahee: {role}\nHaala: {status}\nKomishinii Argame: ETB {commission}\nReferraala: {referrals}",
-    referral_code: "🔗 *Koodii Referraala Keessan*\n\nKoodii: `{code}`\nLiinkii: {link}\n\nLiinkii kana maamiltootaaf qoodadhaa komishinii argachuuf!",
-    commission_history: "💰 *Seenaa Komishinii*\n\n{history}\n\nWaliigala: ETB {total}",
-    no_commission: "Hanga ammaa komishinii hin argatin. Maamiltoota qoodachuudhaan eegalaa!",
-    partner_help: "📖 *Gargaarsa Hiriyaa*\n\nHiriyaa taatanii, hirmaannaa milkaa'aa hunda irraa 10% komishinii argattu!\n\n• Wakiliitoota: Liinkii referraala keessan qoodadhaa\n• Vendooritoota: Pooliiwwan badhaasa uumaa\n• Dhaabbattoonni: Pooliiwwan miseensonniif uumaa\n\nGargaarsa barbaaddaa? Deeggarsa qunnamaa."
+    welcome: "👋 *Gara Abbaa Carraatti Baga nagaan dhufte!*\n\n🏆 *Itoophiyaatti Dirree Badhaasaa Olaanaa*\n\nKonkoolataa, Mana, Maallaqa 10M ETB hanga ta'u fi kan biroo mo'adhaa!\n\n💚 *%2 Fayyaaf* Dhibamtoota Kalee & Onnee gargaara\n\nEegalaa! 🚀",
+    language_select: "🌐 *Afaan Filadhu*\n\nMaaloo afaan fedhitan filadha:",
+    language_set: "✅ Afaan Afaan Oromootti jijjiirame",
+    ask_name: "📝 *Maqaa keessan guutuu maal?*",
+    ask_phone: "📱 *Lakkoofsa bilbilaa keessan maal?*\n\nFakkeenyaaf: 0912345678",
+    name_received: "✅ Galatoomaa! Lakkoofsa bilbilaa keessan maal?",
+    phone_received: "✅ Galatoomaa!",
+    main_menu: "👋 *Baga nagaan deebitan, {name}!*\n\n🎯 *Filannoo armaan gadii keessaa filadhaa:*",
+    
+    programs: "🎯 *Tarkaanfiiwwan Abbaa Carraa*\n\nKaraa mo'achuu keessan filadhaa:",
+    
+    program_1: "🏪 *Pooliiwwan Idilee*\n🚗 Konkoolataa • 🏠 Mana • 🏭 Mashiniin • 💻 Elektirooniksii\n\n💵 100 ETB irraa eegalaa\n🎁 Badhaasa ajaa'ibsiisaa mo'adhaa!",
+    
+    program_2: "🏙️ *VIP Magaalaa*\n📍 Magaalaa keessan, Carraa keessan!\n\n💰 Maallaqa 10M ETB hanga ta'u\n📅 Guyyaa • Torban • Ji'aa Qodaa\n🎟️ Sadarkaa 5 ni argamu",
+    
+    program_3: "🏪 *Merkato VIP*\n💰 Maallaqa 10M ETB hanga ta'u\n\n📅 Guyyaa • Torban • Ji'aa Qodaa\n🎟️ Sadarkaa 5 ni argamu\n🥈 Silver • 🥇 Gold • 💎 Platinum • 💠 Diamond • 👑 Royal",
+    
+    program_4: "🤝 *Tarkaanfii Hiriyaa*\n\n10% Komishinii Argadhaa!\n\n• 🤝 Wakiliitoota: Maamiltoota qoodadhaa\n• 🏪 Vendooritoota: Pooliiwwan uumaa\n• 🏢 Dhaabbattoonni: Pooliiwwan miseensonniif\n\nAmma argachuu eegalaa! 💰",
+    
+    join_regular: "🎯 *Pooliiwwan Idilee*\n\n🚗 Konkoolataa mo'adhaa\n🏠 Mana mo'adhaa\n🏭 Mashiniin mo'adhaa\n💻 Elektirooniksii mo'adhaa\n\n💵 100 ETB irraa eegalaa\n\n👇 Amma hirmaadhaa:",
+    join_city: "🎯 *VIP Magaalaa*\n\n📍 Magaalaa keessan keessatti mo'adhaa!\n💰 10M ETB hanga ta'u\n📅 Guyyaa/Torban/Ji'aa\n\n👇 Amma hirmaadhaa:",
+    join_merkato: "🎯 *Merkato VIP*\n\n💰 10M ETB hanga ta'u\n📅 Guyyaa/Torban/Ji'aa\n🎟️ Sadarkaa 5\n\n👇 Amma hirmaadhaa:",
+    join_partner: "🤝 *Tarkaanfii Hiriyaa*\n\n💰 10% Komishinii Argadhaa\n\n• Wakiliitoota: Liinkii qoodadhaa\n• Vendooritoota: Pooliiwwan uumaa\n• Dhaabbattoonni: Pooliiwwan miseensonniif\n\n👇 Amma ibsaa:",
+    
+    winners: "🏆 *Mo'attoota Dhiyoo*",
+    how_it_works: "📖 *Akkam Hojiirra Oola?*\n\n1️⃣ Tarkaanfii filadhaa\n2️⃣ Sadarkaa keessan filadhaa\n3️⃣ Teessoo filadhaa\n4️⃣ Kaffalaa fi mo'adhaa! 🎉",
+    support: "📞 *Nu Qunnamuu*\n\n📧 hundessanegassa@gmail.com\n📱 0930330323, 0913 277 922",
+    tickets: "🎫 *Tikkeetoota Keessan*",
+    no_tickets: "📭 Tikkeetii tokko hin qabdu.\n\nTarkaanfii tokko itti argachuuf kennadhu! 🎯",
+    
+    back: "🔙 Deebi'i",
+    open_app: "🚀 Appii Banuu",
+    dashboard: "📊 Daashboorardii",
+    register: "📝 Galmaa'i",
+    join_now: "🎯 Amma hirmaadhu",
+    apply_now: "🤝 Amma ibsi"
   }
 };
 
 // ============================================
 // HELPERS
 // ============================================
+const userSessions = {};
+
 async function getUserLanguage(userId) {
   try {
     const { data } = await supabase
@@ -94,7 +145,7 @@ async function getUserLanguage(userId) {
       .eq('telegram_id', userId)
       .single();
     return data?.language || 'en';
-  } catch (error) {
+  } catch {
     return 'en';
   }
 }
@@ -105,24 +156,7 @@ async function updateUserLanguage(userId, lang) {
       .from('profiles')
       .update({ language: lang })
       .eq('telegram_id', userId);
-    return true;
-  } catch (error) {
-    console.error('Language update error:', error);
-    return false;
-  }
-}
-
-async function getUserRole(userId) {
-  try {
-    const { data } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('telegram_id', userId)
-      .single();
-    return data?.role || 'individual';
-  } catch (error) {
-    return 'individual';
-  }
+  } catch {}
 }
 
 async function saveUserProfile(userId, username, firstName, lastName, phone, fullName) {
@@ -134,79 +168,25 @@ async function saveUserProfile(userId, username, firstName, lastName, phone, ful
       .single();
 
     if (!existing) {
-      await supabase
-        .from('profiles')
-        .insert({
-          telegram_id: userId,
-          telegram_username: username,
-          full_name: fullName || `${firstName} ${lastName || ''}`.trim(),
-          phone: phone || '',
-          email: `${username || userId}@telegram.user`,
-          language: 'en',
-          role: 'individual',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
+      await supabase.from('profiles').insert({
+        telegram_id: userId,
+        telegram_username: username,
+        full_name: fullName || `${firstName} ${lastName || ''}`.trim(),
+        phone: phone || '',
+        email: `${username || userId}@telegram.user`,
+        language: 'en',
+        created_at: new Date().toISOString()
+      });
     } else {
-      await supabase
-        .from('profiles')
-        .update({
-          full_name: fullName || existing.full_name,
-          phone: phone || existing.phone,
-          telegram_username: username,
-          updated_at: new Date().toISOString()
-        })
-        .eq('telegram_id', userId);
+      await supabase.from('profiles').update({
+        full_name: fullName || existing.full_name,
+        phone: phone || existing.phone,
+        updated_at: new Date().toISOString()
+      }).eq('telegram_id', userId);
     }
     return true;
-  } catch (error) {
-    console.error('Save user error:', error);
+  } catch {
     return false;
-  }
-}
-
-async function getPartnerData(userId, role) {
-  try {
-    const table = role === 'agent' ? 'agents' : 
-                  role === 'vendor' ? 'vendors' : 'organizations';
-    
-    const { data } = await supabase
-      .from(table)
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-    
-    return data;
-  } catch (error) {
-    return null;
-  }
-}
-
-async function getReferralStats(partnerId) {
-  try {
-    const { data } = await supabase
-      .from('referrals')
-      .select('*')
-      .eq('partner_id', partnerId);
-    
-    return data || [];
-  } catch (error) {
-    return [];
-  }
-}
-
-async function getCommissionHistory(partnerId) {
-  try {
-    const { data } = await supabase
-      .from('commission_transactions')
-      .select('*')
-      .eq('partner_id', partnerId)
-      .order('created_at', { ascending: false })
-      .limit(10);
-    
-    return data || [];
-  } catch (error) {
-    return [];
   }
 }
 
@@ -219,52 +199,34 @@ function buildMainMenu(lang) {
   
   return {
     inline_keyboard: [
-      [{ text: t.merkato, callback_data: 'merkato' }],
-      [{ text: t.city, callback_data: 'city' }],
-      [{ text: t.pools, callback_data: 'pools' }],
-      [{ text: '🤝 Partner', callback_data: 'partner' }],
-      [{ text: t.winners, callback_data: 'winners' }],
-      [{ text: t.how_it_works_btn, callback_data: 'howitworks' }],
-      [{ text: t.support, callback_data: 'support' }],
-      [{ text: t.open_app, web_app: { url: appUrl } }],
-      [{ text: t.dashboard, web_app: { url: `${appUrl}/dashboard` } }],
-      [{ text: t.back, callback_data: 'main_menu' }]
+      [{ text: '🏪 Regular Pools', callback_data: 'regular' }],
+      [{ text: '🏙️ City VIP', callback_data: 'city' }],
+      [{ text: '🏪 Merkato VIP', callback_data: 'merkato' }],
+      [{ text: '🤝 Partner Program', callback_data: 'partner' }],
+      [{ text: '🏆 Winners', callback_data: 'winners' }],
+      [{ text: '📖 How It Works', callback_data: 'how' }],
+      [{ text: '📞 Support', callback_data: 'support' }],
+      [{ text: '🚀 Open App', web_app: { url: appUrl } }],
+      [{ text: '📊 Dashboard', web_app: { url: `${appUrl}/dashboard` } }]
     ]
   };
 }
 
-function buildPartnerMenu(lang, role, status) {
-  const t = PARTNER_TRANSLATIONS[lang] || PARTNER_TRANSLATIONS.en;
+function buildProgramMenu(lang, type) {
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com';
   
-  let buttons = [
-    [{ text: '📊 Dashboard', callback_data: 'partner_dashboard' }],
-    [{ text: '🔗 My Referral Code', callback_data: 'partner_referral' }],
-    [{ text: '💰 Commission History', callback_data: 'partner_commission' }],
-    [{ text: '📖 Help', callback_data: 'partner_help' }],
-  ];
-  
-  // If pending, show status button
-  if (status === 'pending') {
-    buttons = [
-      [{ text: '⏳ Application Status', callback_data: 'partner_status' }],
-      ...buttons,
-    ];
-  }
-  
-  buttons.push([{ text: t.back, callback_data: 'main_menu' }]);
-  
-  return { inline_keyboard: buttons };
-}
-
-function buildApplyPartnerMenu(lang) {
-  const t = PARTNER_TRANSLATIONS[lang] || PARTNER_TRANSLATIONS.en;
+  const urls = {
+    regular: '/listings',
+    city: '/cities',
+    merkato: '/merkato-vip',
+    partner: '/register'
+  };
   
   return {
     inline_keyboard: [
-      [{ text: t.apply_agent, callback_data: 'apply_agent' }],
-      [{ text: t.apply_vendor, callback_data: 'apply_vendor' }],
-      [{ text: t.apply_org, callback_data: 'apply_org' }],
-      [{ text: t.back, callback_data: 'main_menu' }]
+      [{ text: t.join_now, web_app: { url: `${appUrl}${urls[type]}` } }],
+      [{ text: t.back, callback_data: 'menu' }]
     ]
   };
 }
@@ -274,23 +236,16 @@ function buildApplyPartnerMenu(lang) {
 // ============================================
 export async function setupBotCommands() {
   if (!bot) return;
-
   try {
     await bot.telegram.setMyCommands([
-      { command: 'start', description: '🚀 Start the bot' },
-      { command: 'help', description: '📖 Get help' },
-      { command: 'mytickets', description: '🎫 View your tickets' },
-      { command: 'programs', description: '🎯 View available programs' },
-      { command: 'language', description: '🌐 Change language' },
-      { command: 'support', description: '📞 Contact support' },
-      { command: 'winners', description: '🏆 View recent winners' },
-      { command: 'howitworks', description: '📖 How it works' },
-      { command: 'partner', description: '🤝 Partner dashboard' },
-      { command: 'referral', description: '🔗 My referral code' },
+      { command: 'start', description: '🚀 Start' },
+      { command: 'menu', description: '📋 Main Menu' },
+      { command: 'help', description: '📖 Help' },
+      { command: 'mytickets', description: '🎫 My Tickets' }
     ]);
-    console.log('✅ Bot commands set successfully');
+    console.log('✅ Bot commands set');
   } catch (error) {
-    console.error('❌ Failed to set bot commands:', error);
+    console.error('❌ Failed to set commands:', error);
   }
 }
 
@@ -302,31 +257,56 @@ export async function handleBotMessages() {
 
   bot.catch((err, ctx) => {
     console.error('Bot error:', err);
-    ctx.reply('⚠️ Something went wrong. Please try again later.');
+    ctx.reply('⚠️ Please try again later.');
   });
 
   // ============================================
-  // START COMMAND - COLLECT NAME & PHONE
+  // START COMMAND
   // ============================================
   bot.start(async (ctx) => {
     const user = ctx.from;
     const userId = user.id;
     
-    userSessions[userId] = {
-      step: 'ask_name',
-      data: {}
-    };
+    userSessions[userId] = { step: 'ask_name', data: {} };
     
-    const t = TRANSLATIONS.en;
+    const lang = await getUserLanguage(userId);
+    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     
-    await ctx.reply(
-      `${t.welcome}\n\n${t.ask_name}`,
-      { parse_mode: 'Markdown' }
-    );
+    // 1. Welcome with description
+    await ctx.reply(t.welcome, { parse_mode: 'Markdown' });
+    
+    // 2. Language selection
+    await ctx.reply(t.language_select, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '🇬🇧 English', callback_data: 'lang_en' }],
+          [{ text: '🇪🇹 አማርኛ', callback_data: 'lang_am' }],
+          [{ text: '🌍 Afaan Oromo', callback_data: 'lang_om' }]
+        ]
+      }
+    });
+    
+    // 3. Ask name
+    await ctx.reply(t.ask_name, { parse_mode: 'Markdown' });
   });
 
   // ============================================
-  // HANDLE TEXT MESSAGES
+  // LANGUAGE SELECTION
+  // ============================================
+  bot.action(/lang_(.+)/, async (ctx) => {
+    const lang = ctx.match[1];
+    const userId = ctx.from.id;
+    
+    await updateUserLanguage(userId, lang);
+    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+    
+    await ctx.reply(t.language_set, { parse_mode: 'Markdown' });
+    await ctx.answerCbQuery();
+  });
+
+  // ============================================
+  // HANDLE TEXT - NAME & PHONE
   // ============================================
   bot.on('text', async (ctx) => {
     const user = ctx.from;
@@ -337,15 +317,10 @@ export async function handleBotMessages() {
     if (!session) {
       const lang = await getUserLanguage(userId);
       const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-      const name = user.first_name || 'User';
-      
-      await ctx.reply(
-        t.main_menu.replace('{name}', name),
-        {
-          parse_mode: 'Markdown',
-          reply_markup: buildMainMenu(lang)
-        }
-      );
+      await ctx.reply(t.main_menu.replace('{name}', user.first_name || 'User'), {
+        parse_mode: 'Markdown',
+        reply_markup: buildMainMenu(lang)
+      });
       return;
     }
 
@@ -353,11 +328,9 @@ export async function handleBotMessages() {
       session.data.fullName = text;
       session.step = 'ask_phone';
       
-      const t = TRANSLATIONS.en;
-      await ctx.reply(
-        `${t.name_received}\n\n${t.ask_phone}`,
-        { parse_mode: 'Markdown' }
-      );
+      const lang = await getUserLanguage(userId);
+      const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+      await ctx.reply(t.ask_phone, { parse_mode: 'Markdown' });
       return;
     }
     
@@ -374,488 +347,56 @@ export async function handleBotMessages() {
         session.data.fullName
       );
       
-      const langKeyboard = {
-        inline_keyboard: [
-          [{ text: '🇬🇧 English', callback_data: 'lang_en' }],
-          [{ text: '🇪🇹 አማርኛ', callback_data: 'lang_am' }],
-          [{ text: '🌍 Afaan Oromo', callback_data: 'lang_om' }]
-        ]
-      };
-      
-      await ctx.reply(
-        TRANSLATIONS.en.language_select,
-        {
-          parse_mode: 'Markdown',
-          reply_markup: langKeyboard
-        }
-      );
-      
       delete userSessions[userId];
-      return;
+      
+      const lang = await getUserLanguage(userId);
+      const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+      
+      await ctx.reply(t.phone_received, { parse_mode: 'Markdown' });
+      
+      // Show programs immediately
+      await showPrograms(ctx, userId);
     }
   });
 
   // ============================================
-  // LANGUAGE SELECTION
+  // SHOW PROGRAMS
   // ============================================
-  bot.action(/lang_(.+)/, async (ctx) => {
-    const lang = ctx.match[1];
-    const userId = ctx.from.id;
-    const user = ctx.from;
-    const name = user.first_name || 'User';
-    
-    if (!['en', 'am', 'om'].includes(lang)) {
-      await ctx.answerCbQuery('Invalid language selection');
-      return;
-    }
-    
-    await updateUserLanguage(userId, lang);
-    
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    
-    await ctx.reply(t.language_set, { parse_mode: 'Markdown' });
-    
-    await ctx.reply(
-      t.main_menu.replace('{name}', name),
-      {
-        parse_mode: 'Markdown',
-        reply_markup: buildMainMenu(lang)
-      }
-    );
-    
-    await ctx.answerCbQuery();
-  });
-
-  // ============================================
-  // PARTNER COMMAND
-  // ============================================
-  bot.command('partner', async (ctx) => {
-    const userId = ctx.from.id;
-    const lang = await getUserLanguage(userId);
-    const t = PARTNER_TRANSLATIONS[lang] || PARTNER_TRANSLATIONS.en;
-    const user = ctx.from;
-    const name = user.first_name || 'User';
-    
-    const role = await getUserRole(userId);
-    
-    if (role === 'individual') {
-      await ctx.reply(
-        t.not_partner,
-        {
-          parse_mode: 'Markdown',
-          reply_markup: buildApplyPartnerMenu(lang)
-        }
-      );
-      return;
-    }
-    
-    const partnerData = await getPartnerData(userId, role);
-    
-    if (!partnerData) {
-      await ctx.reply(
-        t.not_partner,
-        {
-          parse_mode: 'Markdown',
-          reply_markup: buildApplyPartnerMenu(lang)
-        }
-      );
-      return;
-    }
-    
-    const statusText = partnerData.is_approved ? '✅ Approved' : '⏳ Pending';
-    const roleNames = {
-      agent: 'Agent',
-      vendor: 'Vendor',
-      organization: 'Organization'
-    };
-    
-    await ctx.reply(
-      t.partner_menu.replace('{name}', name).replace('{role}', roleNames[role] || role),
-      {
-        parse_mode: 'Markdown',
-        reply_markup: buildPartnerMenu(lang, role, partnerData.is_approved ? 'approved' : 'pending')
-      }
-    );
-  });
-
-  // ============================================
-  // PARTNER CALLBACKS
-  // ============================================
-  
-  // Partner menu button
-  bot.action('partner', async (ctx) => {
-    const userId = ctx.from.id;
-    const lang = await getUserLanguage(userId);
-    const t = PARTNER_TRANSLATIONS[lang] || PARTNER_TRANSLATIONS.en;
-    const user = ctx.from;
-    const name = user.first_name || 'User';
-    
-    const role = await getUserRole(userId);
-    
-    if (role === 'individual') {
-      await ctx.editMessageText(
-        t.not_partner,
-        {
-          parse_mode: 'Markdown',
-          reply_markup: buildApplyPartnerMenu(lang)
-        }
-      );
-      await ctx.answerCbQuery();
-      return;
-    }
-    
-    const partnerData = await getPartnerData(userId, role);
-    
-    if (!partnerData) {
-      await ctx.editMessageText(
-        t.not_partner,
-        {
-          parse_mode: 'Markdown',
-          reply_markup: buildApplyPartnerMenu(lang)
-        }
-      );
-      await ctx.answerCbQuery();
-      return;
-    }
-    
-    const roleNames = {
-      agent: 'Agent',
-      vendor: 'Vendor',
-      organization: 'Organization'
-    };
-    
-    await ctx.editMessageText(
-      t.partner_menu.replace('{name}', name).replace('{role}', roleNames[role] || role),
-      {
-        parse_mode: 'Markdown',
-        reply_markup: buildPartnerMenu(lang, role, partnerData.is_approved ? 'approved' : 'pending')
-      }
-    );
-    await ctx.answerCbQuery();
-  });
-
-  // Partner Dashboard
-  bot.action('partner_dashboard', async (ctx) => {
-    const userId = ctx.from.id;
-    const lang = await getUserLanguage(userId);
-    const t = PARTNER_TRANSLATIONS[lang] || PARTNER_TRANSLATIONS.en;
-    
-    const role = await getUserRole(userId);
-    const partnerData = await getPartnerData(userId, role);
-    
-    if (!partnerData) {
-      await ctx.reply('❌ Partner data not found');
-      await ctx.answerCbQuery();
-      return;
-    }
-    
-    const statusText = partnerData.is_approved ? '✅ Approved' : '⏳ Pending Review';
-    const referrals = await getReferralStats(partnerData.id);
-    const commissions = await getCommissionHistory(partnerData.id);
-    const totalCommission = commissions.reduce((sum, c) => sum + (c.amount || 0), 0);
-    
-    let message = '';
-    const roleNames = {
-      agent: 'Agent',
-      vendor: 'Vendor', 
-      organization: 'Organization'
-    };
-    
-    if (role === 'agent') {
-      message = t.agent_dashboard
-        .replace('{referrals}', referrals.length)
-        .replace('{commission}', totalCommission.toLocaleString())
-        .replace('{status}', statusText)
-        .replace('{link}', partnerData.referral_link || 'N/A')
-        .replace('{code}', partnerData.referral_code || 'N/A');
-    } else if (role === 'vendor') {
-      message = t.vendor_dashboard
-        .replace('{pools}', partnerData.total_pools_created || 0)
-        .replace('{commission}', totalCommission.toLocaleString())
-        .replace('{status}', statusText);
-    } else if (role === 'organization') {
-      message = t.org_dashboard
-        .replace('{pools}', partnerData.total_pools_created || 0)
-        .replace('{members}', 0) // TODO: Count organization members
-        .replace('{commission}', totalCommission.toLocaleString())
-        .replace('{status}', statusText);
-    }
-    
-    await ctx.editMessageText(
-      message,
-      {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: '🔗 My Referral Code', callback_data: 'partner_referral' }],
-            [{ text: '💰 Commission History', callback_data: 'partner_commission' }],
-            [{ text: '📖 Help', callback_data: 'partner_help' }],
-            [{ text: '🔙 Back to Partner Menu', callback_data: 'partner' }]
-          ]
-        }
-      }
-    );
-    await ctx.answerCbQuery();
-  });
-
-  // Referral Code
-  bot.action('partner_referral', async (ctx) => {
-    const userId = ctx.from.id;
-    const lang = await getUserLanguage(userId);
-    const t = PARTNER_TRANSLATIONS[lang] || PARTNER_TRANSLATIONS.en;
-    
-    const role = await getUserRole(userId);
-    const partnerData = await getPartnerData(userId, role);
-    
-    if (!partnerData || !partnerData.referral_code) {
-      await ctx.reply('❌ Referral code not found. Please contact support.');
-      await ctx.answerCbQuery();
-      return;
-    }
-    
-    await ctx.editMessageText(
-      t.referral_code
-        .replace('{code}', partnerData.referral_code)
-        .replace('{link}', partnerData.referral_link || 'N/A'),
-      {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: '📊 Dashboard', callback_data: 'partner_dashboard' }],
-            [{ text: '🔙 Back to Partner Menu', callback_data: 'partner' }]
-          ]
-        }
-      }
-    );
-    await ctx.answerCbQuery();
-  });
-
-  // Commission History
-  bot.action('partner_commission', async (ctx) => {
-    const userId = ctx.from.id;
-    const lang = await getUserLanguage(userId);
-    const t = PARTNER_TRANSLATIONS[lang] || PARTNER_TRANSLATIONS.en;
-    
-    const role = await getUserRole(userId);
-    const partnerData = await getPartnerData(userId, role);
-    
-    if (!partnerData) {
-      await ctx.reply('❌ Partner data not found');
-      await ctx.answerCbQuery();
-      return;
-    }
-    
-    const commissions = await getCommissionHistory(partnerData.id);
-    const totalCommission = commissions.reduce((sum, c) => sum + (c.amount || 0), 0);
-    
-    let historyText = '';
-    if (commissions.length === 0) {
-      historyText = t.no_commission;
-    } else {
-      commissions.forEach(c => {
-        const date = new Date(c.created_at).toLocaleDateString();
-        historyText += `• ${date}: ETB ${c.amount?.toLocaleString() || 0} (${c.status || 'pending'})\n`;
-      });
-    }
-    
-    await ctx.editMessageText(
-      t.commission_history
-        .replace('{history}', historyText)
-        .replace('{total}', totalCommission.toLocaleString()),
-      {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: '📊 Dashboard', callback_data: 'partner_dashboard' }],
-            [{ text: '🔙 Back to Partner Menu', callback_data: 'partner' }]
-          ]
-        }
-      }
-    );
-    await ctx.answerCbQuery();
-  });
-
-  // Partner Status
-  bot.action('partner_status', async (ctx) => {
-    const userId = ctx.from.id;
-    const lang = await getUserLanguage(userId);
-    const t = PARTNER_TRANSLATIONS[lang] || PARTNER_TRANSLATIONS.en;
-    
-    const role = await getUserRole(userId);
-    const partnerData = await getPartnerData(userId, role);
-    
-    if (!partnerData) {
-      await ctx.reply('❌ Partner data not found');
-      await ctx.answerCbQuery();
-      return;
-    }
-    
-    const statusText = partnerData.is_approved ? '✅ Approved' : '⏳ Pending Review';
-    const roleNames = {
-      agent: 'Agent',
-      vendor: 'Vendor',
-      organization: 'Organization'
-    };
-    const referrals = await getReferralStats(partnerData.id);
-    const commissions = await getCommissionHistory(partnerData.id);
-    const totalCommission = commissions.reduce((sum, c) => sum + (c.amount || 0), 0);
-    
-    await ctx.editMessageText(
-      t.partner_status
-        .replace('{role}', roleNames[role] || role)
-        .replace('{status}', statusText)
-        .replace('{commission}', totalCommission.toLocaleString())
-        .replace('{referrals}', referrals.length),
-      {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: '📊 Dashboard', callback_data: 'partner_dashboard' }],
-            [{ text: '🔙 Back to Partner Menu', callback_data: 'partner' }]
-          ]
-        }
-      }
-    );
-    await ctx.answerCbQuery();
-  });
-
-  // Partner Help
-  bot.action('partner_help', async (ctx) => {
-    const userId = ctx.from.id;
-    const lang = await getUserLanguage(userId);
-    const t = PARTNER_TRANSLATIONS[lang] || PARTNER_TRANSLATIONS.en;
-    
-    await ctx.editMessageText(
-      t.partner_help,
-      {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: '📊 Dashboard', callback_data: 'partner_dashboard' }],
-            [{ text: '🔙 Back to Partner Menu', callback_data: 'partner' }]
-          ]
-        }
-      }
-    );
-    await ctx.answerCbQuery();
-  });
-
-  // Apply Partner - opens web app for registration
-  bot.action(/apply_(.+)/, async (ctx) => {
-    const role = ctx.match[1];
-    const userId = ctx.from.id;
-    const lang = await getUserLanguage(userId);
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com';
-    
-    const roleNames = {
-      agent: 'Agent',
-      vendor: 'Vendor',
-      organization: 'Organization'
-    };
-    
-    await ctx.reply(
-      `📝 *Apply as ${roleNames[role] || role}*\n\n` +
-      `Please complete your application in the web app:\n\n` +
-      `🔗 ${appUrl}/register?role=${role}\n\n` +
-      `You'll need to provide:\n` +
-      `• Personal information\n` +
-      `• Business details\n` +
-      `• Required documents\n\n` +
-      `After submission, admin will review your application.`,
-      {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: '📝 Open Application', web_app: { url: `${appUrl}/register?role=${role}` } }],
-            [{ text: '🔙 Back', callback_data: 'partner' }]
-          ]
-        }
-      }
-    );
-    await ctx.answerCbQuery();
-  });
-
-  // ============================================
-  // REFERRAL COMMAND
-  // ============================================
-  bot.command('referral', async (ctx) => {
-    const userId = ctx.from.id;
-    const lang = await getUserLanguage(userId);
-    const t = PARTNER_TRANSLATIONS[lang] || PARTNER_TRANSLATIONS.en;
-    
-    const role = await getUserRole(userId);
-    
-    if (role === 'individual') {
-      await ctx.reply(
-        '❌ You are not registered as a partner. Use /partner to learn more.',
-        { parse_mode: 'Markdown' }
-      );
-      return;
-    }
-    
-    const partnerData = await getPartnerData(userId, role);
-    
-    if (!partnerData || !partnerData.referral_code) {
-      await ctx.reply('❌ Referral code not found. Please contact support.');
-      return;
-    }
-    
-    await ctx.reply(
-      t.referral_code
-        .replace('{code}', partnerData.referral_code)
-        .replace('{link}', partnerData.referral_link || 'N/A'),
-      {
-        parse_mode: 'Markdown'
-      }
-    );
-  });
-
-  // ============================================
-  // OTHER COMMANDS (Keep existing)
-  // ============================================
-  // ... (keep all your existing commands: programs, mytickets, support, winners, howitworks, etc.)
-
-  // ============================================
-  // MAIN MENU CALLBACK
-  // ============================================
-  bot.action('main_menu', async (ctx) => {
-    const userId = ctx.from.id;
+  async function showPrograms(ctx, userId) {
     const lang = await getUserLanguage(userId);
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     const user = ctx.from;
-    const name = user.first_name || 'User';
+    const name = user?.first_name || 'User';
     
-    await ctx.editMessageText(
-      t.main_menu.replace('{name}', name),
-      {
-        parse_mode: 'Markdown',
-        reply_markup: buildMainMenu(lang)
-      }
+    // Main menu with programs
+    await ctx.reply(t.main_menu.replace('{name}', name), {
+      parse_mode: 'Markdown',
+      reply_markup: buildMainMenu(lang)
+    });
+    
+    // Show program descriptions
+    await ctx.reply(
+      `🎯 *Programs*\n\n` +
+      `${t.program_1}\n\n` +
+      `${t.program_2}\n\n` +
+      `${t.program_3}\n\n` +
+      `${t.program_4}`,
+      { parse_mode: 'Markdown' }
     );
-    await ctx.answerCbQuery();
-  });
+  }
 
   // ============================================
-  // PROGRAM CALLBACKS (Keep existing)
+  // PROGRAM CALLBACKS
   // ============================================
-  bot.action('merkato', async (ctx) => {
+  bot.action('regular', async (ctx) => {
     const userId = ctx.from.id;
     const lang = await getUserLanguage(userId);
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     
-    await ctx.editMessageText(
-      t.merkato_vip,
-      {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: t.view_merkato, callback_data: 'merkato_details' }],
-            [{ text: t.join_now, web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/merkato-vip` } }],
-            [{ text: t.back, callback_data: 'main_menu' }]
-          ]
-        }
-      }
-    );
+    await ctx.editMessageText(t.join_regular, {
+      parse_mode: 'Markdown',
+      reply_markup: buildProgramMenu(lang, 'regular')
+    });
     await ctx.answerCbQuery();
   });
 
@@ -864,70 +405,54 @@ export async function handleBotMessages() {
     const lang = await getUserLanguage(userId);
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     
-    await ctx.editMessageText(
-      t.city_vip,
-      {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: t.view_city, callback_data: 'city_details' }],
-            [{ text: t.join_now, web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/cities` } }],
-            [{ text: t.back, callback_data: 'main_menu' }]
-          ]
-        }
-      }
-    );
+    await ctx.editMessageText(t.join_city, {
+      parse_mode: 'Markdown',
+      reply_markup: buildProgramMenu(lang, 'city')
+    });
     await ctx.answerCbQuery();
   });
 
-  bot.action('pools', async (ctx) => {
+  bot.action('merkato', async (ctx) => {
     const userId = ctx.from.id;
     const lang = await getUserLanguage(userId);
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     
-    await ctx.editMessageText(
-      t.regular_pools,
-      {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: t.view_pools, callback_data: 'pools_details' }],
-            [{ text: t.join_now, web_app: { url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com'}/listings` } }],
-            [{ text: t.back, callback_data: 'main_menu' }]
-          ]
-        }
-      }
-    );
+    await ctx.editMessageText(t.join_merkato, {
+      parse_mode: 'Markdown',
+      reply_markup: buildProgramMenu(lang, 'merkato')
+    });
     await ctx.answerCbQuery();
   });
 
-  // ... (keep all other callbacks: merkato_details, city_details, pools_details, support, howitworks, winners, etc.)
-
-  // ============================================
-  // SUPPORT COMMAND
-  // ============================================
-  bot.command('support', async (ctx) => {
+  bot.action('partner', async (ctx) => {
     const userId = ctx.from.id;
     const lang = await getUserLanguage(userId);
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     
-    await ctx.reply(
-      t.support_title,
-      {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: t.back, callback_data: 'main_menu' }]
-          ]
-        }
-      }
-    );
+    await ctx.editMessageText(t.join_partner, {
+      parse_mode: 'Markdown',
+      reply_markup: buildProgramMenu(lang, 'partner')
+    });
+    await ctx.answerCbQuery();
   });
 
   // ============================================
-  // WINNERS COMMAND
+  // OTHER CALLBACKS
   // ============================================
-  bot.command('winners', async (ctx) => {
+  bot.action('menu', async (ctx) => {
+    const userId = ctx.from.id;
+    const lang = await getUserLanguage(userId);
+    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+    const user = ctx.from;
+    
+    await ctx.editMessageText(t.main_menu.replace('{name}', user.first_name || 'User'), {
+      parse_mode: 'Markdown',
+      reply_markup: buildMainMenu(lang)
+    });
+    await ctx.answerCbQuery();
+  });
+
+  bot.action('winners', async (ctx) => {
     const userId = ctx.from.id;
     const lang = await getUserLanguage(userId);
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
@@ -942,53 +467,62 @@ export async function handleBotMessages() {
         .order('updated_at', { ascending: false })
         .limit(5);
 
-      let winnersText = '';
+      let text = t.winners + '\n\n';
       if (winners && winners.length > 0) {
         winners.forEach((w, i) => {
-          winnersText += `${i + 1}. 🏆 ${w.title || 'Prize'}\n`;
-          winnersText += `   💰 ${w.prize_amount || 'N/A'}\n\n`;
+          text += `${i+1}. 🏆 ${w.title || 'Prize'} - ${w.prize_amount || 'N/A'}\n`;
         });
       } else {
-        winnersText = t.no_winners || 'No recent winners to display. Be the first! 🎯\n\n';
+        text += 'No winners yet. Be the first! 🎯';
       }
-
-      await ctx.reply(
-        `${t.winners_title}\n\n${winnersText}\n${t.winners_footer}`,
-        {
-          parse_mode: 'Markdown',
-          reply_markup: {
-            inline_keyboard: [
-              [{ text: t.winners || '🏆 View All', web_app: { url: `${appUrl}/winners` } }],
-              [{ text: t.back, callback_data: 'main_menu' }]
-            ]
-          }
+      
+      await ctx.editMessageText(text, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '🏆 Hall of Fame', web_app: { url: `${appUrl}/winners` } }],
+            [{ text: '🔙 Back', callback_data: 'menu' }]
+          ]
         }
-      );
-    } catch (error) {
-      console.error('Error fetching winners:', error);
-      await ctx.reply('⚠️ Failed to fetch winners. Please try again later.');
+      });
+    } catch {
+      await ctx.editMessageText('⚠️ Failed to load winners.', {
+        reply_markup: { inline_keyboard: [[{ text: '🔙 Back', callback_data: 'menu' }]] }
+      });
     }
+    await ctx.answerCbQuery();
   });
 
-  // ============================================
-  // HOW IT WORKS COMMAND
-  // ============================================
-  bot.command('howitworks', async (ctx) => {
+  bot.action('how', async (ctx) => {
     const userId = ctx.from.id;
     const lang = await getUserLanguage(userId);
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     
-    await ctx.reply(
-      t.how_it_works,
-      {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: t.back, callback_data: 'main_menu' }]
-          ]
-        }
+    await ctx.editMessageText(t.how_it_works, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '🔙 Back', callback_data: 'menu' }]
+        ]
       }
-    );
+    });
+    await ctx.answerCbQuery();
+  });
+
+  bot.action('support', async (ctx) => {
+    const userId = ctx.from.id;
+    const lang = await getUserLanguage(userId);
+    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+    
+    await ctx.editMessageText(t.support, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '🔙 Back', callback_data: 'menu' }]
+        ]
+      }
+    });
+    await ctx.answerCbQuery();
   });
 
   // ============================================
@@ -1012,33 +546,16 @@ export async function handleBotMessages() {
         return;
       }
 
-      const userId_db = profile.id;
-
-      const [merkatoTickets, cityTickets, regularTickets] = await Promise.all([
-        supabase
-          .from('merkato_vip_participants')
-          .select('*')
-          .eq('user_id', userId_db)
-          .order('created_at', { ascending: false })
-          .limit(3),
-        supabase
-          .from('city_vip_participants')
-          .select('*')
-          .eq('user_id', userId_db)
-          .order('created_at', { ascending: false })
-          .limit(3),
-        supabase
-          .from('regular_pool_participants')
-          .select('*')
-          .eq('user_id', userId_db)
-          .order('created_at', { ascending: false })
-          .limit(3)
+      const [merkato, city, regular] = await Promise.all([
+        supabase.from('merkato_vip_participants').select('*').eq('user_id', profile.id).limit(5),
+        supabase.from('city_vip_participants').select('*').eq('user_id', profile.id).limit(5),
+        supabase.from('regular_pool_participants').select('*').eq('user_id', profile.id).limit(5)
       ]);
 
       const allTickets = [
-        ...(merkatoTickets.data || []).map(t => ({ ...t, type: 'Merkato VIP' })),
-        ...(cityTickets.data || []).map(t => ({ ...t, type: 'City VIP' })),
-        ...(regularTickets.data || []).map(t => ({ ...t, type: 'Regular Pool' }))
+        ...(merkato.data || []).map(t => ({ ...t, type: 'Merkato VIP' })),
+        ...(city.data || []).map(t => ({ ...t, type: 'City VIP' })),
+        ...(regular.data || []).map(t => ({ ...t, type: 'Regular' }))
       ];
 
       if (allTickets.length === 0) {
@@ -1046,81 +563,26 @@ export async function handleBotMessages() {
         return;
       }
 
-      let message = t.tickets_title;
+      let message = t.tickets + '\n\n';
       allTickets.slice(0, 5).forEach((ticket, i) => {
-        const status = ticket.payment_status === 'verified' ? t.status_verified : t.status_pending;
-        message += `${i + 1}. 🏆 ${ticket.type}\n`;
-        message += `   💺 ${ticket.seat_numbers?.join(', ') || 'N/A'}\n`;
-        message += `   ${status}\n`;
+        const status = ticket.payment_status === 'verified' ? '✅' : '⏳';
+        message += `${i+1}. ${status} ${ticket.type}\n`;
+        message += `   Seats: ${ticket.seat_numbers?.join(', ') || 'N/A'}\n`;
         message += `   #${ticket.ticket_number || 'N/A'}\n\n`;
       });
 
-      if (allTickets.length > 5) {
-        message += `*And ${allTickets.length - 5} more...*\n\n`;
-      }
-
-      message += `📱 View all tickets in the app:`;
-      
       await ctx.reply(message, {
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [
-            [{ text: t.dashboard, web_app: { url: `${appUrl}/dashboard` } }],
-            [{ text: t.back, callback_data: 'main_menu' }]
+            [{ text: '📊 View All', web_app: { url: `${appUrl}/dashboard` } }],
+            [{ text: '📋 Menu', callback_data: 'menu' }]
           ]
         }
       });
-    } catch (error) {
-      console.error('Error fetching tickets:', error);
-      await ctx.reply('⚠️ Failed to fetch your tickets. Please try again later.');
+    } catch {
+      await ctx.reply('⚠️ Failed to load tickets.');
     }
-  });
-
-  // ============================================
-  // PROGRAMS COMMAND
-  // ============================================
-  bot.command('programs', async (ctx) => {
-    const userId = ctx.from.id;
-    const lang = await getUserLanguage(userId);
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    
-    await ctx.reply(
-      t.programs_title,
-      {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: t.view_merkato, callback_data: 'merkato_details' }],
-            [{ text: t.view_city, callback_data: 'city_details' }],
-            [{ text: t.view_pools, callback_data: 'pools_details' }],
-            [{ text: t.back, callback_data: 'main_menu' }]
-          ]
-        }
-      }
-    );
-  });
-
-  // ============================================
-  // LANGUAGE COMMAND
-  // ============================================
-  bot.command('language', async (ctx) => {
-    const userId = ctx.from.id;
-    const lang = await getUserLanguage(userId);
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    
-    const langKeyboard = {
-      inline_keyboard: [
-        [{ text: '🇬🇧 English', callback_data: 'lang_en' }],
-        [{ text: '🇪🇹 አማርኛ', callback_data: 'lang_am' }],
-        [{ text: '🌍 Afaan Oromo', callback_data: 'lang_om' }],
-        [{ text: t.back, callback_data: 'main_menu' }]
-      ]
-    };
-
-    await ctx.reply(t.language_select, {
-      parse_mode: 'Markdown',
-      reply_markup: langKeyboard
-    });
   });
 
   // ============================================
@@ -1132,16 +594,36 @@ export async function handleBotMessages() {
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     
     await ctx.reply(
-      t.help_title,
+      `📖 *Help*\n\n` +
+      `/start - Start the bot\n` +
+      `/menu - Main menu\n` +
+      `/mytickets - View tickets\n` +
+      `/help - This help\n\n` +
+      `Need more help? Contact support.`,
       {
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [
-            [{ text: t.back, callback_data: 'main_menu' }]
+            [{ text: '📋 Menu', callback_data: 'menu' }]
           ]
         }
       }
     );
+  });
+
+  // ============================================
+  // MENU COMMAND
+  // ============================================
+  bot.command('menu', async (ctx) => {
+    const userId = ctx.from.id;
+    const lang = await getUserLanguage(userId);
+    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+    const user = ctx.from;
+    
+    await ctx.reply(t.main_menu.replace('{name}', user.first_name || 'User'), {
+      parse_mode: 'Markdown',
+      reply_markup: buildMainMenu(lang)
+    });
   });
 }
 
