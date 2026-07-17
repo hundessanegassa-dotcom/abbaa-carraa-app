@@ -19,7 +19,6 @@ export default function Register() {
   const [showIndividualRegister, setShowIndividualRegister] = useState(false);
   const [referralInfo, setReferralInfo] = useState({ refCode: null, program: null, city: null });
   
-  // Individual registration form
   const [individualForm, setIndividualForm] = useState({
     fullName: '',
     email: '',
@@ -28,7 +27,6 @@ export default function Register() {
   });
   const [individualLoading, setIndividualLoading] = useState(false);
 
-  // Capture referral info from URL
   useEffect(() => {
     if (ref) {
       setReferralInfo({
@@ -42,7 +40,6 @@ export default function Register() {
     }
   }, [ref, program, city]);
 
-  // Check if user is already logged in
   useEffect(() => {
     checkUser();
   }, []);
@@ -124,7 +121,6 @@ export default function Register() {
     }
   };
 
-  // Individual Registration
   const handleIndividualRegister = async (e) => {
     e.preventDefault();
     if (!individualForm.agreeTerms) {
@@ -135,10 +131,9 @@ export default function Register() {
     setIndividualLoading(true);
     
     try {
-      // Create user with email/password
       const { data, error } = await supabase.auth.signUp({
         email: individualForm.email,
-        password: individualForm.password || 'temporary_' + Math.random().toString(36).substring(2, 10),
+        password: 'temporary_' + Math.random().toString(36).substring(2, 10),
         options: {
           data: {
             full_name: individualForm.fullName,
@@ -152,7 +147,6 @@ export default function Register() {
       
       toast.success('Account created! Please check your email to verify.');
       
-      // Save profile
       if (data.user) {
         await supabase
           .from('profiles')
@@ -167,7 +161,6 @@ export default function Register() {
           });
       }
       
-      // Redirect to login
       setTimeout(() => router.push('/login'), 2000);
       
     } catch (error) {
@@ -186,7 +179,6 @@ export default function Register() {
     startGoogleLogin(roleId);
   };
 
-  // Show loading screen
   if ((router.query.role && roles[router.query.role]) || loading) {
     const roleInfo = router.query.role ? roles[router.query.role] : null;
     return (
@@ -205,7 +197,6 @@ export default function Register() {
     );
   }
 
-  // Show partner application
   if (user && selectedRole && showApplication) {
     const roleInfo = roles[selectedRole];
     
@@ -257,7 +248,6 @@ export default function Register() {
             <h1 className="text-3xl font-bold text-gray-800">Join Abbaa Carraa</h1>
             <p className="text-gray-500 mt-2">Choose how you want to participate</p>
             
-            {/* Referral Info Banner */}
             {referralInfo.refCode && (
               <div className="mt-4 inline-flex items-center gap-2 bg-green-100 border border-green-300 rounded-full px-4 py-2 text-sm">
                 <span>🔗</span>
@@ -268,7 +258,6 @@ export default function Register() {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {/* Individual Card */}
             <button
               onClick={() => handleRoleSelect('individual')}
               className="bg-gradient-to-r from-green-500 to-teal-500 rounded-xl p-6 text-white text-left hover:shadow-xl transition-all hover:scale-105 active:scale-95 group"
@@ -283,7 +272,6 @@ export default function Register() {
               </div>
             </button>
             
-            {/* Agent Card */}
             <button
               onClick={() => handleRoleSelect('agent')}
               className={`bg-gradient-to-r ${roles.agent.color} rounded-xl p-6 text-white text-left hover:shadow-xl transition-all hover:scale-105 active:scale-95 group`}
@@ -300,7 +288,6 @@ export default function Register() {
               </div>
             </button>
             
-            {/* Vendor Card */}
             <button
               onClick={() => handleRoleSelect('vendor')}
               className={`bg-gradient-to-r ${roles.vendor.color} rounded-xl p-6 text-white text-left hover:shadow-xl transition-all hover:scale-105 active:scale-95 group`}
@@ -315,7 +302,6 @@ export default function Register() {
               </div>
             </button>
             
-            {/* Organization Card */}
             <button
               onClick={() => handleRoleSelect('organization')}
               className={`bg-gradient-to-r ${roles.organization.color} rounded-xl p-6 text-white text-left hover:shadow-xl transition-all hover:scale-105 active:scale-95 group`}
@@ -331,7 +317,6 @@ export default function Register() {
             </button>
           </div>
 
-          {/* Individual Registration Form */}
           {showIndividualRegister && (
             <div className="mt-8 bg-white rounded-2xl shadow-xl p-8 max-w-md mx-auto">
               <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Create Individual Account</h2>
@@ -408,7 +393,6 @@ export default function Register() {
             </div>
           )}
 
-          {/* Commission Info Banner */}
           {!showIndividualRegister && (
             <div className="mt-8 bg-white rounded-xl p-4 shadow-md">
               <div className="flex items-center gap-3">
