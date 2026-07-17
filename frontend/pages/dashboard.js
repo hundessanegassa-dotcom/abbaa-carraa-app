@@ -111,7 +111,7 @@ export default function Dashboard() {
   };
 
   // ============================================
-  // ✅ CHECK USER - WITH TELEGRAM SESSION SUPPORT
+  // CHECK USER - WITH TELEGRAM SESSION SUPPORT
   // ============================================
   async function checkUser() {
     try {
@@ -148,37 +148,110 @@ export default function Dashboard() {
             }
           });
           
-          // ✅ Load profile using telegram user ID
-          const { data: profileData, error: profileError } = await supabase
+          // ✅ FIRST: Try to find existing profile
+          let profile = null;
+          
+          // Try by telegram_id
+          const { data: profileByTelegramId, error: findTelegramError } = await supabase
             .from('profiles')
             .select('*')
             .eq('telegram_id', userId)
             .maybeSingle();
-
-          // If not found by telegram_id, try by id
-          let profile = profileData;
-          if (!profileData && !profileError) {
-            const { data: profileById } = await supabase
+          
+          if (!findTelegramError && profileByTelegramId) {
+            console.log('✅ Profile found by telegram_id:', profileByTelegramId);
+            profile = profileByTelegramId;
+          }
+          
+          // If not found, try by id
+          if (!profile) {
+            const { data: profileById, error: findIdError } = await supabase
               .from('profiles')
               .select('*')
               .eq('id', userId)
               .maybeSingle();
-            profile = profileById;
+            
+            if (!findIdError && profileById) {
+              console.log('✅ Profile found by id:', profileById);
+              profile = profileById;
+            }
           }
           
+          // If profile exists, update it and continue
           if (profile) {
-            console.log('✅ Profile found:', profile);
-            setProfile(profile);
-          } else {
-            // ✅ Create a basic profile if not exists
-            console.log('👤 Creating new profile for Telegram user...');
-            const { data: newProfile, error: createError } = await supabase
+            console.log('✅ Existing profile found, updating...');
+            
+            // Update profile with latest info
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update({
+                telegram_id: userId,
+                telegram_username: telegramUser.username || null,
+                full_name: telegramUser.full_name || profile.full_name,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', profile.id);
+            
+            if (updateError) {
+              console.error('❌ Error updating profile:', updateError);
+            } else {
+              console.log('✅ Profile updated successfully');
+              setProfile({ ...profile, ...updateError ? {} : { 
+                telegram_id: userId,
+                telegram_username: telegramUser.username || null,
+                full_name: telegramUser.full_name || profile.full_name 
+              }});
+            }
+            
+            // ✅ Load dashboard data
+            await loadDashboardData(profile.id);
+            await loadRecentActivities(profile.id);
+            await loadUserTickets(profile.id);
+            
+            setLoading(false);
+            return;
+          }
+          
+          // ✅ NO PROFILE EXISTS - Create a new one
+          console.log('👤 Creating new profile for Telegram user...');
+          
+          // Try to create profile with upsert to avoid conflicts
+          const { data: newProfile, error: createError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: userId,
+              telegram_id: userId,
+              telegram_username: telegramUser.username || null,
+              full_name: telegramUser.full_name || 'Telegram User',
+              email: telegramUser.email || `${userId}@telegram.user`,
+              phone: telegramUser.phone_number || '',
+              language: 'en',
+              role: 'individual',
+              user_type: 'individual',
+              agreement_accepted: true,
+              status: 'active',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }, { 
+              onConflict: 'id'
+            })
+            .select()
+            .single();
+          
+          if (createError) {
+            console.error('❌ Error creating profile via upsert:', createError);
+            
+            // Try one more time with a different approach - just insert
+            const { data: insertProfile, error: insertError } = await supabase
               .from('profiles')
               .insert({
                 id: userId,
                 telegram_id: userId,
+                telegram_username: telegramUser.username || null,
                 full_name: telegramUser.full_name || 'Telegram User',
                 email: telegramUser.email || `${userId}@telegram.user`,
+                phone: telegramUser.phone_number || '',
+                language: 'en',
                 role: 'individual',
                 user_type: 'individual',
                 agreement_accepted: true,
@@ -189,18 +262,32 @@ export default function Dashboard() {
               .select()
               .single();
             
-            if (!createError && newProfile) {
-              console.log('✅ Profile created:', newProfile);
-              setProfile(newProfile);
-            } else {
-              console.error('❌ Error creating profile:', createError);
+            if (insertError) {
+              console.error('❌ Insert also failed:', insertError);
+              toast.error('Failed to create profile. Please try again.');
+              router.push('/login');
+              return;
             }
+            
+            console.log('✅ Profile created via insert:', insertProfile);
+            setProfile(insertProfile);
+            
+            // Load dashboard data
+            await loadDashboardData(insertProfile.id);
+            await loadRecentActivities(insertProfile.id);
+            await loadUserTickets(insertProfile.id);
+            
+            setLoading(false);
+            return;
           }
           
+          console.log('✅ Profile created via upsert:', newProfile);
+          setProfile(newProfile);
+          
           // ✅ Load dashboard data
-          await loadDashboardData(userId);
-          await loadRecentActivities(userId);
-          await loadUserTickets(userId);
+          await loadDashboardData(newProfile.id);
+          await loadRecentActivities(newProfile.id);
+          await loadUserTickets(newProfile.id);
           
           setLoading(false);
           return;
@@ -683,8 +770,10 @@ export default function Dashboard() {
             <h2 className="text-2xl font-bold text-gray-800">Welcome back, {firstName}! 👋</h2>
             <p className="text-gray-500 mt-1">Here's what's happening with your pools today.</p>
             {isTelegramUser && (
-              <div className="mt-1 inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
-                📱 Connected via Telegram
+              <div className="mt-2 inline-flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-700 text-xs px-3 py-1 rounded-full">
+                <span>📱</span>
+                <span className="font-medium">Connected via Telegram</span>
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
               </div>
             )}
           </div>
