@@ -10,9 +10,6 @@ export default function GoogleLoginButton({ onSuccess, onError, className }) {
     setLoading(true);
     
     try {
-      // Store the intended redirect URL if provided
-      const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/dashboard';
-      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
