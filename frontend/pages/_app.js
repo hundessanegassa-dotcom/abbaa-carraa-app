@@ -7,15 +7,12 @@ import { Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../lib/i18n';
-import Head from 'next/head';
 import useMediaQuery from '../hooks/useMediaQuery';
 import LoadingScreen from '../components/LoadingScreen';
 import SEO from '../components/SEO';
-
-// ✅ Import Telegram Bot Client
 import TelegramBotClient from '../components/TelegramBotClient';
+import { supabase } from '../lib/supabase';
 
-// Dynamic imports with error boundaries and no SSR to prevent hydration issues
 const Navbar = dynamic(() => import('../components/Navbar').catch(() => () => <div className="h-16 bg-gray-100 animate-pulse" />), { 
   ssr: false,
   loading: () => <div className="h-16 bg-gray-100 animate-pulse" /> 
@@ -27,7 +24,6 @@ const LanguageToggle = dynamic(() => import('../components/LanguageToggle').catc
 const MobileBottomNav = dynamic(() => import('../components/MobileBottomNav').catch(() => () => null), { ssr: false });
 const MobileHeader = dynamic(() => import('../components/MobileHeader').catch(() => () => <div className="h-14 bg-white" />), { ssr: false });
 
-// Create queryClient outside component to prevent recreation
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -48,34 +44,36 @@ function MyApp({ Component, pageProps }) {
   const router = useRouter();
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  // ✅ Check if running inside Telegram
+  // ✅ Telegram WebApp Auto-Login
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // Check for Telegram WebApp
-      if (window.Telegram?.WebApp) {
-        const webApp = window.Telegram.WebApp;
-        const user = webApp.initDataUnsafe?.user;
-        setIsTelegram(true);
-        if (user) {
-          setTelegramUser(user);
-          // Save to sessionStorage for other components
-          sessionStorage.setItem('telegram_user', JSON.stringify(user));
-          sessionStorage.setItem('telegram_init_data', webApp.initData);
-          sessionStorage.setItem('telegram_user_id', user.id);
-        }
-        // Expand the WebApp
-        webApp.expand();
-        console.log('📱 Running inside Telegram WebApp');
-      }
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+      const webApp = window.Telegram.WebApp;
+      const user = webApp.initDataUnsafe?.user;
       
-      // Check URL params for Telegram (fallback)
-      const urlParams = new URLSearchParams(window.location.search);
-      const tgStart = urlParams.get('startapp');
-      if (tgStart && tgStart.startsWith('telegram_')) {
-        const tgUserId = tgStart.replace('telegram_', '');
+      if (user) {
         setIsTelegram(true);
-        sessionStorage.setItem('telegram_user_id', tgUserId);
-        console.log('📱 Telegram startapp param detected:', tgUserId);
+        setTelegramUser(user);
+        sessionStorage.setItem('telegram_user', JSON.stringify(user));
+        sessionStorage.setItem('telegram_init_data', webApp.initData);
+        sessionStorage.setItem('telegram_user_id', user.id);
+        
+        // ✅ Auto-login via API
+        fetch('/api/auth/telegram', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            initData: webApp.initData,
+            user: user
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            sessionStorage.setItem('telegram_session_token', data.sessionToken);
+            console.log('✅ Telegram user authenticated');
+          }
+        })
+        .catch(err => console.error('Telegram auth error:', err));
       }
     }
   }, []);
@@ -89,16 +87,13 @@ function MyApp({ Component, pageProps }) {
     }
   }, []);
 
-  // Handle initial loading screen
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowInitialLoading(false);
     }, 2000);
-    
     return () => clearTimeout(timer);
   }, []);
 
-  // Handle router loading states with React transition
   useEffect(() => {
     const handleStart = () => {
       startTransition(() => {
@@ -127,12 +122,10 @@ function MyApp({ Component, pageProps }) {
     };
   }, [router, startTransition]);
 
-  // Set mounted after component mounts (prevents hydration mismatch)
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // 🚀 ADDED: Unregister old service workers to prevent cache issues
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(function(registrations) {
@@ -169,32 +162,18 @@ function MyApp({ Component, pageProps }) {
       '/cities': 'City VIP Programs',
       '/cities/seat': 'Select Seats - City VIP',
       '/payment/merkato': 'Payment - Merkato VIP',
-      // ✅ Admin pages
-      '/admin/dashboard': 'Admin Dashboard',
-      '/admin/analytics': 'Admin Analytics',
-      '/admin/draw-winner': 'Draw Winner',
-      '/admin/verify-payments': 'Verify Payments',
-      '/admin/announcements': 'Announcements',
-      '/admin/applications': 'Applications',
-      '/admin/bank-transfers': 'Bank Transfers',
-      '/admin/logs': 'System Logs',
-      '/admin/newsletter': 'Newsletter',
-      '/admin/test-connections': 'Connection Test',
     };
     return titles[path] || 'Abbaa Carraa';
   };
 
-  // Show initial loading screen first
   if (showInitialLoading) {
     return <LoadingScreen onLoadingComplete={() => setShowInitialLoading(false)} />;
   }
 
-  // Don't render anything until mounted to prevent hydration issues
   if (!mounted) {
     return null;
   }
 
-  // Show loading during router navigation
   if (routerLoading || isPending) {
     return (
       <div className="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
@@ -214,19 +193,15 @@ function MyApp({ Component, pageProps }) {
   const title = getPageTitle();
   const isAuthPage = router.pathname === '/register' || router.pathname === '/login' || router.pathname === '/auth/callback';
 
-  // Use SEO component for better meta tags
-  const seoTitle = title === 'Home' ? undefined : title;
-
-  // ✅ Wrap everything with TelegramBotClient
   return (
     <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={i18n}>
         <TelegramBotClient>
           <>
-            <SEO title={seoTitle} />
-            {/* ✅ Telegram Header Badge */}
+            <SEO title={title === 'Home' ? undefined : title} />
+            
             {isTelegram && (
-              <div className="telegram-header bg-blue-600 text-white px-4 py-1.5 text-center text-xs flex items-center justify-center gap-2 shadow-md">
+              <div className="bg-blue-600 text-white px-4 py-1.5 text-center text-xs flex items-center justify-center gap-2 shadow-md">
                 <span>📱</span>
                 <span>Connected via Telegram</span>
                 {telegramUser && (
@@ -236,6 +211,7 @@ function MyApp({ Component, pageProps }) {
                 )}
               </div>
             )}
+            
             <div className="min-h-screen flex flex-col bg-gray-50">
               {!isAuthPage && (
                 <>
