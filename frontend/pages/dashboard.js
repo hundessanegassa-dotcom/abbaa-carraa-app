@@ -1,4 +1,4 @@
-// pages/dashboard.js - Complete Dashboard with All Features Integrated
+// pages/dashboard.js - Complete Dashboard with Telegram Session Support
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
@@ -37,6 +37,7 @@ export default function Dashboard() {
   const [rotation, setRotation] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const animationRef = useRef(null);
+  const isMounted = useRef(true);
   
   const [stats, setStats] = useState({ 
     totalSpent: 0, 
@@ -60,7 +61,7 @@ export default function Dashboard() {
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [showAllTickets, setShowAllTickets] = useState(false);
   
-  const isMounted = useRef(true);
+  const [isTelegramUser, setIsTelegramUser] = useState(false);
 
   // Load language preference
   useEffect(() => {
@@ -109,22 +110,134 @@ export default function Dashboard() {
     return `perspective(800px) rotateY(${rotation}deg)`;
   };
 
+  // ============================================
+  // ✅ CHECK USER - WITH TELEGRAM SESSION SUPPORT
+  // ============================================
   async function checkUser() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      console.log('🔍 Checking user authentication...');
+      
+      // ✅ STEP 1: Check for Telegram session token
+      const telegramToken = sessionStorage.getItem('telegram_session_token');
+      const telegramUserStr = sessionStorage.getItem('telegram_user');
+      
+      console.log('📱 Telegram token exists:', !!telegramToken);
+      console.log('📱 Telegram user exists:', !!telegramUserStr);
+      
+      if (telegramToken && telegramUserStr) {
+        try {
+          const telegramUser = JSON.parse(telegramUserStr);
+          console.log('📱 Telegram user found:', telegramUser);
+          
+          // Get user ID from telegram user
+          const userId = telegramUser.id || telegramUser.userId || telegramUser.telegram_id;
+          
+          if (!userId) {
+            console.error('❌ No user ID in telegram user data');
+            router.push('/login');
+            return;
+          }
+          
+          // ✅ Set user from Telegram session
+          setIsTelegramUser(true);
+          setUser({ 
+            id: userId,
+            email: telegramUser.email || `${userId}@telegram.user`,
+            user_metadata: { 
+              full_name: telegramUser.full_name || 'Telegram User' 
+            }
+          });
+          
+          // ✅ Load profile using telegram user ID
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('telegram_id', userId)
+            .maybeSingle();
+
+          // If not found by telegram_id, try by id
+          let profile = profileData;
+          if (!profileData && !profileError) {
+            const { data: profileById } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', userId)
+              .maybeSingle();
+            profile = profileById;
+          }
+          
+          if (profile) {
+            console.log('✅ Profile found:', profile);
+            setProfile(profile);
+          } else {
+            // ✅ Create a basic profile if not exists
+            console.log('👤 Creating new profile for Telegram user...');
+            const { data: newProfile, error: createError } = await supabase
+              .from('profiles')
+              .insert({
+                id: userId,
+                telegram_id: userId,
+                full_name: telegramUser.full_name || 'Telegram User',
+                email: telegramUser.email || `${userId}@telegram.user`,
+                role: 'individual',
+                user_type: 'individual',
+                agreement_accepted: true,
+                status: 'active',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              })
+              .select()
+              .single();
+            
+            if (!createError && newProfile) {
+              console.log('✅ Profile created:', newProfile);
+              setProfile(newProfile);
+            } else {
+              console.error('❌ Error creating profile:', createError);
+            }
+          }
+          
+          // ✅ Load dashboard data
+          await loadDashboardData(userId);
+          await loadRecentActivities(userId);
+          await loadUserTickets(userId);
+          
+          setLoading(false);
+          return;
+        } catch (error) {
+          console.error('❌ Error with Telegram user:', error);
+          // Fall through to regular auth check
+        }
+      }
+      
+      // ✅ STEP 2: Check Supabase session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) throw sessionError;
+      
+      if (!session) {
+        console.log('❌ No session found, redirecting to login');
+        // Check if we have a telegram token but no user data
+        if (telegramToken) {
+          console.log('⚠️ Telegram token exists but no user data, clearing...');
+          sessionStorage.removeItem('telegram_session_token');
+          sessionStorage.removeItem('telegram_user');
+        }
         router.push('/login');
         return;
       }
       
+      console.log('✅ Supabase user found:', session.user.id);
+      
       if (!isMounted.current) return;
-      setUser(user);
+      setUser(session.user);
+      setIsTelegramUser(false);
 
       // Check if user is an agent
       const { data: agentInfo } = await supabase
         .from('agents')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', session.user.id)
         .eq('is_approved', true)
         .single();
       
@@ -136,7 +249,7 @@ export default function Dashboard() {
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('id', session.user.id)
         .maybeSingle();
 
       if (!isMounted.current) return;
@@ -147,20 +260,27 @@ export default function Dashboard() {
         return;
       }
       
-      await loadDashboardData(user.id);
-      await loadRecentActivities(user.id);
-      await loadUserTickets(user.id);
+      await loadDashboardData(session.user.id);
+      await loadRecentActivities(session.user.id);
+      await loadUserTickets(session.user.id);
       
     } catch (error) {
-      console.error('Error:', error);
+      console.error('❌ Check user error:', error);
       if (!isMounted.current) return;
+      toast.error('Failed to load dashboard');
+      router.push('/login');
     } finally {
       if (isMounted.current) setLoading(false);
     }
   }
 
+  // ============================================
+  // LOAD USER TICKETS
+  // ============================================
   async function loadUserTickets(userId) {
     try {
+      console.log('🎫 Loading tickets for user:', userId);
+      
       // 1. Load Regular Pool tickets
       const { data: regularData, error: regularError } = await supabase
         .from('regular_pool_participants')
@@ -169,6 +289,7 @@ export default function Dashboard() {
         .order('created_at', { ascending: false });
       
       if (!regularError && regularData) {
+        console.log('✅ Regular tickets loaded:', regularData.length);
         setRegularTickets(regularData);
       }
       
@@ -180,6 +301,7 @@ export default function Dashboard() {
         .order('created_at', { ascending: false });
       
       if (!merkatoError && merkatoData) {
+        console.log('✅ Merkato tickets loaded:', merkatoData.length);
         setMerkatoTickets(merkatoData);
       }
       
@@ -191,14 +313,18 @@ export default function Dashboard() {
         .order('created_at', { ascending: false });
       
       if (!cityError && cityData) {
+        console.log('✅ City tickets loaded:', cityData.length);
         setCityTickets(cityData);
       }
       
     } catch (error) {
-      console.error('Error loading tickets:', error);
+      console.error('❌ Error loading tickets:', error);
     }
   }
 
+  // ============================================
+  // LOAD DASHBOARD DATA
+  // ============================================
   async function loadDashboardData(userId) {
     try {
       const { data: contributions, error: contribError } = await supabase
@@ -334,7 +460,6 @@ export default function Dashboard() {
         .order('updated_at', { ascending: false })
         .limit(5);
 
-      // Also get VIP wins if applicable
       const { data: merkatoWins } = await supabase
         .from('merkato_vip_participants')
         .select('*')
@@ -399,7 +524,6 @@ export default function Dashboard() {
     if (totalSpent >= 10000) badgesList.push({ name: 'Big Spender', nameAm: 'ታላቅ አበርካች', icon: '💰', color: 'bg-green-100 text-green-700' });
     if (profile?.referral_count >= 5) badgesList.push({ name: 'Super Referrer', nameAm: 'ከፍተኛ አመላካች', icon: '🤝', color: 'bg-orange-100 text-orange-700' });
     
-    // VIP participant badges
     const hasMerkato = await supabase.from('merkato_vip_participants').select('id').eq('user_id', userId).limit(1);
     if (hasMerkato.data?.length > 0) {
       badgesList.push({ name: 'Merkato VIP', nameAm: 'መርካቶ VIP', icon: '🏪', color: 'bg-yellow-100 text-yellow-700' });
@@ -433,7 +557,7 @@ export default function Dashboard() {
   }
   
   const isProfileIncomplete = !profile?.phone || !profile?.location || !profile?.address;
-  const firstName = profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'User';
+  const firstName = profile?.full_name?.split(' ')[0] || user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'User';
 
   // Combine ALL THREE ticket types
   const allTickets = [
@@ -558,6 +682,11 @@ export default function Dashboard() {
           <div>
             <h2 className="text-2xl font-bold text-gray-800">Welcome back, {firstName}! 👋</h2>
             <p className="text-gray-500 mt-1">Here's what's happening with your pools today.</p>
+            {isTelegramUser && (
+              <div className="mt-1 inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
+                📱 Connected via Telegram
+              </div>
+            )}
           </div>
           
           {isProfileIncomplete && (
