@@ -1,4 +1,4 @@
-// pages/dashboard.js - Complete Dashboard with Simplified Profile Creation
+// pages/dashboard.js - Fixed Telegram Authentication
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
@@ -53,7 +53,6 @@ export default function Dashboard() {
   const [badges, setBadges] = useState([]);
   const [language, setLanguage] = useState('am');
   
-  // Ticket states for ALL THREE types
   const [regularTickets, setRegularTickets] = useState([]);
   const [merkatoTickets, setMerkatoTickets] = useState([]);
   const [cityTickets, setCityTickets] = useState([]);
@@ -111,7 +110,104 @@ export default function Dashboard() {
   };
 
   // ============================================
-  // CHECK USER - SIMPLIFIED VERSION
+  // CREATE TELEGRAM USER IN SUPABASE AUTH
+  // ============================================
+  async function createTelegramUser(telegramUser) {
+    try {
+      const userId = telegramUser.id || telegramUser.userId || telegramUser.telegram_id;
+      const email = telegramUser.email || `${userId}@telegram.user`;
+      const fullName = telegramUser.full_name || 'Telegram User';
+      
+      console.log('🔐 Creating Supabase user for Telegram ID:', userId);
+      
+      // ✅ STEP 1: Try to sign in the user (if they already exist)
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: `telegram_${userId}_${process.env.NEXT_PUBLIC_TELEGRAM_SECRET || 'default_secret'}`
+      });
+      
+      if (!signInError && signInData.user) {
+        console.log('✅ User already exists, logged in successfully');
+        return signInData.user;
+      }
+      
+      // ✅ STEP 2: User doesn't exist, create them
+      console.log('👤 Creating new user in Supabase Auth...');
+      
+      // Generate a secure password
+      const password = `telegram_${userId}_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+      
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          data: {
+            full_name: fullName,
+            telegram_id: userId,
+            telegram_username: telegramUser.username || '',
+            email_verified: true, // Mark as verified since it's from Telegram
+          }
+        }
+      });
+      
+      if (signUpError) {
+        console.error('❌ Sign up error:', signUpError);
+        
+        // If user already exists but signIn failed, try to sign in again with a different approach
+        if (signUpError.message.includes('already registered')) {
+          const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: `telegram_${userId}_${process.env.NEXT_PUBLIC_TELEGRAM_SECRET || 'default_secret'}`
+          });
+          
+          if (!retryError && retryData.user) {
+            console.log('✅ User logged in on retry');
+            return retryData.user;
+          }
+        }
+        
+        // If all fails, try to create user with admin API (if you have server access)
+        // Or throw error to be handled by caller
+        throw new Error(`Failed to create user: ${signUpError.message}`);
+      }
+      
+      if (!signUpData.user) {
+        throw new Error('No user returned from signup');
+      }
+      
+      console.log('✅ User created in Supabase Auth:', signUpData.user.id);
+      
+      // ✅ STEP 3: Create the profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: signUpData.user.id,
+          email: email,
+          full_name: fullName,
+          role: 'individual',
+          telegram_id: userId,
+          telegram_username: telegramUser.username || '',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+      
+      if (profileError) {
+        console.error('❌ Profile creation error:', profileError);
+        // Continue anyway - we can try to create profile later
+      } else {
+        console.log('✅ Profile created successfully');
+      }
+      
+      return signUpData.user;
+      
+    } catch (error) {
+      console.error('❌ Error in createTelegramUser:', error);
+      throw error;
+    }
+  }
+
+  // ============================================
+  // CHECK USER - UPDATED VERSION
   // ============================================
   async function checkUser() {
     try {
@@ -137,110 +233,100 @@ export default function Dashboard() {
             return;
           }
           
-          // ✅ Set user state
-          setIsTelegramUser(true);
-          setUser({ 
-            id: userId,
-            email: telegramUser.email || `${userId}@telegram.user`,
-            user_metadata: { 
-              full_name: telegramUser.full_name || 'Telegram User' 
-            }
-          });
-          
-          // ✅ Check if profile exists
-          let { data: profile, error: findError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('telegram_id', userId)
-            .maybeSingle();
-          
-          // If not found by telegram_id, try by id
-          if (!profile) {
-            const { data: profileById } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', userId)
-              .maybeSingle();
-            profile = profileById;
-          }
-          
-          if (profile) {
-            console.log('✅ Profile found:', profile);
-            setProfile(profile);
-            
-            // Load dashboard data
-            await loadDashboardData(profile.id);
-            await loadRecentActivities(profile.id);
-            await loadUserTickets(profile.id);
-            
-            setLoading(false);
+          // ✅ STEP 2: Create or login user in Supabase
+          let supabaseUser;
+          try {
+            supabaseUser = await createTelegramUser(telegramUser);
+          } catch (authError) {
+            console.error('❌ Auth error:', authError);
+            toast.error('Failed to authenticate with Telegram. Please try again.');
+            router.push('/login');
             return;
           }
           
-          // ✅ Create new profile - SIMPLIFIED APPROACH
-          console.log('👤 Creating new profile...');
+          if (!supabaseUser) {
+            throw new Error('No user returned from authentication');
+          }
           
-          // Insert profile with minimal required fields
-          const { data: newProfile, error: insertError } = await supabase
+          // ✅ STEP 3: Set user state
+          setIsTelegramUser(true);
+          setUser(supabaseUser);
+          
+          // ✅ STEP 4: Get or create profile
+          let { data: profile, error: findError } = await supabase
             .from('profiles')
-            .insert({
-              id: userId,
-              email: telegramUser.email || `${userId}@telegram.user`,
-              full_name: telegramUser.full_name || 'Telegram User',
-              role: 'individual',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            })
-            .select()
-            .single();
+            .select('*')
+            .eq('id', supabaseUser.id)
+            .maybeSingle();
           
-          if (insertError) {
-            console.error('❌ Insert error:', insertError);
-            
-            // Try upsert as fallback
-            const { data: upsertProfile, error: upsertError } = await supabase
+          if (findError) {
+            console.error('❌ Error finding profile:', findError);
+          }
+          
+          // If profile doesn't exist, create it
+          if (!profile) {
+            console.log('👤 Creating profile for user...');
+            const { data: newProfile, error: insertError } = await supabase
               .from('profiles')
-              .upsert({
-                id: userId,
-                email: telegramUser.email || `${userId}@telegram.user`,
-                full_name: telegramUser.full_name || 'Telegram User',
+              .insert({
+                id: supabaseUser.id,
+                email: supabaseUser.email || telegramUser.email || `${userId}@telegram.user`,
+                full_name: telegramUser.full_name || supabaseUser.user_metadata?.full_name || 'Telegram User',
                 role: 'individual',
+                telegram_id: userId,
+                telegram_username: telegramUser.username || '',
+                created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
               })
               .select()
               .single();
             
-            if (upsertError) {
-              console.error('❌ Upsert also failed:', upsertError);
-              toast.error('Failed to create profile. Please contact support.');
-              router.push('/login');
-              return;
+            if (insertError) {
+              console.error('❌ Profile insert error:', insertError);
+              // Try upsert as fallback
+              const { data: upsertProfile, error: upsertError } = await supabase
+                .from('profiles')
+                .upsert({
+                  id: supabaseUser.id,
+                  email: supabaseUser.email || telegramUser.email || `${userId}@telegram.user`,
+                  full_name: telegramUser.full_name || supabaseUser.user_metadata?.full_name || 'Telegram User',
+                  role: 'individual',
+                  telegram_id: userId,
+                  telegram_username: telegramUser.username || '',
+                  updated_at: new Date().toISOString()
+                })
+                .select()
+                .single();
+              
+              if (upsertError) {
+                console.error('❌ Upsert also failed:', upsertError);
+                // Continue anyway - we'll try to create profile later
+                profile = { id: supabaseUser.id, full_name: 'Telegram User' };
+              } else {
+                console.log('✅ Profile created via upsert:', upsertProfile);
+                profile = upsertProfile;
+              }
+            } else {
+              console.log('✅ Profile created:', newProfile);
+              profile = newProfile;
             }
-            
-            console.log('✅ Profile created via upsert:', upsertProfile);
-            setProfile(upsertProfile);
-            
-            await loadDashboardData(upsertProfile.id);
-            await loadRecentActivities(upsertProfile.id);
-            await loadUserTickets(upsertProfile.id);
-            
-            setLoading(false);
-            return;
           }
           
-          console.log('✅ Profile created successfully:', newProfile);
-          setProfile(newProfile);
+          setProfile(profile || {});
           
-          await loadDashboardData(newProfile.id);
-          await loadRecentActivities(newProfile.id);
-          await loadUserTickets(newProfile.id);
+          // ✅ STEP 5: Load dashboard data
+          await loadDashboardData(supabaseUser.id);
+          await loadRecentActivities(supabaseUser.id);
+          await loadUserTickets(supabaseUser.id);
           
           setLoading(false);
           return;
           
         } catch (error) {
           console.error('❌ Telegram user error:', error);
-          // Fall through to regular auth
+          toast.error('Failed to authenticate with Telegram. Please try again.');
+          router.push('/login');
+          return;
         }
       }
       
