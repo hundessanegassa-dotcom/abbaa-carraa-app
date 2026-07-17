@@ -1,4 +1,4 @@
-// pages/auth/callback.js - COMPLETE WITH TELEGRAM LOGIN
+// pages/auth/callback.js - COMPLETE WORKING VERSION
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
@@ -13,7 +13,6 @@ export default function AuthCallback() {
   const [error, setError] = useState(null);
   const [processingComplete, setProcessingComplete] = useState(false);
 
-  // Get stored redirect URL
   const getStoredRedirectUrl = () => {
     let redirectUrl = localStorage.getItem('abbaa_redirect_after_login');
     if (redirectUrl) {
@@ -61,7 +60,8 @@ export default function AuthCallback() {
       return;
     }
     
-    router.push('/listings');
+    // ✅ Default redirect to dashboard
+    router.push('/dashboard');
   }, [router]);
 
   const createOrUpdateProfile = useCallback(async (session, role) => {
@@ -111,7 +111,7 @@ export default function AuthCallback() {
     }
   }, []);
 
-  // ✅ Handle Telegram Login
+  // ✅ Handle Telegram Login - COMPLETE
   const handleTelegramLogin = useCallback(async (token, telegramId) => {
     console.log('📱 Processing Telegram login...');
     console.log('📱 Token:', token?.substring(0, 30) + '...');
@@ -121,6 +121,7 @@ export default function AuthCallback() {
     setError(null);
     
     try {
+      // ✅ Call the API to verify token
       const response = await fetch('/api/auth/telegram-login', {
         method: 'POST',
         headers: { 
@@ -150,7 +151,7 @@ export default function AuthCallback() {
 
       toast.success('Login successful! 🎉');
       
-      // ✅ Check for redirect URL
+      // ✅ Redirect to dashboard
       const redirectUrl = getStoredRedirectUrl();
       if (redirectUrl) {
         window.location.href = redirectUrl;
