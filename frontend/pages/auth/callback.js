@@ -1,4 +1,4 @@
-// pages/auth/callback.js - COMPLETE WITH TELEGRAM LOGIN SUPPORT
+// pages/auth/callback.js - FIXED WITH BETTER ERROR HANDLING
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
@@ -15,13 +15,11 @@ export default function AuthCallback() {
 
   // Get stored redirect URL
   const getStoredRedirectUrl = () => {
-    // Check localStorage first (set by pool pages)
     let redirectUrl = localStorage.getItem('abbaa_redirect_after_login');
     if (redirectUrl) {
       localStorage.removeItem('abbaa_redirect_after_login');
       return redirectUrl;
     }
-    // Check sessionStorage
     redirectUrl = sessionStorage.getItem('redirectAfterLogin');
     if (redirectUrl) {
       sessionStorage.removeItem('redirectAfterLogin');
@@ -52,24 +50,20 @@ export default function AuthCallback() {
     sessionStorage.removeItem('pendingCity');
   };
 
-  // Handle the final redirect
   const handleFinalRedirect = useCallback(async (redirectUrl, isPoolVip) => {
     console.log('🔴 Final redirect - URL:', redirectUrl, 'IsPoolVip:', isPoolVip);
     
     clearStoredData();
     
-    // CRITICAL: Pool/VIP redirect has HIGHEST priority
     if (redirectUrl) {
       console.log('🎯 Redirecting to pool/VIP:', redirectUrl);
       window.location.href = redirectUrl;
       return;
     }
     
-    // Default for individuals - go to listings
     router.push('/listings');
   }, [router]);
 
-  // Create or update user profile
   const createOrUpdateProfile = useCallback(async (session, role) => {
     const { data: existingProfile } = await supabase
       .from('profiles')
@@ -78,7 +72,6 @@ export default function AuthCallback() {
       .maybeSingle();
     
     if (existingProfile) {
-      // Update existing profile if needed
       if (!existingProfile.agreement_accepted) {
         await supabase
           .from('profiles')
@@ -95,7 +88,6 @@ export default function AuthCallback() {
       }
       return existingProfile;
     } else {
-      // Create new profile
       const { data: newProfile, error } = await supabase
         .from('profiles')
         .insert({
@@ -104,7 +96,7 @@ export default function AuthCallback() {
           full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
           role: role,
           user_type: role,
-          agreement_accepted: role === 'individual' ? true : false, // Individuals auto-accept
+          agreement_accepted: role === 'individual' ? true : false,
           agreement_accepted_at: role === 'individual' ? new Date().toISOString() : null,
           agreement_version: role === 'individual' ? '1.0' : null,
           status: role === 'individual' ? 'active' : 'pending_approval',
@@ -121,23 +113,32 @@ export default function AuthCallback() {
 
   // ✅ Handle Telegram Login
   const handleTelegramLogin = useCallback(async (token, telegramId) => {
-    console.log('📱 Processing Telegram login...');
+    console.log('📱 Processing Telegram login...', { token: token?.substring(0, 20), telegramId });
+    setLoading(true);
+    setError(null);
     
     try {
-      // Verify token with backend
+      // ✅ Verify token with backend
       const response = await fetch('/api/auth/telegram-login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, telegram_id: telegramId })
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          token, 
+          telegram_id: telegramId 
+        })
       });
 
+      console.log('📡 API Response status:', response.status);
       const result = await response.json();
-      
-      if (!result.success) {
+      console.log('📡 API Response:', result);
+
+      if (!response.ok || !result.success) {
         throw new Error(result.error || 'Telegram login failed');
       }
 
-      // Store session token
+      // ✅ Store session token
       sessionStorage.setItem('telegram_session_token', result.sessionToken);
       sessionStorage.setItem('telegram_user', JSON.stringify({
         id: telegramId,
@@ -146,61 +147,53 @@ export default function AuthCallback() {
 
       toast.success('Login successful! 🎉');
       
-      // Check for redirect URL
+      // ✅ Check for redirect URL
       const redirectUrl = getStoredRedirectUrl();
       if (redirectUrl) {
         window.location.href = redirectUrl;
         return;
       }
       
-      // Redirect to dashboard
+      // ✅ Redirect to dashboard
       router.push('/dashboard');
       
     } catch (error) {
-      console.error('Telegram login error:', error);
+      console.error('❌ Telegram login error:', error);
+      setError(error.message);
       toast.error(error.message || 'Telegram login failed');
-      router.push('/login');
+      // ✅ Redirect to login page after error
+      setTimeout(() => router.push('/login'), 2000);
+    } finally {
+      setLoading(false);
     }
   }, [router]);
 
-  // Process individual user (no agreement needed)
+  // Process individual user
   const processIndividualUser = useCallback(async (session, redirectUrl, isPoolVip) => {
-    console.log('👤 Processing INDIVIDUAL user - No agreement needed');
-    
-    // Create/update profile with individual role
+    console.log('👤 Processing INDIVIDUAL user');
     await createOrUpdateProfile(session, 'individual');
-    
     toast.success('Welcome to Abbaa Carraa!');
     await new Promise(resolve => setTimeout(resolve, 500));
-    
     await handleFinalRedirect(redirectUrl, isPoolVip);
   }, [createOrUpdateProfile, handleFinalRedirect]);
 
-  // Process partner user (needs agreement)
+  // Process partner user
   const processPartnerUser = useCallback(async (session, role, redirectUrl) => {
     console.log('🤝 Processing PARTNER user - Role:', role);
-    
-    // Create profile first (without agreement accepted)
     await createOrUpdateProfile(session, role);
-    
-    // Show agreement modal
     setShowAgreement(true);
     setLoading(false);
   }, [createOrUpdateProfile]);
 
-  // Handle agreement acceptance for partners
   const handleAcceptAgreement = useCallback(async () => {
     setLoading(true);
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
       if (sessionError) throw sessionError;
       if (!session) throw new Error('No session found');
       
       const pendingRole = localStorage.getItem('pendingRole') || sessionStorage.getItem('pendingRole') || 'individual';
-      const redirectUrl = getStoredRedirectUrl();
       
-      // Update profile with agreement accepted
       await supabase
         .from('profiles')
         .update({
@@ -216,8 +209,6 @@ export default function AuthCallback() {
       await new Promise(resolve => setTimeout(resolve, 500));
       
       clearStoredData();
-      
-      // Redirect to partner application form
       router.push(`/become-${pendingRole}`);
       
     } catch (err) {
@@ -242,9 +233,10 @@ export default function AuthCallback() {
       try {
         // ✅ Check for Telegram login token first
         const { token, telegram_id } = router.query;
+        console.log('🔍 Router query:', { token: token?.substring(0, 20), telegram_id });
         
         if (token && telegram_id) {
-          console.log('📱 Telegram login detected');
+          console.log('📱 Telegram login detected!');
           await handleTelegramLogin(token, telegram_id);
           return;
         }
@@ -254,7 +246,6 @@ export default function AuthCallback() {
         const isPoolVip = isPoolOrVipRedirect(redirectUrl);
         
         console.log('🟢 Callback - Redirect URL:', redirectUrl);
-        console.log('🟢 Callback - Is Pool/VIP redirect:', isPoolVip);
 
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
@@ -266,27 +257,22 @@ export default function AuthCallback() {
           return;
         }
 
-        // Get pending role (default to individual)
         let pendingRole = localStorage.getItem('pendingRole') || sessionStorage.getItem('pendingRole') || 'individual';
         
-        // If this is a pool/VIP redirect, force role to INDIVIDUAL
         if (isPoolVip) {
           pendingRole = 'individual';
           console.log('🎯 Pool/VIP redirect - Forcing role to individual');
         }
         
-        // Check if user already has a profile
         const { data: existingProfile } = await supabase
           .from('profiles')
           .select('role, agreement_accepted')
           .eq('id', session.user.id)
           .maybeSingle();
 
-        // If user already exists and has agreement accepted
         if (existingProfile?.agreement_accepted === true) {
           console.log('✅ Existing user with agreement accepted');
           
-          // Check for redirect URL FIRST
           if (redirectUrl) {
             console.log('🎯 Existing user - Redirecting to pool/VIP:', redirectUrl);
             clearStoredData();
@@ -296,24 +282,19 @@ export default function AuthCallback() {
           
           clearStoredData();
           
-          // Partners go to their dashboard
           if (existingProfile.role !== 'individual') {
             router.push(`/${existingProfile.role}/dashboard`);
             return;
           }
           
-          // Individuals go to listings
           router.push('/listings');
           return;
         }
 
-        // NEW USER or USER WITHOUT AGREEMENT
         if (isMounted) {
           if (pendingRole === 'individual') {
-            // INDIVIDUAL - No agreement needed, process immediately
             await processIndividualUser(session, redirectUrl, isPoolVip);
           } else {
-            // PARTNER - Needs agreement
             await processPartnerUser(session, pendingRole, redirectUrl);
           }
         }
@@ -367,7 +348,6 @@ export default function AuthCallback() {
     return <LoadingSpinner fullPage message="Completing sign in..." />;
   }
 
-  // Show agreement ONLY for partners (agents/vendors/organizations)
   if (showAgreement) {
     const pendingRole = localStorage.getItem('pendingRole') || sessionStorage.getItem('pendingRole') || 'individual';
     return (
