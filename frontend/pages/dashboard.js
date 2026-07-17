@@ -1,4 +1,4 @@
-// pages/dashboard.js - Complete Dashboard with Telegram Session Support
+// pages/dashboard.js - Complete Dashboard with Simplified Profile Creation
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
@@ -111,13 +111,13 @@ export default function Dashboard() {
   };
 
   // ============================================
-  // CHECK USER - WITH TELEGRAM SESSION SUPPORT
+  // CHECK USER - SIMPLIFIED VERSION
   // ============================================
   async function checkUser() {
     try {
       console.log('🔍 Checking user authentication...');
       
-      // ✅ STEP 1: Check for Telegram session token
+      // ✅ STEP 1: Check for Telegram session
       const telegramToken = sessionStorage.getItem('telegram_session_token');
       const telegramUserStr = sessionStorage.getItem('telegram_user');
       
@@ -127,18 +127,17 @@ export default function Dashboard() {
       if (telegramToken && telegramUserStr) {
         try {
           const telegramUser = JSON.parse(telegramUserStr);
-          console.log('📱 Telegram user found:', telegramUser);
+          console.log('📱 Telegram user data:', telegramUser);
           
-          // Get user ID from telegram user
           const userId = telegramUser.id || telegramUser.userId || telegramUser.telegram_id;
           
           if (!userId) {
-            console.error('❌ No user ID in telegram user data');
+            console.error('❌ No user ID found');
             router.push('/login');
             return;
           }
           
-          // ✅ Set user from Telegram session
+          // ✅ Set user state
           setIsTelegramUser(true);
           setUser({ 
             id: userId,
@@ -148,62 +147,28 @@ export default function Dashboard() {
             }
           });
           
-          // ✅ FIRST: Try to find existing profile
-          let profile = null;
-          
-          // Try by telegram_id
-          const { data: profileByTelegramId, error: findTelegramError } = await supabase
+          // ✅ Check if profile exists
+          let { data: profile, error: findError } = await supabase
             .from('profiles')
             .select('*')
             .eq('telegram_id', userId)
             .maybeSingle();
           
-          if (!findTelegramError && profileByTelegramId) {
-            console.log('✅ Profile found by telegram_id:', profileByTelegramId);
-            profile = profileByTelegramId;
-          }
-          
-          // If not found, try by id
+          // If not found by telegram_id, try by id
           if (!profile) {
-            const { data: profileById, error: findIdError } = await supabase
+            const { data: profileById } = await supabase
               .from('profiles')
               .select('*')
               .eq('id', userId)
               .maybeSingle();
-            
-            if (!findIdError && profileById) {
-              console.log('✅ Profile found by id:', profileById);
-              profile = profileById;
-            }
+            profile = profileById;
           }
           
-          // If profile exists, update it and continue
           if (profile) {
-            console.log('✅ Existing profile found, updating...');
+            console.log('✅ Profile found:', profile);
+            setProfile(profile);
             
-            // Update profile with latest info
-            const { error: updateError } = await supabase
-              .from('profiles')
-              .update({
-                telegram_id: userId,
-                telegram_username: telegramUser.username || null,
-                full_name: telegramUser.full_name || profile.full_name,
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', profile.id);
-            
-            if (updateError) {
-              console.error('❌ Error updating profile:', updateError);
-            } else {
-              console.log('✅ Profile updated successfully');
-              setProfile({ ...profile, ...updateError ? {} : { 
-                telegram_id: userId,
-                telegram_username: telegramUser.username || null,
-                full_name: telegramUser.full_name || profile.full_name 
-              }});
-            }
-            
-            // ✅ Load dashboard data
+            // Load dashboard data
             await loadDashboardData(profile.id);
             await loadRecentActivities(profile.id);
             await loadUserTickets(profile.id);
@@ -212,114 +177,88 @@ export default function Dashboard() {
             return;
           }
           
-          // ✅ NO PROFILE EXISTS - Create a new one
-          console.log('👤 Creating new profile for Telegram user...');
+          // ✅ Create new profile - SIMPLIFIED APPROACH
+          console.log('👤 Creating new profile...');
           
-          // Try to create profile with upsert to avoid conflicts
-          const { data: newProfile, error: createError } = await supabase
+          // Insert profile with minimal required fields
+          const { data: newProfile, error: insertError } = await supabase
             .from('profiles')
-            .upsert({
+            .insert({
               id: userId,
-              telegram_id: userId,
-              telegram_username: telegramUser.username || null,
-              full_name: telegramUser.full_name || 'Telegram User',
               email: telegramUser.email || `${userId}@telegram.user`,
-              phone: telegramUser.phone_number || '',
-              language: 'en',
+              full_name: telegramUser.full_name || 'Telegram User',
               role: 'individual',
-              user_type: 'individual',
-              agreement_accepted: true,
-              status: 'active',
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
-            }, { 
-              onConflict: 'id'
             })
             .select()
             .single();
           
-          if (createError) {
-            console.error('❌ Error creating profile via upsert:', createError);
+          if (insertError) {
+            console.error('❌ Insert error:', insertError);
             
-            // Try one more time with a different approach - just insert
-            const { data: insertProfile, error: insertError } = await supabase
+            // Try upsert as fallback
+            const { data: upsertProfile, error: upsertError } = await supabase
               .from('profiles')
-              .insert({
+              .upsert({
                 id: userId,
-                telegram_id: userId,
-                telegram_username: telegramUser.username || null,
-                full_name: telegramUser.full_name || 'Telegram User',
                 email: telegramUser.email || `${userId}@telegram.user`,
-                phone: telegramUser.phone_number || '',
-                language: 'en',
+                full_name: telegramUser.full_name || 'Telegram User',
                 role: 'individual',
-                user_type: 'individual',
-                agreement_accepted: true,
-                status: 'active',
-                created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
               })
               .select()
               .single();
             
-            if (insertError) {
-              console.error('❌ Insert also failed:', insertError);
-              toast.error('Failed to create profile. Please try again.');
+            if (upsertError) {
+              console.error('❌ Upsert also failed:', upsertError);
+              toast.error('Failed to create profile. Please contact support.');
               router.push('/login');
               return;
             }
             
-            console.log('✅ Profile created via insert:', insertProfile);
-            setProfile(insertProfile);
+            console.log('✅ Profile created via upsert:', upsertProfile);
+            setProfile(upsertProfile);
             
-            // Load dashboard data
-            await loadDashboardData(insertProfile.id);
-            await loadRecentActivities(insertProfile.id);
-            await loadUserTickets(insertProfile.id);
+            await loadDashboardData(upsertProfile.id);
+            await loadRecentActivities(upsertProfile.id);
+            await loadUserTickets(upsertProfile.id);
             
             setLoading(false);
             return;
           }
           
-          console.log('✅ Profile created via upsert:', newProfile);
+          console.log('✅ Profile created successfully:', newProfile);
           setProfile(newProfile);
           
-          // ✅ Load dashboard data
           await loadDashboardData(newProfile.id);
           await loadRecentActivities(newProfile.id);
           await loadUserTickets(newProfile.id);
           
           setLoading(false);
           return;
+          
         } catch (error) {
-          console.error('❌ Error with Telegram user:', error);
-          // Fall through to regular auth check
+          console.error('❌ Telegram user error:', error);
+          // Fall through to regular auth
         }
       }
       
-      // ✅ STEP 2: Check Supabase session
+      // ✅ STEP 2: Regular Supabase auth
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) throw sessionError;
       
       if (!session) {
-        console.log('❌ No session found, redirecting to login');
-        // Check if we have a telegram token but no user data
-        if (telegramToken) {
-          console.log('⚠️ Telegram token exists but no user data, clearing...');
-          sessionStorage.removeItem('telegram_session_token');
-          sessionStorage.removeItem('telegram_user');
-        }
+        console.log('❌ No session, redirecting to login');
         router.push('/login');
         return;
       }
       
-      console.log('✅ Supabase user found:', session.user.id);
-      
-      if (!isMounted.current) return;
+      console.log('✅ Supabase user:', session.user.id);
       setUser(session.user);
       setIsTelegramUser(false);
-
+      
       // Check if user is an agent
       const { data: agentInfo } = await supabase
         .from('agents')
@@ -332,14 +271,34 @@ export default function Dashboard() {
         setIsAgent(true);
         setAgentData(agentInfo);
       }
-
-      const { data: profile } = await supabase
+      
+      // Get or create profile
+      let { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
         .maybeSingle();
-
-      if (!isMounted.current) return;
+      
+      if (!profile) {
+        // Create profile for regular user
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: session.user.id,
+            email: session.user.email,
+            full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
+            role: 'individual',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+        
+        if (!createError && newProfile) {
+          profile = newProfile;
+        }
+      }
+      
       setProfile(profile || {});
       
       if (profile && profile.agreement_accepted !== true) {
@@ -353,7 +312,6 @@ export default function Dashboard() {
       
     } catch (error) {
       console.error('❌ Check user error:', error);
-      if (!isMounted.current) return;
       toast.error('Failed to load dashboard');
       router.push('/login');
     } finally {
