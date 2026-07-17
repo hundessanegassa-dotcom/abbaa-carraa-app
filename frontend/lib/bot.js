@@ -1,4 +1,4 @@
-// lib/bot.js - COMPLETE FIXED VERSION
+// lib/bot.js - COMPLETE WITH CORRECTED TRANSLATIONS
 import { Telegraf } from 'telegraf';
 import { supabase } from './supabase';
 
@@ -11,36 +11,30 @@ if (!BOT_TOKEN) {
 export const bot = BOT_TOKEN ? new Telegraf(BOT_TOKEN) : null;
 
 // ============================================
-// COMPLETE TRANSLATIONS
+// COMPLETE TRANSLATIONS - CORRECTED
 // ============================================
 const TRANSLATIONS = {
   en: {
     welcome: "🌟 *Welcome to Abbaa Carraa!*\n\n🏆 *Ethiopia's #1 Prize Platform*\n\n🚗 Win Cars\n🏠 Win Houses\n💰 Win Cash up to 10M ETB\n🏭 Win Machinery\n💻 Win Electronics\n\n💚 *2% Supports* Kidney & Heart Patients\n\n🎯 *Ready to win? Let's get started!*",
-    
     language_select: "🌐 *Choose Your Language*\n\nPlease select your preferred language:",
     language_set: "✅ Language set to English! 🎉",
-    
     ask_name: "📝 *What is your full name?*\n\nPlease enter your full name:",
     ask_phone: "📱 *What is your phone number?*\n\nExample: 0912345678",
     name_received: "✅ Thank you! Now please share your phone number:",
     phone_received: "✅ Thank you! Your profile is complete! 🎉",
-    
     main_menu: "👋 *Welcome {name}!*\n\n🎯 *Choose an option below:*",
-    
-    programs: "🎯 *Abbaa Carraa Programs*\n\n*Choose your winning path:*\n\n1️⃣ 🚀 *Open Abbaa Carraa App*\nStart your journey now!\n\n2️⃣ 🏊 *Regular Pools*\n🚗 Cars • 🏠 Houses • 🏭 Machinery • 💻 Electronics\n💵 From 100 ETB\n\n3️⃣ 🏙️ *City VIP*\n💰 Win Cash up to 10M ETB\n📅 Daily • Weekly • Monthly Draws\n🎟️ 5 Tiers Available\n\n4️⃣ 🏪 *Merkato VIP*\n💰 Win Cash up to 10M ETB\n📅 Daily • Weekly • Monthly Draws\n🎟️ 5 Tiers Available\n\n5️⃣ 🤝 *Partner Program*\n💰 Earn 10% Commission\n👥 Refer customers • Create pools\n\n👇 *Select a program below:*",
-    
+    programs: "🎯 *Abbaa Carraa Programs*\n\n*Choose your winning path:*\n\n1️⃣ 🚀 *Open Abbaa Carraa App*\nStart your journey now!\n\n2️⃣ 🏊 *Regular Pools*\n🚗 Cars • 🏠 Houses • 🏭 Machinery • 💻 Electronics\n💵 From 100 ETB\n\n3️⃣ 🏙️ *City VIP*\n💰 Win Cash up to 10M ETB\n📅 Daily • Weekly • Monthly Draws\n🎟️ 5 Tiers Available\n\n4️⃣ 🏪 *Merkato VIP*\n💰 Win Cash up to 10M ETB\n📅 Daily • Weekly • Monthly Draws\n🎟️ 5 Tiers Available\n\n5️⃣ 🤝 *Partner Program*\n💰 Earn 10% Commission\n👥 Refer customers • Create pools",
     program_1: "🚀 *Open Abbaa Carraa App*\n\nStart your winning journey now!\n\n👇 Click below to open the app:",
-    program_2: "🏊 *Join Regular Pools*\n\n🚗 Win Cars\n🏠 Win Houses\n🏭 Win Machinery\n💻 Win Electronics\n\n💵 Entry from 100 ETB\n🎁 Amazing prizes await!\n\n👇 Join now:",
-    program_3: "🏙️ *Join City VIP*\n\n📍 Win in your city!\n💰 Up to 10M ETB Cash\n📅 Daily • Weekly • Monthly\n🎟️ 5 Tiers\n\n👇 Join now:",
-    program_4: "🏪 *Join Merkato VIP*\n\n💰 Up to 10M ETB Cash\n📅 Daily • Weekly • Monthly\n🎟️ 5 Tiers: Silver • Gold • Platinum • Diamond • Royal\n\n👇 Join now:",
-    program_5: "🤝 *Join Partner Program*\n\n💰 Earn 10% Commission\n\n• Agents: Refer customers\n• Vendors: Create pools\n• Organizations: Member pools\n\n👇 Apply now:",
-    
-    winners: "🏆 *Recent Winners*\n\n",
+    program_2: "🏊 *Join Regular Pools*\n\n🚗 Win Cars\n🏠 Win Houses\n🏭 Win Machinery\n💻 Win Electronics\n\n💵 Entry from 100 ETB\n🎁 Amazing prizes await!",
+    program_3: "🏙️ *Join City VIP*\n\n📍 Win in your city!\n💰 Up to 10M ETB Cash\n📅 Daily • Weekly • Monthly\n🎟️ 5 Tiers",
+    program_4: "🏪 *Join Merkato VIP*\n\n💰 Up to 10M ETB Cash\n📅 Daily • Weekly • Monthly\n🎟️ 5 Tiers: Silver • Gold • Platinum • Diamond • Royal",
+    program_5: "🤝 *Join Partner Program*\n\n💰 Earn 10% Commission\n\n• Agents: Refer customers\n• Vendors: Create pools\n• Organizations: Member pools",
+    winners: "🏆 *Recent Winners*",
+    no_winners: "No winners yet. Be the first! 🎯",
     how_it_works: "📖 *How It Works*\n\n1️⃣ Choose a program\n2️⃣ Pick your tier\n3️⃣ Select seats\n4️⃣ Pay & win! 🎉",
     support: "📞 *Contact Support*\n\n📧 hundessanegassa@gmail.com\n📱 0930330323, 0913 277 922",
-    tickets: "🎫 *Your Tickets*\n\n",
+    tickets: "🎫 *Your Tickets*",
     no_tickets: "📭 *No tickets yet.*\n\nJoin a program to start winning! 🎯",
-    
     back: "🔙 Back",
     open_app: "🚀 Open App",
     dashboard: "📊 Dashboard",
@@ -48,34 +42,28 @@ const TRANSLATIONS = {
     apply_now: "🤝 Apply Now",
     view_winners: "🏆 View Winners"
   },
-  
+
   am: {
     welcome: "🌟 *እንኳን ወደ Abbaa Carraa በደህና መጡ!*\n\n🏆 *የኢትዮጵያ ቀዳሚ የሽልማት መድረክ*\n\n🚗 መኪናዎች ያሸንፉ\n🏠 ቤቶች ያሸንፉ\n💰 እስከ 10M ብር ያሸንፉ\n🏭 ማሽነሪዎች ያሸንፉ\n💻 ኤሌክትሮኒክስ ያሸንፉ\n\n💚 *2% ለጤና* የኩላሊት እና የልብ ህመምተኞችን ይደግፋል\n\n🎯 *ለማሸነፍ ዝግጁ? እንጀምር!*",
-    
     language_select: "🌐 *ቋንቋዎን ይምረጡ*\n\nእባክዎ የሚመርጡትን ቋንቋ ይምረጡ:",
     language_set: "✅ ቋንቋ ወደ አማርኛ ተቀይሯል! 🎉",
-    
     ask_name: "📝 *ሙሉ ስምዎ ምንድነው?*\n\nእባክዎ ሙሉ ስምዎን ያስገቡ:",
     ask_phone: "📱 *ስልክ ቁጥርዎ ምንድነው?*\n\nለምሳሌ: 0912345678",
     name_received: "✅ እናመሰግናለን! አሁን ስልክ ቁጥርዎን ያጋሩ:",
     phone_received: "✅ እናመሰግናለን! መገለጫዎ ተጠናቋል! 🎉",
-    
     main_menu: "👋 *እንኳን ደህና መጡ {name}!*\n\n🎯 *ከታች ያለውን ይምረጡ:*",
-    
-    programs: "🎯 *የአባካራ ፕሮግራሞች*\n\n*የማሸነፍ መንገድዎን ይምረጡ:*\n\n1️⃣ 🚀 *አባካራ መተግበሪያ ይክፈቱ*\nጉዞዎን አሁን ይጀምሩ!\n\n2️⃣ 🏊 *መደበኛ የእጣ መደቦች*\n🚗 መኪና • 🏠 ቤት • 🏭 ማሽነሪ • 💻 ኤሌክትሮኒክስ\n💵 ከ100 ብር ጀምሮ\n\n3️⃣ 🏙️ *የከተማ ቪአይፒ*\n💰 እስከ 10M ብር ጥሬ ገንዘብ\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ\n🎟️ 5 ደረጃዎች\n\n4️⃣ 🏪 *መርካቶ ቪአይፒ*\n💰 እስከ 10M ብር ጥሬ ገንዘብ\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ\n🎟️ 5 ደረጃዎች: ብር • ወርቅ • ፕላቲኒየም • አልማዝ • ንጉሣዊ\n\n5️⃣ 🤝 *የአጋር ፕሮግራም*\n💰 10% ኮሚሽን ያግኙ\n👥 ደንበኞችን ያመልክቱ • ፑሎች ይፍጠሩ\n\n👇 *ከታች ያለውን ፕሮግራም ይምረጡ:*",
-    
-    program_1: "🚀 *አባካራ መተግበሪያ ይክፈቱ*\n\nየማሸነፍ ጉዞዎን አሁን ይጀምሩ!\n\n👇 መተግበሪያውን ለመክፈት ከታች ይጫኑ:",
-    program_2: "🏊 *ወደ መደበኛ የእጣ መደቦች ይቀላቀሉ*\n\n🚗 መኪናዎች ያሸንፉ\n🏠 ቤቶች ያሸንፉ\n🏭 ማሽነሪዎች ያሸንፉ\n💻 ኤሌክትሮኒክስ ያሸንፉ\n\n💵 ከ100 ብር ጀምሮ\n🎁 አስደናቂ ሽልማቶች!\n\n👇 አሁን ይቀላቀሉ:",
-    program_3: "🏙️ *ወደ ከተማ ቪአይፒ ይቀላቀሉ*\n\n📍 በከተማዎ ያሸንፉ!\n💰 እስከ 10M ብር ጥሬ ገንዘብ\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ\n🎟️ 5 ደረጃዎች\n\n👇 አሁን ይቀላቀሉ:",
-    program_4: "🏪 *ወደ መርካቶ ቪአይፒ ይቀላቀሉ*\n\n💰 እስከ 10M ብር ጥሬ ገንዘብ\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ\n🎟️ 5 ደረጃዎች\n\n👇 አሁን ይቀላቀሉ:",
-    program_5: "🤝 *ወደ አጋር ፕሮግራም ይቀላቀሉ*\n\n💰 10% ኮሚሽን ያግኙ\n\n• ወኪሎች: ደንበኞችን ያመልክቱ\n• ነጋዴዎች: ፑሎች ይፍጠሩ\n• ድርጅቶች: ለአባላት ፑሎች\n\n👇 አሁን ያመልክቱ:",
-    
-    winners: "🏆 *የቅርብ ጊዜ አሸናፊዎች*\n\n",
+    programs: "🎯 *የAbbaa Carraa ፕሮግራሞች*\n\n*የማሸነፍ መንገድዎን ይምረጡ:*\n\n1️⃣ 🚀 *Abbaa Carraa መተግበሪያ ይክፈቱ*\nጉዞዎን አሁን ይጀምሩ!\n\n2️⃣ 🏊 *መደበኛ የእጣ መደቦች*\n🚗 መኪና • 🏠 ቤት • 🏭 ማሽነሪ • 💻 ኤሌክትሮኒክስ\n💵 ከ100 ብር ጀምሮ\n\n3️⃣ 🏙️ *የከተማ ቪአይፒ*\n💰 እስከ 10M ብር ጥሬ ገንዘብ\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ\n🎟️ 5 ደረጃዎች\n\n4️⃣ 🏪 *መርካቶ ቪአይፒ*\n💰 እስከ 10M ብር ጥሬ ገንዘብ\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ\n🎟️ 5 ደረጃዎች\n\n5️⃣ 🤝 *የአጋር ፕሮግራም*\n💰 10% ኮሚሽን ያግኙ\n👥 ደንበኞችን ያመልክቱ • ፑሎች ይፍጠሩ",
+    program_1: "🚀 *Abbaa Carraa መተግበሪያ ይክፈቱ*\n\nየማሸነፍ ጉዞዎን አሁን ይጀምሩ!\n\n👇 መተግበሪያውን ለመክፈት ከታች ይጫኑ:",
+    program_2: "🏊 *ወደ መደበኛ የእጣ መደቦች ይቀላቀሉ*\n\n🚗 መኪናዎች ያሸንፉ\n🏠 ቤቶች ያሸንፉ\n🏭 ማሽነሪዎች ያሸንፉ\n💻 ኤሌክትሮኒክስ ያሸንፉ\n\n💵 ከ100 ብር ጀምሮ\n🎁 አስደናቂ ሽልማቶች!",
+    program_3: "🏙️ *ወደ ከተማ ቪአይፒ ይቀላቀሉ*\n\n📍 በከተማዎ ያሸንፉ!\n💰 እስከ 10M ብር ጥሬ ገንዘብ\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ\n🎟️ 5 ደረጃዎች",
+    program_4: "🏪 *ወደ መርካቶ ቪአይፒ ይቀላቀሉ*\n\n💰 እስከ 10M ብር ጥሬ ገንዘብ\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ\n🎟️ 5 ደረጃዎች",
+    program_5: "🤝 *ወደ አጋር ፕሮግራም ይቀላቀሉ*\n\n💰 10% ኮሚሽን ያግኙ\n\n• ወኪሎች: ደንበኞችን ያመልክቱ\n• ነጋዴዎች: የእጣ መደቦች ይፍጠሩ\n• ድርጅቶች: ለአባላት የእጣ መደቦች ይፍጠሩ",
+    winners: "🏆 *የቅርብ ጊዜ አሸናፊዎች*",
+    no_winners: "ምንም አሸናፊዎች የሉም። የመጀመሪያው ይሁኑ! 🎯",
     how_it_works: "📖 *እንዴት እንሳተፋለን?*\n\n1️⃣ ፕሮግራም ይምረጡ\n2️⃣ ደረጃዎን ይምረጡ\n3️⃣ መቀመጫ ይምረጡ\n4️⃣ ይክፈሉ እና ያሸንፉ! 🎉",
     support: "📞 *እኛን ያግኙ*\n\n📧 hundessanegassa@gmail.com\n📱 0930330323, 0913 277 922",
-    tickets: "🎫 *ቲኬቶችዎ*\n\n",
+    tickets: "🎫 *ቲኬቶችዎ*",
     no_tickets: "📭 *ምንም ቲኬቶች የሉዎትም.*\n\nለመጀመር ፕሮግራም ይቀላቀሉ! 🎯",
-    
     back: "🔙 ተመለስ",
     open_app: "🚀 መተግበሪያ ይክፈቱ",
     dashboard: "📊 ዳሽቦርድ",
@@ -83,39 +71,33 @@ const TRANSLATIONS = {
     apply_now: "🤝 አሁን ያመልክቱ",
     view_winners: "🏆 አሸናፊዎችን ይመልከቱ"
   },
-  
+
   om: {
-    welcome: "🌟 *Gara Abbaa Carraatti Baga nagaan dhufte!*\n\n🏆 *Itoophiyaatti Dirree Badhaasaa Olaanaa*\n\n🚗 Konkoolataa mo'adhaa\n🏠 Mana mo'adhaa\n💰 Maallaqa 10M ETB hanga ta'u mo'adhaa\n🏭 Mashiniin mo'adhaa\n💻 Elektirooniksii mo'adhaa\n\n💚 *%2 Fayyaaf* Dhibamtoota Kalee & Onnee gargaara\n\n🎯 *Mo'achuuf qophi? Eegalaa!*",
-    
-    language_select: "🌐 *Afaan Filadhu*\n\nMaaloo afaan fedhitan filadha:",
+    welcome: "🌟 *Gara Abbaa Carraatti Baga nagaan dhufte!*\n\n🏆 *Itoophiyaatti Dirree Badhaasaa Olaanaa*\n\n🚗 Konkoolataa mo'adhaa\n🏠 Mana mo'adhaa\n💰 Maallaqa hanga miliyoona 10ti mo'adhaa\n🏭 Mashinoota mo'adhaa\n💻 Elektirooniksoota adda addaa mo'adhaa\n\n💚 *%2 Fayyaaf* Dhibamtoota Kalee fi Onnee gargaara\n\n🎯 *Mo'achuuf qophii? Eegalaa!*",
+    language_select: "🌐 *Afaan Filadhu*\n\nMaaloo afaan fetaan filadha:",
     language_set: "✅ Afaan Afaan Oromootti jijjiirame! 🎉",
-    
-    ask_name: "📝 *Maqaa keessan guutuu maal?*\n\nMaaloo maqaa keessan guutuu galchaa:",
-    ask_phone: "📱 *Lakkoofsa bilbilaa keessan maal?*\n\nFakkeenyaaf: 0912345678",
+    ask_name: "📝 *Maqaa keessan guutuu galchaa?*\n\nMaaloo maqaa keessan guutuu galchaa:",
+    ask_phone: "📱 *Lakkoofsa bilbilaa keessan galchaa?*\n\nFakkeenyaaf: 0912345678",
     name_received: "✅ Galatoomaa! Amma lakkoofsa bilbilaa keessan qoodadhaa:",
     phone_received: "✅ Galatoomaa! Profiiliin keessan xumurame! 🎉",
-    
     main_menu: "👋 *Baga nagaan deebitan {name}!*\n\n🎯 *Filannoo armaan gadii keessaa filadhaa:*",
-    
-    programs: "🎯 *Tarkaanfiiwwan Abbaa Carraa*\n\n*Karaa mo'achuu keessan filadhaa:*\n\n1️⃣ 🚀 *Abbaa Carraa Appii Banuu*\nImala keessan amma eegalaa!\n\n2️⃣ 🏊 *Pooliiwwan Idilee*\n🚗 Konkoolataa • 🏠 Mana • 🏭 Mashiniin • 💻 Elektirooniksii\n💵 100 ETB irraa eegalaa\n\n3️⃣ 🏙️ *VIP Magaalaa*\n💰 Maallaqa 10M ETB hanga ta'u\n📅 Guyyaa • Torban • Ji'aa\n🎟️ Sadarkaa 5\n\n4️⃣ 🏪 *Merkato VIP*\n💰 Maallaqa 10M ETB hanga ta'u\n📅 Guyyaa • Torban • Ji'aa\n🎟️ Sadarkaa 5: Silver • Gold • Platinum • Diamond • Royal\n\n5️⃣ 🤝 *Tarkaanfii Hiriyaa*\n💰 10% Komishinii Argadhaa\n👥 Maamiltoota qoodadhaa • Pooliiwwan uumaa\n\n👇 *Tarkaanfii armaan gadii keessaa filadhaa:*",
-    
-    program_1: "🚀 *Abbaa Carraa Appii Banuu*\n\nImala mo'achuu keessan amma eegalaa!\n\n👇 Appii banuuf jalatti cuqaasaa:",
-    program_2: "🏊 *Pooliiwwan Idilee itti hirmaadhaa*\n\n🚗 Konkoolataa mo'adhaa\n🏠 Mana mo'adhaa\n🏭 Mashiniin mo'adhaa\n💻 Elektirooniksii mo'adhaa\n\n💵 100 ETB irraa eegalaa\n🎁 Badhaasa ajaa'ibsiisaa!\n\n👇 Amma hirmaadhaa:",
-    program_3: "🏙️ *VIP Magaalaa itti hirmaadhaa*\n\n📍 Magaalaa keessan keessatti mo'adhaa!\n💰 Maallaqa 10M ETB hanga ta'u\n📅 Guyyaa • Torban • Ji'aa\n🎟️ Sadarkaa 5\n\n👇 Amma hirmaadhaa:",
-    program_4: "🏪 *Merkato VIP itti hirmaadhaa*\n\n💰 Maallaqa 10M ETB hanga ta'u\n📅 Guyyaa • Torban • Ji'aa\n🎟️ Sadarkaa 5\n\n👇 Amma hirmaadhaa:",
-    program_5: "🤝 *Tarkaanfii Hiriyaa itti hirmaadhaa*\n\n💰 10% Komishinii Argadhaa\n\n• Wakiliitoota: Maamiltoota qoodadhaa\n• Vendooritoota: Pooliiwwan uumaa\n• Dhaabbattoonni: Pooliiwwan miseensonniif\n\n👇 Amma ibsaa:",
-    
-    winners: "🏆 *Mo'attoota Dhiyoo*\n\n",
-    how_it_works: "📖 *Akkam Hojiirra Oola?*\n\n1️⃣ Tarkaanfii filadhaa\n2️⃣ Sadarkaa keessan filadhaa\n3️⃣ Teessoo filadhaa\n4️⃣ Kaffalaa fi mo'adhaa! 🎉",
+    programs: "🎯 *Tarkaanfiiwwan Abbaa Carraa*\n\n*Karaa mo'achuu keessan filadhaa:*\n\n1️⃣ 🚀 *Appii Abbaa Carraa Bani*\nImala keessan amma eegalaa!\n\n2️⃣ 🏊 *Carraawaan Idilee*\n🚗 Konkoolataa • 🏠 Mana • 🏭 Mashinoota • 💻 Elektirooniksoota gara garaa\n💵 100 ETB irraa eegalaa\n\n3️⃣ 🏙️ *VIP Magaalaa*\n💰 Maallaqa 10M ETB hanga ta'u\n📅 Guyyaa • Torban • Ji'aa\n🎟️ Sadarkaa 5\n\n4️⃣ 🏪 *Merkato VIP*\n💰 Maallaqa 10M ETB hanga ta'u\n📅 Guyyaa • Torban • Ji'aa\n🎟️ Sadarkaa 5\n\n5️⃣ 🤝 *Tarkaanfii partinaaraa*\n💰 10% Komishinii Argadhaa\n👥 Maamiltoota qoodadhaa • Carraa Idilee uumaa",
+    program_1: "🚀 *Appii Abbaa Carraa Bani*\n\nImala mo'achuu keessan amma eegalaa!\n\n👇 Appii banuuf jalatti cuqaasaa:",
+    program_2: "🏊 *Carraawwaan Idilee itti hirmaadhaa*\n\n🚗 Konkoolataa mo'adhaa\n🏠 Mana mo'adhaa\n🏭 Mashinoota mo'adhaa\n💻 Elektirooniksoota gara garaa mo'adhaa\n\n💵 100 ETB irraa eegalaa\n🎁 Badhaasa ajaa'ibsiisaa!",
+    program_3: "🏙️ *VIP Magaalaa itti hirmaadhaa*\n\n📍 Magaalaa keessan keessatti mo'adhaa!\n💰 Maallaqa 10M ETB hanga ta'u\n📅 Guyyaa • Torban • Ji'aa\n🎟️ Sadarkaa 5",
+    program_4: "🏪 *Merkato VIP itti hirmaadhaa*\n\n💰 Maallaqa 10M ETB hanga ta'u\n📅 Guyyaa • Torban • Ji'aa\n🎟️ Sadarkaa 5",
+    program_5: "🤝 *Tarkaanfii paartinaraa itti hirmaadhaa*\n\n💰 10% Komishinii Argadhaa\n\n• Bakka Bu'oota: Maamiltoota qoodadhaa\n• Dhiyeestoota: Carraawwaan idilee uumaa\n• Dhaabbattoonni: Carraa Idilee miseensotaaf uuma",
+    winners: "🏆 *Mo'attoota Dhiyoo*",
+    no_winners: "Mo'attoon dhiyoo hin jiru. Isa jalqabaa ta'aa! 🎯",
+    how_it_works: "📖 *Abbaa Carraa Akkam Hojiirra Oola?*\n\n1️⃣ Tarkaanfii filadhaa\n2️⃣ Sadarkaa keessan filadhaa\n3️⃣ Teessoo filadhaa\n4️⃣ Kaffalaa ti mo'adhaa! 🎉",
     support: "📞 *Nu Qunnamuu*\n\n📧 hundessanegassa@gmail.com\n📱 0930330323, 0913 277 922",
-    tickets: "🎫 *Tikkeetoota Keessan*\n\n",
-    no_tickets: "📭 *Tikkeetii tokko hin qabdu.*\n\nTarkaanfii tokko itti argachuuf kennadhu! 🎯",
-    
+    tickets: "🎫 *Tikkeetoota Keessan*",
+    no_tickets: "📭 *Tikkeetii tokko hin qabdu.*\n\nTarkaanfii tokko itti argachuuf hirmaadhu! 🎯",
     back: "🔙 Deebi'i",
-    open_app: "🚀 Appii Banuu",
-    dashboard: "📊 Daashboorardii",
+    open_app: "🚀 Appii Bani",
+    dashboard: "📊 Daashboorardii koo",
     join_now: "🎯 Amma hirmaadhu",
-    apply_now: "🤝 Amma ibsi",
+    apply_now: "🤝 Amma dorgomi",
     view_winners: "🏆 Mo'attoota ilaali"
   }
 };
@@ -182,7 +164,7 @@ async function saveUserProfile(userId, username, firstName, lastName, phone, ful
 }
 
 // ============================================
-// BUILD MENUS
+// BUILD MENUS - BUTTONS ALWAYS BELOW TEXT
 // ============================================
 function buildMainMenu(lang) {
   const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
@@ -259,22 +241,21 @@ export async function handleBotMessages() {
   });
 
   // ============================================
-  // START COMMAND - FULL FLOW
+  // START COMMAND
   // ============================================
   bot.start(async (ctx) => {
     const user = ctx.from;
     const userId = user.id;
     
-    // Initialize session
     userSessions[userId] = { 
-      step: 'language',  // First step: language selection
+      step: 'language',
       data: {} 
     };
     
-    // 1. Show Welcome Message
+    // 1. Welcome Message
     await ctx.reply(TRANSLATIONS.en.welcome, { parse_mode: 'Markdown' });
     
-    // 2. Show Language Selection
+    // 2. Language Selection
     await ctx.reply(TRANSLATIONS.en.language_select, {
       parse_mode: 'Markdown',
       reply_markup: {
@@ -288,22 +269,20 @@ export async function handleBotMessages() {
   });
 
   // ============================================
-  // LANGUAGE SELECTION CALLBACK - CONTINUES FLOW
+  // LANGUAGE SELECTION CALLBACK
   // ============================================
   bot.action(/lang_(.+)/, async (ctx) => {
     const lang = ctx.match[1];
     const userId = ctx.from.id;
-    const user = ctx.from;
     
-    // Update language in database
     await updateUserLanguage(userId, lang);
     
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     
-    // 1. Confirm language change
+    // 1. Language confirmed
     await ctx.reply(t.language_set, { parse_mode: 'Markdown' });
     
-    // 2. Update session to next step (ask_name)
+    // 2. Update session
     if (userSessions[userId]) {
       userSessions[userId].step = 'ask_name';
       userSessions[userId].language = lang;
@@ -331,18 +310,19 @@ export async function handleBotMessages() {
     
     const session = userSessions[userId];
     
-    // If no session or completed, show menu
     if (!session) {
       const lang = await getUserLanguage(userId);
       const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
       await ctx.reply(t.main_menu.replace('{name}', user.first_name || 'User'), {
+        parse_mode: 'Markdown'
+      });
+      await ctx.reply('👇 *Choose an option below:*', {
         parse_mode: 'Markdown',
         reply_markup: buildMainMenu(lang)
       });
       return;
     }
 
-    // STEP: Ask Name
     if (session.step === 'ask_name') {
       session.data.fullName = text;
       session.step = 'ask_phone';
@@ -354,7 +334,6 @@ export async function handleBotMessages() {
       return;
     }
     
-    // STEP: Ask Phone
     if (session.step === 'ask_phone') {
       session.data.phone = text;
       session.step = 'complete';
@@ -362,7 +341,6 @@ export async function handleBotMessages() {
       const lang = session.language || await getUserLanguage(userId);
       const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
       
-      // Save user profile
       await saveUserProfile(
         userId,
         user.username,
@@ -374,32 +352,35 @@ export async function handleBotMessages() {
       
       await ctx.reply(t.phone_received, { parse_mode: 'Markdown' });
       
-      // Show programs immediately
       await showPrograms(ctx, userId, lang);
       
-      // Clear session
       delete userSessions[userId];
       return;
     }
   });
 
   // ============================================
-  // SHOW PROGRAMS
+  // SHOW PROGRAMS - Description FIRST, Buttons BELOW
   // ============================================
   async function showPrograms(ctx, userId, lang) {
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     const user = ctx.from;
     const name = user?.first_name || 'User';
     
-    // Show main menu with programs
+    // 1. Main menu with welcome (text FIRST)
     await ctx.reply(t.main_menu.replace('{name}', name), {
-      parse_mode: 'Markdown',
-      reply_markup: buildMainMenu(lang)
+      parse_mode: 'Markdown'
     });
     
-    // Show detailed program descriptions
+    // 2. Programs description (text FIRST)
     await ctx.reply(t.programs, {
       parse_mode: 'Markdown'
+    });
+    
+    // 3. Then the buttons (BELOW the text)
+    await ctx.reply('👇 *Select a program below:*', {
+      parse_mode: 'Markdown',
+      reply_markup: buildMainMenu(lang)
     });
   }
 
@@ -412,6 +393,10 @@ export async function handleBotMessages() {
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     
     await ctx.editMessageText(t.program_2, {
+      parse_mode: 'Markdown'
+    });
+    
+    await ctx.reply('👇 *Join now:*', {
       parse_mode: 'Markdown',
       reply_markup: buildProgramMenu(lang, 'regular')
     });
@@ -424,6 +409,10 @@ export async function handleBotMessages() {
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     
     await ctx.editMessageText(t.program_3, {
+      parse_mode: 'Markdown'
+    });
+    
+    await ctx.reply('👇 *Join now:*', {
       parse_mode: 'Markdown',
       reply_markup: buildProgramMenu(lang, 'city')
     });
@@ -436,6 +425,10 @@ export async function handleBotMessages() {
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     
     await ctx.editMessageText(t.program_4, {
+      parse_mode: 'Markdown'
+    });
+    
+    await ctx.reply('👇 *Join now:*', {
       parse_mode: 'Markdown',
       reply_markup: buildProgramMenu(lang, 'merkato')
     });
@@ -448,6 +441,10 @@ export async function handleBotMessages() {
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     
     await ctx.editMessageText(t.program_5, {
+      parse_mode: 'Markdown'
+    });
+    
+    await ctx.reply('👇 *Apply now:*', {
       parse_mode: 'Markdown',
       reply_markup: buildProgramMenu(lang, 'partner')
     });
@@ -455,7 +452,7 @@ export async function handleBotMessages() {
   });
 
   // ============================================
-  // MENU CALLBACK
+  // OTHER CALLBACKS
   // ============================================
   bot.action('menu', async (ctx) => {
     const userId = ctx.from.id;
@@ -464,15 +461,16 @@ export async function handleBotMessages() {
     const user = ctx.from;
     
     await ctx.editMessageText(t.main_menu.replace('{name}', user.first_name || 'User'), {
+      parse_mode: 'Markdown'
+    });
+    
+    await ctx.reply('👇 *Choose an option below:*', {
       parse_mode: 'Markdown',
       reply_markup: buildMainMenu(lang)
     });
     await ctx.answerCbQuery();
   });
 
-  // ============================================
-  // WINNERS CALLBACK
-  // ============================================
   bot.action('winners', async (ctx) => {
     const userId = ctx.from.id;
     const lang = await getUserLanguage(userId);
@@ -494,10 +492,14 @@ export async function handleBotMessages() {
           text += `${i+1}. 🏆 ${w.title || 'Prize'} - ${w.prize_amount || 'N/A'}\n`;
         });
       } else {
-        text += 'No winners yet. Be the first! 🎯';
+        text += t.no_winners;
       }
       
       await ctx.editMessageText(text, {
+        parse_mode: 'Markdown'
+      });
+      
+      await ctx.reply('👇 *View all winners:*', {
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [
@@ -514,15 +516,16 @@ export async function handleBotMessages() {
     await ctx.answerCbQuery();
   });
 
-  // ============================================
-  // HOW IT WORKS CALLBACK
-  // ============================================
   bot.action('how', async (ctx) => {
     const userId = ctx.from.id;
     const lang = await getUserLanguage(userId);
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     
     await ctx.editMessageText(t.how_it_works, {
+      parse_mode: 'Markdown'
+    });
+    
+    await ctx.reply('👇 *Go back:*', {
       parse_mode: 'Markdown',
       reply_markup: {
         inline_keyboard: [
@@ -533,15 +536,16 @@ export async function handleBotMessages() {
     await ctx.answerCbQuery();
   });
 
-  // ============================================
-  // SUPPORT CALLBACK
-  // ============================================
   bot.action('support', async (ctx) => {
     const userId = ctx.from.id;
     const lang = await getUserLanguage(userId);
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     
     await ctx.editMessageText(t.support, {
+      parse_mode: 'Markdown'
+    });
+    
+    await ctx.reply('👇 *Go back:*', {
       parse_mode: 'Markdown',
       reply_markup: {
         inline_keyboard: [
@@ -599,6 +603,10 @@ export async function handleBotMessages() {
       });
 
       await ctx.reply(message, {
+        parse_mode: 'Markdown'
+      });
+      
+      await ctx.reply('👇 *View all tickets:*', {
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [
@@ -628,14 +636,18 @@ export async function handleBotMessages() {
       `/help - This help\n\n` +
       `Need more help? Contact support.`,
       {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: t.back, callback_data: 'menu' }]
-          ]
-        }
+        parse_mode: 'Markdown'
       }
     );
+    
+    await ctx.reply('👇 *Go back:*', {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: t.back, callback_data: 'menu' }]
+        ]
+      }
+    });
   });
 
   // ============================================
@@ -648,6 +660,10 @@ export async function handleBotMessages() {
     const user = ctx.from;
     
     await ctx.reply(t.main_menu.replace('{name}', user.first_name || 'User'), {
+      parse_mode: 'Markdown'
+    });
+    
+    await ctx.reply('👇 *Choose an option below:*', {
       parse_mode: 'Markdown',
       reply_markup: buildMainMenu(lang)
     });
