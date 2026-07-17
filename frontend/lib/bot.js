@@ -1,6 +1,6 @@
-// lib/bot.js - COMPLETE WITH LOGIN HANDLER
+// lib/bot.js - COMPLETE WITH LOGIN HANDLER & SUPABASE CHECKS
 import { Telegraf } from 'telegraf';
-import { supabase } from './supabase';
+import { supabase, isSupabaseConfigured } from './supabase';
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaa-carraa-ethiopia.vercel.app';
@@ -115,6 +115,8 @@ const TRANSLATIONS = {
 const userSessions = {};
 
 async function getUserLanguage(userId) {
+  if (!supabase || !isSupabaseConfigured()) return 'en';
+  
   try {
     const { data } = await supabase
       .from('profiles')
@@ -128,6 +130,8 @@ async function getUserLanguage(userId) {
 }
 
 async function updateUserLanguage(userId, lang) {
+  if (!supabase || !isSupabaseConfigured()) return false;
+  
   try {
     await supabase
       .from('profiles')
@@ -140,6 +144,8 @@ async function updateUserLanguage(userId, lang) {
 }
 
 async function saveUserProfile(userId, username, firstName, lastName, phone, fullName) {
+  if (!supabase || !isSupabaseConfigured()) return false;
+  
   try {
     const { data: existing } = await supabase
       .from('profiles')
@@ -182,6 +188,13 @@ async function handleLoginFlow(ctx) {
   const userId = user.id;
   
   console.log('🔐 Starting login flow for user:', userId);
+  
+  // ✅ Check if Supabase is configured
+  if (!supabase || !isSupabaseConfigured()) {
+    console.error('❌ Supabase not configured!');
+    await ctx.reply('⚠️ Login service is not available. Please try again later.');
+    return;
+  }
   
   try {
     // Generate a simple token
