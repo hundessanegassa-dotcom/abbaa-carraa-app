@@ -59,13 +59,13 @@ function MyApp({ Component, pageProps }) {
         
         // ✅ Auto-login via API
         fetch('/api/auth/telegram', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            initData: webApp.initData,
-            user: user
-          })
-        })
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    initData: webApp.initData,
+    user: user
+  })
+})
         .then(res => res.json())
         .then(data => {
           if (data.success) {
