@@ -2,76 +2,115 @@
 import { supabase } from '../../../lib/supabase';
 
 export default async function handler(req, res) {
-  // ✅ Enable CORS for this endpoint
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
+  console.log('📡 Telegram login API called');
+  console.log('📡 Method:', req.method);
+  console.log('📡 Body:', req.body);
 
+  // Handle preflight request
   if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    );
     res.status(200).end();
     return;
   }
 
   if (req.method !== 'POST') {
+    console.log('❌ Wrong method:', req.method);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const { token, telegram_id } = req.body;
 
-    console.log('📱 Telegram login attempt:', { token: token?.substring(0, 20), telegram_id });
+    console.log('📡 Token received:', token?.substring(0, 30) + '...');
+    console.log('📡 Telegram ID received:', telegram_id);
 
     if (!token || !telegram_id) {
       console.log('❌ Missing token or telegram_id');
-      return res.status(400).json({ error: 'Missing token or telegram_id' });
+      return res.status(400).json({ 
+        success: false,
+        error: 'Missing token or telegram_id' 
+      });
     }
 
-    // ✅ Verify the token
+    // Query the database
+    console.log('🔍 Looking up token in database...');
     const { data: tokenData, error: tokenError } = await supabase
       .from('login_tokens')
       .select('*')
       .eq('token', token)
-      .single();
+      .maybeSingle();
 
-    if (tokenError || !tokenData) {
-      console.log('❌ Invalid token:', tokenError?.message);
-      return res.status(401).json({ error: 'Invalid or expired token' });
+    if (tokenError) {
+      console.log('❌ Database error:', tokenError);
+      return res.status(500).json({ 
+        success: false,
+        error: 'Database error: ' + tokenError.message 
+      });
     }
 
-    // ✅ Check if token is expired
-    if (new Date(tokenData.expires_at) < new Date()) {
+    if (!tokenData) {
+      console.log('❌ Token not found in database');
+      return res.status(401).json({ 
+        success: false,
+        error: 'Invalid token' 
+      });
+    }
+
+    console.log('✅ Token found:', tokenData);
+
+    // Check expiration
+    const expiresAt = new Date(tokenData.expires_at);
+    const now = new Date();
+    console.log('📅 Expires at:', expiresAt);
+    console.log('📅 Now:', now);
+
+    if (expiresAt < now) {
       console.log('❌ Token expired');
       await supabase.from('login_tokens').delete().eq('token', token);
-      return res.status(401).json({ error: 'Token expired' });
+      return res.status(401).json({ 
+        success: false,
+        error: 'Token expired' 
+      });
     }
 
-    // ✅ Check if telegram_id matches
+    // Check telegram_id match
+    console.log('🔍 Checking telegram_id match...');
+    console.log('📌 Token telegram_id:', tokenData.telegram_id);
+    console.log('📌 Request telegram_id:', parseInt(telegram_id));
+
     if (tokenData.telegram_id !== parseInt(telegram_id)) {
-      console.log('❌ Telegram ID mismatch:', tokenData.telegram_id, telegram_id);
-      return res.status(401).json({ error: 'Invalid token for this user' });
+      console.log('❌ Telegram ID mismatch');
+      return res.status(401).json({ 
+        success: false,
+        error: 'Invalid token for this user' 
+      });
     }
 
-    console.log('✅ Token verified for user:', telegram_id);
+    console.log('✅ All checks passed!');
 
-    // ✅ Get or create user profile
+    // Get or create user
     let { data: profile, error: findError } = await supabase
       .from('profiles')
       .select('*')
       .eq('telegram_id', parseInt(telegram_id))
-      .single();
+      .maybeSingle();
 
-    if (findError && findError.code !== 'PGRST116') {
-      console.error('❌ Database error:', findError);
-      throw findError;
+    if (findError) {
+      console.log('❌ Error finding user:', findError);
+      return res.status(500).json({ 
+        success: false,
+        error: 'Database error' 
+      });
     }
 
     if (!profile) {
-      console.log('👤 Creating new user for telegram_id:', telegram_id);
-      
+      console.log('👤 Creating new user...');
       const { data: newUser, error: createError } = await supabase
         .from('profiles')
         .insert({
@@ -91,40 +130,31 @@ export default async function handler(req, res) {
         .single();
 
       if (createError) {
-        console.error('❌ Failed to create user:', createError);
-        throw createError;
+        console.log('❌ Error creating user:', createError);
+        return res.status(500).json({ 
+          success: false,
+          error: 'Failed to create user' 
+        });
       }
       profile = newUser;
       console.log('✅ User created:', profile.id);
     } else {
       console.log('👤 Existing user found:', profile.id);
-      // ✅ Update user info
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          telegram_username: tokenData.username || profile.telegram_username,
-          full_name: tokenData.first_name || profile.full_name,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', profile.id);
-
-      if (updateError) {
-        console.error('❌ Failed to update user:', updateError);
-      }
     }
 
-    // ✅ Delete the used token
+    // Delete the used token
     await supabase.from('login_tokens').delete().eq('token', token);
     console.log('🗑️ Token deleted');
 
-    // ✅ Generate session token
+    // Generate session token
     const sessionToken = Buffer.from(JSON.stringify({
       userId: profile.id,
       telegramId: parseInt(telegram_id),
       timestamp: Date.now()
     })).toString('base64');
 
-    console.log('✅ Login successful for user:', profile.id);
+    console.log('✅ Login successful!');
+    console.log('📊 Session token:', sessionToken.substring(0, 30) + '...');
 
     res.status(200).json({
       success: true,
@@ -140,10 +170,10 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('❌ Telegram login error:', error);
+    console.error('❌ Unexpected error:', error);
     res.status(500).json({ 
       success: false,
-      error: 'Authentication failed: ' + error.message 
+      error: 'Internal server error: ' + error.message 
     });
   }
 }
