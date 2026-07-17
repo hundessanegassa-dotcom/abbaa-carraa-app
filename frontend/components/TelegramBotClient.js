@@ -1,4 +1,4 @@
-// components/TelegramBotClient.js - COMPLETE WITH FULL TELEGRAM SUPPORT
+// components/TelegramBotClient.js
 import { useEffect, useState, createContext, useContext } from 'react';
 
 const TelegramContext = createContext(null);
@@ -69,7 +69,8 @@ export default function TelegramBotClient({ children }) {
         sessionStorage.setItem('telegram_user_id', user.id);
         
         // ✅ Auto-login via API
-        fetch('/api/auth/telegram', {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaa-carraa-ethiopia.vercel.app';
+        fetch(`${appUrl}/api/auth/telegram`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
