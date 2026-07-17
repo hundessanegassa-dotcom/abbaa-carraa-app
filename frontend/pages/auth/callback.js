@@ -1,4 +1,4 @@
-// pages/auth/callback.js - FIXED WITH BETTER ERROR HANDLING
+// pages/auth/callback.js - COMPLETE WITH TELEGRAM LOGIN
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
@@ -113,12 +113,14 @@ export default function AuthCallback() {
 
   // ✅ Handle Telegram Login
   const handleTelegramLogin = useCallback(async (token, telegramId) => {
-    console.log('📱 Processing Telegram login...', { token: token?.substring(0, 20), telegramId });
+    console.log('📱 Processing Telegram login...');
+    console.log('📱 Token:', token?.substring(0, 30) + '...');
+    console.log('📱 Telegram ID:', telegramId);
+    
     setLoading(true);
     setError(null);
     
     try {
-      // ✅ Verify token with backend
       const response = await fetch('/api/auth/telegram-login', {
         method: 'POST',
         headers: { 
@@ -130,15 +132,16 @@ export default function AuthCallback() {
         })
       });
 
-      console.log('📡 API Response status:', response.status);
+      console.log('📡 Response status:', response.status);
+      
       const result = await response.json();
-      console.log('📡 API Response:', result);
+      console.log('📡 Response data:', result);
 
       if (!response.ok || !result.success) {
         throw new Error(result.error || 'Telegram login failed');
       }
 
-      // ✅ Store session token
+      // ✅ Store session
       sessionStorage.setItem('telegram_session_token', result.sessionToken);
       sessionStorage.setItem('telegram_user', JSON.stringify({
         id: telegramId,
@@ -154,14 +157,12 @@ export default function AuthCallback() {
         return;
       }
       
-      // ✅ Redirect to dashboard
       router.push('/dashboard');
       
     } catch (error) {
       console.error('❌ Telegram login error:', error);
       setError(error.message);
       toast.error(error.message || 'Telegram login failed');
-      // ✅ Redirect to login page after error
       setTimeout(() => router.push('/login'), 2000);
     } finally {
       setLoading(false);
