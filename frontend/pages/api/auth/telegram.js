@@ -13,20 +13,19 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid user data' });
     }
 
-    // Check if user exists in database
     const { data: existingUser, error: findError } = await supabase
       .from('profiles')
       .select('*')
       .eq('telegram_id', user.id)
       .single();
 
+    let profile;
+
     if (findError && findError.code !== 'PGRST116') {
       throw findError;
     }
 
-    let profile;
     if (!existingUser) {
-      // Create new user
       const { data: newUser, error: createError } = await supabase
         .from('profiles')
         .insert({
@@ -35,6 +34,7 @@ export default async function handler(req, res) {
           full_name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Telegram User',
           email: `${user.username || user.id}@telegram.user`,
           language: 'en',
+          phone: user.phone_number || '',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -44,7 +44,6 @@ export default async function handler(req, res) {
       if (createError) throw createError;
       profile = newUser;
     } else {
-      // Update existing user
       const { data: updatedUser, error: updateError } = await supabase
         .from('profiles')
         .update({
@@ -60,7 +59,6 @@ export default async function handler(req, res) {
       profile = updatedUser;
     }
 
-    // Generate a session token (you can use JWT or similar)
     const sessionToken = Buffer.from(JSON.stringify({
       userId: profile.id,
       telegramId: user.id,
@@ -73,6 +71,7 @@ export default async function handler(req, res) {
       sessionToken,
       message: 'Authentication successful'
     });
+
   } catch (error) {
     console.error('Telegram auth error:', error);
     res.status(500).json({ error: 'Authentication failed' });
