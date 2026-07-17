@@ -1,17 +1,17 @@
-// lib/bot.js - COMPLETE WITH CORRECTED TRANSLATIONS
+// lib/bot.js - COMPLETE WITH TELEGRAM LOGIN FLOW
 import { Telegraf } from 'telegraf';
 import { supabase } from './supabase';
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 if (!BOT_TOKEN) {
-  console.warn('⚠️ TELEGRAM_BOT_TOKEN not set');
+  console.warn('⚠️ TELEGRAM_BOT_TOKEN not set. Bot features will not work.');
 }
 
 export const bot = BOT_TOKEN ? new Telegraf(BOT_TOKEN) : null;
 
 // ============================================
-// COMPLETE TRANSLATIONS - CORRECTED
+// COMPLETE TRANSLATIONS
 // ============================================
 const TRANSLATIONS = {
   en: {
@@ -40,7 +40,9 @@ const TRANSLATIONS = {
     dashboard: "📊 Dashboard",
     join_now: "🎯 Join Now",
     apply_now: "🤝 Apply Now",
-    view_winners: "🏆 View Winners"
+    view_winners: "🏆 View Winners",
+    login_success: "✅ *Login Successful!*\n\nWelcome {name}! 🎉\n\n🔐 Your session is ready!",
+    return_to_app: "🚀 Return to App"
   },
 
   am: {
@@ -69,7 +71,9 @@ const TRANSLATIONS = {
     dashboard: "📊 ዳሽቦርድ",
     join_now: "🎯 አሁን ይቀላቀሉ",
     apply_now: "🤝 አሁን ያመልክቱ",
-    view_winners: "🏆 አሸናፊዎችን ይመልከቱ"
+    view_winners: "🏆 አሸናፊዎችን ይመልከቱ",
+    login_success: "✅ *መግቢያ ተሳክቷል!*\n\nእንኳን ደህና መጡ {name}! 🎉\n\n🔐 ክፍለ ጊዜዎ ዝግጁ ነው!",
+    return_to_app: "🚀 ወደ መተግበሪያ ተመለስ"
   },
 
   om: {
@@ -98,7 +102,9 @@ const TRANSLATIONS = {
     dashboard: "📊 Daashboorardii koo",
     join_now: "🎯 Amma hirmaadhu",
     apply_now: "🤝 Amma dorgomi",
-    view_winners: "🏆 Mo'attoota ilaali"
+    view_winners: "🏆 Mo'attoota ilaali",
+    login_success: "✅ *Galmaa'iin Milkaa'e!*\n\nBaga nagaan dhufte {name}! 🎉\n\n🔐 Gaheessaan keessan qophii dha!",
+    return_to_app: "🚀 Gara Appii Deebi'i"
   }
 };
 
@@ -164,7 +170,7 @@ async function saveUserProfile(userId, username, firstName, lastName, phone, ful
 }
 
 // ============================================
-// BUILD MENUS - BUTTONS ALWAYS BELOW TEXT
+// BUILD MENUS
 // ============================================
 function buildMainMenu(lang) {
   const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
@@ -241,12 +247,80 @@ export async function handleBotMessages() {
   });
 
   // ============================================
-  // START COMMAND
+  // START COMMAND - WITH LOGIN HANDLING
   // ============================================
   bot.start(async (ctx) => {
     const user = ctx.from;
     const userId = user.id;
+    const startPayload = ctx.payload; // Value after ?start= in the link
     
+    // ✅ Check if this is a login request
+    const isLogin = startPayload === 'login' || startPayload?.startsWith('login');
+    
+    if (isLogin) {
+      try {
+        // Get user's language preference
+        const lang = await getUserLanguage(userId);
+        const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+        
+        // Generate a secure login token
+        const loginToken = Buffer.from(JSON.stringify({
+          userId: user.id,
+          username: user.username,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          timestamp: Date.now(),
+          expires: Date.now() + 300000 // 5 minutes expiry
+        })).toString('base64');
+        
+        // Store the token temporarily
+        const { error } = await supabase
+          .from('login_tokens')
+          .insert({
+            token: loginToken,
+            telegram_id: user.id,
+            username: user.username || null,
+            first_name: user.first_name || null,
+            last_name: user.last_name || null,
+            expires_at: new Date(Date.now() + 300000).toISOString()
+          });
+        
+        if (error) {
+          console.error('Error storing login token:', error);
+          await ctx.reply('⚠️ Login failed. Please try again.');
+          return;
+        }
+        
+        // Send login success message with deep link back to app
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com';
+        
+        await ctx.reply(
+          t.login_success.replace('{name}', user.first_name || 'User'),
+          {
+            parse_mode: 'Markdown',
+            reply_markup: {
+              inline_keyboard: [
+                [{ 
+                  text: t.return_to_app, 
+                  url: `${appUrl}/auth/callback?token=${loginToken}&telegram_id=${user.id}`
+                }]
+              ]
+            }
+          }
+        );
+        
+      } catch (error) {
+        console.error('Login error:', error);
+        await ctx.reply('⚠️ Login failed. Please try again.');
+      }
+      return;
+    }
+    
+    // ============================================
+    // NORMAL START FLOW (Existing code)
+    // ============================================
+    
+    // Initialize session
     userSessions[userId] = { 
       step: 'language',
       data: {} 
@@ -360,24 +434,21 @@ export async function handleBotMessages() {
   });
 
   // ============================================
-  // SHOW PROGRAMS - Description FIRST, Buttons BELOW
+  // SHOW PROGRAMS
   // ============================================
   async function showPrograms(ctx, userId, lang) {
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     const user = ctx.from;
     const name = user?.first_name || 'User';
     
-    // 1. Main menu with welcome (text FIRST)
     await ctx.reply(t.main_menu.replace('{name}', name), {
       parse_mode: 'Markdown'
     });
     
-    // 2. Programs description (text FIRST)
     await ctx.reply(t.programs, {
       parse_mode: 'Markdown'
     });
     
-    // 3. Then the buttons (BELOW the text)
     await ctx.reply('👇 *Select a program below:*', {
       parse_mode: 'Markdown',
       reply_markup: buildMainMenu(lang)
