@@ -1,34 +1,74 @@
 // components/TelegramLoginButton.js
-import { useTelegram } from './TelegramBotClient';
+import { useState } from 'react';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
+import { useTelegram } from './TelegramBotClient';
 
-export default function TelegramLoginButton({ onSuccess, className }) {
-  const { isInTelegram, user, showAlert } = useTelegram();
+export default function TelegramLoginButton({ onSuccess, onError, className }) {
+  const [loading, setLoading] = useState(false);
+  const { isInTelegram, user } = useTelegram();
   const router = useRouter();
 
   const handleTelegramLogin = async () => {
-    if (isInTelegram && user) {
-      toast.success(`Welcome ${user.first_name}! 🎉`);
-      const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/dashboard';
-      router.push(redirectPath);
-      if (onSuccess) onSuccess();
-    } else {
-      const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'abbaacarraa_bot';
-      window.open(`https://t.me/${botUsername}`, '_blank');
-      toast.info('Please open the Telegram bot to login');
+    setLoading(true);
+    
+    try {
+      // If already in Telegram WebApp and user data is available
+      if (isInTelegram && user) {
+        // Send user data to backend for authentication
+        const response = await fetch('/api/auth/telegram', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            telegram_id: user.id,
+            username: user.username,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            photo_url: user.photo_url,
+            init_data: sessionStorage.getItem('telegram_init_data')
+          })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+          sessionStorage.setItem('telegram_session_token', result.sessionToken);
+          toast.success(`Welcome ${user.first_name}! 🎉`);
+          
+          const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/dashboard';
+          sessionStorage.removeItem('redirectAfterLogin');
+          router.push(redirectPath);
+          
+          if (onSuccess) onSuccess(result);
+        } else {
+          throw new Error('Authentication failed');
+        }
+      } else {
+        // Not in Telegram, open the bot
+        const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'abbaacarraa_bot';
+        const startParam = 'startapp=login';
+        window.open(`https://t.me/${botUsername}?start=${startParam}`, '_blank');
+        toast.info('Please open the Telegram bot to login');
+      }
+    } catch (error) {
+      console.error('Telegram login error:', error);
+      toast.error('Failed to login with Telegram');
+      if (onError) onError(error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <button
       onClick={handleTelegramLogin}
-      className={`w-full flex items-center justify-center gap-3 px-4 py-3 bg-[#0088cc] hover:bg-[#0077b3] text-white rounded-xl transition font-medium ${className}`}
+      disabled={loading}
+      className={`w-full flex items-center justify-center gap-3 px-4 py-3 bg-[#0088cc] hover:bg-[#0077b3] text-white rounded-lg transition font-medium ${className}`}
     >
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
         <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
       </svg>
-      <span>Continue with Telegram</span>
+      {loading ? 'Connecting...' : 'Continue with Telegram'}
     </button>
   );
 }
