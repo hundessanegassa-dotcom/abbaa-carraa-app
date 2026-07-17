@@ -1,5 +1,5 @@
-// components/TelegramLoginButton.js - FIXED WITH CORRECT BOT USERNAME
-import { useState, useEffect } from 'react';
+// components/TelegramLoginButton.js
+import { useState } from 'react';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
 import { useTelegram } from './TelegramBotClient';
@@ -16,9 +16,7 @@ export default function TelegramLoginButton({ onSuccess, onError, className }) {
     setLoading(true);
     
     try {
-      // If already in Telegram WebApp and user data is available
       if (isInTelegram && user) {
-        // Direct authentication via API
         const response = await fetch('/api/auth/telegram', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -46,10 +44,7 @@ export default function TelegramLoginButton({ onSuccess, onError, className }) {
           throw new Error('Authentication failed');
         }
       } else {
-        // ✅ Open Telegram bot with login parameter
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com';
-        
-        // Store the redirect URL for after login
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaa-carraa-ethiopia.vercel.app';
         const currentPath = window.location.pathname;
         sessionStorage.setItem('redirectAfterLogin', currentPath);
         
@@ -58,7 +53,6 @@ export default function TelegramLoginButton({ onSuccess, onError, className }) {
         
         toast.info('Please login in the Telegram bot and click "Return to App"');
         
-        // Listen for login success via URL (polling)
         const checkLogin = setInterval(() => {
           const sessionToken = sessionStorage.getItem('telegram_session_token');
           if (sessionToken) {
@@ -69,7 +63,6 @@ export default function TelegramLoginButton({ onSuccess, onError, className }) {
           }
         }, 2000);
         
-        // Clean up interval after 5 minutes
         setTimeout(() => clearInterval(checkLogin), 300000);
       }
     } catch (error) {
