@@ -1,4 +1,4 @@
-// lib/bot.js - COMPLETE WITH TELEGRAM LOGIN FLOW
+// lib/bot.js - COMPLETE FIXED WITH TELEGRAM LOGIN
 import { Telegraf } from 'telegraf';
 import { supabase } from './supabase';
 
@@ -41,8 +41,10 @@ const TRANSLATIONS = {
     join_now: "🎯 Join Now",
     apply_now: "🤝 Apply Now",
     view_winners: "🏆 View Winners",
-    login_success: "✅ *Login Successful!*\n\nWelcome {name}! 🎉\n\n🔐 Your session is ready!",
-    return_to_app: "🚀 Return to App"
+    login_success: "✅ *Login Successful!*\n\nWelcome {name}! 🎉\n\n🔐 Your session is ready!\n\nClick the button below to return to the app:",
+    return_to_app: "🚀 Return to App",
+    login_button: "🔐 Login to Abbaa Carraa",
+    login_message: "🔐 *Login to Abbaa Carraa*\n\nClick the button below to login:"
   },
 
   am: {
@@ -72,8 +74,10 @@ const TRANSLATIONS = {
     join_now: "🎯 አሁን ይቀላቀሉ",
     apply_now: "🤝 አሁን ያመልክቱ",
     view_winners: "🏆 አሸናፊዎችን ይመልከቱ",
-    login_success: "✅ *መግቢያ ተሳክቷል!*\n\nእንኳን ደህና መጡ {name}! 🎉\n\n🔐 ክፍለ ጊዜዎ ዝግጁ ነው!",
-    return_to_app: "🚀 ወደ መተግበሪያ ተመለስ"
+    login_success: "✅ *መግቢያ ተሳክቷል!*\n\nእንኳን ደህና መጡ {name}! 🎉\n\n🔐 ክፍለ ጊዜዎ ዝግጁ ነው!\n\nመተግበሪያውን ለመክፈት ከታች ያለውን ቁልፍ ይጫኑ:",
+    return_to_app: "🚀 ወደ መተግበሪያ ተመለስ",
+    login_button: "🔐 ወደ Abbaa Carraa ይግቡ",
+    login_message: "🔐 *ወደ Abbaa Carraa ይግቡ*\n\nለመግቢያ ከታች ያለውን ቁልፍ ይጫኑ:"
   },
 
   om: {
@@ -103,8 +107,10 @@ const TRANSLATIONS = {
     join_now: "🎯 Amma hirmaadhu",
     apply_now: "🤝 Amma dorgomi",
     view_winners: "🏆 Mo'attoota ilaali",
-    login_success: "✅ *Galmaa'iin Milkaa'e!*\n\nBaga nagaan dhufte {name}! 🎉\n\n🔐 Gaheessaan keessan qophii dha!",
-    return_to_app: "🚀 Gara Appii Deebi'i"
+    login_success: "✅ *Galmaa'iin Milkaa'e!*\n\nBaga nagaan dhufte {name}! 🎉\n\n🔐 Gaheessaan keessan qophii dha!\n\nAppii banuuf jalatti cuqaasaa:",
+    return_to_app: "🚀 Gara Appii Deebi'i",
+    login_button: "🔐 Gara Abbaa Carraa Galmaa'i",
+    login_message: "🔐 *Gara Abbaa Carraa Galmaa'i*\n\nGalmaa'uuf jalatti cuqaasaa:"
   }
 };
 
@@ -154,6 +160,10 @@ async function saveUserProfile(userId, username, firstName, lastName, phone, ful
         phone: phone || '',
         email: `${username || userId}@telegram.user`,
         language: 'en',
+        role: 'individual',
+        user_type: 'individual',
+        agreement_accepted: true,
+        status: 'active',
         created_at: new Date().toISOString()
       });
     } else {
@@ -227,7 +237,8 @@ export async function setupBotCommands() {
       { command: 'start', description: '🚀 Start' },
       { command: 'menu', description: '📋 Main Menu' },
       { command: 'help', description: '📖 Help' },
-      { command: 'mytickets', description: '🎫 My Tickets' }
+      { command: 'mytickets', description: '🎫 My Tickets' },
+      { command: 'login', description: '🔐 Login to Abbaa Carraa' }
     ]);
     console.log('✅ Bot commands set');
   } catch (error) {
@@ -235,510 +246,521 @@ export async function setupBotCommands() {
   }
 }
 
-export async function handleBotMessages() {
-  if (!bot) {
-    console.log('⚠️ Bot not initialized');
-    return;
-  }
-
-  bot.catch((err, ctx) => {
-    console.error('Bot error:', err);
-    ctx.reply('⚠️ Please try again later.');
-  });
-
-  // ============================================
-  // START COMMAND - WITH LOGIN HANDLING
-  // ============================================
-  bot.start(async (ctx) => {
-    const user = ctx.from;
-    const userId = user.id;
-    const startPayload = ctx.payload; // Value after ?start= in the link
+// ============================================
+// HANDLE LOGIN COMMAND
+// ============================================
+async function handleLoginFlow(ctx) {
+  const user = ctx.from;
+  const userId = user.id;
+  const lang = await getUserLanguage(userId);
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  
+  try {
+    // Generate a secure login token
+    const loginToken = Buffer.from(JSON.stringify({
+      userId: user.id,
+      username: user.username,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      timestamp: Date.now(),
+      expires: Date.now() + 300000 // 5 minutes expiry
+    })).toString('base64');
     
-    // ✅ Check if this is a login request
-    const isLogin = startPayload === 'login' || startPayload?.startsWith('login');
-    
-    if (isLogin) {
-      try {
-        // Get user's language preference
-        const lang = await getUserLanguage(userId);
-        const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-        
-        // Generate a secure login token
-        const loginToken = Buffer.from(JSON.stringify({
-          userId: user.id,
-          username: user.username,
-          firstName: user.first_name,
-          lastName: user.last_name,
-          timestamp: Date.now(),
-          expires: Date.now() + 300000 // 5 minutes expiry
-        })).toString('base64');
-        
-        // Store the token temporarily
-        const { error } = await supabase
-          .from('login_tokens')
-          .insert({
-            token: loginToken,
-            telegram_id: user.id,
-            username: user.username || null,
-            first_name: user.first_name || null,
-            last_name: user.last_name || null,
-            expires_at: new Date(Date.now() + 300000).toISOString()
-          });
-        
-        if (error) {
-          console.error('Error storing login token:', error);
-          await ctx.reply('⚠️ Login failed. Please try again.');
-          return;
-        }
-        
-        // Send login success message with deep link back to app
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com';
-        
-        await ctx.reply(
-          t.login_success.replace('{name}', user.first_name || 'User'),
-          {
-            parse_mode: 'Markdown',
-            reply_markup: {
-              inline_keyboard: [
-                [{ 
-                  text: t.return_to_app, 
-                  url: `${appUrl}/auth/callback?token=${loginToken}&telegram_id=${user.id}`
-                }]
-              ]
-            }
-          }
-        );
-        
-      } catch (error) {
-        console.error('Login error:', error);
-        await ctx.reply('⚠️ Login failed. Please try again.');
-      }
-      return;
-    }
-    
-    // ============================================
-    // NORMAL START FLOW (Existing code)
-    // ============================================
-    
-    // Initialize session
-    userSessions[userId] = { 
-      step: 'language',
-      data: {} 
-    };
-    
-    // 1. Welcome Message
-    await ctx.reply(TRANSLATIONS.en.welcome, { parse_mode: 'Markdown' });
-    
-    // 2. Language Selection
-    await ctx.reply(TRANSLATIONS.en.language_select, {
-      parse_mode: 'Markdown',
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: '🇬🇧 English', callback_data: 'lang_en' }],
-          [{ text: '🇪🇹 አማርኛ', callback_data: 'lang_am' }],
-          [{ text: '🌍 Afaan Oromo', callback_data: 'lang_om' }]
-        ]
-      }
-    });
-  });
-
-  // ============================================
-  // LANGUAGE SELECTION CALLBACK
-  // ============================================
-  bot.action(/lang_(.+)/, async (ctx) => {
-    const lang = ctx.match[1];
-    const userId = ctx.from.id;
-    
-    await updateUserLanguage(userId, lang);
-    
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    
-    // 1. Language confirmed
-    await ctx.reply(t.language_set, { parse_mode: 'Markdown' });
-    
-    // 2. Update session
-    if (userSessions[userId]) {
-      userSessions[userId].step = 'ask_name';
-      userSessions[userId].language = lang;
-    } else {
-      userSessions[userId] = { 
-        step: 'ask_name', 
-        language: lang,
-        data: {} 
-      };
-    }
-    
-    // 3. Ask for name
-    await ctx.reply(t.ask_name, { parse_mode: 'Markdown' });
-    
-    await ctx.answerCbQuery();
-  });
-
-  // ============================================
-  // HANDLE TEXT - NAME & PHONE
-  // ============================================
-  bot.on('text', async (ctx) => {
-    const user = ctx.from;
-    const userId = user.id;
-    const text = ctx.message.text.trim();
-    
-    const session = userSessions[userId];
-    
-    if (!session) {
-      const lang = await getUserLanguage(userId);
-      const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-      await ctx.reply(t.main_menu.replace('{name}', user.first_name || 'User'), {
-        parse_mode: 'Markdown'
+    // Store the token temporarily
+    const { error } = await supabase
+      .from('login_tokens')
+      .insert({
+        token: loginToken,
+        telegram_id: user.id,
+        username: user.username || null,
+        first_name: user.first_name || null,
+        last_name: user.last_name || null,
+        expires_at: new Date(Date.now() + 300000).toISOString()
       });
-      await ctx.reply('👇 *Choose an option below:*', {
-        parse_mode: 'Markdown',
-        reply_markup: buildMainMenu(lang)
-      });
-      return;
-    }
-
-    if (session.step === 'ask_name') {
-      session.data.fullName = text;
-      session.step = 'ask_phone';
-      
-      const lang = session.language || await getUserLanguage(userId);
-      const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-      
-      await ctx.reply(t.ask_phone, { parse_mode: 'Markdown' });
+    
+    if (error) {
+      console.error('Error storing login token:', error);
+      await ctx.reply('⚠️ Login failed. Please try again.');
       return;
     }
     
-    if (session.step === 'ask_phone') {
-      session.data.phone = text;
-      session.step = 'complete';
-      
-      const lang = session.language || await getUserLanguage(userId);
-      const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-      
-      await saveUserProfile(
-        userId,
-        user.username,
-        user.first_name,
-        user.last_name,
-        text,
-        session.data.fullName
-      );
-      
-      await ctx.reply(t.phone_received, { parse_mode: 'Markdown' });
-      
-      await showPrograms(ctx, userId, lang);
-      
-      delete userSessions[userId];
-      return;
-    }
-  });
-
-  // ============================================
-  // SHOW PROGRAMS
-  // ============================================
-  async function showPrograms(ctx, userId, lang) {
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    const user = ctx.from;
-    const name = user?.first_name || 'User';
-    
-    await ctx.reply(t.main_menu.replace('{name}', name), {
-      parse_mode: 'Markdown'
-    });
-    
-    await ctx.reply(t.programs, {
-      parse_mode: 'Markdown'
-    });
-    
-    await ctx.reply('👇 *Select a program below:*', {
-      parse_mode: 'Markdown',
-      reply_markup: buildMainMenu(lang)
-    });
-  }
-
-  // ============================================
-  // PROGRAM CALLBACKS
-  // ============================================
-  bot.action('regular', async (ctx) => {
-    const userId = ctx.from.id;
-    const lang = await getUserLanguage(userId);
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    
-    await ctx.editMessageText(t.program_2, {
-      parse_mode: 'Markdown'
-    });
-    
-    await ctx.reply('👇 *Join now:*', {
-      parse_mode: 'Markdown',
-      reply_markup: buildProgramMenu(lang, 'regular')
-    });
-    await ctx.answerCbQuery();
-  });
-
-  bot.action('city', async (ctx) => {
-    const userId = ctx.from.id;
-    const lang = await getUserLanguage(userId);
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    
-    await ctx.editMessageText(t.program_3, {
-      parse_mode: 'Markdown'
-    });
-    
-    await ctx.reply('👇 *Join now:*', {
-      parse_mode: 'Markdown',
-      reply_markup: buildProgramMenu(lang, 'city')
-    });
-    await ctx.answerCbQuery();
-  });
-
-  bot.action('merkato', async (ctx) => {
-    const userId = ctx.from.id;
-    const lang = await getUserLanguage(userId);
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    
-    await ctx.editMessageText(t.program_4, {
-      parse_mode: 'Markdown'
-    });
-    
-    await ctx.reply('👇 *Join now:*', {
-      parse_mode: 'Markdown',
-      reply_markup: buildProgramMenu(lang, 'merkato')
-    });
-    await ctx.answerCbQuery();
-  });
-
-  bot.action('partner', async (ctx) => {
-    const userId = ctx.from.id;
-    const lang = await getUserLanguage(userId);
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    
-    await ctx.editMessageText(t.program_5, {
-      parse_mode: 'Markdown'
-    });
-    
-    await ctx.reply('👇 *Apply now:*', {
-      parse_mode: 'Markdown',
-      reply_markup: buildProgramMenu(lang, 'partner')
-    });
-    await ctx.answerCbQuery();
-  });
-
-  // ============================================
-  // OTHER CALLBACKS
-  // ============================================
-  bot.action('menu', async (ctx) => {
-    const userId = ctx.from.id;
-    const lang = await getUserLanguage(userId);
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    const user = ctx.from;
-    
-    await ctx.editMessageText(t.main_menu.replace('{name}', user.first_name || 'User'), {
-      parse_mode: 'Markdown'
-    });
-    
-    await ctx.reply('👇 *Choose an option below:*', {
-      parse_mode: 'Markdown',
-      reply_markup: buildMainMenu(lang)
-    });
-    await ctx.answerCbQuery();
-  });
-
-  bot.action('winners', async (ctx) => {
-    const userId = ctx.from.id;
-    const lang = await getUserLanguage(userId);
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+    // Send login success message with deep link back to app
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com';
-    
-    try {
-      const { data: winners } = await supabase
-        .from('pools')
-        .select('*')
-        .eq('status', 'completed')
-        .not('winner_id', 'is', null)
-        .order('updated_at', { ascending: false })
-        .limit(5);
-
-      let text = t.winners;
-      if (winners && winners.length > 0) {
-        winners.forEach((w, i) => {
-          text += `${i+1}. 🏆 ${w.title || 'Prize'} - ${w.prize_amount || 'N/A'}\n`;
-        });
-      } else {
-        text += t.no_winners;
-      }
-      
-      await ctx.editMessageText(text, {
-        parse_mode: 'Markdown'
-      });
-      
-      await ctx.reply('👇 *View all winners:*', {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: t.view_winners, web_app: { url: `${appUrl}/winners` } }],
-            [{ text: t.back, callback_data: 'menu' }]
-          ]
-        }
-      });
-    } catch {
-      await ctx.editMessageText('⚠️ Failed to load winners.', {
-        reply_markup: { inline_keyboard: [[{ text: t.back, callback_data: 'menu' }]] }
-      });
-    }
-    await ctx.answerCbQuery();
-  });
-
-  bot.action('how', async (ctx) => {
-    const userId = ctx.from.id;
-    const lang = await getUserLanguage(userId);
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    
-    await ctx.editMessageText(t.how_it_works, {
-      parse_mode: 'Markdown'
-    });
-    
-    await ctx.reply('👇 *Go back:*', {
-      parse_mode: 'Markdown',
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: t.back, callback_data: 'menu' }]
-        ]
-      }
-    });
-    await ctx.answerCbQuery();
-  });
-
-  bot.action('support', async (ctx) => {
-    const userId = ctx.from.id;
-    const lang = await getUserLanguage(userId);
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    
-    await ctx.editMessageText(t.support, {
-      parse_mode: 'Markdown'
-    });
-    
-    await ctx.reply('👇 *Go back:*', {
-      parse_mode: 'Markdown',
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: t.back, callback_data: 'menu' }]
-        ]
-      }
-    });
-    await ctx.answerCbQuery();
-  });
-
-  // ============================================
-  // MY TICKETS COMMAND
-  // ============================================
-  bot.command('mytickets', async (ctx) => {
-    const userId = ctx.from.id;
-    const lang = await getUserLanguage(userId);
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com';
-    
-    try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('telegram_id', userId)
-        .single();
-
-      if (!profile) {
-        await ctx.reply(t.no_tickets, { parse_mode: 'Markdown' });
-        return;
-      }
-
-      const [merkato, city, regular] = await Promise.all([
-        supabase.from('merkato_vip_participants').select('*').eq('user_id', profile.id).limit(5),
-        supabase.from('city_vip_participants').select('*').eq('user_id', profile.id).limit(5),
-        supabase.from('regular_pool_participants').select('*').eq('user_id', profile.id).limit(5)
-      ]);
-
-      const allTickets = [
-        ...(merkato.data || []).map(t => ({ ...t, type: 'Merkato VIP' })),
-        ...(city.data || []).map(t => ({ ...t, type: 'City VIP' })),
-        ...(regular.data || []).map(t => ({ ...t, type: 'Regular' }))
-      ];
-
-      if (allTickets.length === 0) {
-        await ctx.reply(t.no_tickets, { parse_mode: 'Markdown' });
-        return;
-      }
-
-      let message = t.tickets;
-      allTickets.slice(0, 5).forEach((ticket, i) => {
-        const status = ticket.payment_status === 'verified' ? '✅' : '⏳';
-        message += `${i+1}. ${status} ${ticket.type}\n`;
-        message += `   Seats: ${ticket.seat_numbers?.join(', ') || 'N/A'}\n`;
-        message += `   #${ticket.ticket_number || 'N/A'}\n\n`;
-      });
-
-      await ctx.reply(message, {
-        parse_mode: 'Markdown'
-      });
-      
-      await ctx.reply('👇 *View all tickets:*', {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: '📊 Dashboard', web_app: { url: `${appUrl}/dashboard` } }],
-            [{ text: t.back, callback_data: 'menu' }]
-          ]
-        }
-      });
-    } catch {
-      await ctx.reply('⚠️ Failed to load tickets.');
-    }
-  });
-
-  // ============================================
-  // HELP COMMAND
-  // ============================================
-  bot.help(async (ctx) => {
-    const userId = ctx.from.id;
-    const lang = await getUserLanguage(userId);
-    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     
     await ctx.reply(
-      `📖 *Help*\n\n` +
-      `/start - Start the bot\n` +
-      `/menu - Main menu\n` +
-      `/mytickets - View tickets\n` +
-      `/help - This help\n\n` +
-      `Need more help? Contact support.`,
+      t.login_success.replace('{name}', user.first_name || 'User'),
       {
-        parse_mode: 'Markdown'
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [
+            [{ 
+              text: t.return_to_app, 
+              url: `${appUrl}/auth/callback?token=${loginToken}&telegram_id=${user.id}`
+            }]
+          ]
+        }
       }
     );
     
-    await ctx.reply('👇 *Go back:*', {
-      parse_mode: 'Markdown',
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: t.back, callback_data: 'menu' }]
-        ]
-      }
-    });
-  });
+  } catch (error) {
+    console.error('Login error:', error);
+    await ctx.reply('⚠️ Login failed. Please try again.');
+  }
+}
 
+// ============================================
+// START COMMAND - WITH LOGIN HANDLING
+// ============================================
+bot.start(async (ctx) => {
+  const user = ctx.from;
+  const userId = user.id;
+  
+  // ✅ Check if this is a login request
+  const startPayload = ctx.payload; // Value after ?start= in the link
+  console.log('📱 Start payload:', startPayload);
+  
+  // Check for login in multiple ways
+  const isLogin = startPayload === 'login' || 
+                  startPayload?.startsWith('login') ||
+                  startPayload?.includes('login');
+  
+  if (isLogin) {
+    console.log('🔐 Login request detected!');
+    await handleLoginFlow(ctx);
+    return;
+  }
+  
   // ============================================
-  // MENU COMMAND
+  // NORMAL START FLOW (Existing code)
   // ============================================
-  bot.command('menu', async (ctx) => {
-    const userId = ctx.from.id;
+  
+  // Initialize session
+  userSessions[userId] = { 
+    step: 'language',
+    data: {} 
+  };
+  
+  // 1. Welcome Message
+  await ctx.reply(TRANSLATIONS.en.welcome, { parse_mode: 'Markdown' });
+  
+  // 2. Language Selection
+  await ctx.reply(TRANSLATIONS.en.language_select, {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '🇬🇧 English', callback_data: 'lang_en' }],
+        [{ text: '🇪🇹 አማርኛ', callback_data: 'lang_am' }],
+        [{ text: '🌍 Afaan Oromo', callback_data: 'lang_om' }]
+      ]
+    }
+  });
+});
+
+// ============================================
+// LOGIN COMMAND
+// ============================================
+bot.command('login', async (ctx) => {
+  console.log('🔐 /login command received');
+  await handleLoginFlow(ctx);
+});
+
+// ============================================
+// LANGUAGE SELECTION CALLBACK
+// ============================================
+bot.action(/lang_(.+)/, async (ctx) => {
+  const lang = ctx.match[1];
+  const userId = ctx.from.id;
+  
+  await updateUserLanguage(userId, lang);
+  
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  
+  // 1. Language confirmed
+  await ctx.reply(t.language_set, { parse_mode: 'Markdown' });
+  
+  // 2. Update session
+  if (userSessions[userId]) {
+    userSessions[userId].step = 'ask_name';
+    userSessions[userId].language = lang;
+  } else {
+    userSessions[userId] = { 
+      step: 'ask_name', 
+      language: lang,
+      data: {} 
+    };
+  }
+  
+  // 3. Ask for name
+  await ctx.reply(t.ask_name, { parse_mode: 'Markdown' });
+  
+  await ctx.answerCbQuery();
+});
+
+// ============================================
+// HANDLE TEXT - NAME & PHONE
+// ============================================
+bot.on('text', async (ctx) => {
+  const user = ctx.from;
+  const userId = user.id;
+  const text = ctx.message.text.trim();
+  
+  const session = userSessions[userId];
+  
+  if (!session) {
     const lang = await getUserLanguage(userId);
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-    const user = ctx.from;
-    
     await ctx.reply(t.main_menu.replace('{name}', user.first_name || 'User'), {
       parse_mode: 'Markdown'
     });
-    
     await ctx.reply('👇 *Choose an option below:*', {
       parse_mode: 'Markdown',
       reply_markup: buildMainMenu(lang)
     });
+    return;
+  }
+
+  if (session.step === 'ask_name') {
+    session.data.fullName = text;
+    session.step = 'ask_phone';
+    
+    const lang = session.language || await getUserLanguage(userId);
+    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+    
+    await ctx.reply(t.ask_phone, { parse_mode: 'Markdown' });
+    return;
+  }
+  
+  if (session.step === 'ask_phone') {
+    session.data.phone = text;
+    session.step = 'complete';
+    
+    const lang = session.language || await getUserLanguage(userId);
+    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+    
+    await saveUserProfile(
+      userId,
+      user.username,
+      user.first_name,
+      user.last_name,
+      text,
+      session.data.fullName
+    );
+    
+    await ctx.reply(t.phone_received, { parse_mode: 'Markdown' });
+    
+    await showPrograms(ctx, userId, lang);
+    
+    delete userSessions[userId];
+    return;
+  }
+});
+
+// ============================================
+// SHOW PROGRAMS
+// ============================================
+async function showPrograms(ctx, userId, lang) {
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  const user = ctx.from;
+  const name = user?.first_name || 'User';
+  
+  await ctx.reply(t.main_menu.replace('{name}', name), {
+    parse_mode: 'Markdown'
+  });
+  
+  await ctx.reply(t.programs, {
+    parse_mode: 'Markdown'
+  });
+  
+  await ctx.reply('👇 *Select a program below:*', {
+    parse_mode: 'Markdown',
+    reply_markup: buildMainMenu(lang)
   });
 }
+
+// ============================================
+// PROGRAM CALLBACKS
+// ============================================
+bot.action('regular', async (ctx) => {
+  const userId = ctx.from.id;
+  const lang = await getUserLanguage(userId);
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  
+  await ctx.editMessageText(t.program_2, {
+    parse_mode: 'Markdown'
+  });
+  
+  await ctx.reply('👇 *Join now:*', {
+    parse_mode: 'Markdown',
+    reply_markup: buildProgramMenu(lang, 'regular')
+  });
+  await ctx.answerCbQuery();
+});
+
+bot.action('city', async (ctx) => {
+  const userId = ctx.from.id;
+  const lang = await getUserLanguage(userId);
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  
+  await ctx.editMessageText(t.program_3, {
+    parse_mode: 'Markdown'
+  });
+  
+  await ctx.reply('👇 *Join now:*', {
+    parse_mode: 'Markdown',
+    reply_markup: buildProgramMenu(lang, 'city')
+  });
+  await ctx.answerCbQuery();
+});
+
+bot.action('merkato', async (ctx) => {
+  const userId = ctx.from.id;
+  const lang = await getUserLanguage(userId);
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  
+  await ctx.editMessageText(t.program_4, {
+    parse_mode: 'Markdown'
+  });
+  
+  await ctx.reply('👇 *Join now:*', {
+    parse_mode: 'Markdown',
+    reply_markup: buildProgramMenu(lang, 'merkato')
+  });
+  await ctx.answerCbQuery();
+});
+
+bot.action('partner', async (ctx) => {
+  const userId = ctx.from.id;
+  const lang = await getUserLanguage(userId);
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  
+  await ctx.editMessageText(t.program_5, {
+    parse_mode: 'Markdown'
+  });
+  
+  await ctx.reply('👇 *Apply now:*', {
+    parse_mode: 'Markdown',
+    reply_markup: buildProgramMenu(lang, 'partner')
+  });
+  await ctx.answerCbQuery();
+});
+
+// ============================================
+// OTHER CALLBACKS
+// ============================================
+bot.action('menu', async (ctx) => {
+  const userId = ctx.from.id;
+  const lang = await getUserLanguage(userId);
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  const user = ctx.from;
+  
+  await ctx.editMessageText(t.main_menu.replace('{name}', user.first_name || 'User'), {
+    parse_mode: 'Markdown'
+  });
+  
+  await ctx.reply('👇 *Choose an option below:*', {
+    parse_mode: 'Markdown',
+    reply_markup: buildMainMenu(lang)
+  });
+  await ctx.answerCbQuery();
+});
+
+bot.action('winners', async (ctx) => {
+  const userId = ctx.from.id;
+  const lang = await getUserLanguage(userId);
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com';
+  
+  try {
+    const { data: winners } = await supabase
+      .from('pools')
+      .select('*')
+      .eq('status', 'completed')
+      .not('winner_id', 'is', null)
+      .order('updated_at', { ascending: false })
+      .limit(5);
+
+    let text = t.winners;
+    if (winners && winners.length > 0) {
+      winners.forEach((w, i) => {
+        text += `${i+1}. 🏆 ${w.title || 'Prize'} - ${w.prize_amount || 'N/A'}\n`;
+      });
+    } else {
+      text += t.no_winners;
+    }
+    
+    await ctx.editMessageText(text, {
+      parse_mode: 'Markdown'
+    });
+    
+    await ctx.reply('👇 *View all winners:*', {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: t.view_winners, web_app: { url: `${appUrl}/winners` } }],
+          [{ text: t.back, callback_data: 'menu' }]
+        ]
+      }
+    });
+  } catch {
+    await ctx.editMessageText('⚠️ Failed to load winners.', {
+      reply_markup: { inline_keyboard: [[{ text: t.back, callback_data: 'menu' }]] }
+    });
+  }
+  await ctx.answerCbQuery();
+});
+
+bot.action('how', async (ctx) => {
+  const userId = ctx.from.id;
+  const lang = await getUserLanguage(userId);
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  
+  await ctx.editMessageText(t.how_it_works, {
+    parse_mode: 'Markdown'
+  });
+  
+  await ctx.reply('👇 *Go back:*', {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: t.back, callback_data: 'menu' }]
+      ]
+    }
+  });
+  await ctx.answerCbQuery();
+});
+
+bot.action('support', async (ctx) => {
+  const userId = ctx.from.id;
+  const lang = await getUserLanguage(userId);
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  
+  await ctx.editMessageText(t.support, {
+    parse_mode: 'Markdown'
+  });
+  
+  await ctx.reply('👇 *Go back:*', {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: t.back, callback_data: 'menu' }]
+      ]
+    }
+  });
+  await ctx.answerCbQuery();
+});
+
+// ============================================
+// MY TICKETS COMMAND
+// ============================================
+bot.command('mytickets', async (ctx) => {
+  const userId = ctx.from.id;
+  const lang = await getUserLanguage(userId);
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com';
+  
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('telegram_id', userId)
+      .single();
+
+    if (!profile) {
+      await ctx.reply(t.no_tickets, { parse_mode: 'Markdown' });
+      return;
+    }
+
+    const [merkato, city, regular] = await Promise.all([
+      supabase.from('merkato_vip_participants').select('*').eq('user_id', profile.id).limit(5),
+      supabase.from('city_vip_participants').select('*').eq('user_id', profile.id).limit(5),
+      supabase.from('regular_pool_participants').select('*').eq('user_id', profile.id).limit(5)
+    ]);
+
+    const allTickets = [
+      ...(merkato.data || []).map(t => ({ ...t, type: 'Merkato VIP' })),
+      ...(city.data || []).map(t => ({ ...t, type: 'City VIP' })),
+      ...(regular.data || []).map(t => ({ ...t, type: 'Regular' }))
+    ];
+
+    if (allTickets.length === 0) {
+      await ctx.reply(t.no_tickets, { parse_mode: 'Markdown' });
+      return;
+    }
+
+    let message = t.tickets;
+    allTickets.slice(0, 5).forEach((ticket, i) => {
+      const status = ticket.payment_status === 'verified' ? '✅' : '⏳';
+      message += `${i+1}. ${status} ${ticket.type}\n`;
+      message += `   Seats: ${ticket.seat_numbers?.join(', ') || 'N/A'}\n`;
+      message += `   #${ticket.ticket_number || 'N/A'}\n\n`;
+    });
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown'
+    });
+    
+    await ctx.reply('👇 *View all tickets:*', {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '📊 Dashboard', web_app: { url: `${appUrl}/dashboard` } }],
+          [{ text: t.back, callback_data: 'menu' }]
+        ]
+      }
+    });
+  } catch {
+    await ctx.reply('⚠️ Failed to load tickets.');
+  }
+});
+
+// ============================================
+// HELP COMMAND
+// ============================================
+bot.help(async (ctx) => {
+  const userId = ctx.from.id;
+  const lang = await getUserLanguage(userId);
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  
+  await ctx.reply(
+    `📖 *Help*\n\n` +
+    `/start - Start the bot\n` +
+    `/menu - Main menu\n` +
+    `/mytickets - View tickets\n` +
+    `/login - Login to Abbaa Carraa\n` +
+    `/help - This help\n\n` +
+    `Need more help? Contact support.`,
+    {
+      parse_mode: 'Markdown'
+    }
+  );
+  
+  await ctx.reply('👇 *Go back:*', {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: t.back, callback_data: 'menu' }]
+      ]
+    }
+  });
+});
+
+// ============================================
+// MENU COMMAND
+// ============================================
+bot.command('menu', async (ctx) => {
+  const userId = ctx.from.id;
+  const lang = await getUserLanguage(userId);
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  const user = ctx.from;
+  
+  await ctx.reply(t.main_menu.replace('{name}', user.first_name || 'User'), {
+    parse_mode: 'Markdown'
+  });
+  
+  await ctx.reply('👇 *Choose an option below:*', {
+    parse_mode: 'Markdown',
+    reply_markup: buildMainMenu(lang)
+  });
+});
 
 export default bot;
