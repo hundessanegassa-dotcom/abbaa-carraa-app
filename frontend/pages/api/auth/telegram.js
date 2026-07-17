@@ -1,4 +1,4 @@
-// pages/api/auth/telegram.js
+// pages/api/auth/telegram.js - For WebApp auto-login
 import { supabase } from '../../../lib/supabase';
 
 export default async function handler(req, res) {
@@ -13,19 +13,21 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid user data' });
     }
 
-    const { data: existingUser, error: findError } = await supabase
+    console.log('📱 Telegram WebApp auth for user:', user.id);
+
+    // Check if user exists
+    let { data: profile, error: findError } = await supabase
       .from('profiles')
       .select('*')
       .eq('telegram_id', user.id)
       .single();
 
-    let profile;
-
     if (findError && findError.code !== 'PGRST116') {
       throw findError;
     }
 
-    if (!existingUser) {
+    if (!profile) {
+      console.log('👤 Creating new user from WebApp');
       const { data: newUser, error: createError } = await supabase
         .from('profiles')
         .insert({
@@ -34,7 +36,10 @@ export default async function handler(req, res) {
           full_name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Telegram User',
           email: `${user.username || user.id}@telegram.user`,
           language: 'en',
-          phone: user.phone_number || '',
+          role: 'individual',
+          user_type: 'individual',
+          agreement_accepted: true,
+          status: 'active',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -43,27 +48,16 @@ export default async function handler(req, res) {
 
       if (createError) throw createError;
       profile = newUser;
-    } else {
-      const { data: updatedUser, error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          telegram_username: user.username || null,
-          full_name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Telegram User',
-          updated_at: new Date().toISOString()
-        })
-        .eq('telegram_id', user.id)
-        .select()
-        .single();
-
-      if (updateError) throw updateError;
-      profile = updatedUser;
     }
 
+    // Generate session token
     const sessionToken = Buffer.from(JSON.stringify({
       userId: profile.id,
       telegramId: user.id,
       timestamp: Date.now()
     })).toString('base64');
+
+    console.log('✅ WebApp auth successful for:', profile.id);
 
     res.status(200).json({
       success: true,
@@ -73,7 +67,7 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('Telegram auth error:', error);
+    console.error('❌ Telegram WebApp auth error:', error);
     res.status(500).json({ error: 'Authentication failed' });
   }
 }
