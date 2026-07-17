@@ -15,7 +15,7 @@ export default function TelegramLoginButton({ onSuccess, onError, className }) {
     try {
       // If already in Telegram WebApp and user data is available
       if (isInTelegram && user) {
-        // Send user data to backend for authentication
+        // Direct authentication via API
         const response = await fetch('/api/auth/telegram', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -24,7 +24,6 @@ export default function TelegramLoginButton({ onSuccess, onError, className }) {
             username: user.username,
             first_name: user.first_name,
             last_name: user.last_name,
-            photo_url: user.photo_url,
             init_data: sessionStorage.getItem('telegram_init_data')
           })
         });
@@ -44,11 +43,33 @@ export default function TelegramLoginButton({ onSuccess, onError, className }) {
           throw new Error('Authentication failed');
         }
       } else {
-        // Not in Telegram, open the bot
+        // Open Telegram bot with login parameter
         const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'abbaacarraa_bot';
-        const startParam = 'startapp=login';
-        window.open(`https://t.me/${botUsername}?start=${startParam}`, '_blank');
-        toast.info('Please open the Telegram bot to login');
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://abbaacarraa.com';
+        
+        // Store the redirect URL for after login
+        const currentPath = window.location.pathname;
+        sessionStorage.setItem('redirectAfterLogin', currentPath);
+        
+        // Open the bot with login payload
+        window.open(`https://t.me/${botUsername}?start=login`, '_blank');
+        
+        // Show waiting message
+        toast.info('Please login in the Telegram bot and click "Return to App"');
+        
+        // Listen for login success via URL (polling)
+        const checkLogin = setInterval(() => {
+          const sessionToken = sessionStorage.getItem('telegram_session_token');
+          if (sessionToken) {
+            clearInterval(checkLogin);
+            const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/dashboard';
+            router.push(redirectPath);
+            if (onSuccess) onSuccess();
+          }
+        }, 2000);
+        
+        // Clean up interval after 5 minutes
+        setTimeout(() => clearInterval(checkLogin), 300000);
       }
     } catch (error) {
       console.error('Telegram login error:', error);
