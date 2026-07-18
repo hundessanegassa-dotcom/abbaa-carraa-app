@@ -18,7 +18,12 @@ const Navbar = dynamic(() => import('../components/Navbar').catch(() => () => <d
   loading: () => <div className="h-16 bg-gray-100 animate-pulse" /> 
 });
 
-const Footer = dynamic(() => import('../components/Footer').catch(() => () => null), { ssr: false });
+// ✅ FIXED: Added loading fallback for Footer
+const Footer = dynamic(() => import('../components/Footer').catch(() => () => null), { 
+  ssr: false,
+  loading: () => <div className="h-24 bg-gray-50" /> // Loading fallback
+});
+
 const ChatBot = dynamic(() => import('../components/ChatBot').catch(() => () => null), { ssr: false });
 const LanguageToggle = dynamic(() => import('../components/LanguageToggle').catch(() => () => null), { ssr: false });
 const MobileBottomNav = dynamic(() => import('../components/MobileBottomNav').catch(() => () => null), { ssr: false });
@@ -59,21 +64,21 @@ function MyApp({ Component, pageProps }) {
         
         // ✅ Auto-login via API
         fetch('/api/auth/telegram', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    initData: webApp.initData,
-    user: user
-  })
-})
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            sessionStorage.setItem('telegram_session_token', data.sessionToken);
-            console.log('✅ Telegram user authenticated');
-          }
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            initData: webApp.initData,
+            user: user
+          })
         })
-        .catch(err => console.error('Telegram auth error:', err));
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              sessionStorage.setItem('telegram_session_token', data.sessionToken);
+              console.log('✅ Telegram user authenticated');
+            }
+          })
+          .catch(err => console.error('Telegram auth error:', err));
       }
     }
   }, []);

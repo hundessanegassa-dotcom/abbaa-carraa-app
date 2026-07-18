@@ -1,11 +1,11 @@
-// pages/payment/merkato.js - Fixed with TicketImage import
+// pages/payment/merkato.js - Fixed with proper ticket generation
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
 import Head from 'next/head';
 import toast from 'react-hot-toast';
 import BankTransferUpload from '../../components/BankTransferUpload';
-import TicketImage from '../../components/TicketImage'; // ✅ FIXED: Changed from Ticket to TicketImage
+import { generateTicketImage } from '../../lib/ticketGenerator'; // ✅ FIXED: Using ticketGenerator function
 
 export default function MerkatoPayment() {
   const router = useRouter();
@@ -16,6 +16,7 @@ export default function MerkatoPayment() {
   const [poolInfo, setPoolInfo] = useState(null);
   const [showPayment, setShowPayment] = useState(true);
   const [ticketGenerated, setTicketGenerated] = useState(false);
+  const [ticketImageUrl, setTicketImageUrl] = useState(null);
 
   const vipPools = {
     daily: { name: "Daily Millionaire", entryFee: 500, prize: 1000000, totalSeats: 2400, drawDate: "Every Day at 8:00 PM" },
@@ -72,6 +73,24 @@ export default function MerkatoPayment() {
   const handlePaymentSuccess = async (paymentProofUrl, reference) => {
     if (isMounted.current) {
       setShowPayment(false);
+      // Generate ticket image
+      try {
+        const ticketUrl = await generateTicketImage({
+          participant: participantData,
+          programType: 'merkato',
+          tier: type,
+          seatNumbers: getSeatNumbersArray(),
+          ticketNumber: participantData?.ticket_number || `MK-${Date.now()}`,
+          amount: parseInt(amount) || poolInfo.entryFee,
+          prize: poolInfo.name,
+          language: 'am',
+          isVerified: false
+        });
+        setTicketImageUrl(ticketUrl);
+      } catch (error) {
+        console.error('Error generating ticket:', error);
+        toast.error('Failed to generate ticket image');
+      }
       setTicketGenerated(true);
     }
     
@@ -141,24 +160,15 @@ export default function MerkatoPayment() {
           {ticketGenerated && participantData && (
             <div className="bg-white rounded-2xl shadow-xl p-6">
               <h2 className="text-2xl font-bold text-center mb-6">🎫 Your Merkato VIP Ticket</h2>
-              {/* ✅ FIXED: Updated to TicketImage with correct props */}
-              <TicketImage
-                participant={participantData}
-                pool={{
-                  prize_amount: poolInfo.prize,
-                  target_amount: poolInfo.prize,
-                  prize_name: poolInfo.name,
-                  drawDate: poolInfo.drawDate,
-                  name: 'Merkato VIP'
-                }}
-                isVerified={false}
-                seatNumbers={seatNumbersArray}
-                ticketNumber={participantData.ticket_number || `MK-${Date.now()}`}
-                amount={totalAmount}
-                createdAt={participantData.created_at || new Date().toISOString()}
-                poolType="merkato"
-                show3D={true}
-              />
+              {ticketImageUrl ? (
+                <div className="text-center">
+                  <img src={ticketImageUrl} alt="Merkato VIP Ticket" className="mx-auto rounded-lg shadow-md mb-4" />
+                </div>
+              ) : (
+                <div className="bg-gray-100 rounded-lg p-8 text-center">
+                  <p className="text-gray-500">Generating your ticket...</p>
+                </div>
+              )}
               <div className="text-center mt-6">
                 <p className="text-sm text-yellow-600">
                   ⏳ This is an UNVERIFIED ticket. Your seats will be confirmed after admin verifies your payment.

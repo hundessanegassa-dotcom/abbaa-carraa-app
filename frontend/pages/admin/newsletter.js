@@ -1,10 +1,12 @@
-// pages/admin/newsletter.js - FIXED with AdminLayout
+// pages/admin/newsletter.js - FIXED with AdminLayout and useRouter
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router'; // ✅ FIXED: Added missing import
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
-import AdminLayout from '../../components/admin/AdminLayout'; // ✅ ADDED
+import AdminLayout from '../../components/admin/AdminLayout';
 
 export default function AdminNewsletter() {
+  const router = useRouter(); // ✅ FIXED: Now properly initialized
   const [subscribers, setSubscribers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, active: 0, thisMonth: 0 });

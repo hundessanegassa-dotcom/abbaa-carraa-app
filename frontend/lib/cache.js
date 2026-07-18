@@ -1,4 +1,6 @@
 // Simple in-memory cache for API responses
+import { supabase } from './supabase';
+
 const cache = new Map();
 
 export const CACHE_DURATION = {
@@ -28,12 +30,46 @@ export function clearCache(key) {
   }
 }
 
-// Preload critical data
+// ✅ FIXED: Removed calls to undefined functions
+// Preload critical data - safely wrapped
 export async function preloadCriticalData() {
-  const preloadPromises = [
-    cachedFetch('featured-pools', () => fetchFeaturedPools(), CACHE_DURATION.LONG),
-    cachedFetch('stats', () => fetchStats(), CACHE_DURATION.MEDIUM),
-  ];
-  
-  await Promise.all(preloadPromises);
+  try {
+    // Only preload data that actually exists
+    if (!supabase) {
+      console.warn('Supabase not configured, skipping preload');
+      return;
+    }
+    
+    // Fetch featured pools if the table exists
+    try {
+      await cachedFetch(
+        'featured-pools',
+        () => supabase
+          .from('pools')
+          .select('*')
+          .eq('status', 'active')
+          .eq('featured', true)
+          .limit(6),
+        CACHE_DURATION.LONG
+      );
+    } catch (error) {
+      console.warn('Could not preload featured pools:', error.message);
+    }
+
+    // Fetch platform stats if the table exists
+    try {
+      await cachedFetch(
+        'stats',
+        () => supabase
+          .from('profiles')
+          .select('count', { count: 'exact', head: true }),
+        CACHE_DURATION.MEDIUM
+      );
+    } catch (error) {
+      console.warn('Could not preload stats:', error.message);
+    }
+  } catch (error) {
+    console.error('Error preloading critical data:', error);
+    // Don't throw - preload failures should not break the app
+  }
 }
