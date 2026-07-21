@@ -1,4 +1,4 @@
-// pages/cities/[city].js - UPDATED with PoolProductCard
+// pages/cities/[city].js - COMPLETE WITH TICKET IMAGE COMPONENT
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -9,7 +9,7 @@ import NoSSR from '../../components/NoSSR';
 import TopCitySelector from '../../components/TopCitySelector';
 import UnifiedAgentApplication from '../../components/UnifiedAgentApplication';
 import SeatSelector from '../../components/SeatSelector';
-import CityTicket from '../../components/CityTicket';
+import TicketImage from '../../components/TicketImage'; // ✅ NEW
 import PoolProductCard from '../../components/PoolProductCard';
 import { TIERS, getDrawScheduleText, TIER_IDS, getTierLabel } from '../../components/SeatSelector';
 import { getCityData, getAllCities, addUnlistedCity, updateCityData } from '../../lib/cityData';
@@ -41,6 +41,11 @@ export default function CityVip() {
   const [checkingUser, setCheckingUser] = useState(true);
   const [citySearchTerm, setCitySearchTerm] = useState('');
   const [is3D, setIs3D] = useState(false);
+  
+  // ✅ NEW: Ticket verification states
+  const [ticketVerified, setTicketVerified] = useState(false);
+  const [checkingVerification, setCheckingVerification] = useState(false);
+  const [paymentSubmitted, setPaymentSubmitted] = useState(false);
 
   // Load language preference
   useEffect(() => {
@@ -67,6 +72,16 @@ export default function CityVip() {
     }
   }, [cityInfo]);
 
+  // ✅ NEW: Check ticket verification status periodically
+  useEffect(() => {
+    if (participantId && paymentSubmitted) {
+      checkVerificationStatus();
+      
+      const interval = setInterval(checkVerificationStatus, 30000); // Check every 30 seconds
+      return () => clearInterval(interval);
+    }
+  }, [participantId, paymentSubmitted]);
+
   const toggleLanguage = () => {
     const newLang = language === 'am' ? 'en' : 'am';
     setLanguage(newLang);
@@ -91,6 +106,44 @@ export default function CityVip() {
       console.error('Error checking user:', error);
     } finally {
       setCheckingUser(false);
+    }
+  };
+
+  // ✅ NEW: Check verification status function
+  const checkVerificationStatus = async () => {
+    if (!participantId || checkingVerification) return;
+    
+    setCheckingVerification(true);
+    try {
+      const { data: participant, error } = await supabase
+        .from('city_vip_participants')
+        .select('payment_status')
+        .eq('id', participantId)
+        .single();
+
+      if (error) throw error;
+
+      if (participant?.payment_status === 'verified') {
+        setTicketVerified(true);
+        toast.success(
+          language === 'am' 
+            ? '✅ ቲኬትዎ ተረጋግጧል! የተረጋገጠ ቲኬትዎን ያውርዱ' 
+            : '✅ Your ticket is verified! Download your verified ticket'
+        );
+        // Refresh participant data to get latest
+        const { data: updatedParticipant } = await supabase
+          .from('city_vip_participants')
+          .select('*')
+          .eq('id', participantId)
+          .single();
+        if (updatedParticipant) {
+          setParticipantData(updatedParticipant);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking verification:', error);
+    } finally {
+      setCheckingVerification(false);
     }
   };
 
@@ -226,6 +279,7 @@ export default function CityVip() {
         .single();
       
       setParticipantData(updatedParticipant);
+      setPaymentSubmitted(true); // ✅ NEW
       setShowPayment(false);
       setShowTicket(true);
       
@@ -560,24 +614,79 @@ export default function CityVip() {
             </div>
           )}
 
+          {/* ============================================
+              TICKET DISPLAY - UPDATED WITH TicketImage
+              ============================================ */}
           {showTicket && participantData && (
             <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4 overflow-y-auto">
-              <div className="bg-white rounded-2xl max-w-md w-full">
-                <div className="bg-gradient-to-r from-gray-800 to-gray-900 p-4 flex justify-between rounded-t-2xl">
-                  <h3 className="text-white font-bold">
-                    {language === 'am' ? 'የእርስዎ ቲኬት' : 'Your Ticket'}
-                  </h3>
-                  <button onClick={handleCloseTicket} className="text-white text-2xl">×</button>
+              <div className="bg-white rounded-2xl max-w-2xl w-full my-8">
+                <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center rounded-t-2xl">
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-xl font-bold">
+                      {language === 'am' ? '🎫 የእርስዎ ቲኬት' : '🎫 Your Ticket'}
+                    </h2>
+                    {ticketVerified && (
+                      <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">
+                        ✅ {language === 'am' ? 'የተረጋገጠ' : 'Verified'}
+                      </span>
+                    )}
+                  </div>
+                  <button onClick={handleCloseTicket} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
                 </div>
                 <div className="p-6">
-                  <CityTicket 
+                  <TicketImage
                     participant={participantData}
-                    pool={selectedTier}
-                    cityInfo={cityInfo}
-                    type="unverified"
-                    tierId={selectedTierId}
+                    pool={{
+                      prize_name: selectedTier ? 
+                        `${selectedTier.icon} ${language === 'am' ? selectedTier.labelAm : selectedTier.labelEn} - ${cityName} VIP` : 
+                        'City VIP',
+                      target_amount: selectedTier?.prize || 0,
+                      prize: selectedTier?.prize || 0
+                    }}
+                    isVerified={ticketVerified || participantData.payment_status === 'verified'}
+                    seatNumbers={selectedSeats}
+                    ticketNumber={participantData.ticket_number}
+                    amount={participantData.contribution_amount}
+                    createdAt={participantData.created_at}
+                    poolType="city"
+                    show3D={is3D}
                     language={language}
+                    onDownload={() => {
+                      toast.success(
+                        language === 'am' 
+                          ? '📥 ቲኬት እየተወረደ ነው...' 
+                          : '📥 Downloading ticket...'
+                      );
+                    }}
+                    onClose={handleCloseTicket}
                   />
+                  
+                  {/* Verification Status Message */}
+                  {!ticketVerified && paymentSubmitted && (
+                    <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                      <p className="text-sm text-yellow-800">
+                        ⏳ {language === 'am' 
+                          ? 'ቲኬትዎ እየተረጋገጠ ነው. እባክዎ ይጠብቁ. አስተዳዳሪው ክፍያዎን ካረጋገጠ በኋላ የተረጋገጠ ቲኬት ያገኛሉ.' 
+                          : 'Your ticket is being verified. Please wait. You will receive a verified ticket once the admin confirms your payment.'}
+                      </p>
+                      <div className="mt-2 flex items-center justify-center gap-2">
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-yellow-600"></div>
+                        <span className="text-xs text-yellow-600">
+                          {language === 'am' ? 'በመጠበቅ ላይ...' : 'Waiting...'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {ticketVerified && (
+                    <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                      <p className="text-sm text-green-800">
+                        ✅ {language === 'am' 
+                          ? 'ቲኬትዎ ተረጋግጧል! የተረጋገጠ ቲኬትዎን ማውረድ ይችላሉ.' 
+                          : 'Your ticket is verified! You can download your verified ticket.'}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
