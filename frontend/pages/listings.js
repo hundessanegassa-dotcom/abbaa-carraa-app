@@ -1,11 +1,11 @@
-// pages/listings.js - REGULAR POOLS ONLY (No Merkato or City VIP)
+// pages/listings.js - REGULAR POOLS ONLY (UPDATED with PoolProductCard)
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import Link from 'next/link';
 import Head from 'next/head';
 import toast from 'react-hot-toast';
 import NoSSR from '../components/NoSSR';
-import PoolCard from '../components/PoolCard';
+import PoolProductCard from '../components/PoolProductCard';
 import DashboardLayout from '../components/DashboardLayout';
 
 export default function Listings() {
@@ -149,6 +149,16 @@ export default function Listings() {
   const filteredPools = getFilteredPools();
   const categories = ['all', ...new Set(pools.map(p => p.category).filter(Boolean))];
 
+  // Auto-rotate 3D effect
+  useEffect(() => {
+    if (is3D) {
+      const interval = setInterval(() => {
+        setRotation(prev => (prev + 0.1) % 360);
+      }, 50);
+      return () => clearInterval(interval);
+    }
+  }, [is3D]);
+
   return (
     <NoSSR>
       <>
@@ -285,46 +295,62 @@ export default function Listings() {
             ) : viewMode === 'grid' ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {filteredPools.map((pool) => (
-                  <PoolCard 
+                  <PoolProductCard 
                     key={pool.id} 
                     pool={pool} 
                     featured={pool.is_featured === true} 
                     language={language}
+                    show3D={is3D}
                   />
                 ))}
               </div>
             ) : (
+              // LIST VIEW - Using PoolProductCard in a horizontal layout
               <div className="space-y-4">
                 {filteredPools.map((pool) => (
-                  <div key={pool.id} className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition">
-                    <div className="flex flex-col md:flex-row">
-                      <div className="md:w-48 h-48 bg-gray-200 relative">
-                        {pool.image_url ? (
-                          <img src={pool.image_url} alt={pool.prize_name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-4xl bg-gradient-to-br from-gray-100 to-gray-200">
-                            🎁
-                          </div>
-                        )}
-                        {pool.is_featured && (
-                          <span className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                            ⭐ Featured
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex-1 p-4 flex flex-col justify-between">
-                        <div>
-                          <h3 className="text-lg font-bold text-gray-800">{pool.prize_name}</h3>
-                          <p className="text-sm text-gray-500 line-clamp-2">{pool.description}</p>
-                          <div className="flex flex-wrap gap-4 mt-2 text-sm">
-                            <span>💰 <span className="font-bold text-green-600">ETB {pool.target_amount?.toLocaleString()}</span></span>
-                            <span>🎫 <span className="font-bold">ETB {pool.entry_fee?.toLocaleString()}</span></span>
-                            <span>📊 <span className="font-bold">{Math.min(Math.round((pool.current_amount / pool.target_amount) * 100), 100)}%</span></span>
-                          </div>
+                  <div key={pool.id} className="transform transition-all duration-300 hover:scale-[1.01]">
+                    <div className="bg-gradient-to-br from-green-300 via-green-400 to-emerald-500 rounded-2xl p-4 shadow-lg border border-green-200">
+                      <div className="flex flex-col md:flex-row gap-4">
+                        {/* Image - Left side */}
+                        <div className="md:w-48 h-48 rounded-xl overflow-hidden shadow-lg flex-shrink-0 bg-gradient-to-br from-green-200 to-emerald-300">
+                          {pool.prize_image || pool.image_url ? (
+                            <img 
+                              src={pool.prize_image || pool.image_url} 
+                              alt={pool.prize_name} 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-6xl">
+                              🎁
+                            </div>
+                          )}
                         </div>
-                        <Link href={`/pools/${pool.id}`} className="mt-3 bg-green-600 hover:bg-green-700 text-white text-center py-2 rounded-lg font-semibold text-sm transition">
-                          {language === 'am' ? 'ይቀላቀሉ →' : 'Join Pool →'}
-                        </Link>
+                        
+                        {/* Content - Right side */}
+                        <div className="flex-1 flex flex-col justify-between text-white">
+                          <div>
+                            <h3 className="text-xl font-bold drop-shadow-md">{pool.prize_name}</h3>
+                            {pool.description && (
+                              <p className="text-sm text-white/80 line-clamp-2 mt-1">{pool.description}</p>
+                            )}
+                            
+                            <div className="flex flex-wrap gap-4 mt-2 text-sm">
+                              <span>💰 <span className="font-bold">ETB {pool.target_amount?.toLocaleString()}</span></span>
+                              <span>🎫 <span className="font-bold">ETB {pool.entry_fee?.toLocaleString()}</span></span>
+                              <span>📊 <span className="font-bold">{Math.min(Math.round((pool.current_amount / pool.target_amount) * 100), 100)}%</span></span>
+                            </div>
+                            
+                            {pool.end_date && (
+                              <div className="mt-1 text-xs text-white/70">
+                                ⏰ {new Date(pool.end_date).toLocaleDateString()}
+                              </div>
+                            )}
+                          </div>
+                          
+                          <Link href={`/pools/${pool.id}`} className="mt-3 bg-white text-green-700 hover:bg-gray-100 text-center py-2.5 rounded-lg font-semibold text-sm transition transform hover:scale-105 active:scale-95 shadow-md">
+                            {language === 'am' ? '🎯 ይቀላቀሉ →' : '🎯 Join Pool →'}
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   </div>
