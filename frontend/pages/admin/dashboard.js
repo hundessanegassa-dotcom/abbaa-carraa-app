@@ -1,4 +1,4 @@
-// pages/admin/dashboard.js - COMPLETE WITH THEATER STYLE SEATS FOR CITY VIP & MERKATO VIP
+// pages/admin/dashboard.js - COMPLETE WITH THEATER STYLE SEATS FOR CITY VIP & MERKATO VIP + CREATOR APPLICATIONS
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -19,12 +19,27 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [isAdmin, setIsAdmin] = useState(false);
   
+  // ============================================
+  // CREATOR APPLICATIONS STATE
+  // ============================================
+  const [creatorApplications, setCreatorApplications] = useState([]);
+  const [creatorStats, setCreatorStats] = useState({
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+    total: 0
+  });
+  const [selectedCreatorApp, setSelectedCreatorApp] = useState(null);
+  const [showCreatorDetailModal, setShowCreatorDetailModal] = useState(false);
+  const [processingCreator, setProcessingCreator] = useState(false);
+  
   // Stats
   const [stats, setStats] = useState({
     total_users: 0, total_agents: 0, total_vendors: 0, total_organizations: 0,
     total_pools: 0, active_pools: 0, completed_pools: 0, pending_pools: 0,
     total_volume: 0, total_commission_paid: 0, pending_commission: 0,
-    charity_total: 0, lives_impacted: 0, platform_revenue: 0
+    charity_total: 0, lives_impacted: 0, platform_revenue: 0,
+    pending_creator_applications: 0
   });
   
   // Merkato VIP Stats
@@ -46,7 +61,7 @@ export default function AdminDashboard() {
   // Seat View States (Theater Style)
   const [showSeatView, setShowSeatView] = useState(false);
   const [selectedSeatViewParticipant, setSelectedSeatViewParticipant] = useState(null);
-  const [seatViewType, setSeatViewType] = useState('city'); // 'city' or 'merkato'
+  const [seatViewType, setSeatViewType] = useState('city');
   
   // UNIFIED MODAL STATES
   const [cityModalMode, setCityModalMode] = useState(null);
@@ -188,10 +203,148 @@ export default function AdminDashboard() {
       setIsAdmin(true);
       await loadAllData();
       await loadNotifications();
+      await loadCreatorApplications();
       setLoading(false);
     } catch (error) {
       console.error('Admin check error:', error);
       setLoading(false);
+    }
+  }
+
+  // ============================================
+  // CREATOR APPLICATIONS FUNCTIONS
+  // ============================================
+  async function loadCreatorApplications() {
+    try {
+      const { data, error } = await supabase
+        .from('pool_creators')
+        .select('*, profiles:user_id(id, full_name, email, phone)')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading creator applications:', error);
+        return;
+      }
+
+      const apps = data || [];
+      const pending = apps.filter(a => a.verification_status === 'pending').length;
+      const approved = apps.filter(a => a.verification_status === 'approved').length;
+      const rejected = apps.filter(a => a.verification_status === 'rejected').length;
+
+      if (isMounted.current) {
+        setCreatorApplications(apps);
+        setCreatorStats({ pending, approved, rejected, total: apps.length });
+        setStats(prev => ({ ...prev, pending_creator_applications: pending }));
+      }
+    } catch (error) {
+      console.error('Error loading creator applications:', error);
+    }
+  }
+
+  async function handleApproveCreator(applicationId) {
+    if (!confirm('Approve this creator application?')) return;
+    
+    setProcessingCreator(true);
+    const toastId = toast.loading('Approving creator application...');
+    
+    try {
+      const { error } = await supabase
+        .from('pool_creators')
+        .update({
+          verification_status: 'approved',
+          verified_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', applicationId);
+
+      if (error) throw error;
+
+      // Get creator info for notification
+      const { data: creator } = await supabase
+        .from('pool_creators')
+        .select('user_id, business_name, full_name')
+        .eq('id', applicationId)
+        .single();
+
+      if (creator) {
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: creator.user_id,
+            title: '🎉 Your Creator Application is Approved!',
+            message: `Congratulations ${creator.full_name || 'Creator'}! Your application to become a pool creator has been approved. You can now create your own prize pools and earn commission!`,
+            type: 'creator_approval',
+            link_url: '/creator/dashboard',
+            created_at: new Date().toISOString()
+          });
+
+        await supabase
+          .from('admin_notifications')
+          .insert({
+            title: `✅ Creator Approved: ${creator.business_name || creator.full_name}`,
+            message: `Creator application has been approved by ${user?.email}`,
+            type: 'creator_approved'
+          });
+      }
+
+      toast.success('✅ Creator application approved!', { id: toastId });
+      await loadCreatorApplications();
+      await loadStats();
+    } catch (error) {
+      console.error('Approval error:', error);
+      toast.error('Failed to approve application', { id: toastId });
+    } finally {
+      setProcessingCreator(false);
+    }
+  }
+
+  async function handleRejectCreator(applicationId) {
+    const reason = prompt('Please enter the reason for rejection:');
+    if (reason === null) return;
+    
+    setProcessingCreator(true);
+    const toastId = toast.loading('Rejecting creator application...');
+    
+    try {
+      const { error } = await supabase
+        .from('pool_creators')
+        .update({
+          verification_status: 'rejected',
+          rejection_reason: reason,
+          rejected_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', applicationId);
+
+      if (error) throw error;
+
+      const { data: creator } = await supabase
+        .from('pool_creators')
+        .select('user_id, business_name, full_name')
+        .eq('id', applicationId)
+        .single();
+
+      if (creator) {
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: creator.user_id,
+            title: '📝 Creator Application Update',
+            message: `Dear ${creator.full_name || 'Creator'}, your application to become a pool creator has been reviewed. ${reason ? `Reason: ${reason}` : 'Please contact support for more details.'}`,
+            type: 'creator_rejection',
+            link_url: '/become-creator',
+            created_at: new Date().toISOString()
+          });
+      }
+
+      toast.success('❌ Creator application rejected', { id: toastId });
+      await loadCreatorApplications();
+      await loadStats();
+    } catch (error) {
+      console.error('Rejection error:', error);
+      toast.error('Failed to reject application', { id: toastId });
+    } finally {
+      setProcessingCreator(false);
     }
   }
 
@@ -277,7 +430,8 @@ export default function AdminDashboard() {
       const charity_total = total_volume * 0.02;
       
       if (!isMounted.current) return;
-      setStats({
+      setStats(prev => ({
+        ...prev,
         total_users: userCount || 0,
         total_agents: agentsData?.length || 0,
         total_vendors: vendorsData?.length || 0,
@@ -292,7 +446,7 @@ export default function AdminDashboard() {
         charity_total,
         lives_impacted: Math.floor(charity_total / 100),
         platform_revenue
-      });
+      }));
     } catch (error) { 
       console.error('Stats loading error:', error); 
     }
@@ -971,66 +1125,81 @@ export default function AdminDashboard() {
     }
   }
 
- // pages/admin/dashboard.js - COMPLETE FIXED loadAllPools
+  async function loadAllPools() {
+    try {
+      const { data: poolsData, error: poolsError } = await supabase
+        .from('pools')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
 
-async function loadAllPools() {
-  try {
-    // ✅ First, check if we can query pools
-    const { data: poolsData, error: poolsError } = await supabase
-      .from('pools')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(100);
-
-    if (poolsError) {
-      console.error('Pools query error:', poolsError);
-      // If the table doesn't exist, create it
-      if (poolsError.code === '42P01') { // Table doesn't exist
-        console.log('Pools table may not exist yet');
+      if (poolsError) {
+        console.error('Pools query error:', poolsError);
+        if (poolsError.code === '42P01') {
+          console.log('Pools table may not exist yet');
+          if (isMounted.current) setAllPools([]);
+          return;
+        }
         if (isMounted.current) setAllPools([]);
         return;
       }
-      if (isMounted.current) setAllPools([]);
-      return;
-    }
 
-    // ✅ If pools data exists, try to get creator names
-    let poolsWithCreators = [];
-    if (poolsData && poolsData.length > 0) {
-      // Get unique creator IDs
-      const creatorIds = [...new Set(poolsData.map(p => p.created_by).filter(Boolean))];
-      
-      // Fetch profiles for creators
-      let profilesMap = {};
-      if (creatorIds.length > 0) {
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', creatorIds);
-        
-        if (!profilesError && profilesData) {
-          profilesMap = profilesData.reduce((acc, p) => {
-            acc[p.id] = p;
-            return acc;
-          }, {});
+      let poolsWithCreators = [];
+      if (poolsData && poolsData.length > 0) {
+        const creatorIds = [...new Set(poolsData.map(p => p.created_by).filter(Boolean))];
+        let profilesMap = {};
+        if (creatorIds.length > 0) {
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, full_name')
+            .in('id', creatorIds);
+          
+          if (!profilesError && profilesData) {
+            profilesMap = profilesData.reduce((acc, p) => {
+              acc[p.id] = p;
+              return acc;
+            }, {});
+          }
         }
+
+        poolsWithCreators = poolsData.map(pool => ({
+          ...pool,
+          profiles: pool.created_by ? profilesMap[pool.created_by] || null : null
+        }));
       }
 
-      // Map creator names to pools
-      poolsWithCreators = poolsData.map(pool => ({
-        ...pool,
-        profiles: pool.created_by ? profilesMap[pool.created_by] || null : null
-      }));
+      if (isMounted.current) {
+        setAllPools(poolsWithCreators || []);
+      }
+    } catch (error) {
+      console.error('Error loading all pools:', error);
+      if (isMounted.current) setAllPools([]);
     }
-
-    if (isMounted.current) {
-      setAllPools(poolsWithCreators || []);
-    }
-  } catch (error) {
-    console.error('Error loading all pools:', error);
-    if (isMounted.current) setAllPools([]);
   }
-}
+
+  async function loadFeaturedPools() {
+    try {
+      const { data, error } = await supabase
+        .from('pools')
+        .select('*')
+        .eq('is_featured', true)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (error) {
+        console.error('Featured pools error:', error);
+        if (isMounted.current) setFeaturedPools([]);
+        return;
+      }
+      
+      if (isMounted.current) setFeaturedPools(data || []);
+    } catch (error) { 
+      console.error('Error loading featured pools:', error);
+      if (isMounted.current) setFeaturedPools([]);
+    }
+  }
+
   async function loadWithdrawalRequests() {
     try {
       const { data, error } = await supabase
@@ -1630,7 +1799,8 @@ async function loadAllPools() {
     (pendingVendors?.length || 0) +
     (pendingOrganizations?.length || 0) +
     (disputes?.length || 0) +
-    (withdrawalRequests?.length || 0);
+    (withdrawalRequests?.length || 0) +
+    (creatorStats.pending || 0);
 
   return (
     <AdminLayout
@@ -1643,7 +1813,7 @@ async function loadAllPools() {
       show3D={false}
     >
       {/* Quick Stats - Pending Items Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-6 gap-3 mb-6">
         <div className="bg-yellow-50 rounded-xl p-3 text-center border border-yellow-200">
           <p className="text-2xl font-bold text-yellow-600">{pendingBankTransfers || 0}</p>
           <p className="text-xs text-gray-500">🏦 Bank Transfers</p>
@@ -1661,6 +1831,10 @@ async function loadAllPools() {
             {(pendingAgents?.length || 0) + (pendingVendors?.length || 0) + (pendingOrganizations?.length || 0)}
           </p>
           <p className="text-xs text-gray-500">📝 Approvals</p>
+        </div>
+        <div className="bg-pink-50 rounded-xl p-3 text-center border border-pink-200">
+          <p className="text-2xl font-bold text-pink-600">{creatorStats.pending || 0}</p>
+          <p className="text-xs text-gray-500">👑 Creator Apps</p>
         </div>
         <div className="bg-red-50 rounded-xl p-3 text-center border border-red-200">
           <p className="text-2xl font-bold text-red-600">{disputes?.length || 0}</p>
@@ -1683,6 +1857,7 @@ async function loadAllPools() {
           <button onClick={() => setActiveTab('users')} className={`px-4 py-3 font-semibold ${activeTab === 'users' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>👥 Users</button>
           <button onClick={() => setActiveTab('pools')} className={`px-4 py-3 font-semibold ${activeTab === 'pools' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>🌊 All Pools</button>
           <button onClick={() => setActiveTab('approvals')} className={`px-4 py-3 font-semibold ${activeTab === 'approvals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>📝 Approvals</button>
+          <button onClick={() => setActiveTab('creator-applications')} className={`px-4 py-3 font-semibold ${activeTab === 'creator-applications' ? 'border-b-2 border-pink-600 text-pink-600' : 'text-gray-500'}`}>👑 Creator Apps</button>
           <button onClick={() => setActiveTab('withdrawals')} className={`px-4 py-3 font-semibold ${activeTab === 'withdrawals' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>💰 Withdrawals</button>
           <button onClick={() => setActiveTab('bank-transfers')} className={`px-4 py-3 font-semibold ${activeTab === 'bank-transfers' ? 'border-b-2 border-yellow-600 text-yellow-600' : 'text-gray-500'}`}>🏦 Bank Transfers</button>
           <button onClick={() => setActiveTab('finance')} className={`px-4 py-3 font-semibold ${activeTab === 'finance' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500'}`}>💰 Finance</button>
@@ -1692,7 +1867,7 @@ async function loadAllPools() {
       </div>
 
       <div className="py-6">
-        {/* Overview Tab - Same as before */}
+        {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
@@ -2109,7 +2284,7 @@ async function loadAllPools() {
           </div>
         )}
 
-        {/* Approvals Tab - Same as before */}
+        {/* Approvals Tab */}
         {activeTab === 'approvals' && (
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-md p-6">
@@ -2240,6 +2415,152 @@ async function loadAllPools() {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Creator Applications Tab */}
+        {activeTab === 'creator-applications' && (
+          <div className="space-y-6">
+            {/* Creator Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white rounded-xl p-4 shadow-sm border">
+                <p className="text-2xl font-bold text-gray-800">{creatorStats.total}</p>
+                <p className="text-sm text-gray-500">📋 Total Applications</p>
+              </div>
+              <div className="bg-yellow-50 rounded-xl p-4 shadow-sm border border-yellow-200">
+                <p className="text-2xl font-bold text-yellow-600">{creatorStats.pending}</p>
+                <p className="text-sm text-yellow-600">⏳ Pending Review</p>
+              </div>
+              <div className="bg-green-50 rounded-xl p-4 shadow-sm border border-green-200">
+                <p className="text-2xl font-bold text-green-600">{creatorStats.approved}</p>
+                <p className="text-sm text-green-600">✅ Approved</p>
+              </div>
+              <div className="bg-red-50 rounded-xl p-4 shadow-sm border border-red-200">
+                <p className="text-2xl font-bold text-red-600">{creatorStats.rejected}</p>
+                <p className="text-sm text-red-600">❌ Rejected</p>
+              </div>
+            </div>
+
+            {/* Creator Applications List */}
+            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+              <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
+                <h2 className="font-bold text-lg">👑 Creator Applications</h2>
+                <button onClick={loadCreatorApplications} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm transition">🔄 Refresh</button>
+              </div>
+              {creatorApplications.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-3">📭</div>
+                  <p className="text-gray-500 text-lg">No creator applications found</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Applicant</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Business</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pool Settings</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Applied</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {creatorApplications.map((app) => (
+                        <tr key={app.id} className="hover:bg-gray-50 transition">
+                          <td className="px-4 py-3">
+                            <div>
+                              <p className="font-semibold text-gray-800">{app.full_name || app.profiles?.full_name || 'N/A'}</p>
+                              <p className="text-xs text-gray-500">{app.email || app.profiles?.email}</p>
+                              <p className="text-xs text-gray-400">{app.phone || app.profiles?.phone}</p>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div>
+                              <p className="font-medium text-gray-700">{app.business_name || 'N/A'}</p>
+                              <p className="text-xs text-gray-400">{app.city || app.location || 'No location'}</p>
+                              <p className="text-xs text-gray-400 capitalize">{app.business_type || 'individual'}</p>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="text-sm">
+                              <p><span className="text-gray-500">Prize:</span> <span className="font-medium">ETB {app.default_prize_amount?.toLocaleString() || 'N/A'}</span></p>
+                              <p><span className="text-gray-500">Entry Fee:</span> <span className="font-medium">ETB {app.default_entry_fee?.toLocaleString() || 'N/A'}</span></p>
+                              <p><span className="text-gray-500">Seats:</span> <span className="font-medium">{app.default_total_seats?.toLocaleString() || 'N/A'}</span></p>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            {app.verification_status === 'pending' && (
+                              <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium border border-yellow-200">⏳ Pending</span>
+                            )}
+                            {app.verification_status === 'approved' && (
+                              <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium border border-green-200">✅ Approved</span>
+                            )}
+                            {app.verification_status === 'rejected' && (
+                              <span className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-medium border border-red-200">❌ Rejected</span>
+                            )}
+                            {app.rejection_reason && (
+                              <p className="text-xs text-red-500 mt-1 max-w-[150px] truncate" title={app.rejection_reason}>
+                                Reason: {app.rejection_reason}
+                              </p>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-500">
+                            {new Date(app.created_at).toLocaleDateString()}
+                            <br />
+                            <span className="text-xs text-gray-400">{new Date(app.created_at).toLocaleTimeString()}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-col gap-1.5">
+                              <button
+                                onClick={() => {
+                                  setSelectedCreatorApp(app);
+                                  setShowCreatorDetailModal(true);
+                                }}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition"
+                              >
+                                👁️ View Details
+                              </button>
+                              {app.verification_status === 'pending' && (
+                                <div className="flex gap-1">
+                                  <button
+                                    onClick={() => handleApproveCreator(app.id)}
+                                    disabled={processingCreator}
+                                    className="flex-1 bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs font-medium transition disabled:opacity-50"
+                                  >
+                                    ✅ Approve
+                                  </button>
+                                  <button
+                                    onClick={() => handleRejectCreator(app.id)}
+                                    disabled={processingCreator}
+                                    className="flex-1 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs font-medium transition disabled:opacity-50"
+                                  >
+                                    ❌ Reject
+                                  </button>
+                                </div>
+                              )}
+                              {app.shop_banner_url && (
+                                <button
+                                  onClick={() => { setViewingDocument(app.shop_banner_url); setShowDocumentModal(true); }}
+                                  className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs font-medium transition"
+                                >
+                                  🏪 View Banner
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {creatorApplications.length > 0 && (
+                <div className="px-4 py-3 bg-gray-50 border-t text-sm text-gray-500">
+                  Showing {creatorApplications.length} applications
                 </div>
               )}
             </div>
@@ -2453,7 +2774,115 @@ async function loadAllPools() {
       {/* Seat View Modal */}
       <SeatViewModal />
 
-      {/* Modals */}
+      {/* Creator Detail Modal */}
+      {showCreatorDetailModal && selectedCreatorApp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-bold">📋 Creator Application Details</h2>
+                <p className="text-sm text-gray-500">{selectedCreatorApp.business_name}</p>
+              </div>
+              <button onClick={() => { setShowCreatorDetailModal(false); setSelectedCreatorApp(null); }} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+            </div>
+            <div className="p-6">
+              {selectedCreatorApp.shop_banner_url && (
+                <div className="mb-4 rounded-lg overflow-hidden border">
+                  <img src={selectedCreatorApp.shop_banner_url} alt={selectedCreatorApp.business_name} className="w-full h-48 object-cover" />
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-bold text-gray-700 mb-2">👤 Personal Information</h3>
+                  <div className="space-y-1 text-sm">
+                    <p><span className="text-gray-500">Full Name:</span> <span className="font-medium">{selectedCreatorApp.full_name || selectedCreatorApp.profiles?.full_name || 'N/A'}</span></p>
+                    <p><span className="text-gray-500">Email:</span> <span className="font-medium">{selectedCreatorApp.email || selectedCreatorApp.profiles?.email}</span></p>
+                    <p><span className="text-gray-500">Phone:</span> <span className="font-medium">{selectedCreatorApp.phone || selectedCreatorApp.profiles?.phone}</span></p>
+                    <p><span className="text-gray-500">Location:</span> <span className="font-medium">{selectedCreatorApp.location || 'N/A'}</span></p>
+                    <p><span className="text-gray-500">City:</span> <span className="font-medium">{selectedCreatorApp.city || 'N/A'}</span></p>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-bold text-gray-700 mb-2">🏪 Business Information</h3>
+                  <div className="space-y-1 text-sm">
+                    <p><span className="text-gray-500">Business Name:</span> <span className="font-medium">{selectedCreatorApp.business_name}</span></p>
+                    <p><span className="text-gray-500">Business Type:</span> <span className="font-medium capitalize">{selectedCreatorApp.business_type || 'Individual'}</span></p>
+                    <p><span className="text-gray-500">Status:</span> {selectedCreatorApp.verification_status === 'pending' ? '⏳ Pending' : selectedCreatorApp.verification_status === 'approved' ? '✅ Approved' : '❌ Rejected'}</p>
+                    {selectedCreatorApp.rejection_reason && (
+                      <p><span className="text-gray-500">Rejection Reason:</span> <span className="text-red-600">{selectedCreatorApp.rejection_reason}</span></p>
+                    )}
+                    <p><span className="text-gray-500">Applied:</span> <span className="font-medium">{new Date(selectedCreatorApp.created_at).toLocaleString()}</span></p>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-4 col-span-2">
+                  <h3 className="font-bold text-gray-700 mb-2">🎯 Pool Settings</h3>
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="bg-white rounded-lg p-3 shadow-sm">
+                      <p className="text-xs text-gray-500">Prize Amount</p>
+                      <p className="font-bold text-green-600">ETB {selectedCreatorApp.default_prize_amount?.toLocaleString() || 'N/A'}</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-3 shadow-sm">
+                      <p className="text-xs text-gray-500">Entry Fee</p>
+                      <p className="font-bold text-blue-600">ETB {selectedCreatorApp.default_entry_fee?.toLocaleString() || 'N/A'}</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-3 shadow-sm">
+                      <p className="text-xs text-gray-500">Total Seats</p>
+                      <p className="font-bold text-purple-600">{selectedCreatorApp.default_total_seats?.toLocaleString() || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-4 col-span-2">
+                  <h3 className="font-bold text-gray-700 mb-2">💳 Payment Details</h3>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div><p className="text-gray-500">Bank Name</p><p className="font-medium">{selectedCreatorApp.bank_name || 'N/A'}</p></div>
+                    <div><p className="text-gray-500">Bank Account Number</p><p className="font-medium">{selectedCreatorApp.bank_account_number || 'N/A'}</p></div>
+                    <div><p className="text-gray-500">Account Holder</p><p className="font-medium">{selectedCreatorApp.bank_account_name || 'N/A'}</p></div>
+                    <div><p className="text-gray-500">TeleBirr Number</p><p className="font-medium">{selectedCreatorApp.telebirr_number || 'N/A'}</p></div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-4 col-span-2">
+                  <h3 className="font-bold text-gray-700 mb-2">📄 Documents</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {selectedCreatorApp.digital_id_url && (
+                      <button onClick={() => { setViewingDocument(selectedCreatorApp.digital_id_url); setShowDocumentModal(true); }} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">🪪 View Digital ID</button>
+                    )}
+                    {selectedCreatorApp.business_license_url && (
+                      <button onClick={() => { setViewingDocument(selectedCreatorApp.business_license_url); setShowDocumentModal(true); }} className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">📜 View Business License</button>
+                    )}
+                    {selectedCreatorApp.shop_banner_url && (
+                      <button onClick={() => { setViewingDocument(selectedCreatorApp.shop_banner_url); setShowDocumentModal(true); }} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">🏪 View Shop Banner</button>
+                    )}
+                    {!selectedCreatorApp.digital_id_url && !selectedCreatorApp.business_license_url && !selectedCreatorApp.shop_banner_url && (
+                      <p className="text-gray-400 text-sm">No documents uploaded</p>
+                    )}
+                  </div>
+                </div>
+
+                {selectedCreatorApp.bio && (
+                  <div className="bg-gray-50 rounded-lg p-4 col-span-2">
+                    <h3 className="font-bold text-gray-700 mb-2">📝 About</h3>
+                    <p className="text-sm text-gray-600">{selectedCreatorApp.bio}</p>
+                  </div>
+                )}
+              </div>
+
+              {selectedCreatorApp.verification_status === 'pending' && (
+                <div className="mt-6 pt-6 border-t flex gap-3">
+                  <button onClick={() => { handleApproveCreator(selectedCreatorApp.id); setShowCreatorDetailModal(false); }} disabled={processingCreator} className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition disabled:opacity-50">✅ Approve Application</button>
+                  <button onClick={() => { handleRejectCreator(selectedCreatorApp.id); setShowCreatorDetailModal(false); }} disabled={processingCreator} className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-semibold transition disabled:opacity-50">❌ Reject Application</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* City Draw Modal */}
       {showCityDrawModal && selectedCityPool && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-white rounded-2xl max-w-md w-full p-6">
@@ -2578,10 +3007,16 @@ async function loadAllPools() {
               <button onClick={() => { setShowDocumentModal(false); setViewingDocument(null); }} className="text-gray-500 text-2xl">×</button>
             </div>
             <div className="p-4">
-              {viewingDocument.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+              {viewingDocument && viewingDocument.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
                 <img src={viewingDocument} alt="Document" className="w-full rounded-lg" />
-              ) : (
+              ) : viewingDocument && viewingDocument.match(/\.(pdf)$/i) ? (
                 <iframe src={viewingDocument} className="w-full h-[70vh]" title="Document" />
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">📄</div>
+                  <p className="text-gray-500">Document preview not available</p>
+                  <a href={viewingDocument} target="_blank" rel="noopener noreferrer" className="mt-4 inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">Open in new tab</a>
+                </div>
               )}
             </div>
           </div>
