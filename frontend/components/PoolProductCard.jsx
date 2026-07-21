@@ -1,7 +1,7 @@
 // components/PoolProductCard.jsx
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 export default function PoolProductCard({ 
   pool, 
@@ -29,7 +29,8 @@ export default function PoolProductCard({
     target_amount,
     current_amount,
     status,
-    end_date
+    end_date,
+    description
   } = pool;
 
   // Get the actual entry fee and prize amount
@@ -63,7 +64,7 @@ export default function PoolProductCard({
   const imageSrc = getImageSrc();
 
   // Prize emoji
-  const getPrizeEmoji = () => {
+  const getPrizeEmoji = useMemo(() => {
     const name = (prize_name || title || '').toLowerCase();
     if (name.includes('car') || name.includes('vehicle') || name.includes('🚗')) return '🚗';
     if (name.includes('house') || name.includes('home') || name.includes('property')) return '🏠';
@@ -74,7 +75,7 @@ export default function PoolProductCard({
     if (name.includes('vip') || name.includes('merkato')) return '👑';
     if (name.includes('city')) return '🏙️';
     return '🎁';
-  };
+  }, [prize_name, title]);
 
   // ===== COUNTDOWN TIMER =====
   useEffect(() => {
@@ -225,7 +226,7 @@ export default function PoolProductCard({
             </>
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center">
-              <span className="text-7xl mb-2">{getPrizeEmoji()}</span>
+              <span className="text-7xl mb-2">{getPrizeEmoji}</span>
               <span className="text-sm font-medium text-white drop-shadow-md">
                 {prize_name || (language === 'am' ? 'ሽልማት' : 'Prize')}
               </span>
@@ -239,9 +240,16 @@ export default function PoolProductCard({
         </div>
 
         {/* Title */}
-        <h3 className="text-xl font-bold text-center drop-shadow-md mb-2 z-10 line-clamp-1">
+        <h3 className="text-xl font-bold text-center drop-shadow-md mb-1 z-10 line-clamp-1">
           {prize_name || title || (language === 'am' ? 'ሽልማት' : 'Prize')}
         </h3>
+
+        {/* Description */}
+        {description && (
+          <p className="text-xs text-center text-white/80 mb-2 z-10 line-clamp-2">
+            {description}
+          </p>
+        )}
 
         {/* Countdown Timer */}
         {end_date && isActive && (
