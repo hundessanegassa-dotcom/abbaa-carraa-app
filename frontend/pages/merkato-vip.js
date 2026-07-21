@@ -1,4 +1,5 @@
 // pages/merkato-vip.js - COMPLETE WITH 5 TIERS (100, 500, 1000, 2500, 5000 BIRR)
+// UPDATED with PoolProductCard design
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
@@ -7,6 +8,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import NoSSR from '../components/NoSSR';
 import TopCitySelector from '../components/TopCitySelector';
+import PoolProductCard from '../components/PoolProductCard';
 
 // ✅ 5 TIERS FOR MERKATO VIP - 100, 500, 1000, 2500, 5000 BIRR
 export const MERKATO_TIERS = {
@@ -20,7 +22,9 @@ export const MERKATO_TIERS = {
     seats: 1200,
     color: 'from-gray-400 to-gray-500',
     badge: 'Silver',
-    tier: 1
+    tier: 1,
+    image_url: '/images/merkato-silver.jpg', // Add your image URLs
+    end_date: '2026-12-31T23:59:59'
   },
   gold: {
     id: 'gold',
@@ -32,7 +36,9 @@ export const MERKATO_TIERS = {
     seats: 1200,
     color: 'from-yellow-400 to-yellow-600',
     badge: 'Gold',
-    tier: 2
+    tier: 2,
+    image_url: '/images/merkato-gold.jpg',
+    end_date: '2026-12-31T23:59:59'
   },
   platinum: {
     id: 'platinum',
@@ -44,7 +50,9 @@ export const MERKATO_TIERS = {
     seats: 2400,
     color: 'from-gray-300 to-blue-400',
     badge: 'Platinum',
-    tier: 3
+    tier: 3,
+    image_url: '/images/merkato-platinum.jpg',
+    end_date: '2026-12-31T23:59:59'
   },
   diamond: {
     id: 'diamond',
@@ -56,7 +64,9 @@ export const MERKATO_TIERS = {
     seats: 2400,
     color: 'from-blue-400 to-cyan-400',
     badge: 'Diamond',
-    tier: 4
+    tier: 4,
+    image_url: '/images/merkato-diamond.jpg',
+    end_date: '2026-12-31T23:59:59'
   },
   royal: {
     id: 'royal',
@@ -68,7 +78,9 @@ export const MERKATO_TIERS = {
     seats: 2400,
     color: 'from-purple-500 to-pink-500',
     badge: 'Royal',
-    tier: 5
+    tier: 5,
+    image_url: '/images/merkato-royal.jpg',
+    end_date: '2026-12-31T23:59:59'
   }
 };
 
@@ -102,6 +114,7 @@ export default function MerkatoVIP() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkingUser, setCheckingUser] = useState(true);
+  const [is3D, setIs3D] = useState(false);
 
   // Load language preference
   useEffect(() => {
@@ -298,52 +311,47 @@ export default function MerkatoVIP() {
     router.push('/dashboard');
   };
 
+  // Convert tier to pool format for PoolProductCard
+  const convertTierToPool = (tierId, tier) => {
+    return {
+      id: tierId,
+      prize_name: `${tier.icon} ${language === 'am' ? tier.labelAm : tier.labelEn} - Merkato VIP`,
+      title: `${tier.icon} ${language === 'am' ? tier.labelAm : tier.labelEn}`,
+      entry_fee: tier.contribution,
+      target_amount: tier.prize,
+      current_amount: 0, // This would come from your database
+      status: 'active',
+      end_date: tier.end_date || '2026-12-31T23:59:59',
+      image_url: tier.image_url || null,
+      prize_image: tier.image_url || null,
+      is_featured: tier.tier >= 4,
+      description: `${language === 'am' ? 'የ' : ''} ${getDrawScheduleText(tierId, language)} ${language === 'am' ? 'እጣ' : 'Draw'} - ${language === 'am' ? 'እስከ' : 'Up to'} ETB ${tier.prize.toLocaleString()}`
+    };
+  };
+
   const renderTierSelection = () => {
     const tierIds = ['silver', 'gold', 'platinum', 'diamond', 'royal'];
     
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 max-w-7xl mx-auto">
         {tierIds.map((tierId) => {
           const tier = MERKATO_TIERS[tierId];
           if (!tier) return null;
           
+          const poolData = convertTierToPool(tierId, tier);
+          
           return (
-            <div
-              key={tierId}
-              className="bg-white rounded-2xl shadow-lg overflow-hidden transform transition hover:scale-105 cursor-pointer border-2 hover:border-green-500"
+            <div 
+              key={tierId} 
               onClick={() => handleTierSelect(tierId)}
+              className="cursor-pointer"
             >
-              <div className={`bg-gradient-to-r ${tier.color} p-4 text-white text-center`}>
-                <div className="text-4xl mb-2">{tier.icon}</div>
-                <h3 className="font-bold text-xl">
-                  {language === 'am' ? tier.labelAm : tier.labelEn}
-                </h3>
-                <span className="text-xs opacity-80">
-                  {getDrawScheduleText(tierId, language)}
-                </span>
-              </div>
-              
-              <div className="p-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{language === 'am' ? 'ክፍያ' : 'Entry'}</span>
-                  <span className="font-semibold">ETB {tier.contribution.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{language === 'am' ? 'ሽልማት' : 'Prize'}</span>
-                  <span className="font-bold text-green-600">ETB {tier.prize.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{language === 'am' ? 'መቀመጫዎች' : 'Seats'}</span>
-                  <span className="font-semibold">{tier.seats.toLocaleString()}</span>
-                </div>
-                
-                <button 
-                  className="w-full mt-3 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold text-sm transition"
-                  onClick={(e) => { e.stopPropagation(); handleTierSelect(tierId); }}
-                >
-                  {language === 'am' ? 'መቀመጫ ምረጥ' : 'Select Seats'}
-                </button>
-              </div>
+              <PoolProductCard 
+                pool={poolData}
+                featured={tier.tier >= 4}
+                language={language}
+                show3D={false}
+              />
             </div>
           );
         })}
@@ -404,7 +412,7 @@ export default function MerkatoVIP() {
 
           {showTiers && (
             <div className="container mx-auto px-4 py-8">
-              <h2 className="text-2xl font-bold text-center mb-6">
+              <h2 className="text-2xl font-bold text-center mb-4">
                 {language === 'am' ? 'የእርስዎን ደረጃ ይምረጡ' : 'Select Your Tier'}
               </h2>
               <p className="text-center text-gray-500 mb-8">
