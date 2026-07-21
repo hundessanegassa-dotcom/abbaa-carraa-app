@@ -1,4 +1,4 @@
-// pages/index.js - COMPLETE HOMEPAGE WITH ALL 94 CITIES & 5-TIER SYSTEM
+// pages/index.js - COMPLETE CLEAN HOMEPAGE WITH ALL VIEWS
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -15,10 +15,9 @@ import toast from 'react-hot-toast';
 import { useUIMode } from '../hooks/useUIMode';
 import BankingStyleView from '../components/BankingStyleView';
 import { getAllCities, getCityData } from '../lib/cityData';
-
-// ✅ Import Telegram hook
 import { useTelegram } from '../hooks/useTelegram';
 
+// Lazy loaded components
 const MovingAd = dynamic(() => import('../components/MovingAd'), { ssr: false, loading: () => null });
 const Testimonials = dynamic(() => import('../components/Testimonials'), { ssr: false, loading: () => null });
 const NewsletterSubscribe = dynamic(() => import('../components/NewsletterSubscribe'), { ssr: false, loading: () => null });
@@ -33,9 +32,7 @@ export async function getServerSideProps() {
 export default function Home() {
   const router = useRouter();
   const { mode, toggleMode } = useUIMode();
-  
-  // ✅ Telegram integration
-  const { isInTelegram, user: telegramUser, showAlert, showConfirm } = useTelegram();
+  const { isInTelegram, user: telegramUser } = useTelegram();
   
   const [language, setLanguage] = useState('am');
   const [pools, setPools] = useState([]);
@@ -65,48 +62,7 @@ export default function Home() {
   const [activeView, setActiveView] = useState('app');
   const [showModeDrawer, setShowModeDrawer] = useState(false);
 
-  // ✅ Auto-login with Telegram
-  useEffect(() => {
-    if (isInTelegram && telegramUser) {
-      console.log('📱 Telegram user detected:', telegramUser);
-      
-      const initData = sessionStorage.getItem('telegram_init_data');
-      if (initData) {
-        fetch('/api/auth/telegram', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            initData, 
-            user: telegramUser 
-          })
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            console.log('✅ Telegram auto-login successful');
-            toast.success('Welcome via Telegram! 🎉');
-          }
-        })
-        .catch(err => console.error('Telegram auto-login error:', err));
-      }
-    }
-  }, [isInTelegram, telegramUser]);
-
-  // Load language preference
-  useEffect(() => {
-    const savedLang = localStorage.getItem('appLanguage');
-    if (savedLang === 'am' || savedLang === 'en') {
-      setLanguage(savedLang);
-    }
-  }, []);
-
-  const toggleLanguage = () => {
-    const newLang = language === 'am' ? 'en' : 'am';
-    setLanguage(newLang);
-    localStorage.setItem('appLanguage', newLang);
-  };
-
-  // ALL 94 ETHIOPIAN CITIES - COMPLETE LIST
+  // ALL 94 ETHIOPIAN CITIES
   const allCityVipPrograms = [
     // ===================== CENTRAL & MAJOR CITIES =====================
     { id: 'addis-ababa', name: 'አዲስ አበባ', nameEn: 'Addis Ababa', region: 'Central', icon: '🏙️', prize: '10M ETB' },
@@ -230,9 +186,41 @@ export default function Home() {
     threshold: 0.3,
   });
 
+  // Load data on mount
   useEffect(() => {
     loadData();
   }, []);
+
+  // Load language preference
+  useEffect(() => {
+    const savedLang = localStorage.getItem('appLanguage');
+    if (savedLang === 'am' || savedLang === 'en') {
+      setLanguage(savedLang);
+    }
+  }, []);
+
+  // Auto-login with Telegram
+  useEffect(() => {
+    if (isInTelegram && telegramUser) {
+      console.log('📱 Telegram user detected:', telegramUser);
+      const initData = sessionStorage.getItem('telegram_init_data');
+      if (initData) {
+        fetch('/api/auth/telegram', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ initData, user: telegramUser })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            console.log('✅ Telegram auto-login successful');
+            toast.success('Welcome via Telegram! 🎉');
+          }
+        })
+        .catch(err => console.error('Telegram auto-login error:', err));
+      }
+    }
+  }, [isInTelegram, telegramUser]);
 
   const loadData = async () => {
     setLoading(true);
@@ -293,6 +281,12 @@ export default function Home() {
       setDataLoaded(true);
       setIsInitialLoad(false);
     }
+  };
+
+  const toggleLanguage = () => {
+    const newLang = language === 'am' ? 'en' : 'am';
+    setLanguage(newLang);
+    localStorage.setItem('appLanguage', newLang);
   };
 
   const handleRegister = async (e) => {
@@ -360,57 +354,67 @@ export default function Home() {
     setProgramsDropdownOpen(false);
   };
 
+  const t = (am, en) => language === 'am' ? am : en;
+
+  // ============================================
+  // REGISTER MODAL
+  // ============================================
   const RegisterModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
-          <div><h2 className="text-2xl font-bold text-gray-800">Create Account</h2><p className="text-sm text-gray-500">Join Abbaa Carraa to start winning!</p></div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">{t('Create Account', 'Create Account')}</h2>
+            <p className="text-sm text-gray-500">{t('Join Abbaa Carraa to start winning!', 'Join Abbaa Carraa to start winning!')}</p>
+          </div>
           <button onClick={() => setShowRegisterModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
         </div>
         <form onSubmit={handleRegister} className="p-6 space-y-4">
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label><input type="text" required value={registerForm.fullName} onChange={(e) => setRegisterForm({...registerForm, fullName: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500" placeholder="Enter your full name" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label><input type="email" required value={registerForm.email} onChange={(e) => setRegisterForm({...registerForm, email: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500" placeholder="you@example.com" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label><input type="tel" required value={registerForm.phone} onChange={(e) => setRegisterForm({...registerForm, phone: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500" placeholder="09xxxxxxxx" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">City *</label><input type="text" required value={registerForm.city} onChange={(e) => setRegisterForm({...registerForm, city: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500" placeholder="Your city" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">Password *</label><input type="password" required value={registerForm.password} onChange={(e) => setRegisterForm({...registerForm, password: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500" placeholder="Minimum 6 characters" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password *</label><input type="password" required value={registerForm.confirmPassword} onChange={(e) => setRegisterForm({...registerForm, confirmPassword: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500" placeholder="Confirm your password" /></div>
-          <div className="flex items-start gap-2"><input type="checkbox" id="agreeTerms" checked={registerForm.agreeTerms} onChange={(e) => setRegisterForm({...registerForm, agreeTerms: e.target.checked})} className="mt-1 w-4 h-4 text-green-600 border-gray-300 rounded" /><label htmlFor="agreeTerms" className="text-sm text-gray-600">I agree to the Terms and Conditions</label></div>
-          <button type="submit" disabled={registerLoading} className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50">{registerLoading ? 'Creating Account...' : 'Create Account →'}</button>
-          <p className="text-center text-sm text-gray-500">Already have an account? <button type="button" onClick={() => { setShowRegisterModal(false); router.push('/login'); }} className="text-green-600 hover:underline">Login here</button></p>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('Full Name', 'Full Name')} *</label>
+            <input type="text" required value={registerForm.fullName} onChange={(e) => setRegisterForm({...registerForm, fullName: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500" placeholder={t('Enter your full name', 'Enter your full name')} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('Email Address', 'Email Address')} *</label>
+            <input type="email" required value={registerForm.email} onChange={(e) => setRegisterForm({...registerForm, email: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500" placeholder="you@example.com" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('Phone Number', 'Phone Number')} *</label>
+            <input type="tel" required value={registerForm.phone} onChange={(e) => setRegisterForm({...registerForm, phone: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500" placeholder="09xxxxxxxx" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('City', 'City')} *</label>
+            <input type="text" required value={registerForm.city} onChange={(e) => setRegisterForm({...registerForm, city: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500" placeholder={t('Your city', 'Your city')} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('Password', 'Password')} *</label>
+            <input type="password" required value={registerForm.password} onChange={(e) => setRegisterForm({...registerForm, password: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500" placeholder={t('Minimum 6 characters', 'Minimum 6 characters')} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('Confirm Password', 'Confirm Password')} *</label>
+            <input type="password" required value={registerForm.confirmPassword} onChange={(e) => setRegisterForm({...registerForm, confirmPassword: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500" placeholder={t('Confirm your password', 'Confirm your password')} />
+          </div>
+          <div className="flex items-start gap-2">
+            <input type="checkbox" id="agreeTerms" checked={registerForm.agreeTerms} onChange={(e) => setRegisterForm({...registerForm, agreeTerms: e.target.checked})} className="mt-1 w-4 h-4 text-green-600 border-gray-300 rounded" />
+            <label htmlFor="agreeTerms" className="text-sm text-gray-600">{t('I agree to the Terms and Conditions', 'I agree to the Terms and Conditions')}</label>
+          </div>
+          <button type="submit" disabled={registerLoading} className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50">
+            {registerLoading ? t('Creating Account...', 'Creating Account...') : t('Create Account →', 'Create Account →')}
+          </button>
+          <p className="text-center text-sm text-gray-500">
+            {t('Already have an account?', 'Already have an account?')}{' '}
+            <button type="button" onClick={() => { setShowRegisterModal(false); router.push('/login'); }} className="text-green-600 hover:underline">
+              {t('Login here', 'Login here')}
+            </button>
+          </p>
         </form>
       </div>
     </div>
   );
 
-  // ========== MOVING MARQUEE ==========
-  const MovingMarquee = () => {
-    const marqueeText = `🏆 በAbbaa Carraa ወርቃማ እድልን ያሸንፉ! • 🥈 Silver: 100 ETB (1200 Seats) • 🥇 Gold: 500 ETB (1200 Seats) • 💎 Platinum: 1,000 ETB (2400 Seats) • 💠 Diamond: 2,500 ETB (2400 Seats) • 👑 Royal: 5,000 ETB (2400 Seats) • 🏪 Merkato VIP & 🏙️ City VIP Available! • 💚 2% Supports Health • Join & Start Winning Today! 🎯`;
-
-    return (
-      <div className="w-full overflow-hidden bg-gradient-to-r from-green-600 to-teal-600 py-2.5 md:py-3 shadow-inner">
-        <div className="whitespace-nowrap animate-marquee-slow" style={{ display: 'inline-block' }}>
-          <span className="text-white font-semibold text-[11px] md:text-sm tracking-wide px-4">
-            {marqueeText}
-          </span>
-        </div>
-        <style jsx>{`
-          @keyframes marquee-slow {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
-          }
-          .animate-marquee-slow {
-            animation: marquee-slow 45s linear infinite;
-            will-change: transform;
-          }
-          .animate-marquee-slow:hover {
-            animation-play-state: paused;
-          }
-        `}</style>
-      </div>
-    );
-  };
-
-  // ========== COLLAPSIBLE MODE DRAWER ==========
+  // ============================================
+  // MODE DRAWER
+  // ============================================
   const ModeDrawer = () => (
     <div className="relative">
       <button 
@@ -418,7 +422,7 @@ export default function Home() {
         className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-xs font-medium text-gray-700 transition"
       >
         <span>⚙️</span>
-        <span>Views</span>
+        <span>{t('Views', 'Views')}</span>
         <svg className={`w-3 h-3 transition-transform ${showModeDrawer ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
@@ -430,21 +434,21 @@ export default function Home() {
             onClick={() => { setActiveView('app'); setShowModeDrawer(false); }} 
             className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-2 ${activeView === 'app' ? 'bg-green-600 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
           >
-            <span>📱</span> App View
+            <span>📱</span> {t('App View', 'App View')}
             {activeView === 'app' && <span className="ml-auto text-white">✓</span>}
           </button>
           <button 
             onClick={() => { setActiveView('classic'); setShowModeDrawer(false); }} 
             className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-2 ${activeView === 'classic' ? 'bg-green-600 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
           >
-            <span>🖥️</span> Classic View
+            <span>🖥️</span> {t('Classic View', 'Classic View')}
             {activeView === 'classic' && <span className="ml-auto text-white">✓</span>}
           </button>
           <button 
             onClick={() => { setActiveView('banking'); setShowModeDrawer(false); }} 
             className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-2 ${activeView === 'banking' ? 'bg-green-600 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
           >
-            <span>🏦</span> Banking View
+            <span>🏦</span> {t('Banking View', 'Banking View')}
             {activeView === 'banking' && <span className="ml-auto text-white">✓</span>}
           </button>
           <div className="border-t border-gray-100 my-1"></div>
@@ -454,20 +458,57 @@ export default function Home() {
           >
             <span>🌐</span> {language === 'am' ? 'Switch to English' : 'ወደ አማርኛ ቀይር'}
           </button>
+          <Link href="/become-creator" className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 hover:from-purple-200 hover:to-pink-200 transition flex items-center gap-2">
+            <span>🏪</span> {t('Become Creator', 'Become Creator')}
+          </Link>
         </div>
       )}
     </div>
   );
 
+  // ============================================
+  // MOVING MARQUEE
+  // ============================================
+  const MovingMarquee = () => {
+    const marqueeText = `🏆 በAbbaa Carraa ወርቃማ እድልን ያሸንፉ! • 🥈 Silver: 100 ETB (1200 Seats) • 🥇 Gold: 500 ETB (1200 Seats) • 💎 Platinum: 1,000 ETB (2400 Seats) • 💠 Diamond: 2,500 ETB (2400 Seats) • 👑 Royal: 5,000 ETB (2400 Seats) • 🏪 Merkato VIP & 🏙️ City VIP Available! • 💚 2% Supports Health • Join & Start Winning Today! 🎯`;
+
+    return (
+      <div className="w-full overflow-hidden bg-gradient-to-r from-green-600 to-teal-600 py-2.5 md:py-3 shadow-inner">
+        <div className="whitespace-nowrap animate-marquee-slow" style={{ display: 'inline-block' }}>
+          <span className="text-white font-semibold text-[11px] md:text-sm tracking-wide px-4">{marqueeText}</span>
+        </div>
+        <style jsx>{`
+          @keyframes marquee-slow {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+          }
+          .animate-marquee-slow {
+            animation: marquee-slow 45s linear infinite;
+            will-change: transform;
+          }
+          .animate-marquee-slow:hover { animation-play-state: paused; }
+        `}</style>
+      </div>
+    );
+  };
+
+  // ============================================
+  // LOADING STATE
+  // ============================================
   if (loading && isInitialLoad) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div><p className="mt-4 text-gray-500">Loading amazing prizes...</p></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-500">{t('Loading amazing prizes...', 'Loading amazing prizes...')}</p>
+        </div>
       </div>
     );
   }
 
-  // ========== BANKING MODE ==========
+  // ============================================
+  // BANKING MODE
+  // ============================================
   if (activeView === 'banking') {
     return (
       <>
@@ -497,7 +538,9 @@ export default function Home() {
     );
   }
 
-  // ========== APP MODE ==========
+  // ============================================
+  // APP MODE
+  // ============================================
   if (activeView === 'app') {
     return (
       <>
@@ -508,14 +551,13 @@ export default function Home() {
         </Head>
 
         <div className="min-h-screen bg-gray-50 pb-20">
-          {/* MOVING MARQUEE */}
           <MovingMarquee />
 
-          {/* ✅ TELEGRAM HEADER BADGE */}
+          {/* Telegram Badge */}
           {isInTelegram && (
             <div className="bg-blue-600 text-white px-4 py-1.5 text-center text-xs flex items-center justify-center gap-2 shadow-md">
               <span>📱</span>
-              <span>Connected via Telegram</span>
+              <span>{t('Connected via Telegram', 'Connected via Telegram')}</span>
               {telegramUser && (
                 <span className="bg-blue-700 px-2 py-0.5 rounded-full text-[10px]">
                   @{telegramUser.username || telegramUser.id}
@@ -524,7 +566,7 @@ export default function Home() {
             </div>
           )}
 
-          {/* TOP APP BAR */}
+          {/* Header */}
           <header className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-100 px-3 md:px-4 py-2.5 md:py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 md:gap-2">
@@ -532,67 +574,55 @@ export default function Home() {
                 <span className="font-bold text-sm md:text-lg text-gray-800">Abbaa Carraa</span>
               </div>
               <div className="flex items-center gap-1.5 md:gap-2">
-                <button className="hidden sm:block text-[10px] md:text-xs bg-green-100 text-green-700 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full hover:bg-green-200 transition font-medium">
-                  👁️ View
-                </button>
                 <Link href="/login" className="text-[10px] md:text-xs bg-green-100 text-green-700 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full hover:bg-green-200 transition font-medium">
-                  Login
+                  {t('Login', 'Login')}
                 </Link>
                 <button onClick={() => setShowRegisterModal(true)} className="text-[10px] md:text-xs bg-green-100 text-green-700 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full hover:bg-green-200 transition font-medium">
-                  Register
-                </button>
-                <button className="relative p-1">
-                  <span className="text-lg md:text-xl">🔔</span>
-                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 md:w-4 md:h-4 bg-red-500 text-white text-[7px] md:text-[9px] rounded-full flex items-center justify-center">3</span>
+                  {t('Register', 'Register')}
                 </button>
                 <Link href="/profile" className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-gradient-to-r from-green-500 to-teal-500 flex items-center justify-center text-white font-bold text-xs md:text-sm">
-                  U
+                  {telegramUser?.first_name?.[0]?.toUpperCase() || 'U'}
                 </Link>
                 <ModeDrawer />
               </div>
             </div>
           </header>
 
-          {/* WELCOME SECTION */}
+          {/* Welcome */}
           <div className="px-3 md:px-4 py-3 md:py-4 bg-white border-b border-gray-100">
-            <p className="text-xs md:text-sm text-gray-500">Welcome back,</p>
+            <p className="text-xs md:text-sm text-gray-500">{t('Welcome back,', 'Welcome back,')}</p>
             <p className="text-lg md:text-xl font-bold text-gray-800">
-              {telegramUser?.first_name || 'Guest'}
+              {telegramUser?.first_name || t('Guest', 'Guest')}
               {isInTelegram && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">📱 Telegram</span>}
             </p>
             <div className="flex flex-wrap gap-1.5 md:gap-2 mt-1.5 md:mt-2">
-              <span className="bg-green-100 text-green-700 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full font-medium">⭐ {stats.total_pools} Active</span>
-              <span className="bg-yellow-100 text-yellow-700 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full font-medium">🏆 {stats.total_winners} Winners</span>
-              <span className="bg-blue-100 text-blue-700 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full font-medium">🏙️ {uniqueCities.length} Cities</span>
+              <span className="bg-green-100 text-green-700 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full font-medium">⭐ {stats.total_pools} {t('Active', 'Active')}</span>
+              <span className="bg-yellow-100 text-yellow-700 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full font-medium">🏆 {stats.total_winners} {t('Winners', 'Winners')}</span>
+              <span className="bg-blue-100 text-blue-700 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full font-medium">🏙️ {uniqueCities.length} {t('Cities', 'Cities')}</span>
             </div>
           </div>
 
-          {/* CATEGORIES SECTION - ALL GREEN BORDERS */}
+          {/* Categories */}
           <div className="px-3 md:px-4 py-2">
             <h2 className="text-[10px] md:text-sm font-bold text-gray-500 uppercase tracking-wider mb-2 md:mb-3">
-              {language === 'am' ? 'ምድቦች' : 'Categories'}
+              {t('Categories', 'Categories')}
             </h2>
             <div className="grid grid-cols-4 gap-2 md:gap-4">
               <Link href="/listings" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border-2 border-green-500 hover:shadow-md transition">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">🏊</span>
-                <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">Regular Pools</span>
-                <span className="text-[6px] md:text-[8px] text-gray-400 mt-0.5">Cars • Houses</span>
+                <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">{t('Regular Pools', 'Regular Pools')}</span>
               </Link>
-
               <Link href="/merkato-vip" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border-2 border-green-500 hover:shadow-md transition">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">🏪</span>
-                <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">Merkato VIP</span>
-                <span className="text-[6px] md:text-[8px] text-gray-400 mt-0.5">5 Tiers • Cash</span>
+                <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">{t('Merkato VIP', 'Merkato VIP')}</span>
               </Link>
-
               <button onClick={() => setShowCityDropdown(!showCityDropdown)} className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border-2 border-green-500 hover:shadow-md transition relative">
                 <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">🏙️</span>
-                <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">City VIP</span>
-                <span className="text-[6px] md:text-[8px] text-gray-400 mt-0.5">94 Cities • Cash</span>
+                <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">{t('City VIP', 'City VIP')}</span>
                 {showCityDropdown && (
                   <div className="absolute bottom-full left-0 mb-2 w-64 md:w-72 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
                     <div className="p-2 md:p-3 bg-gray-50 border-b">
-                      <input type="text" placeholder="🔍 Search city..." value={citySearchTerm} onChange={(e) => setCitySearchTerm(e.target.value)} className="w-full px-2 md:px-3 py-1.5 md:py-2 border rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-green-500" autoFocus />
+                      <input type="text" placeholder={t('🔍 Search city...', '🔍 Search city...')} value={citySearchTerm} onChange={(e) => setCitySearchTerm(e.target.value)} className="w-full px-2 md:px-3 py-1.5 md:py-2 border rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-green-500" autoFocus />
                     </div>
                     <div className="max-h-48 md:max-h-64 overflow-y-auto">
                       {filteredCityList.slice(0, 15).map(city => (
@@ -608,43 +638,21 @@ export default function Home() {
                   </div>
                 )}
               </button>
-
-              <Link href="/winners" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border-2 border-green-500 hover:shadow-md transition">
-                <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">🏆</span>
-                <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">Winners</span>
-                <span className="text-[6px] md:text-[8px] text-gray-400 mt-0.5">Hall of Fame</span>
+              <Link href="/become-creator" className="flex flex-col items-center bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 text-white hover:shadow-md transition">
+                <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">🏪</span>
+                <span className="text-[9px] md:text-xs font-bold text-center leading-tight">{t('Open Shop', 'Open Shop')}</span>
               </Link>
-
-              <Link href="/how-it-works" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border-2 border-green-500 hover:shadow-md transition">
-                <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">📖</span>
-                <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">How It Works</span>
-              </Link>
-
-              <Link href="/about" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border-2 border-green-500 hover:shadow-md transition">
-                <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">ℹ️</span>
-                <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">About</span>
-              </Link>
-
-              <Link href="/contact" className="flex flex-col items-center bg-white rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 border-2 border-green-500 hover:shadow-md transition">
-                <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">📞</span>
-                <span className="text-[9px] md:text-xs font-bold text-gray-700 text-center leading-tight">Contact</span>
-              </Link>
-
-              <button onClick={() => setShowRegisterModal(true)} className="flex flex-col items-center bg-gradient-to-r from-green-500 to-teal-500 rounded-xl md:rounded-2xl shadow-sm p-2.5 md:p-4 text-white hover:shadow-md transition">
-                <span className="text-2xl md:text-3xl mb-0.5 md:mb-1">📝</span>
-                <span className="text-[9px] md:text-xs font-bold text-center leading-tight">Register</span>
-              </button>
             </div>
           </div>
 
-          {/* FEATURED POOLS */}
+          {/* Featured Pools */}
           {featuredPools.length > 0 && (
             <div className="px-3 md:px-4 py-3 md:py-4">
               <div className="flex justify-between items-center mb-2 md:mb-3">
-                <h2 className="text-[10px] md:text-sm font-bold text-gray-500 uppercase tracking-wider">⭐ Featured Pools</h2>
-                <Link href="/listings" className="text-[10px] md:text-xs text-green-600 font-medium">See All</Link>
+                <h2 className="text-[10px] md:text-sm font-bold text-gray-500 uppercase tracking-wider">⭐ {t('Featured Pools', 'Featured Pools')}</h2>
+                <Link href="/listings" className="text-[10px] md:text-xs text-green-600 font-medium">{t('See All', 'See All')}</Link>
               </div>
-              <div className="flex overflow-x-auto gap-3 md:gap-4 pb-3 snap-x snap-mandatory scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div className="flex overflow-x-auto gap-3 md:gap-4 pb-3 snap-x snap-mandatory scrollbar-hide">
                 {featuredPools.map((pool) => (
                   <div key={pool.id} className="min-w-[280px] md:min-w-[300px] max-w-[280px] md:max-w-[300px] snap-start flex-shrink-0 transform transition-all duration-300 hover:scale-[1.02]">
                     <PoolCard pool={pool} featured={true} language={language} />
@@ -654,21 +662,19 @@ export default function Home() {
             </div>
           )}
 
-          {/* REGULAR POOLS */}
+          {/* Regular Pools */}
           <div className="px-3 md:px-4 py-3 md:py-4">
             <div className="flex justify-between items-center mb-2 md:mb-3">
-              <h2 className="text-[10px] md:text-sm font-bold text-gray-500 uppercase tracking-wider">🏊 Regular Pools</h2>
-              <Link href="/listings" className="text-[10px] md:text-xs text-green-600 font-medium">View All</Link>
+              <h2 className="text-[10px] md:text-sm font-bold text-gray-500 uppercase tracking-wider">🏊 {t('Regular Pools', 'Regular Pools')}</h2>
+              <Link href="/listings" className="text-[10px] md:text-xs text-green-600 font-medium">{t('View All', 'View All')}</Link>
             </div>
-            
             {pools.length === 0 ? (
               <div className="text-center py-8 bg-gray-50 rounded-xl">
                 <div className="text-4xl mb-2">🏊</div>
-                <p className="text-gray-500 text-sm">No active pools at the moment</p>
-                <p className="text-xs text-gray-400 mt-1">Check back soon!</p>
+                <p className="text-gray-500 text-sm">{t('No active pools at the moment', 'No active pools at the moment')}</p>
               </div>
             ) : (
-              <div className="flex overflow-x-auto gap-3 md:gap-4 pb-3 snap-x snap-mandatory scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div className="flex overflow-x-auto gap-3 md:gap-4 pb-3 snap-x snap-mandatory scrollbar-hide">
                 {pools.map((pool) => (
                   <div key={pool.id} className="min-w-[280px] md:min-w-[300px] max-w-[280px] md:max-w-[300px] snap-start flex-shrink-0 transform transition-all duration-300 hover:scale-[1.02]">
                     <PoolCard pool={pool} featured={pool.is_featured === true} language={language} />
@@ -678,34 +684,38 @@ export default function Home() {
             )}
           </div>
 
-          {/* CHARITY BANNER */}
+          {/* Charity Banner */}
           <div className="mx-3 md:mx-4 p-3 md:p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl md:rounded-2xl border border-red-100 mb-3 md:mb-4">
             <div className="flex items-center gap-2 md:gap-3">
               <span className="text-2xl md:text-3xl">💚</span>
               <div>
-                <p className="font-bold text-sm md:text-base text-red-800">2% for Health</p>
-                <p className="text-[10px] md:text-xs text-red-700">Supporting kidney & heart disease patients</p>
+                <p className="font-bold text-sm md:text-base text-red-800">{t('2% for Health', '2% for Health')}</p>
+                <p className="text-[10px] md:text-xs text-red-700">{t('Supporting kidney & heart disease patients', 'Supporting kidney & heart disease patients')}</p>
               </div>
             </div>
           </div>
 
-          {/* BOTTOM NAVIGATION */}
+          {/* Bottom Navigation */}
           <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center py-1.5 md:py-2 px-2 md:px-4 z-40 shadow-lg">
             <Link href="/" className="flex flex-col items-center text-green-600">
               <span className="text-xl md:text-2xl">🏠</span>
-              <span className="text-[8px] md:text-[10px] font-bold">Home</span>
+              <span className="text-[8px] md:text-[10px] font-bold">{t('Home', 'Home')}</span>
             </Link>
             <Link href="/listings" className="flex flex-col items-center text-gray-400 hover:text-gray-600">
               <span className="text-xl md:text-2xl">🎁</span>
-              <span className="text-[8px] md:text-[10px] font-bold">Pools</span>
+              <span className="text-[8px] md:text-[10px] font-bold">{t('Pools', 'Pools')}</span>
             </Link>
             <Link href="/winners" className="flex flex-col items-center text-gray-400 hover:text-gray-600">
               <span className="text-xl md:text-2xl">🏆</span>
-              <span className="text-[8px] md:text-[10px] font-bold">Winners</span>
+              <span className="text-[8px] md:text-[10px] font-bold">{t('Winners', 'Winners')}</span>
             </Link>
             <Link href="/dashboard" className="flex flex-col items-center text-gray-400 hover:text-gray-600">
               <span className="text-xl md:text-2xl">👤</span>
-              <span className="text-[8px] md:text-[10px] font-bold">Profile</span>
+              <span className="text-[8px] md:text-[10px] font-bold">{t('Profile', 'Profile')}</span>
+            </Link>
+            <Link href="/become-creator" className="flex flex-col items-center text-purple-600">
+              <span className="text-xl md:text-2xl">🏪</span>
+              <span className="text-[8px] md:text-[10px] font-bold">{t('Shop', 'Shop')}</span>
             </Link>
           </nav>
 
@@ -720,7 +730,9 @@ export default function Home() {
     );
   }
 
-  // ========== CLASSIC MODE ==========
+  // ============================================
+  // CLASSIC MODE
+  // ============================================
   return (
     <>
       <Head>
@@ -735,17 +747,21 @@ export default function Home() {
           <ModeDrawer />
         </div>
 
+        {/* Navbar */}
         <nav className="sticky top-0 z-40 bg-gray-900 shadow-lg border-b border-gray-700">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-between h-16">
               <Link href="/" className="flex items-center gap-2 group shrink-0">
                 <span className="text-2xl group-hover:scale-110 transition-transform">🎫</span>
-                <div><span className="font-bold text-white text-lg">Abbaa Carraa</span><span className="text-xs text-gray-400 ml-2 hidden sm:inline">| Ethiopia's Premier Platform</span></div>
+                <div>
+                  <span className="font-bold text-white text-lg">Abbaa Carraa</span>
+                  <span className="text-xs text-gray-400 ml-2 hidden sm:inline">| Ethiopia's Premier Platform</span>
+                </div>
               </Link>
               <div className="hidden md:flex items-center gap-1">
                 <div className="relative">
                   <button onClick={() => setProgramsDropdownOpen(!programsDropdownOpen)} className="flex items-center gap-2 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition text-sm font-medium">
-                    <span>📋</span> Programs
+                    <span>📋</span> {t('Programs', 'Programs')}
                     <svg className={`w-4 h-4 transition-transform ${programsDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
@@ -754,43 +770,33 @@ export default function Home() {
                     <div className="absolute top-full left-0 mt-2 w-72 bg-gray-800 rounded-xl shadow-2xl border border-gray-700 z-50 overflow-hidden">
                       <Link href="/merkato-vip" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-b border-gray-700">
                         <span className="text-xl">🏪</span>
-                        <div>
-                          <div className="font-medium">Merkato VIP</div>
-                          <div className="text-xs text-gray-400">5 Tiers • Up to 10M ETB</div>
-                        </div>
+                        <div><div className="font-medium">{t('Merkato VIP', 'Merkato VIP')}</div><div className="text-xs text-gray-400">{t('5 Tiers • Up to 10M ETB', '5 Tiers • Up to 10M ETB')}</div></div>
                       </Link>
                       <Link href="/city-vip" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-b border-gray-700">
                         <span className="text-xl">🏙️</span>
-                        <div>
-                          <div className="font-medium">City VIP</div>
-                          <div className="text-xs text-gray-400">94 Cities • 5 Tiers</div>
-                        </div>
+                        <div><div className="font-medium">{t('City VIP', 'City VIP')}</div><div className="text-xs text-gray-400">{t('94 Cities • 5 Tiers', '94 Cities • 5 Tiers')}</div></div>
                       </Link>
                       <button onClick={() => scrollToSection('regular-pools')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-b border-gray-700">
                         <span className="text-xl">🏊</span>
-                        <div>
-                          <div className="font-medium">Regular Pools</div>
-                          <div className="text-xs text-gray-400">Cars, Houses & More</div>
-                        </div>
+                        <div><div className="font-medium">{t('Regular Pools', 'Regular Pools')}</div><div className="text-xs text-gray-400">{t('Cars, Houses & More', 'Cars, Houses & More')}</div></div>
                       </button>
-                      <Link href="/dashboard" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3">
-                        <span className="text-xl">📊</span>
-                        <div>
-                          <div className="font-medium">Dashboard</div>
-                          <div className="text-xs text-gray-400">Track your tickets</div>
-                        </div>
+                      <Link href="/become-creator" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3">
+                        <span className="text-xl">🏪</span>
+                        <div><div className="font-medium">{t('Become Creator', 'Become Creator')}</div><div className="text-xs text-gray-400">{t('Earn 10% Commission', 'Earn 10% Commission')}</div></div>
                       </Link>
                     </div>
                   )}
                 </div>
-                <Link href="/about" className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition whitespace-nowrap text-sm font-medium">ℹ️ About</Link>
-                <Link href="/contact" className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition whitespace-nowrap text-sm font-medium">📞 Contact</Link>
+                <Link href="/about" className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition whitespace-nowrap text-sm font-medium">ℹ️ {t('About', 'About')}</Link>
+                <Link href="/contact" className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition whitespace-nowrap text-sm font-medium">📞 {t('Contact', 'Contact')}</Link>
               </div>
               <div className="hidden md:flex items-center gap-2">
                 <TopCitySelector />
-                <Link href="/login" className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium shadow-sm">Login</Link>
-                <button onClick={() => setShowRegisterModal(true)} className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium shadow-sm">Register</button>
-                <button className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium shadow-sm">👁️ View</button>
+                <Link href="/login" className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium shadow-sm">{t('Login', 'Login')}</Link>
+                <button onClick={() => setShowRegisterModal(true)} className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium shadow-sm">{t('Register', 'Register')}</button>
+                <Link href="/become-creator" className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg transition text-sm font-medium shadow-sm flex items-center gap-1">
+                  <span>🏪</span> {t('Open Shop', 'Open Shop')}
+                </Link>
               </div>
               <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -801,28 +807,25 @@ export default function Home() {
             {mobileMenuOpen && (
               <div className="md:hidden py-4 border-t border-gray-700 space-y-2">
                 <div className="flex gap-2 px-4 py-2">
-                  <Link href="/login" className="flex-1 text-center px-3 py-2 bg-green-600 text-white rounded-lg text-xs">🔐 Login</Link>
-                  <button onClick={() => { setShowRegisterModal(true); setMobileMenuOpen(false); }} className="flex-1 text-center px-3 py-2 bg-green-600 text-white rounded-lg text-xs">📝 Register</button>
-                  <button className="flex-1 text-center px-3 py-2 bg-green-600 text-white rounded-lg text-xs">👁️ View</button>
+                  <Link href="/login" className="flex-1 text-center px-3 py-2 bg-green-600 text-white rounded-lg text-xs">🔐 {t('Login', 'Login')}</Link>
+                  <button onClick={() => { setShowRegisterModal(true); setMobileMenuOpen(false); }} className="flex-1 text-center px-3 py-2 bg-green-600 text-white rounded-lg text-xs">📝 {t('Register', 'Register')}</button>
+                  <Link href="/become-creator" className="flex-1 text-center px-3 py-2 bg-purple-600 text-white rounded-lg text-xs">🏪 {t('Shop', 'Shop')}</Link>
                 </div>
                 <Link href="/merkato-vip" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
-                  <span className="text-xl">🏪</span><div><div>Merkato VIP</div><div className="text-xs text-gray-400">5 Tiers • Up to 10M</div></div>
+                  <span className="text-xl">🏪</span><div><div>{t('Merkato VIP', 'Merkato VIP')}</div><div className="text-xs text-gray-400">{t('5 Tiers • Up to 10M', '5 Tiers • Up to 10M')}</div></div>
                 </Link>
                 <Link href="/city-vip" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
-                  <span className="text-xl">🏙️</span><div><div>City VIP</div><div className="text-xs text-gray-400">94 Cities • 5 Tiers</div></div>
+                  <span className="text-xl">🏙️</span><div><div>{t('City VIP', 'City VIP')}</div><div className="text-xs text-gray-400">{t('94 Cities • 5 Tiers', '94 Cities • 5 Tiers')}</div></div>
                 </Link>
                 <button onClick={() => scrollToSection('regular-pools')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
-                  <span className="text-xl">🏊</span><div><div>Regular Pools</div><div className="text-xs text-gray-400">Cars, Houses & More</div></div>
+                  <span className="text-xl">🏊</span><div><div>{t('Regular Pools', 'Regular Pools')}</div><div className="text-xs text-gray-400">{t('Cars, Houses & More', 'Cars, Houses & More')}</div></div>
                 </button>
                 <div className="h-px bg-gray-700 my-2"></div>
                 <Link href="/dashboard" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
-                  <span className="text-xl">📊</span><div><div>Dashboard</div><div className="text-xs text-gray-400">Track your tickets</div></div>
+                  <span className="text-xl">📊</span><div><div>{t('Dashboard', 'Dashboard')}</div><div className="text-xs text-gray-400">{t('Track your tickets', 'Track your tickets')}</div></div>
                 </Link>
-                <Link href="/about" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
-                  <span className="text-xl">ℹ️</span><div><div>About</div><div className="text-xs text-gray-400">Learn about us</div></div>
-                </Link>
-                <Link href="/contact" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
-                  <span className="text-xl">📞</span><div><div>Contact</div><div className="text-xs text-gray-400">Get in touch</div></div>
+                <Link href="/become-creator" className="w-full text-left px-4 py-3 text-purple-400 hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
+                  <span className="text-xl">🏪</span><div><div className="font-medium">{t('Become Creator', 'Become Creator')}</div><div className="text-xs text-gray-400">{t('Earn 10% Commission', 'Earn 10% Commission')}</div></div>
                 </Link>
                 <div className="pt-2"><TopCitySelector /></div>
               </div>
@@ -834,47 +837,55 @@ export default function Home() {
         <CashEquivalentBanner />
         <CharityBanner />
 
+        {/* Hero Banner */}
         <div className="w-full bg-gradient-to-br from-green-700 to-teal-700">
           <div className="max-w-7xl mx-auto">
             <img src="/images/abbaa-carraa-bg.png" alt="Abbaa Carraa" className="w-full h-auto object-cover block" loading="eager" fetchPriority="high" style={{ maxHeight: '500px', objectPosition: 'center' }} />
           </div>
         </div>
 
+        {/* Hero Text */}
         <div className="bg-white py-12 w-full">
           <div className="container mx-auto px-4 text-center">
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-4 py-1.5 rounded-full text-sm font-semibold mb-5 animate-pulse">🔥 Ethiopia's #1 Prize Platform 🏆</div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900">Welcome to <span className="bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">Abbaa Carraa</span></h1>
-            <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mt-4">Win cars, houses, machinery, electronics, and more through community savings!</p>
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-4 py-1.5 rounded-full text-sm font-semibold mb-5 animate-pulse">🔥 {t("Ethiopia's #1 Prize Platform", "Ethiopia's #1 Prize Platform")} 🏆</div>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900">
+              {t('Welcome to', 'Welcome to')} <span className="bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">Abbaa Carraa</span>
+            </h1>
+            <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mt-4">{t('Win cars, houses, machinery, electronics, and more through community savings!', 'Win cars, houses, machinery, electronics, and more through community savings!')}</p>
             <div className="mt-4 inline-flex items-center gap-2 bg-green-50 border border-green-200 px-4 py-2 rounded-full">
               <span className="text-green-600 text-lg">💚</span>
-              <span className="text-green-700 font-medium">2% supports kidney & heart disease patients</span>
+              <span className="text-green-700 font-medium">{t('2% supports kidney & heart disease patients', '2% supports kidney & heart disease patients')}</span>
             </div>
             <div className="flex flex-wrap justify-center gap-4 mt-8">
               <Link href="/merkato-vip" className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2">
-                <span>🏪</span> Join Merkato VIP <span>→</span>
+                <span>🏪</span> {t('Join Merkato VIP', 'Join Merkato VIP')} <span>→</span>
               </Link>
               <Link href="/city-vip" className="bg-gradient-to-r from-gray-700 to-gray-900 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2">
-                <span>🏙️</span> Join City VIP <span>→</span>
+                <span>🏙️</span> {t('Join City VIP', 'Join City VIP')} <span>→</span>
               </Link>
               <button onClick={() => scrollToSection('regular-pools')} className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2">
-                <span>🏊</span> Join Regular Pools <span>→</span>
+                <span>🏊</span> {t('Join Regular Pools', 'Join Regular Pools')} <span>→</span>
               </button>
+              <Link href="/become-creator" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2 animate-pulse">
+                <span>🏪</span> {t('Open Your Own Shop', 'Open Your Own Shop')} <span>→</span>
+              </Link>
             </div>
           </div>
         </div>
 
+        {/* Stats Banner */}
         <div ref={counterRef} className="bg-gradient-to-r from-gray-50 to-white border-y border-gray-200 py-3">
           <div className="container mx-auto px-4">
             <div className="flex flex-wrap justify-center items-center gap-6 text-sm">
-              <div className="flex items-center gap-2"><span className="text-green-600 text-lg">💰</span><span className="text-gray-600">Total Prize:</span><span className="font-bold text-gray-800">{counterInView ? <CountUp start={0} end={Math.floor(stats.total_raised / 1000)} duration={2} separator="," /> : '0'}+K ETB</span></div>
+              <div className="flex items-center gap-2"><span className="text-green-600 text-lg">💰</span><span className="text-gray-600">{t('Total Prize', 'Total Prize')}:</span><span className="font-bold text-gray-800">{counterInView ? <CountUp start={0} end={Math.floor(stats.total_raised / 1000)} duration={2} separator="," /> : '0'}+K ETB</span></div>
               <div className="w-px h-6 bg-gray-300 hidden sm:block"></div>
-              <div className="flex items-center gap-2"><span className="text-yellow-600 text-lg">🏆</span><span className="text-gray-600">Winners:</span><span className="font-bold text-gray-800">{stats.total_winners}+</span></div>
+              <div className="flex items-center gap-2"><span className="text-yellow-600 text-lg">🏆</span><span className="text-gray-600">{t('Winners', 'Winners')}:</span><span className="font-bold text-gray-800">{stats.total_winners}+</span></div>
               <div className="w-px h-6 bg-gray-300 hidden sm:block"></div>
-              <div className="flex items-center gap-2"><span className="text-blue-600 text-lg">🎯</span><span className="text-gray-600">Active Pools:</span><span className="font-bold text-gray-800">{stats.total_pools}+</span></div>
+              <div className="flex items-center gap-2"><span className="text-blue-600 text-lg">🎯</span><span className="text-gray-600">{t('Active Pools', 'Active Pools')}:</span><span className="font-bold text-gray-800">{stats.total_pools}+</span></div>
               <div className="w-px h-6 bg-gray-300 hidden sm:block"></div>
-              <div className="flex items-center gap-2"><span className="text-purple-600 text-lg">🤝</span><span className="text-gray-600">Agents:</span><span className="font-bold text-gray-800">{stats.total_agents}+</span></div>
+              <div className="flex items-center gap-2"><span className="text-purple-600 text-lg">🤝</span><span className="text-gray-600">{t('Agents', 'Agents')}:</span><span className="font-bold text-gray-800">{stats.total_agents}+</span></div>
               <div className="w-px h-6 bg-gray-300 hidden sm:block"></div>
-              <div className="flex items-center gap-2"><span className="text-orange-600 text-lg">🏙️</span><span className="text-gray-600">Cities:</span><span className="font-bold text-gray-800">{uniqueCities.length}+</span></div>
+              <div className="flex items-center gap-2"><span className="text-orange-600 text-lg">🏙️</span><span className="text-gray-600">{t('Cities', 'Cities')}:</span><span className="font-bold text-gray-800">{uniqueCities.length}+</span></div>
             </div>
           </div>
         </div>
@@ -882,9 +893,10 @@ export default function Home() {
         <MovingAd />
         <AdvertisingBanner />
 
+        {/* Main Content */}
         <div id="pools-section" className="container mx-auto px-4 py-12">
-          <h2 className="text-3xl font-bold text-center mb-4">Available Opportunities</h2>
-          <p className="text-center text-gray-500 mb-8">Choose from VIP programs or regular pools</p>
+          <h2 className="text-3xl font-bold text-center mb-4">{t('Available Opportunities', 'Available Opportunities')}</h2>
+          <p className="text-center text-gray-500 mb-8">{t('Choose from VIP programs or regular pools', 'Choose from VIP programs or regular pools')}</p>
 
           {/* Merkato VIP */}
           <div id="merkato-vip" className="mb-12 scroll-mt-20">
@@ -898,24 +910,23 @@ export default function Home() {
                   <div className="flex items-center gap-3">
                     <div className="text-5xl md:text-6xl animate-bounce">🏪</div>
                     <div>
-                      <div className="font-bold text-2xl md:text-3xl">መርካቶ VIP</div>
-                      <div className="text-xs md:text-sm opacity-90">5 Premium Tiers • Win Cash up to 10M ETB</div>
+                      <div className="font-bold text-2xl md:text-3xl">{t('መርካቶ VIP', 'Merkato VIP')}</div>
+                      <div className="text-xs md:text-sm opacity-90">{t('5 Premium Tiers • Win Cash up to 10M ETB', '5 Premium Tiers • Win Cash up to 10M ETB')}</div>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <div className="bg-gray-400 text-white px-2 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg">🥈 Silver</div>
-                    <div className="bg-yellow-400 text-gray-900 px-2 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg">🥇 Gold</div>
-                    <div className="bg-blue-300 text-gray-900 px-2 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg">💎 Platinum</div>
-                    <div className="bg-cyan-400 text-gray-900 px-2 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg">💠 Diamond</div>
-                    <div className="bg-purple-500 text-white px-2 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg">👑 Royal</div>
+                    <div className="bg-gray-400 text-white px-2 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg">🥈 {t('Silver', 'Silver')}</div>
+                    <div className="bg-yellow-400 text-gray-900 px-2 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg">🥇 {t('Gold', 'Gold')}</div>
+                    <div className="bg-blue-300 text-gray-900 px-2 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg">💎 {t('Platinum', 'Platinum')}</div>
+                    <div className="bg-cyan-400 text-gray-900 px-2 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg">💠 {t('Diamond', 'Diamond')}</div>
+                    <div className="bg-purple-500 text-white px-2 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg">👑 {t('Royal', 'Royal')}</div>
                   </div>
                   <div className="bg-white text-gray-900 px-5 py-2 rounded-full font-bold hover:bg-gray-100 transition transform hover:scale-105 shadow-xl flex items-center gap-2 text-sm md:text-base">
-                    <span>🎯</span><span>Join Now</span><span>→</span>
+                    <span>🎯</span><span>{t('Join Now', 'Join Now')}</span><span>→</span>
                   </div>
                 </div>
                 <div className="mt-4 text-center">
-                  <p className="text-sm md:text-lg font-bold animate-pulse">"ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው"</p>
-                  <p className="text-xs md:text-sm opacity-80 mt-1">"Today, this week, and this month - let's make one participant a millionaire"</p>
+                  <p className="text-sm md:text-lg font-bold animate-pulse">{t('"ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው"', '"Today, this week, and this month - let\'s make one participant a millionaire"')}</p>
                 </div>
               </div>
             </Link>
@@ -928,13 +939,13 @@ export default function Home() {
                 <div className="flex items-center gap-3">
                   <span className="text-4xl">🏙️</span>
                   <div>
-                    <h3 className="text-xl font-bold text-white">City VIP Programs</h3>
-                    <p className="text-sm text-gray-300">5 Premium Tiers • {uniqueCities.length}+ Ethiopian cities available!</p>
+                    <h3 className="text-xl font-bold text-white">{t('City VIP Programs', 'City VIP Programs')}</h3>
+                    <p className="text-sm text-gray-300">{t('5 Premium Tiers • {count}+ Ethiopian cities available!', '5 Premium Tiers • {count}+ Ethiopian cities available!').replace('{count}', uniqueCities.length)}</p>
                   </div>
                 </div>
                 <div className="relative">
                   <button onClick={() => setShowCityDropdown(!showCityDropdown)} className="flex items-center gap-2 px-5 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition shadow-md">
-                    <span>🎯</span><span>Select City</span>
+                    <span>🎯</span><span>{t('Select City', 'Select City')}</span>
                     <svg className={`w-4 h-4 transition-transform ${showCityDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
@@ -942,11 +953,11 @@ export default function Home() {
                   {showCityDropdown && (
                     <div className="absolute top-full left-0 mt-2 w-80 md:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
                       <div className="p-3 bg-gray-50 border-b">
-                        <input type="text" placeholder="🔍 Search your city... (94 cities available)" value={citySearchTerm} onChange={(e) => setCitySearchTerm(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500" autoFocus />
-                        <p className="text-xs text-gray-400 mt-1">Showing {filteredCityList.length} of {uniqueCities.length} cities</p>
+                        <input type="text" placeholder={t('🔍 Search your city... (94 cities available)', '🔍 Search your city... (94 cities available)')} value={citySearchTerm} onChange={(e) => setCitySearchTerm(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500" autoFocus />
+                        <p className="text-xs text-gray-400 mt-1">{t('Showing {count} of {total} cities', 'Showing {count} of {total} cities').replace('{count}', filteredCityList.length).replace('{total}', uniqueCities.length)}</p>
                       </div>
                       <div className="max-h-96 overflow-y-auto">
-                        {filteredCityList.length === 0 ? <div className="p-4 text-center text-gray-500">No cities found</div> : filteredCityList.slice(0, 20).map(city => (
+                        {filteredCityList.length === 0 ? <div className="p-4 text-center text-gray-500">{t('No cities found', 'No cities found')}</div> : filteredCityList.slice(0, 20).map(city => (
                           <a key={city.id} href={`/cities/${city.id}`} onClick={(e) => { e.preventDefault(); setShowCityDropdown(false); setCitySearchTerm(''); window.location.href = `/cities/${city.id}`; }} className="w-full text-left px-4 py-3 hover:bg-gray-50 transition border-b last:border-0 flex items-center gap-3 cursor-pointer group">
                             <span className="text-2xl">{city.icon}</span>
                             <div className="flex-1">
@@ -955,41 +966,20 @@ export default function Home() {
                               </div>
                               <div className="text-xs text-gray-500">{city.nameEn} • {city.region}</div>
                             </div>
-                            <span className="text-green-600 text-xs font-medium opacity-0 group-hover:opacity-100 transition flex items-center gap-1">Join <span>→</span></span>
+                            <span className="text-green-600 text-xs font-medium opacity-0 group-hover:opacity-100 transition flex items-center gap-1">{t('Join', 'Join')} <span>→</span></span>
                           </a>
                         ))}
                       </div>
-                      <div className="p-2 text-center text-xs text-gray-400 bg-gray-50">{uniqueCities.length}+ Ethiopian cities • 5 Premium Tiers • Up to 10M ETB</div>
                     </div>
                   )}
                 </div>
               </div>
               <div className="grid grid-cols-3 md:grid-cols-5 gap-3 mt-6 pt-4 border-t border-gray-700">
-                <div className="text-center bg-gray-800 rounded-lg p-2">
-                  <div className="text-2xl">🥈</div>
-                  <div className="text-white font-bold text-xs">100 ETB</div>
-                  <div className="text-[8px] text-gray-400">1,200 Seats</div>
-                </div>
-                <div className="text-center bg-gray-800 rounded-lg p-2">
-                  <div className="text-2xl">🥇</div>
-                  <div className="text-white font-bold text-xs">500 ETB</div>
-                  <div className="text-[8px] text-gray-400">1,200 Seats</div>
-                </div>
-                <div className="text-center bg-gray-800 rounded-lg p-2">
-                  <div className="text-2xl">💎</div>
-                  <div className="text-white font-bold text-xs">1,000 ETB</div>
-                  <div className="text-[8px] text-gray-400">2,400 Seats</div>
-                </div>
-                <div className="text-center bg-gray-800 rounded-lg p-2">
-                  <div className="text-2xl">💠</div>
-                  <div className="text-white font-bold text-xs">2,500 ETB</div>
-                  <div className="text-[8px] text-gray-400">2,400 Seats</div>
-                </div>
-                <div className="text-center bg-gray-800 rounded-lg p-2">
-                  <div className="text-2xl">👑</div>
-                  <div className="text-white font-bold text-xs">5,000 ETB</div>
-                  <div className="text-[8px] text-gray-400">2,400 Seats</div>
-                </div>
+                <div className="text-center bg-gray-800 rounded-lg p-2"><div className="text-2xl">🥈</div><div className="text-white font-bold text-xs">100 ETB</div><div className="text-[8px] text-gray-400">1,200 {t('Seats', 'Seats')}</div></div>
+                <div className="text-center bg-gray-800 rounded-lg p-2"><div className="text-2xl">🥇</div><div className="text-white font-bold text-xs">500 ETB</div><div className="text-[8px] text-gray-400">1,200 {t('Seats', 'Seats')}</div></div>
+                <div className="text-center bg-gray-800 rounded-lg p-2"><div className="text-2xl">💎</div><div className="text-white font-bold text-xs">1,000 ETB</div><div className="text-[8px] text-gray-400">2,400 {t('Seats', 'Seats')}</div></div>
+                <div className="text-center bg-gray-800 rounded-lg p-2"><div className="text-2xl">💠</div><div className="text-white font-bold text-xs">2,500 ETB</div><div className="text-[8px] text-gray-400">2,400 {t('Seats', 'Seats')}</div></div>
+                <div className="text-center bg-gray-800 rounded-lg p-2"><div className="text-2xl">👑</div><div className="text-white font-bold text-xs">5,000 ETB</div><div className="text-[8px] text-gray-400">2,400 {t('Seats', 'Seats')}</div></div>
               </div>
             </div>
           </div>
@@ -1002,12 +992,12 @@ export default function Home() {
                   <div className="flex items-center gap-3">
                     <span className="text-4xl group-hover:scale-110 transition-transform">🏊</span>
                     <div className="text-left">
-                      <h3 className="text-2xl font-bold">Regular Prize Pools</h3>
-                      <p className="text-sm text-gray-300">Win Cars, Houses, Machinery & Electronics</p>
+                      <h3 className="text-2xl font-bold">{t('Regular Prize Pools', 'Regular Prize Pools')}</h3>
+                      <p className="text-sm text-gray-300">{t('Win Cars, Houses, Machinery & Electronics', 'Win Cars, Houses, Machinery & Electronics')}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm">{showRegularPools ? 'Close' : 'View'}</span>
+                    <span className="text-sm">{showRegularPools ? t('Close', 'Close') : t('View', 'View')}</span>
                     <svg className={`w-5 h-5 transition-transform duration-300 ${showRegularPools ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
@@ -1015,14 +1005,14 @@ export default function Home() {
                 </div>
                 <div className="mt-3 pt-3 border-t border-gray-600 w-full">
                   <div className="rounded-lg p-2">
-                    <p className="text-sm md:text-base font-bold text-yellow-300">🎯 Join and WIN!</p>
-                    <p className="text-xs text-gray-300">ይሳተፉ እና ያሸንፉ!</p>
+                    <p className="text-sm md:text-base font-bold text-yellow-300">🎯 {t('Join and WIN!', 'Join and WIN!')}</p>
+                    <p className="text-xs text-gray-300">{t('ይሳተፉ እና ያሸንፉ!', 'ይሳተፉ እና ያሸንፉ!')}</p>
                     <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
-                      <span className="text-lg">🚗</span><span className="text-xs font-semibold text-white">Car</span><span className="text-gray-400">•</span>
-                      <span className="text-lg">🏭</span><span className="text-xs font-semibold text-white">Machinery</span><span className="text-gray-400">•</span>
-                      <span className="text-lg">🏠</span><span className="text-xs font-semibold text-white">House</span><span className="text-gray-400">•</span>
-                      <span className="text-lg">💻</span><span className="text-xs font-semibold text-white">Electronics</span><span className="text-gray-400">•</span>
-                      <span className="text-lg">🎁</span><span className="text-xs font-semibold text-white">Much More</span>
+                      <span className="text-lg">🚗</span><span className="text-xs font-semibold text-white">{t('Car', 'Car')}</span><span className="text-gray-400">•</span>
+                      <span className="text-lg">🏭</span><span className="text-xs font-semibold text-white">{t('Machinery', 'Machinery')}</span><span className="text-gray-400">•</span>
+                      <span className="text-lg">🏠</span><span className="text-xs font-semibold text-white">{t('House', 'House')}</span><span className="text-gray-400">•</span>
+                      <span className="text-lg">💻</span><span className="text-xs font-semibold text-white">{t('Electronics', 'Electronics')}</span><span className="text-gray-400">•</span>
+                      <span className="text-lg">🎁</span><span className="text-xs font-semibold text-white">{t('Much More', 'Much More')}</span>
                     </div>
                   </div>
                 </div>
@@ -1032,15 +1022,15 @@ export default function Home() {
               <div className="mt-6 animate-fade-in">
                 <div className="flex justify-between items-center flex-wrap gap-4 mb-6">
                   <div>
-                    <h4 className="text-lg font-semibold text-gray-700">Available Prize Pools</h4>
-                    <p className="text-sm text-gray-500">Choose based on your budget and preference</p>
+                    <h4 className="text-lg font-semibold text-gray-700">{t('Available Prize Pools', 'Available Prize Pools')}</h4>
+                    <p className="text-sm text-gray-500">{t('Choose based on your budget and preference', 'Choose based on your budget and preference')}</p>
                   </div>
                 </div>
                 {pools.length === 0 ? (
                   <div className="text-center py-12 bg-gray-50 rounded-lg">
                     <div className="text-5xl mb-3">🏊</div>
-                    <p className="text-gray-500">No active pools at the moment</p>
-                    <p className="text-sm text-gray-400 mt-2">Check back soon!</p>
+                    <p className="text-gray-500">{t('No active pools at the moment', 'No active pools at the moment')}</p>
+                    <p className="text-sm text-gray-400 mt-2">{t('Check back soon!', 'Check back soon!')}</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1055,47 +1045,52 @@ export default function Home() {
         <Testimonials />
         <NewsletterSubscribe />
 
+        {/* How It Works */}
         <div className="bg-gray-50 py-16 w-full">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-12">እንዴት እንሳተፋለን? | How It Works</h2>
+            <h2 className="text-3xl font-bold text-center mb-12">{t('እንዴት እንሳተፋለን? | How It Works', 'እንዴት እንሳተፋለን? | How It Works')}</h2>
             <div className="grid md:grid-cols-3 gap-8 text-center">
               <div className="hover:scale-105 transition transform">
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">1</div>
-                <h3 className="font-bold text-xl mb-2">Find a Pool</h3>
-                <p className="text-gray-600">Browse available prize pools</p>
+                <h3 className="font-bold text-xl mb-2">{t('Find a Pool', 'Find a Pool')}</h3>
+                <p className="text-gray-600">{t('Browse available prize pools', 'Browse available prize pools')}</p>
               </div>
               <div className="hover:scale-105 transition transform">
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">2</div>
-                <h3 className="font-bold text-xl mb-2">Contribute</h3>
-                <p className="text-gray-600">Make your contribution securely</p>
+                <h3 className="font-bold text-xl mb-2">{t('Contribute', 'Contribute')}</h3>
+                <p className="text-gray-600">{t('Make your contribution securely', 'Make your contribution securely')}</p>
               </div>
               <div className="hover:scale-105 transition transform">
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-green-600">3</div>
-                <h3 className="font-bold text-xl mb-2">Win!</h3>
-                <p className="text-gray-600">Win amazing prizes!</p>
+                <h3 className="font-bold text-xl mb-2">{t('Win!', 'Win!')}</h3>
+                <p className="text-gray-600">{t('Win amazing prizes!', 'Win amazing prizes!')}</p>
               </div>
             </div>
           </div>
         </div>
 
+        {/* Partner Program */}
         <div className="border-t border-gray-200"></div>
         <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-12">
           <div className="container mx-auto px-4 text-center">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2">Partner Program</h2>
-            <p className="text-gray-300 text-sm md:text-base mb-6">Join our partner program and start earning commissions today!</p>
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">{t('Partner Program', 'Partner Program')}</h2>
+            <p className="text-gray-300 text-sm md:text-base mb-6">{t('Join our partner program and start earning commissions today!', 'Join our partner program and start earning commissions today!')}</p>
             <div className="flex flex-wrap justify-center gap-4">
               <button onClick={() => handleRoleSelection('agent')} className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-xl transition transform hover:scale-105 flex items-center gap-2">
-                <span>🤝</span> Become an Agent
+                <span>🤝</span> {t('Become an Agent', 'Become an Agent')}
               </button>
               <button onClick={() => handleRoleSelection('vendor')} className="bg-gradient-to-r from-purple-500 to-pink-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-xl transition transform hover:scale-105 flex items-center gap-2">
-                <span>🏪</span> Become a Vendor
+                <span>🏪</span> {t('Become a Vendor', 'Become a Vendor')}
               </button>
               <button onClick={() => handleRoleSelection('organization')} className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-xl transition transform hover:scale-105 flex items-center gap-2">
-                <span>🏢</span> Become an Organization
+                <span>🏢</span> {t('Become an Organization', 'Become an Organization')}
               </button>
+              <Link href="/become-creator" className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-xl transition transform hover:scale-105 flex items-center gap-2">
+                <span>🏪</span> {t('Become a Pool Creator', 'Become a Pool Creator')}
+              </Link>
             </div>
             <div className="mt-4 text-xs text-gray-400">
-              <p>✓ No upfront fees ✓ Earn 10% on every successful pool ✓ 24/7 support</p>
+              <p>{t('✓ No upfront fees ✓ Earn 10% on every successful pool ✓ 24/7 support', '✓ No upfront fees ✓ Earn 10% on every successful pool ✓ 24/7 support')}</p>
             </div>
           </div>
         </div>
@@ -1109,19 +1104,6 @@ export default function Home() {
         @keyframes fade-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fade-in 0.5s ease-out; }
         .scroll-mt-20 { scroll-margin-top: 80px; }
-        @keyframes marquee-slow {
-          0% { transform: translateX(100%); }
-          100% { transform: translateX(-100%); }
-        }
-        .animate-marquee-slow {
-          animation: marquee-slow 45s linear infinite;
-          will-change: transform;
-        }
-        .animate-marquee-slow:hover {
-          animation-play-state: paused;
-        }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </>
   );
