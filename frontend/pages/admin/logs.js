@@ -1,10 +1,12 @@
-// pages/admin/logs.js - FIXED with AdminLayout
+// pages/admin/logs.js - COMPLETE with creator logs
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
-import AdminLayout from '../../components/admin/AdminLayout'; // ✅ ADDED
+import AdminLayout from '../../components/admin/AdminLayout';
 
 export default function AdminLogs() {
+  const router = useRouter();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -63,12 +65,16 @@ export default function AdminLogs() {
         { data: notifications },
         { data: payments },
         { data: draws },
-        { data: userActions }
+        { data: userActions },
+        { data: creatorApplications },
+        { data: creatorApprovals }
       ] = await Promise.all([
         supabase.from('admin_notifications').select('*').order('created_at', { ascending: false }).limit(100),
         supabase.from('city_vip_participants').select('*').eq('payment_status', 'verified').order('verified_at', { ascending: false }).limit(50),
         supabase.from('merkato_vip_draws').select('*').order('drawn_at', { ascending: false }).limit(50),
-        supabase.from('profiles').select('id, full_name, email, created_at').order('created_at', { ascending: false }).limit(50)
+        supabase.from('profiles').select('id, full_name, email, created_at').order('created_at', { ascending: false }).limit(50),
+        supabase.from('pool_creators').select('*').eq('verification_status', 'pending').order('created_at', { ascending: false }).limit(50),
+        supabase.from('pool_creators').select('*').in('verification_status', ['approved', 'rejected']).order('updated_at', { ascending: false }).limit(50)
       ]);
 
       const formattedLogs = [];
@@ -125,6 +131,33 @@ export default function AdminLogs() {
         });
       });
 
+      // Add creator applications as logs
+      (creatorApplications || []).forEach(c => {
+        formattedLogs.push({
+          id: c.id,
+          type: 'creator',
+          action: 'Creator Application Submitted',
+          details: `${c.business_name || c.full_name} applied to become a creator`,
+          user: c.full_name || c.email,
+          timestamp: c.created_at,
+          icon: '👑'
+        });
+      });
+
+      // Add creator approvals/rejections as logs
+      (creatorApprovals || []).forEach(c => {
+        const action = c.verification_status === 'approved' ? 'Creator Application Approved' : 'Creator Application Rejected';
+        formattedLogs.push({
+          id: c.id,
+          type: 'creator',
+          action: action,
+          details: `${c.business_name || c.full_name} ${c.verification_status === 'approved' ? 'approved' : 'rejected'}${c.rejection_reason ? ` (Reason: ${c.rejection_reason})` : ''}`,
+          user: c.full_name || c.email,
+          timestamp: c.updated_at || c.created_at,
+          icon: c.verification_status === 'approved' ? '✅' : '❌'
+        });
+      });
+
       // Sort by timestamp descending
       formattedLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
       setLogs(formattedLogs);
@@ -148,6 +181,7 @@ export default function AdminLogs() {
       case 'payment': return 'bg-green-100 text-green-800';
       case 'draw': return 'bg-purple-100 text-purple-800';
       case 'user': return 'bg-yellow-100 text-yellow-800';
+      case 'creator': return 'bg-pink-100 text-pink-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -158,6 +192,7 @@ export default function AdminLogs() {
       case 'payment': return '💰';
       case 'draw': return '🏆';
       case 'user': return '👤';
+      case 'creator': return '👑';
       default: return '📌';
     }
   };
@@ -224,6 +259,14 @@ export default function AdminLogs() {
             >
               👤 Users
             </button>
+            <button 
+              onClick={() => setFilter('creator')} 
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition flex items-center gap-1 ${
+                filter === 'creator' ? 'bg-pink-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              👑 Creators
+            </button>
           </div>
           <div className="flex-1 min-w-[200px]">
             <div className="relative">
@@ -284,7 +327,9 @@ export default function AdminLogs() {
                       </span>
                     </td>
                     <td className="px-4 py-3 font-medium text-sm">{log.action}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">{log.details}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate" title={log.details}>
+                      {log.details}
+                    </td>
                     <td className="px-4 py-3 text-sm text-gray-500">{log.user}</td>
                     <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
                       {new Date(log.timestamp).toLocaleString()}
@@ -298,7 +343,7 @@ export default function AdminLogs() {
       </div>
 
       {/* Stats */}
-      <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="mt-4 grid grid-cols-2 md:grid-cols-5 gap-3">
         <div className="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-200">
           <p className="text-2xl font-bold text-blue-600">{logs.filter(l => l.type === 'notification').length}</p>
           <p className="text-xs text-gray-500">🔔 Notifications</p>
@@ -314,6 +359,10 @@ export default function AdminLogs() {
         <div className="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-200">
           <p className="text-2xl font-bold text-yellow-600">{logs.filter(l => l.type === 'user').length}</p>
           <p className="text-xs text-gray-500">👤 Users</p>
+        </div>
+        <div className="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-200">
+          <p className="text-2xl font-bold text-pink-600">{logs.filter(l => l.type === 'creator').length}</p>
+          <p className="text-xs text-gray-500">👑 Creators</p>
         </div>
       </div>
     </AdminLayout>
