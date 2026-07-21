@@ -1,4 +1,4 @@
-// lib/bot.js - COMPLETE WITH ALL TRANSLATIONS & CREATOR FEATURES
+// lib/bot.js - COMPLETE WITH UPDATED MENU & WELCOME
 import { Telegraf } from 'telegraf';
 import { supabase, isSupabaseConfigured } from './supabase';
 
@@ -17,7 +17,7 @@ export const bot = BOT_TOKEN ? new Telegraf(BOT_TOKEN) : null;
 const TRANSLATIONS = {
   en: {
     // Welcome & Language
-    welcome: "🌟 *Welcome to Abbaa Carraa!*\n\n🏆 *Ethiopia's #1 Prize Platform*\n\n🚗 Win Cars\n🏠 Win Houses\n💰 Win Cash up to 10M ETB\n🏭 Win Machinery\n💻 Win Electronics\n\n💚 *2% Supports* Kidney & Heart Patients\n\n🎯 *Ready to win? Let's get started!*",
+    welcome: "🌟 *Welcome to Abbaa Carraa!*\n\n🏆 *Ethiopia's #1 Prize Platform*\n\n🚗 Win Cars\n🏠 Win Houses\n💰 Win Cash up to 10M ETB\n🏭 Win Machinery\n💻 Win Electronics\n\n💚 *2% Supports* Kidney & Heart Patients\n\n🎯 *Ready to win? Let's get started!*\n\n🏪 *Open Your Own Shop* - Create pools and earn 10% commission!",
     language_select: "🌐 *Choose Your Language*\n\nPlease select your preferred language:",
     language_set: "✅ Language set to English! 🎉",
     
@@ -27,16 +27,21 @@ const TRANSLATIONS = {
     name_received: "✅ Thank you! Now please share your phone number:",
     phone_received: "✅ Thank you! Your profile is complete! 🎉",
     
-    // Main Menu
+    // Main Menu - UPDATED ORDER
     main_menu: "👋 *Welcome {name}!*\n\n🎯 *Choose an option below:*",
-    programs: "🎯 *Abbaa Carraa Programs*\n\n*Choose your winning path:*\n\n1️⃣ 🚀 *Open Abbaa Carraa App*\nStart your journey now!\n\n2️⃣ 🏊 *Regular Pools*\n🚗 Cars • 🏠 Houses • 🏭 Machinery • 💻 Electronics\n💵 From 100 ETB\n\n3️⃣ 🏙️ *City VIP*\n💰 Win Cash up to 10M ETB\n📅 Daily • Weekly • Monthly Draws\n🎟️ 5 Tiers Available\n\n4️⃣ 🏪 *Merkato VIP*\n💰 Win Cash up to 10M ETB\n📅 Daily • Weekly • Monthly Draws\n🎟️ 5 Tiers Available\n\n5️⃣ 🤝 *Partner Program*\n💰 Earn 10% Commission\n👥 Refer customers • Create pools",
+    programs: "🎯 *Abbaa Carraa Programs*\n\n*Choose your winning path:*\n\n1️⃣ 🚀 *Open Abbaa Carraa App*\nStart your journey now!\n\n2️⃣ 🏊 *Regular Pools*\n🚗 Cars • 🏠 Houses • 🏭 Machinery • 💻 Electronics\n💵 From 100 ETB\n\n3️⃣ 🏙️ *City VIP*\n💰 Win Cash up to 10M ETB\n📅 Daily • Weekly • Monthly Draws\n🎟️ 5 Tiers Available\n\n4️⃣ 🏪 *Merkato VIP*\n💰 Win Cash up to 10M ETB\n📅 Daily • Weekly • Monthly Draws\n🎟️ 5 Tiers Available\n\n5️⃣ 🏪 *Open Your Own Shop*\n💰 Earn 10% Commission\n👥 Create pools • Set your own prizes\n\n6️⃣ 🤝 *Partner Program*\n💰 Earn 10% Commission\n👥 Refer customers • Create pools\n\n7️⃣ 📊 *Dashboard*\nView your activity and tickets\n\n8️⃣ 📖 *How It Works*\nLearn how to win\n\n9️⃣ 🏆 *Winners*\nView recent winners\n\n🔟 📞 *Support*\nContact us",
     
     // Program Details
     program_1: "🚀 *Open Abbaa Carraa App*\n\nStart your winning journey now!\n\n👇 Click below to open the app:",
     program_2: "🏊 *Join Regular Pools*\n\n🚗 Win Cars\n🏠 Win Houses\n🏭 Win Machinery\n💻 Win Electronics\n\n💵 Entry from 100 ETB\n🎁 Amazing prizes await!",
     program_3: "🏙️ *Join City VIP*\n\n📍 Win in your city!\n💰 Up to 10M ETB Cash\n📅 Daily • Weekly • Monthly\n🎟️ 5 Tiers",
     program_4: "🏪 *Join Merkato VIP*\n\n💰 Up to 10M ETB Cash\n📅 Daily • Weekly • Monthly\n🎟️ 5 Tiers: Silver • Gold • Platinum • Diamond • Royal",
-    program_5: "🤝 *Join Partner Program*\n\n💰 Earn 10% Commission\n\n• Agents: Refer customers\n• Vendors: Create pools\n• Organizations: Member pools",
+    program_5: "🏪 *Open Your Own Shop*\n\n💰 Earn 10% commission on every pool\n\n• Create your own prize pools\n• Set your own prizes and entry fees\n• Get paid when you reach the target\n• Withdraw your earnings anytime\n\nReady to start? 👇",
+    program_6: "🤝 *Join Partner Program*\n\n💰 Earn 10% Commission\n\n• Agents: Refer customers\n• Vendors: Create pools\n• Organizations: Member pools",
+    program_7: "📊 *Dashboard*\n\nView your activity, tickets, and stats.\n\n👇 Open your dashboard:",
+    program_8: "📖 *How It Works*\n\n1️⃣ Choose a program\n2️⃣ Pick your tier\n3️⃣ Select seats\n4️⃣ Pay & win! 🎉",
+    program_9: "🏆 *Recent Winners*",
+    program_10: "📞 *Contact Support*\n\n📧 hundessanegassa@gmail.com\n📱 0930330323, 0913 277 922",
     
     // Winners & How It Works
     winners: "🏆 *Recent Winners*",
@@ -73,7 +78,7 @@ const TRANSLATIONS = {
     become_creator: "🏪 *Become a Pool Creator!*\n\n💰 Earn 10% commission on every pool\n\n• Create your own prize pools\n• Set your own prizes and entry fees\n• Get paid when you reach the target\n• Withdraw your earnings anytime\n\nReady to start? 👇",
     
     // Button Labels
-    become_creator_btn: "🏪 Become Creator",
+    become_creator_btn: "🏪 Open Your Own Shop",
     creator_shop: "🏪 My Shop",
     create_pool: "📝 Create Pool",
     my_pools: "📋 My Pools",
@@ -84,7 +89,7 @@ const TRANSLATIONS = {
 
   am: {
     // Welcome & Language
-    welcome: "🌟 *እንኳን ወደ Abbaa Carraa በደህና መጡ!*\n\n🏆 *የኢትዮጵያ ቀዳሚ የሽልማት መድረክ*\n\n🚗 መኪናዎች ያሸንፉ\n🏠 ቤቶች ያሸንፉ\n🏭 ማሽነሪዎች ያሸንፉ\n💻 ኤሌክትሮኒክስ ያሸንፉ\n💰 እስከ 10 ሚሊዮን ብር ያሸንፉ\n\n💚 *2% ለጤና* የኩላሊት እና የልብ ህመምተኞችን ይደግፋል\n\n🎯 *ለማሸነፍ ዝግጁ? እንጀምር!*",
+    welcome: "🌟 *እንኳን ወደ Abbaa Carraa በደህና መጡ!*\n\n🏆 *የኢትዮጵያ ቀዳሚ የሽልማት መድረክ*\n\n🚗 መኪናዎች ያሸንፉ\n🏠 ቤቶች ያሸንፉ\n🏭 ማሽነሪዎች ያሸንፉ\n💻 ኤሌክትሮኒክስ ያሸንፉ\n💰 እስከ 10 ሚሊዮን ብር ያሸንፉ\n\n💚 *2% ለጤና* የኩላሊት እና የልብ ህመምተኞችን ይደግፋል\n\n🎯 *ለማሸነፍ ዝግጁ? እንጀምር!*\n\n🏪 *የራስዎን መደብር ይክፈቱ* - ፑሎች ይፍጠሩ እና 10% ኮሚሽን ያግኙ!",
     language_select: "🌐 *ቋንቋዎን ይምረጡ*\n\nእባክዎ የሚመርጡትን ቋንቋ ይምረጡ:",
     language_set: "✅ ቋንቋ ወደ አማርኛ ተቀይሯል! 🎉",
     
@@ -94,16 +99,21 @@ const TRANSLATIONS = {
     name_received: "✅ እናመሰግናለን! አሁን ስልክ ቁጥርዎን ያጋሩ:",
     phone_received: "✅ እናመሰግናለን! መገለጫዎ ተጠናቋል! 🎉",
     
-    // Main Menu
+    // Main Menu - UPDATED ORDER
     main_menu: "👋 *እንኳን ደህና መጡ {name}!*\n\n🎯 *ከታች ያለውን ይምረጡ:*",
-    programs: "🎯 *የAbbaa Carraa ፕሮግራሞች*\n\n*የማሸነፍ መንገድዎን ይምረጡ:*\n\n1️⃣ 🚀 *የAbbaa Carraa መተግበሪያ ይክፈቱ*\nጉዞዎን አሁን ይጀምሩ!\n\n2️⃣ 🏊 *መደበኛ የእጣ መደቦች*\n🚗 መኪና • 🏠 ቤት • 🏭 ማሽነሪ • 💻 ኤሌክትሮኒክስ\n💵 ከ100 ብር ጀምሮ\n\n3️⃣ 🏙️ *የከተማ ቪአይፒ*\n💰 እስከ 10 ሚሊዮን ብር ጥሬ ገንዘብ\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ\n🎟️ 5 ደረጃዎች\n\n4️⃣ 🏪 *መርካቶ ቪአይፒ*\n💰 እስከ 10 ሚሊዮን ብር ጥሬ ገንዘብ\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ\n🎟️ 5 ደረጃዎች\n\n5️⃣ 🤝 *የአጋር ፕሮግራም*\n💰 10% ኮሚሽን ያግኙ\n👥 ደንበኞችን ያመልክቱ • ፑሎች ይፍጠሩ",
+    programs: "🎯 *የAbbaa Carraa ፕሮግራሞች*\n\n*የማሸነፍ መንገድዎን ይምረጡ:*\n\n1️⃣ 🚀 *የAbbaa Carraa መተግበሪያ ይክፈቱ*\nጉዞዎን አሁን ይጀምሩ!\n\n2️⃣ 🏊 *መደበኛ የእጣ መደቦች*\n🚗 መኪና • 🏠 ቤት • 🏭 ማሽነሪ • 💻 ኤሌክትሮኒክስ\n💵 ከ100 ብር ጀምሮ\n\n3️⃣ 🏙️ *የከተማ ቪአይፒ*\n💰 እስከ 10 ሚሊዮን ብር ጥሬ ገንዘብ\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ\n🎟️ 5 ደረጃዎች\n\n4️⃣ 🏪 *መርካቶ ቪአይፒ*\n💰 እስከ 10 ሚሊዮን ብር ጥሬ ገንዘብ\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ\n🎟️ 5 ደረጃዎች\n\n5️⃣ 🏪 *የራስዎን መደብር ይክፈቱ*\n💰 10% ኮሚሽን ያግኙ\n👥 ፑሎች ይፍጠሩ • የራስዎን ሽልማቶች ያዘጋጁ\n\n6️⃣ 🤝 *የአጋር ፕሮግራም*\n💰 10% ኮሚሽን ያግኙ\n👥 ደንበኞችን ያመልክቱ • ፑሎች ይፍጠሩ\n\n7️⃣ 📊 *ዳሽቦርድ*\nእንቅስቃሴዎን እና ቲኬቶችዎን ይመልከቱ\n\n8️⃣ 📖 *እንዴት እንሳተፋለን?*\nእንዴት እንደሚሳተፉ ይማሩ\n\n9️⃣ 🏆 *አሸናፊዎች*\nየቅርብ ጊዜ አሸናፊዎችን ይመልከቱ\n\n🔟 📞 *እኛን ያግኙ*\nያግኙን",
     
     // Program Details
     program_1: "🚀 *የAbbaa Carraa መተግበሪያ ይክፈቱ*\n\nየማሸነፍ ጉዞዎን አሁን ይጀምሩ!\n\n👇 መተግበሪያውን ለመክፈት ከታች ይጫኑ:",
     program_2: "🏊 *ወደ መደበኛ የእጣ መደቦች ይቀላቀሉ*\n\n🚗 መኪናዎች ያሸንፉ\n🏠 ቤቶች ያሸንፉ\n🏭 ማሽነሪዎች ያሸንፉ\n💻 ኤሌክትሮኒክስ ያሸንፉ\n\n💵 ከ100 ብር ጀምሮ\n🎁 አስደናቂ ሽልማቶች ይጠብቁዎታል!",
     program_3: "🏙️ *ወደ ከተማ ቪአይፒ ይቀላቀሉ*\n\n📍 በከተማዎ ያሸንፉ!\n💰 እስከ 10 ሚሊዮን ብር ጥሬ ገንዘብ\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ\n🎟️ 5 ደረጃዎች",
     program_4: "🏪 *ወደ መርካቶ ቪአይፒ ይቀላቀሉ*\n\n💰 እስከ 10 ሚሊዮን ብር ጥሬ ገንዘብ\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ\n🎟️ 5 ደረጃዎች",
-    program_5: "🤝 *ወደ አጋር ፕሮግራም ይቀላቀሉ*\n\n💰 10% ኮሚሽን ያግኙ\n\n• ወኪሎች: ደንበኞችን ያመልክቱ\n• ነጋዴዎች: የእጣ መደቦች ይፍጠሩ\n• ድርጅቶች: ለአባላት የእጣ መደቦች ይፍጠሩ",
+    program_5: "🏪 *የራስዎን መደብር ይክፈቱ*\n\n💰 በእያንዳንዱ ፑል ላይ 10% ኮሚሽን ያግኙ\n\n• የራስዎን የእጣ መደቦች ይፍጠሩ\n• የራስዎን ሽልማቶች እና መግቢያ ያዘጋጁ\n• ዒላማውን ከደረሱ በኋላ ክፍያዎን ያግኙ\n• ገንዘብዎን በማንኛውም ጊዜ ያውጡ\n\nለመጀመር ዝግጁ? 👇",
+    program_6: "🤝 *ወደ አጋር ፕሮግራም ይቀላቀሉ*\n\n💰 10% ኮሚሽን ያግኙ\n\n• ወኪሎች: ደንበኞችን ያመልክቱ\n• ነጋዴዎች: የእጣ መደቦች ይፍጠሩ\n• ድርጅቶች: ለአባላት የእጣ መደቦች ይፍጠሩ",
+    program_7: "📊 *ዳሽቦርድ*\n\nእንቅስቃሴዎን፣ ቲኬቶችዎን እና ስታቲስቲክስዎን ይመልከቱ።\n\n👇 ዳሽቦርድዎን ይክፈቱ:",
+    program_8: "📖 *እንዴት እንሳተፋለን?*\n\n1️⃣ ፕሮግራም ይምረጡ\n2️⃣ ደረጃዎን ይምረጡ\n3️⃣ መቀመጫ ይምረጡ\n4️⃣ ይክፈሉ እና ያሸንፉ! 🎉",
+    program_9: "🏆 *የቅርብ ጊዜ አሸናፊዎች*",
+    program_10: "📞 *እኛን ያግኙ*\n\n📧 hundessanegassa@gmail.com\n📱 0930330323, 0913 277 922",
     
     // Winners & How It Works
     winners: "🏆 *የቅርብ ጊዜ አሸናፊዎች*",
@@ -137,10 +147,10 @@ const TRANSLATIONS = {
     creator_no_pools: "📭 *እስካሁን ምንም የእጣ መደቦች አልፈጠሩም.*\n\nመጀመሪያ የእጣ መደብዎን ይፍጠሩ እና ማግኘት ይጀምሩ! 🚀",
     
     // Become Creator
-    become_creator: "🏪 *የእጣ መደብ ፈጣሪ ይሁኑ!*\n\n💰 በእያንዳንዱ የእጣ መደብ ላይ የራስዎን ኮሚሽን ያግኙ\n\n• የራስዎን የእጣ መደቦች ይፍጠሩ\n• የራስዎን ሽልማቶች እና መግቢያ ያዘጋጁ\n• ዒላማውን ከደረሱ በኋላ ክፍያዎን ያግኙ\n• ገንዘብዎን በማንኛውም ጊዜ ያውጡ\n\nለመጀመር ዝግጁ? 👇",
+    become_creator: "🏪 *የራስዎን መደብር ይክፈቱ!*\n\n💰 በእያንዳንዱ ፑል ላይ 10% ኮሚሽን ያግኙ\n\n• የራስዎን የእጣ መደቦች ይፍጠሩ\n• የራስዎን ሽልማቶች እና መግቢያ ያዘጋጁ\n• ዒላማውን ከደረሱ በኋላ ክፍያዎን ያግኙ\n• ገንዘብዎን በማንኛውም ጊዜ ያውጡ\n\nለመጀመር ዝግጁ? 👇",
     
     // Button Labels
-    become_creator_btn: "🏪 የእጣ መደብ ፈጣሪ ይሁኑ",
+    become_creator_btn: "🏪 የራስዎን መደብር ይክፈቱ",
     creator_shop: "🏪 የእኔ መደብር",
     create_pool: "📝 የእጣ መደብ ፍጠር",
     my_pools: "📋 የእጣ መደቦቼ",
@@ -151,7 +161,7 @@ const TRANSLATIONS = {
 
   om: {
     // Welcome & Language
-    welcome: "🌟 *Gara Abbaa Carraatti Baga Nagaan Dhufte!*\n\n🏆 *Itoophiyaatti Dirree Badhaasaa Olaanaa*\n\n🚗 Konkoolataa Mo'adhaa\n🏠 Mana Mo'adhaa\n🏭 Mashiniinoota Mo'adhaa\n💻 Elektirooniksoota Adda Addaa Mo'adhaa\n💰 Maallaqa Hanga Miliyoona 10ti Mo'adhaa\n\n💚 *%2 Fayyaaf* Dhibamtoota Kalee fi Onnee Gargaaruuf oola\n\n🎯 *Mo'achuuf Qophiidhaa? Eegalaa!*",
+    welcome: "🌟 *Gara Abbaa Carraatti Baga Nagaan Dhufte!*\n\n🏆 *Itoophiyaatti Dirree Badhaasaa Olaanaa*\n\n🚗 Konkoolataa Mo'adhaa\n🏠 Mana Mo'adhaa\n🏭 Mashiniinoota Mo'adhaa\n💻 Elektirooniksoota Adda Addaa Mo'adhaa\n💰 Maallaqa Hanga Miliyoona 10ti Mo'adhaa\n\n💚 *%2 Fayyaaf* Dhibamtoota Kalee fi Onnee Gargaaruuf oola\n\n🎯 *Mo'achuuf Qophiidhaa? Eegalaa!*\n\n🏪 *Daldala Keessan Banadhaa* - Carraawwan Uumaa fi 10% Komishinii Argadhaa!",
     language_select: "🌐 *Afaan Filadhu*\n\nMaaloo afaan filachuu barbaaddan filadhaa:",
     language_set: "✅ Afaan Afaan Oromootti jijjiirame! 🎉",
     
@@ -161,16 +171,21 @@ const TRANSLATIONS = {
     name_received: "✅ Galatoomaa! Amma lakkoofsa bilbilaa keessan qoodadhaa:",
     phone_received: "✅ Galatoomaa! Profiiliin keessan xumurame! 🎉",
     
-    // Main Menu
+    // Main Menu - UPDATED ORDER
     main_menu: "👋 *Baga Nagaan Deebitan {name}!*\n\n🎯 *Filannoo Armaan Gadii Keessaa Filadhaa:*",
-    programs: "🎯 *Sagaantawwaan Abbaa Carraa*\n\n*Karaa Mo'achuu Keessan Filadhaa:*\n\n1️⃣ 🚀 *Appii Abbaa Carraa Bani*\nImala Keessan Amma Eegalaa!\n\n2️⃣ 🏊 *Carraawwan Idilee*\n🚗 Konkoolataa • 🏠 Mana • 🏭 Mashiniinoota • 💻 Elektirooniksoota\n💵 100 ETB Irraa Eegalaa\n\n3️⃣ 🏙️ *VIP Magaalaa*\n💰 Maallaqa Hanga Miliyoona 10ti\n📅 Guyyaa • Torban • Ji'aa\n🎟️ Sadarkaa 5\n\n4️⃣ 🏪 *Merkato VIP*\n💰 Maallaqa Hanga Miliyoona 10ti\n📅 Guyyaa • Torban • Ji'aa\n🎟️ Sadarkaa 5\n\n5️⃣ 🤝 *sagantaa michuu*\n💰 10% Komishinii Argadhaa\n👥 Maamiltoota Qoodadhaa • Carraawwan Uumaa",
+    programs: "🎯 *Sagaantawwaan Abbaa Carraa*\n\n*Karaa Mo'achuu Keessan Filadhaa:*\n\n1️⃣ 🚀 *Appii Abbaa Carraa Bani*\nImala Keessan Amma Eegalaa!\n\n2️⃣ 🏊 *Carraawwan Idilee*\n🚗 Konkoolataa • 🏠 Mana • 🏭 Mashiniinoota • 💻 Elektirooniksoota\n💵 100 ETB Irraa Eegalaa\n\n3️⃣ 🏙️ *VIP Magaalaa*\n💰 Maallaqa Hanga Miliyoona 10ti\n📅 Guyyaa • Torban • Ji'aa\n🎟️ Sadarkaa 5\n\n4️⃣ 🏪 *Merkato VIP*\n💰 Maallaqa Hanga Miliyoona 10ti\n📅 Guyyaa • Torban • Ji'aa\n🎟️ Sadarkaa 5\n\n5️⃣ 🏪 *Daldala Keessan Banadhaa*\n💰 10% Komishinii Argadhaa\n👥 Carraawwan Uumaa • Badhaasa mataa keetii kaa'i\n\n6️⃣ 🤝 *Sagantaa Michuu*\n💰 10% Komishinii Argadhaa\n👥 Maamiltoota Qoodadhaa • Carraawwan Uumaa\n\n7️⃣ 📊 *Daashboorardii*\nHojii fi Tikkeetoota keessan ilaalaa\n\n8️⃣ 📖 *Akkam Hojiirra Oola?*\nAkkam hirmaachuu akka dandeessan hubadhaa\n\n9️⃣ 🏆 *Mo'attoota*\nMo'attoota dhiyoo ilaalaa\n\n🔟 📞 *Qunnamtii*\nNu qunnamuu",
     
     // Program Details
     program_1: "🚀 *Appii Abbaa Carraa Bani*\n\nImala mo'achuu keessan amma eegalaa!\n\n👇 Appii banuuf jalatti cuqaasaa:",
     program_2: "🏊 *Carraawwan Idilee itti hirmaadhaa*\n\n🚗 Konkoolataa mo'adhaa\n🏠 Mana mo'adhaa\n🏭 Mashiniinoota mo'adhaa\n💻 Elektirooniksoota mo'adhaa\n\n💵 100 ETB irraa eegalaa\n🎁 Badhaasa ajaa'ibsiisaa eegachaa jira!",
     program_3: "🏙️ *VIP Magaalaa itti hirmaadhaa*\n\n📍 Magaalaa keessan keessatti mo'adhaa!\n💰 Maallaqa Hanga Miliyoona 10ti\n📅 Guyyaa • Torban • Ji'aa\n🎟️ Sadarkaa 5",
     program_4: "🏪 *Merkato VIP itti hirmaadhaa*\n\n💰 Maallaqa Hanga Miliyoona 10ti\n📅 Guyyaa • Torban • Ji'aa\n🎟️ Sadarkaa 5",
-    program_5: "🤝 *sagantaa michuu Itti Hirmaadhaa*\n\n💰 10% Komishinii Argadhaa\n\n• Bakka Bu'oota: Maamiltoota Qoodadhaa\n• Dhiyeestoota: Carraawwan Idilee Uumaa\n• Dhaabbattoonni: Miseensotaaf Carraa Idilee Uumaa",
+    program_5: "🏪 *Daldala Keessan Banadhaa*\n\n💰 Carraa tokkoon tokkoon 10% Komishinii Argadhaa\n\n• Carraawwan Badhaasaa Keessan Uumaa\n• Badhaasa fi kaffaltii seensaa mataa keetii kaa'i\n• Yeroo galma irra geesse kaffaltii argadhu\n• Galii Keessan Yeroo Barbaaddan Baafadha\n\nJalqabuuf Qophiidha? 👇",
+    program_6: "🤝 *Sagantaa Michuu Itti Hirmaadhaa*\n\n💰 10% Komishinii Argadhaa\n\n• Bakka Bu'oota: Maamiltoota Qoodadhaa\n• Dhiyeestoota: Carraawwan Idilee Uumaa\n• Dhaabbattoonni: Miseensotaaf Carraa Idilee Uumaa",
+    program_7: "📊 *Daashboorardii*\n\nHojii, Tikkeetoota fi istaatistikaa keessan ilaalaa.\n\n👇 Daashboorardiin keessan banadhaa:",
+    program_8: "📖 *Akkam Hojiirra Oola?*\n\n1️⃣ Sagantaalee jiraan Filadhaa\n2️⃣ Sadarkaa Keessan Filadhaa\n3️⃣ Teessoo Filadhaa\n4️⃣ Kaffalaati Mo'adhaa! 🎉",
+    program_9: "🏆 *Mo'attoota Dhiyoo*",
+    program_10: "📞 *Nu Qunnamaa*\n\n📧 hundessanegassa@gmail.com\n📱 0930330323, 0913 277 922",
     
     // Winners & How It Works
     winners: "🏆 *Mo'attoota Dhiyoo*",
@@ -204,10 +219,10 @@ const TRANSLATIONS = {
     creator_no_pools: "📭 *Carraa Tokko Hin Uumne.*\n\nCarraa Keessan Jalqabaa Uumaati Galii Argachuu Eegalaa! 🚀",
     
     // Become Creator
-    become_creator: "🏪 *Kuusaa badhaasa carraa mataa keetii uumi!*\n\n💰 Sagantaa Carraa uumtu hunda irratti komishinii mataa keetii argadhu\n\n• Carraawwan Badhaasaa Keessan Uumaa\n• Badhaasa fi kaffaltii seensaa mataa keetii kaa'i\n• Yeroo galma irra geesse kaffaltii argadhu\n• Galii Keessan Yeroo Barbaaddan Baafadha\n\nJalqabuuf Qophiidha? 👇",
+    become_creator: "🏪 *Daldala Keessan Banadhaa!*\n\n💰 Carraa tokkoon tokkoon 10% Komishinii Argadhaa\n\n• Carraawwan Badhaasaa Keessan Uumaa\n• Badhaasa fi kaffaltii seensaa mataa keetii kaa'i\n• Yeroo galma irra geesse kaffaltii argadhu\n• Galii Keessan Yeroo Barbaaddan Baafadha\n\nJalqabuuf Qophiidha? 👇",
     
     // Button Labels
-    become_creator_btn: "🏪 Uumaa Carraa Ta'aa",
+    become_creator_btn: "🏪 Daldala Keessan Banadhaa",
     creator_shop: "🏪 Dunkaana Koo",
     create_pool: "📝 Carraa Uumaa",
     my_pools: "📋 Carraawwan Koo",
@@ -415,7 +430,7 @@ async function handleLoginFlow(ctx) {
 }
 
 // ============================================
-// BUILD MENUS
+// BUILD MENUS - UPDATED
 // ============================================
 function buildMainMenu(lang, isCreator = false) {
   const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
@@ -425,18 +440,22 @@ function buildMainMenu(lang, isCreator = false) {
     [{ text: '🏊 Regular Pools', callback_data: 'regular' }],
     [{ text: '🏙️ City VIP', callback_data: 'city' }],
     [{ text: '🏪 Merkato VIP', callback_data: 'merkato' }],
-    [{ text: '🤝 Partner Program', callback_data: 'partner' }],
-    [{ text: '🏆 Winners', callback_data: 'winners' }],
-    [{ text: '📖 How It Works', callback_data: 'how' }],
-    [{ text: '📞 Support', callback_data: 'support' }],
-    [{ text: '📊 Dashboard', web_app: { url: `${APP_URL}/dashboard` } }]
   ];
   
+  // Add Creator Shop button
   if (isCreator) {
     buttons.push([{ text: '🏪 ' + (t.creator_shop || 'My Shop'), callback_data: 'creator_menu' }]);
   } else {
-    buttons.push([{ text: '🏪 ' + (t.become_creator_btn || 'Become Creator'), callback_data: 'become_creator' }]);
+    buttons.push([{ text: '🏪 ' + (t.become_creator_btn || 'Open Your Own Shop'), callback_data: 'become_creator' }]);
   }
+  
+  buttons.push(
+    [{ text: '🤝 Partner Program', callback_data: 'partner' }],
+    [{ text: '📊 Dashboard', web_app: { url: `${APP_URL}/dashboard` } }],
+    [{ text: '📖 How It Works', callback_data: 'how' }],
+    [{ text: '🏆 Winners', callback_data: 'winners' }],
+    [{ text: '📞 Support', callback_data: 'support' }]
+  );
   
   return {
     inline_keyboard: buttons
@@ -450,19 +469,33 @@ function buildProgramMenu(lang, type) {
     regular: '/listings',
     city: '/cities',
     merkato: '/merkato-vip',
-    partner: '/register'
+    partner: '/register',
+    creator: '/creator/apply',
+    dashboard: '/dashboard',
+    winners: '/winners',
+    support: '/support'
   };
   
   const buttonTexts = {
     regular: t.join_now,
     city: t.join_now,
     merkato: t.join_now,
-    partner: t.apply_now
+    partner: t.apply_now,
+    creator: t.apply_now,
+    dashboard: t.dashboard,
+    winners: t.view_winners,
+    support: t.support
   };
+  
+  const label = type === 'creator' ? '🏪 Open Shop' :
+                type === 'dashboard' ? '📊 Dashboard' :
+                type === 'winners' ? '🏆 Winners' :
+                type === 'support' ? '📞 Contact' :
+                buttonTexts[type] || t.join_now;
   
   return {
     inline_keyboard: [
-      [{ text: buttonTexts[type] || t.join_now, web_app: { url: `${APP_URL}${urls[type]}` } }],
+      [{ text: label, web_app: { url: `${APP_URL}${urls[type] || ''}` } }],
       [{ text: t.back, callback_data: 'menu' }]
     ]
   };
@@ -811,6 +844,7 @@ export async function handleBotMessages() {
       data: {} 
     };
     
+    // Send welcome with Open Your Own Shop
     await ctx.reply(TRANSLATIONS.en.welcome, { parse_mode: 'Markdown' });
     
     await ctx.reply(TRANSLATIONS.en.language_select, {
@@ -1030,7 +1064,7 @@ export async function handleBotMessages() {
   }
 
   // ============================================
-  // PROGRAM CALLBACKS
+  // PROGRAM CALLBACKS - UPDATED
   // ============================================
   bot.action('regular', async (ctx) => {
     const userId = ctx.from.id;
@@ -1085,7 +1119,7 @@ export async function handleBotMessages() {
     const lang = await getUserLanguage(userId);
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     
-    await ctx.editMessageText(t.program_5, {
+    await ctx.editMessageText(t.program_6, {
       parse_mode: 'Markdown'
     });
     
@@ -1228,7 +1262,7 @@ export async function handleBotMessages() {
     const lang = await getUserLanguage(userId);
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     
-    await ctx.editMessageText(t.how_it_works, {
+    await ctx.editMessageText(t.program_8, {
       parse_mode: 'Markdown'
     });
     
@@ -1248,7 +1282,7 @@ export async function handleBotMessages() {
     const lang = await getUserLanguage(userId);
     const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
     
-    await ctx.editMessageText(t.support, {
+    await ctx.editMessageText(t.program_10, {
       parse_mode: 'Markdown'
     });
     
