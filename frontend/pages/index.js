@@ -1,4 +1,4 @@
-// pages/index.js - COMPLETE CLEAN HOMEPAGE WITH ALL VIEWS
+// pages/index.js - COMPLETE WITH PARTNER PROGRAM, CITY VIP TIERS & SEARCH
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -16,6 +16,7 @@ import { useUIMode } from '../hooks/useUIMode';
 import BankingStyleView from '../components/BankingStyleView';
 import { getAllCities, getCityData } from '../lib/cityData';
 import { useTelegram } from '../hooks/useTelegram';
+import { TIERS } from '../components/SeatSelector';
 
 // Lazy loaded components
 const MovingAd = dynamic(() => import('../components/MovingAd'), { ssr: false, loading: () => null });
@@ -61,6 +62,8 @@ export default function Home() {
   });
   const [activeView, setActiveView] = useState('app');
   const [showModeDrawer, setShowModeDrawer] = useState(false);
+  const [selectedCityForTiers, setSelectedCityForTiers] = useState(null);
+  const [showCityTiersModal, setShowCityTiersModal] = useState(false);
 
   // ALL 94 ETHIOPIAN CITIES
   const allCityVipPrograms = [
@@ -357,6 +360,87 @@ export default function Home() {
   const t = (am, en) => language === 'am' ? am : en;
 
   // ============================================
+  // CITY VIP TIERS MODAL
+  // ============================================
+  const CityTiersModal = () => {
+    if (!showCityTiersModal || !selectedCityForTiers) return null;
+    
+    const tiers = [
+      { id: 'silver', label: language === 'am' ? 'ብር' : 'Silver', icon: '🥈', contribution: 100, prize: 100000, seats: 1200 },
+      { id: 'gold', label: language === 'am' ? 'ወርቅ' : 'Gold', icon: '🥇', contribution: 500, prize: 500000, seats: 1200 },
+      { id: 'platinum', label: language === 'am' ? 'ፕላቲኒየም' : 'Platinum', icon: '💎', contribution: 1000, prize: 2000000, seats: 2400 },
+      { id: 'diamond', label: language === 'am' ? 'አልማዝ' : 'Diamond', icon: '💠', contribution: 2500, prize: 5000000, seats: 2400 },
+      { id: 'royal', label: language === 'am' ? 'ንጉሣዊ' : 'Royal', icon: '👑', contribution: 5000, prize: 10000000, seats: 2400 }
+    ];
+    
+    return (
+      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setShowCityTiersModal(false)}>
+        <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <span>{selectedCityForTiers.icon}</span>
+                {selectedCityForTiers.name} VIP
+                <span className="text-sm font-normal text-gray-500 ml-2">{selectedCityForTiers.nameEn}</span>
+              </h2>
+              <p className="text-sm text-gray-500">{t('5 Premium Tiers • Win Cash up to 10M ETB', '5 Premium Tiers • Win Cash up to 10M ETB')}</p>
+            </div>
+            <button onClick={() => setShowCityTiersModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+          </div>
+          
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {tiers.map((tier) => (
+                <div key={tier.id} className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition">
+                  <div className={`p-4 text-center text-white bg-gradient-to-r ${
+                    tier.id === 'silver' ? 'from-gray-400 to-gray-500' :
+                    tier.id === 'gold' ? 'from-yellow-400 to-yellow-600' :
+                    tier.id === 'platinum' ? 'from-gray-300 to-blue-400' :
+                    tier.id === 'diamond' ? 'from-blue-400 to-cyan-400' :
+                    'from-purple-500 to-pink-500'
+                  }`}>
+                    <div className="text-4xl mb-1">{tier.icon}</div>
+                    <h3 className="font-bold text-xl">{tier.label}</h3>
+                  </div>
+                  <div className="p-4 space-y-3">
+                    <div className="flex justify-between text-sm border-b pb-2">
+                      <span className="text-gray-500">{t('ክፍያ', 'Entry')}</span>
+                      <span className="font-bold">ETB {tier.contribution.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm border-b pb-2">
+                      <span className="text-gray-500">{t('ሽልማት', 'Prize')}</span>
+                      <span className="font-bold text-green-600">ETB {tier.prize.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">{t('መቀመጫዎች', 'Seats')}</span>
+                      <span className="font-bold">{tier.seats.toLocaleString()}</span>
+                    </div>
+                    <Link 
+                      href={`/cities/${selectedCityForTiers.id}?tier=${tier.id}`}
+                      className="block w-full text-center bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold text-sm transition"
+                    >
+                      {t('ይምረጡ', 'Select')}
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-6 text-center">
+              <Link 
+                href={`/cities/${selectedCityForTiers.id}`}
+                className="text-green-600 hover:text-green-700 font-medium text-sm"
+              >
+                {t('ሁሉንም ደረጃዎች ይመልከቱ →', 'View all tiers →')}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ============================================
   // REGISTER MODAL
   // ============================================
   const RegisterModal = () => (
@@ -622,18 +706,32 @@ export default function Home() {
                 {showCityDropdown && (
                   <div className="absolute bottom-full left-0 mb-2 w-64 md:w-72 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
                     <div className="p-2 md:p-3 bg-gray-50 border-b">
-                      <input type="text" placeholder={t('🔍 Search city...', '🔍 Search city...')} value={citySearchTerm} onChange={(e) => setCitySearchTerm(e.target.value)} className="w-full px-2 md:px-3 py-1.5 md:py-2 border rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-green-500" autoFocus />
+                      <input type="text" placeholder={t('🔍 Search city... (94 cities)', '🔍 Search city... (94 cities)')} value={citySearchTerm} onChange={(e) => setCitySearchTerm(e.target.value)} className="w-full px-2 md:px-3 py-1.5 md:py-2 border rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-green-500" autoFocus />
+                      <p className="text-xs text-gray-400 mt-1">{filteredCityList.length} / {uniqueCities.length} cities</p>
                     </div>
                     <div className="max-h-48 md:max-h-64 overflow-y-auto">
-                      {filteredCityList.slice(0, 15).map(city => (
-                        <Link key={city.id} href={`/cities/${city.id}`} className="block px-3 md:px-4 py-1.5 md:py-2 hover:bg-gray-50 transition border-b last:border-0 text-left">
-                          <div className="flex items-center gap-1.5 md:gap-2">
-                            <span className="text-base md:text-lg">{city.icon}</span>
-                            <span className="text-xs md:text-sm font-medium text-gray-800">{city.name}</span>
-                            <span className="text-[8px] md:text-xs text-gray-400">{city.nameEn}</span>
-                          </div>
-                        </Link>
+                      {filteredCityList.slice(0, 20).map(city => (
+                        <button
+                          key={city.id}
+                          onClick={() => {
+                            setSelectedCityForTiers(city);
+                            setShowCityTiersModal(true);
+                            setShowCityDropdown(false);
+                            setCitySearchTerm('');
+                          }}
+                          className="w-full text-left px-3 md:px-4 py-1.5 md:py-2 hover:bg-gray-50 transition border-b last:border-0 flex items-center gap-2"
+                        >
+                          <span className="text-base md:text-lg">{city.icon}</span>
+                          <span className="text-xs md:text-sm font-medium text-gray-800">{city.name}</span>
+                          <span className="text-[8px] md:text-xs text-gray-400">{city.nameEn}</span>
+                          <span className="ml-auto text-xs text-green-600">👁️ Tiers</span>
+                        </button>
                       ))}
+                      {filteredCityList.length > 20 && (
+                        <Link href="/cities" className="block px-3 md:px-4 py-2 text-center text-xs text-green-600 hover:bg-gray-50">
+                          {t(`View all ${filteredCityList.length} cities →`, `View all ${filteredCityList.length} cities →`)}
+                        </Link>
+                      )}
                     </div>
                   </div>
                 )}
@@ -684,6 +782,33 @@ export default function Home() {
             )}
           </div>
 
+          {/* Partner Program - New Section */}
+          <div className="px-3 md:px-4 py-3 md:py-4">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 border-2 border-blue-200">
+              <h2 className="text-[10px] md:text-sm font-bold text-blue-700 uppercase tracking-wider mb-2">🤝 {t('Partner Program', 'Partner Program')}</h2>
+              <p className="text-xs md:text-sm text-gray-600 mb-3">
+                {t('Join our partner program and start earning commissions today!', 'Join our partner program and start earning commissions today!')}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => handleRoleSelection('agent')} className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1">
+                  🤝 {t('Agent', 'Agent')}
+                </button>
+                <button onClick={() => handleRoleSelection('vendor')} className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1">
+                  🏪 {t('Vendor', 'Vendor')}
+                </button>
+                <button onClick={() => handleRoleSelection('organization')} className="bg-cyan-500 hover:bg-cyan-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1">
+                  🏢 {t('Organization', 'Organization')}
+                </button>
+                <Link href="/become-creator" className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1">
+                  🏪 {t('Creator', 'Creator')}
+                </Link>
+              </div>
+              <p className="text-[8px] md:text-[10px] text-gray-400 mt-2">
+                {t('✓ No upfront fees ✓ Earn 10% on every successful pool ✓ 24/7 support', '✓ No upfront fees ✓ Earn 10% on every successful pool ✓ 24/7 support')}
+              </p>
+            </div>
+          </div>
+
           {/* Charity Banner */}
           <div className="mx-3 md:mx-4 p-3 md:p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl md:rounded-2xl border border-red-100 mb-3 md:mb-4">
             <div className="flex items-center gap-2 md:gap-3">
@@ -720,6 +845,7 @@ export default function Home() {
           </nav>
 
           {showRegisterModal && <RegisterModal />}
+          {showCityTiersModal && <CityTiersModal />}
 
           <style jsx>{`
             .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -772,10 +898,10 @@ export default function Home() {
                         <span className="text-xl">🏪</span>
                         <div><div className="font-medium">{t('Merkato VIP', 'Merkato VIP')}</div><div className="text-xs text-gray-400">{t('5 Tiers • Up to 10M ETB', '5 Tiers • Up to 10M ETB')}</div></div>
                       </Link>
-                      <Link href="/city-vip" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-b border-gray-700">
+                      <button onClick={() => setShowCityDropdown(!showCityDropdown)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-b border-gray-700">
                         <span className="text-xl">🏙️</span>
                         <div><div className="font-medium">{t('City VIP', 'City VIP')}</div><div className="text-xs text-gray-400">{t('94 Cities • 5 Tiers', '94 Cities • 5 Tiers')}</div></div>
-                      </Link>
+                      </button>
                       <button onClick={() => scrollToSection('regular-pools')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-b border-gray-700">
                         <span className="text-xl">🏊</span>
                         <div><div className="font-medium">{t('Regular Pools', 'Regular Pools')}</div><div className="text-xs text-gray-400">{t('Cars, Houses & More', 'Cars, Houses & More')}</div></div>
@@ -784,6 +910,17 @@ export default function Home() {
                         <span className="text-xl">🏪</span>
                         <div><div className="font-medium">{t('Become Creator', 'Become Creator')}</div><div className="text-xs text-gray-400">{t('Earn 10% Commission', 'Earn 10% Commission')}</div></div>
                       </Link>
+                      <div className="border-t border-gray-700 my-1"></div>
+                      <div className="px-4 py-2 text-xs text-gray-500">{t('Partner Program', 'Partner Program')}</div>
+                      <button onClick={() => handleRoleSelection('agent')} className="w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-2">
+                        <span className="text-lg">🤝</span> {t('Become an Agent', 'Become an Agent')}
+                      </button>
+                      <button onClick={() => handleRoleSelection('vendor')} className="w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-2">
+                        <span className="text-lg">🏪</span> {t('Become a Vendor', 'Become a Vendor')}
+                      </button>
+                      <button onClick={() => handleRoleSelection('organization')} className="w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-2">
+                        <span className="text-lg">🏢</span> {t('Become an Organization', 'Become an Organization')}
+                      </button>
                     </div>
                   )}
                 </div>
@@ -821,12 +958,16 @@ export default function Home() {
                   <span className="text-xl">🏊</span><div><div>{t('Regular Pools', 'Regular Pools')}</div><div className="text-xs text-gray-400">{t('Cars, Houses & More', 'Cars, Houses & More')}</div></div>
                 </button>
                 <div className="h-px bg-gray-700 my-2"></div>
-                <Link href="/dashboard" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
-                  <span className="text-xl">📊</span><div><div>{t('Dashboard', 'Dashboard')}</div><div className="text-xs text-gray-400">{t('Track your tickets', 'Track your tickets')}</div></div>
-                </Link>
-                <Link href="/become-creator" className="w-full text-left px-4 py-3 text-purple-400 hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
-                  <span className="text-xl">🏪</span><div><div className="font-medium">{t('Become Creator', 'Become Creator')}</div><div className="text-xs text-gray-400">{t('Earn 10% Commission', 'Earn 10% Commission')}</div></div>
-                </Link>
+                <div className="px-4 py-1 text-xs text-gray-500">{t('Partner Program', 'Partner Program')}</div>
+                <button onClick={() => handleRoleSelection('agent')} className="w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-2">
+                  <span className="text-lg">🤝</span> {t('Become an Agent', 'Become an Agent')}
+                </button>
+                <button onClick={() => handleRoleSelection('vendor')} className="w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-2">
+                  <span className="text-lg">🏪</span> {t('Become a Vendor', 'Become a Vendor')}
+                </button>
+                <button onClick={() => handleRoleSelection('organization')} className="w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-2">
+                  <span className="text-lg">🏢</span> {t('Become an Organization', 'Become an Organization')}
+                </button>
                 <div className="pt-2"><TopCitySelector /></div>
               </div>
             )}
@@ -860,9 +1001,43 @@ export default function Home() {
               <Link href="/merkato-vip" className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2">
                 <span>🏪</span> {t('Join Merkato VIP', 'Join Merkato VIP')} <span>→</span>
               </Link>
-              <Link href="/city-vip" className="bg-gradient-to-r from-gray-700 to-gray-900 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2">
-                <span>🏙️</span> {t('Join City VIP', 'Join City VIP')} <span>→</span>
-              </Link>
+              <button onClick={() => { setShowCityDropdown(!showCityDropdown); }} className="bg-gradient-to-r from-gray-700 to-gray-900 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2 relative">
+                <span>🏙️</span> {t('Join City VIP', 'Join City VIP')} <span>↓</span>
+                {showCityDropdown && (
+                  <div className="absolute top-full left-0 mt-2 w-80 md:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
+                    <div className="p-3 bg-gray-50 border-b">
+                      <input type="text" placeholder={t('🔍 Search city... (94 cities)', '🔍 Search city... (94 cities)')} value={citySearchTerm} onChange={(e) => setCitySearchTerm(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500" autoFocus />
+                      <p className="text-xs text-gray-400 mt-1">{filteredCityList.length} / {uniqueCities.length} cities</p>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {filteredCityList.slice(0, 20).map(city => (
+                        <button
+                          key={city.id}
+                          onClick={() => {
+                            setSelectedCityForTiers(city);
+                            setShowCityTiersModal(true);
+                            setShowCityDropdown(false);
+                            setCitySearchTerm('');
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-50 transition border-b last:border-0 flex items-center gap-3"
+                        >
+                          <span className="text-2xl">{city.icon}</span>
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-800">{city.name}</div>
+                            <div className="text-xs text-gray-500">{city.nameEn} • {city.region}</div>
+                          </div>
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">👁️ Tiers</span>
+                        </button>
+                      ))}
+                      {filteredCityList.length > 20 && (
+                        <Link href="/cities" className="block px-4 py-3 text-center text-sm text-green-600 hover:bg-gray-50">
+                          {t(`View all ${filteredCityList.length} cities →`, `View all ${filteredCityList.length} cities →`)}
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </button>
               <button onClick={() => scrollToSection('regular-pools')} className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2">
                 <span>🏊</span> {t('Join Regular Pools', 'Join Regular Pools')} <span>→</span>
               </button>
@@ -957,8 +1132,17 @@ export default function Home() {
                         <p className="text-xs text-gray-400 mt-1">{t('Showing {count} of {total} cities', 'Showing {count} of {total} cities').replace('{count}', filteredCityList.length).replace('{total}', uniqueCities.length)}</p>
                       </div>
                       <div className="max-h-96 overflow-y-auto">
-                        {filteredCityList.length === 0 ? <div className="p-4 text-center text-gray-500">{t('No cities found', 'No cities found')}</div> : filteredCityList.slice(0, 20).map(city => (
-                          <a key={city.id} href={`/cities/${city.id}`} onClick={(e) => { e.preventDefault(); setShowCityDropdown(false); setCitySearchTerm(''); window.location.href = `/cities/${city.id}`; }} className="w-full text-left px-4 py-3 hover:bg-gray-50 transition border-b last:border-0 flex items-center gap-3 cursor-pointer group">
+                        {filteredCityList.length === 0 ? <div className="p-4 text-center text-gray-500">{t('No cities found', 'No cities found')}</div> : filteredCityList.map(city => (
+                          <button
+                            key={city.id}
+                            onClick={() => {
+                              setSelectedCityForTiers(city);
+                              setShowCityTiersModal(true);
+                              setShowCityDropdown(false);
+                              setCitySearchTerm('');
+                            }}
+                            className="w-full text-left px-4 py-3 hover:bg-gray-50 transition border-b last:border-0 flex items-center gap-3 group"
+                          >
                             <span className="text-2xl">{city.icon}</span>
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
@@ -966,20 +1150,41 @@ export default function Home() {
                               </div>
                               <div className="text-xs text-gray-500">{city.nameEn} • {city.region}</div>
                             </div>
-                            <span className="text-green-600 text-xs font-medium opacity-0 group-hover:opacity-100 transition flex items-center gap-1">{t('Join', 'Join')} <span>→</span></span>
-                          </a>
+                            <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full group-hover:bg-green-600 group-hover:text-white transition">👁️ {t('Tiers', 'Tiers')}</span>
+                          </button>
                         ))}
                       </div>
+                      <div className="p-2 text-center text-xs text-gray-400 bg-gray-50">{uniqueCities.length}+ Ethiopian cities • 5 Premium Tiers • Up to 10M ETB</div>
                     </div>
                   )}
                 </div>
               </div>
               <div className="grid grid-cols-3 md:grid-cols-5 gap-3 mt-6 pt-4 border-t border-gray-700">
-                <div className="text-center bg-gray-800 rounded-lg p-2"><div className="text-2xl">🥈</div><div className="text-white font-bold text-xs">100 ETB</div><div className="text-[8px] text-gray-400">1,200 {t('Seats', 'Seats')}</div></div>
-                <div className="text-center bg-gray-800 rounded-lg p-2"><div className="text-2xl">🥇</div><div className="text-white font-bold text-xs">500 ETB</div><div className="text-[8px] text-gray-400">1,200 {t('Seats', 'Seats')}</div></div>
-                <div className="text-center bg-gray-800 rounded-lg p-2"><div className="text-2xl">💎</div><div className="text-white font-bold text-xs">1,000 ETB</div><div className="text-[8px] text-gray-400">2,400 {t('Seats', 'Seats')}</div></div>
-                <div className="text-center bg-gray-800 rounded-lg p-2"><div className="text-2xl">💠</div><div className="text-white font-bold text-xs">2,500 ETB</div><div className="text-[8px] text-gray-400">2,400 {t('Seats', 'Seats')}</div></div>
-                <div className="text-center bg-gray-800 rounded-lg p-2"><div className="text-2xl">👑</div><div className="text-white font-bold text-xs">5,000 ETB</div><div className="text-[8px] text-gray-400">2,400 {t('Seats', 'Seats')}</div></div>
+                <div className="text-center bg-gray-800 rounded-lg p-2">
+                  <div className="text-2xl">🥈</div>
+                  <div className="text-white font-bold text-xs">100 ETB</div>
+                  <div className="text-[8px] text-gray-400">1,200 {t('Seats', 'Seats')}</div>
+                </div>
+                <div className="text-center bg-gray-800 rounded-lg p-2">
+                  <div className="text-2xl">🥇</div>
+                  <div className="text-white font-bold text-xs">500 ETB</div>
+                  <div className="text-[8px] text-gray-400">1,200 {t('Seats', 'Seats')}</div>
+                </div>
+                <div className="text-center bg-gray-800 rounded-lg p-2">
+                  <div className="text-2xl">💎</div>
+                  <div className="text-white font-bold text-xs">1,000 ETB</div>
+                  <div className="text-[8px] text-gray-400">2,400 {t('Seats', 'Seats')}</div>
+                </div>
+                <div className="text-center bg-gray-800 rounded-lg p-2">
+                  <div className="text-2xl">💠</div>
+                  <div className="text-white font-bold text-xs">2,500 ETB</div>
+                  <div className="text-[8px] text-gray-400">2,400 {t('Seats', 'Seats')}</div>
+                </div>
+                <div className="text-center bg-gray-800 rounded-lg p-2">
+                  <div className="text-2xl">👑</div>
+                  <div className="text-white font-bold text-xs">5,000 ETB</div>
+                  <div className="text-[8px] text-gray-400">2,400 {t('Seats', 'Seats')}</div>
+                </div>
               </div>
             </div>
           </div>
@@ -1040,6 +1245,32 @@ export default function Home() {
               </div>
             )}
           </div>
+
+          {/* Partner Program Section */}
+          <div id="partner-program" className="mb-12 scroll-mt-20">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 md:p-8 shadow-xl text-white">
+              <div className="text-center">
+                <div className="text-5xl mb-3">🤝</div>
+                <h3 className="text-2xl md:text-3xl font-bold">{t('Partner Program', 'Partner Program')}</h3>
+                <p className="text-sm md:text-base text-blue-200 mt-2">{t('Join our partner program and start earning commissions today!', 'Join our partner program and start earning commissions today!')}</p>
+                <p className="text-xs text-blue-300 mt-1">{t('✓ No upfront fees ✓ Earn 10% on every successful pool ✓ 24/7 support', '✓ No upfront fees ✓ Earn 10% on every successful pool ✓ 24/7 support')}</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+                <button onClick={() => handleRoleSelection('agent')} className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg">
+                  <span>🤝</span> {t('Become an Agent', 'Become an Agent')}
+                </button>
+                <button onClick={() => handleRoleSelection('vendor')} className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg">
+                  <span>🏪</span> {t('Become a Vendor', 'Become a Vendor')}
+                </button>
+                <button onClick={() => handleRoleSelection('organization')} className="bg-cyan-500 hover:bg-cyan-600 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg">
+                  <span>🏢</span> {t('Become an Organization', 'Become an Organization')}
+                </button>
+                <Link href="/become-creator" className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg">
+                  <span>🏪</span> {t('Become a Pool Creator', 'Become a Pool Creator')}
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
 
         <Testimonials />
@@ -1069,36 +1300,11 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Partner Program */}
-        <div className="border-t border-gray-200"></div>
-        <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-12">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2">{t('Partner Program', 'Partner Program')}</h2>
-            <p className="text-gray-300 text-sm md:text-base mb-6">{t('Join our partner program and start earning commissions today!', 'Join our partner program and start earning commissions today!')}</p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <button onClick={() => handleRoleSelection('agent')} className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-xl transition transform hover:scale-105 flex items-center gap-2">
-                <span>🤝</span> {t('Become an Agent', 'Become an Agent')}
-              </button>
-              <button onClick={() => handleRoleSelection('vendor')} className="bg-gradient-to-r from-purple-500 to-pink-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-xl transition transform hover:scale-105 flex items-center gap-2">
-                <span>🏪</span> {t('Become a Vendor', 'Become a Vendor')}
-              </button>
-              <button onClick={() => handleRoleSelection('organization')} className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-xl transition transform hover:scale-105 flex items-center gap-2">
-                <span>🏢</span> {t('Become an Organization', 'Become an Organization')}
-              </button>
-              <Link href="/become-creator" className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-xl transition transform hover:scale-105 flex items-center gap-2">
-                <span>🏪</span> {t('Become a Pool Creator', 'Become a Pool Creator')}
-              </Link>
-            </div>
-            <div className="mt-4 text-xs text-gray-400">
-              <p>{t('✓ No upfront fees ✓ Earn 10% on every successful pool ✓ 24/7 support', '✓ No upfront fees ✓ Earn 10% on every successful pool ✓ 24/7 support')}</p>
-            </div>
-          </div>
-        </div>
-
         {showCitySelector && <CitySelector onClose={() => setShowCitySelector(false)} />}
       </div>
 
       {showRegisterModal && <RegisterModal />}
+      {showCityTiersModal && <CityTiersModal />}
 
       <style jsx>{`
         @keyframes fade-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
