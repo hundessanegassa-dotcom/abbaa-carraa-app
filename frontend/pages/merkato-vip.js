@@ -1,5 +1,4 @@
-// pages/merkato-vip.js - COMPLETE WITH 5 TIERS (100, 500, 1000, 2500, 5000 BIRR)
-// UPDATED with PoolProductCard design
+// pages/merkato-vip.js - COMPLETE WITH TICKET IMAGE COMPONENT
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
@@ -9,6 +8,7 @@ import toast from 'react-hot-toast';
 import NoSSR from '../components/NoSSR';
 import TopCitySelector from '../components/TopCitySelector';
 import PoolProductCard from '../components/PoolProductCard';
+import TicketImage from '../components/TicketImage';
 
 // ✅ 5 TIERS FOR MERKATO VIP - 100, 500, 1000, 2500, 5000 BIRR
 export const MERKATO_TIERS = {
@@ -23,7 +23,7 @@ export const MERKATO_TIERS = {
     color: 'from-gray-400 to-gray-500',
     badge: 'Silver',
     tier: 1,
-    image_url: '/images/merkato-silver.jpg', // Add your image URLs
+    image_url: '/images/merkato-silver.jpg',
     end_date: '2026-12-31T23:59:59'
   },
   gold: {
@@ -115,6 +115,9 @@ export default function MerkatoVIP() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkingUser, setCheckingUser] = useState(true);
   const [is3D, setIs3D] = useState(false);
+  const [ticketVerified, setTicketVerified] = useState(false);
+  const [checkingVerification, setCheckingVerification] = useState(false);
+  const [paymentSubmitted, setPaymentSubmitted] = useState(false);
 
   // Load language preference
   useEffect(() => {
@@ -124,6 +127,16 @@ export default function MerkatoVIP() {
     }
     checkUser();
   }, []);
+
+  // Check ticket verification status periodically
+  useEffect(() => {
+    if (participantId && paymentSubmitted) {
+      checkVerificationStatus();
+      
+      const interval = setInterval(checkVerificationStatus, 30000); // Check every 30 seconds
+      return () => clearInterval(interval);
+    }
+  }, [participantId, paymentSubmitted]);
 
   const toggleLanguage = () => {
     const newLang = language === 'am' ? 'en' : 'am';
@@ -149,6 +162,43 @@ export default function MerkatoVIP() {
       console.error('Error checking user:', error);
     } finally {
       setCheckingUser(false);
+    }
+  };
+
+  const checkVerificationStatus = async () => {
+    if (!participantId || checkingVerification) return;
+    
+    setCheckingVerification(true);
+    try {
+      const { data: participant, error } = await supabase
+        .from('merkato_vip_participants')
+        .select('payment_status')
+        .eq('id', participantId)
+        .single();
+
+      if (error) throw error;
+
+      if (participant?.payment_status === 'verified') {
+        setTicketVerified(true);
+        toast.success(
+          language === 'am' 
+            ? '✅ ቲኬትዎ ተረጋግጧል! የተረጋገጠ ቲኬትዎን ያውርዱ' 
+            : '✅ Your ticket is verified! Download your verified ticket'
+        );
+        // Refresh participant data to get latest
+        const { data: updatedParticipant } = await supabase
+          .from('merkato_vip_participants')
+          .select('*')
+          .eq('id', participantId)
+          .single();
+        if (updatedParticipant) {
+          setParticipantData(updatedParticipant);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking verification:', error);
+    } finally {
+      setCheckingVerification(false);
     }
   };
 
@@ -283,6 +333,7 @@ export default function MerkatoVIP() {
         .single();
       
       setParticipantData(updatedParticipant);
+      setPaymentSubmitted(true);
       setShowPayment(false);
       setShowTicket(true);
       
@@ -319,13 +370,13 @@ export default function MerkatoVIP() {
       title: `${tier.icon} ${language === 'am' ? tier.labelAm : tier.labelEn}`,
       entry_fee: tier.contribution,
       target_amount: tier.prize,
-      current_amount: 0, // This would come from your database
+      current_amount: 0,
       status: 'active',
       end_date: tier.end_date || '2026-12-31T23:59:59',
       image_url: tier.image_url || null,
       prize_image: tier.image_url || null,
       is_featured: tier.tier >= 4,
-      description: `${language === 'am' ? 'የ' : ''} ${getDrawScheduleText(tierId, language)} ${language === 'am' ? 'እጣ' : 'Draw'} - ${language === 'am' ? 'እስከ' : 'Up to'} ETB ${tier.prize.toLocaleString()}`
+      description: `${getDrawScheduleText(tierId, language)} - ${language === 'am' ? 'እስከ' : 'Up to'} ETB ${tier.prize.toLocaleString()}`
     };
   };
 
@@ -581,45 +632,79 @@ export default function MerkatoVIP() {
             </div>
           )}
 
+          {/* ============================================
+              TICKET DISPLAY - UPDATED WITH TicketImage
+              ============================================ */}
           {showTicket && participantData && (
             <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4 overflow-y-auto">
-              <div className="bg-white rounded-2xl max-w-md w-full">
-                <div className="bg-gradient-to-r from-gray-800 to-gray-900 p-4 flex justify-between rounded-t-2xl">
-                  <h3 className="text-white font-bold">
-                    {language === 'am' ? 'የእርስዎ ቲኬት' : 'Your Ticket'}
-                  </h3>
-                  <button onClick={handleCloseTicket} className="text-white text-2xl">×</button>
+              <div className="bg-white rounded-2xl max-w-2xl w-full my-8">
+                <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center rounded-t-2xl">
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-xl font-bold">
+                      {language === 'am' ? '🎫 የእርስዎ ቲኬት' : '🎫 Your Ticket'}
+                    </h2>
+                    {ticketVerified && (
+                      <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">
+                        ✅ {language === 'am' ? 'የተረጋገጠ' : 'Verified'}
+                      </span>
+                    )}
+                  </div>
+                  <button onClick={handleCloseTicket} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
                 </div>
                 <div className="p-6">
-                  <div className="text-center">
-                    <div className="text-6xl mb-3">🏪</div>
-                    <h3 className="font-bold text-2xl">Merkato VIP</h3>
-                    <div className="mt-2 text-sm text-gray-500">
-                      {language === 'am' ? 'ቲኬት ቁጥር' : 'Ticket Number'}: <span className="font-bold text-gray-800">{participantData.ticket_number}</span>
+                  <TicketImage
+                    participant={participantData}
+                    pool={{
+                      prize_name: selectedTier ? 
+                        `${selectedTier.icon} ${language === 'am' ? selectedTier.labelAm : selectedTier.labelEn}` : 
+                        'Merkato VIP',
+                      target_amount: selectedTier?.prize || 0,
+                      prize: selectedTier?.prize || 0
+                    }}
+                    isVerified={ticketVerified || participantData.payment_status === 'verified'}
+                    seatNumbers={selectedSeats}
+                    ticketNumber={participantData.ticket_number}
+                    amount={participantData.contribution_amount}
+                    createdAt={participantData.created_at}
+                    poolType="merkato"
+                    show3D={is3D}
+                    language={language}
+                    onDownload={() => {
+                      toast.success(
+                        language === 'am' 
+                          ? '📥 ቲኬት እየተወረደ ነው...' 
+                          : '📥 Downloading ticket...'
+                      );
+                    }}
+                    onClose={handleCloseTicket}
+                  />
+                  
+                  {/* Verification Status Message */}
+                  {!ticketVerified && paymentSubmitted && (
+                    <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                      <p className="text-sm text-yellow-800">
+                        ⏳ {language === 'am' 
+                          ? 'ቲኬትዎ እየተረጋገጠ ነው. እባክዎ ይጠብቁ. አስተዳዳሪው ክፍያዎን ካረጋገጠ በኋላ የተረጋገጠ ቲኬት ያገኛሉ.' 
+                          : 'Your ticket is being verified. Please wait. You will receive a verified ticket once the admin confirms your payment.'}
+                      </p>
+                      <div className="mt-2 flex items-center justify-center gap-2">
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-yellow-600"></div>
+                        <span className="text-xs text-yellow-600">
+                          {language === 'am' ? 'በመጠበቅ ላይ...' : 'Waiting...'}
+                        </span>
+                      </div>
                     </div>
-                    <div className="mt-1 text-sm text-gray-500">
-                      {language === 'am' ? 'ደረጃ' : 'Tier'}: <span className="font-bold text-gray-800">
-                        {language === 'am' ? selectedTier.labelAm : selectedTier.labelEn}
-                      </span>
-                    </div>
-                    <div className="mt-1 text-sm text-gray-500">
-                      {language === 'am' ? 'መቀመጫዎች' : 'Seats'}: <span className="font-bold text-gray-800">{selectedSeats.join(', ')}</span>
-                    </div>
-                    <div className="mt-1 text-sm text-gray-500">
-                      {language === 'am' ? 'ሽልማት' : 'Prize'}: <span className="font-bold text-green-600">ETB {selectedTier.prize.toLocaleString()}</span>
-                    </div>
-                    <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                      <p className="text-xs text-yellow-800">
-                        ⏳ {language === 'am' ? 'ቲኬትዎ ክፍያ እስኪረጋገጥ ድረስ ያልተረጋገጠ ነው' : 'Your ticket is unverified until payment is confirmed'}
+                  )}
+                  
+                  {ticketVerified && (
+                    <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                      <p className="text-sm text-green-800">
+                        ✅ {language === 'am' 
+                          ? 'ቲኬትዎ ተረጋግጧል! የተረጋገጠ ቲኬትዎን ማውረድ ይችላሉ.' 
+                          : 'Your ticket is verified! You can download your verified ticket.'}
                       </p>
                     </div>
-                    <button
-                      onClick={handleCloseTicket}
-                      className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition"
-                    >
-                      {language === 'am' ? 'ወደ ዳሽቦርድ' : 'Go to Dashboard'}
-                    </button>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
