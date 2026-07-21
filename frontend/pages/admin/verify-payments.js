@@ -1,11 +1,11 @@
-// pages/admin/verify-payments.js - FIXED with AdminLayout
+// pages/admin/verify-payments.js - COMPLETE (Optional enhancement)
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
 import Head from 'next/head';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import AdminLayout from '../../components/admin/AdminLayout'; // ✅ ADDED
+import AdminLayout from '../../components/admin/AdminLayout';
 
 export default function VerifyPayments() {
   const router = useRouter();
