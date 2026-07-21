@@ -1,4 +1,4 @@
-// pages/cities/[city].js - FIXED LOADING ISSUE
+// pages/cities/[city].js - UPDATED with PoolProductCard
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -10,16 +10,15 @@ import TopCitySelector from '../../components/TopCitySelector';
 import UnifiedAgentApplication from '../../components/UnifiedAgentApplication';
 import SeatSelector from '../../components/SeatSelector';
 import CityTicket from '../../components/CityTicket';
+import PoolProductCard from '../../components/PoolProductCard';
 import { TIERS, getDrawScheduleText, TIER_IDS, getTierLabel } from '../../components/SeatSelector';
-// ✅ IMPORT FROM cityData
 import { getCityData, getAllCities, addUnlistedCity, updateCityData } from '../../lib/cityData';
 
-// ✅ Get city list from lib
+// Get city list from lib
 const cityList = getAllCities();
 
 export default function CityVip() {
   const router = useRouter();
-  // ✅ FIX: The route is /cities/[city] so the param is 'city' not 'cityId'
   const { city } = router.query;
   const [language, setLanguage] = useState('am');
   const [user, setUser] = useState(null);
@@ -41,6 +40,7 @@ export default function CityVip() {
   const [showAgentApplication, setShowAgentApplication] = useState(false);
   const [checkingUser, setCheckingUser] = useState(true);
   const [citySearchTerm, setCitySearchTerm] = useState('');
+  const [is3D, setIs3D] = useState(false);
 
   // Load language preference
   useEffect(() => {
@@ -50,7 +50,7 @@ export default function CityVip() {
     }
   }, []);
 
-  // ✅ FIX: Separate useEffect for city data
+  // Separate useEffect for city data
   useEffect(() => {
     if (city) {
       console.log('📍 City param:', city);
@@ -60,7 +60,7 @@ export default function CityVip() {
     }
   }, [city]);
 
-  // ✅ Check user after city is loaded
+  // Check user after city is loaded
   useEffect(() => {
     if (cityInfo) {
       checkUser();
@@ -254,52 +254,48 @@ export default function CityVip() {
     router.push('/dashboard');
   };
 
+  // Convert tier to pool format for PoolProductCard
+  const convertTierToPool = (tierId, tier) => {
+    const cityName = cityInfo?.name?.split('|')[0] || city || 'City';
+    return {
+      id: `${city}-${tierId}`,
+      prize_name: `${tier.icon} ${language === 'am' ? tier.labelAm : tier.labelEn} - ${cityName} VIP`,
+      title: `${tier.icon} ${language === 'am' ? tier.labelAm : tier.labelEn}`,
+      entry_fee: tier.contribution,
+      target_amount: tier.prize,
+      current_amount: 0,
+      status: 'active',
+      end_date: '2026-12-31T23:59:59',
+      image_url: tier.image_url || null,
+      prize_image: tier.image_url || null,
+      is_featured: tier.tier >= 4,
+      description: `${getDrawScheduleText(tierId, language)} ${language === 'am' ? 'እጣ' : 'Draw'} - ${language === 'am' ? 'እስከ' : 'Up to'} ETB ${tier.prize.toLocaleString()}`
+    };
+  };
+
   const renderTierSelection = () => {
     const tierIds = ['silver', 'gold', 'platinum', 'diamond', 'royal'];
     
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 max-w-7xl mx-auto">
         {tierIds.map((tierId) => {
           const tier = TIERS[tierId];
           if (!tier) return null;
           
+          const poolData = convertTierToPool(tierId, tier);
+          
           return (
-            <div
-              key={tierId}
-              className="bg-white rounded-2xl shadow-lg overflow-hidden transform transition hover:scale-105 cursor-pointer border-2 hover:border-green-500"
+            <div 
+              key={tierId} 
               onClick={() => handleTierSelect(tierId)}
+              className="cursor-pointer"
             >
-              <div className={'bg-gradient-to-r ' + tier.color + ' p-4 text-white text-center'}>
-                <div className="text-4xl mb-2">{tier.icon}</div>
-                <h3 className="font-bold text-xl">
-                  {language === 'am' ? tier.labelAm : tier.labelEn}
-                </h3>
-                <span className="text-xs opacity-80">
-                  {getDrawScheduleText(tierId, language)}
-                </span>
-              </div>
-              
-              <div className="p-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{language === 'am' ? 'ክፍያ' : 'Entry'}</span>
-                  <span className="font-semibold">ETB {tier.contribution.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{language === 'am' ? 'ሽልማት' : 'Prize'}</span>
-                  <span className="font-bold text-green-600">ETB {tier.prize.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{language === 'am' ? 'መቀመጫዎች' : 'Seats'}</span>
-                  <span className="font-semibold">{tier.seats.toLocaleString()}</span>
-                </div>
-                
-                <button 
-                  className="w-full mt-3 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold text-sm transition"
-                  onClick={(e) => { e.stopPropagation(); handleTierSelect(tierId); }}
-                >
-                  {language === 'am' ? 'መቀመጫ ምረጥ' : 'Select Seats'}
-                </button>
-              </div>
+              <PoolProductCard 
+                pool={poolData}
+                featured={tier.tier >= 4}
+                language={language}
+                show3D={false}
+              />
             </div>
           );
         })}
@@ -307,7 +303,7 @@ export default function CityVip() {
     );
   };
 
-  // ✅ FIX: Show loading while city is being fetched
+  // Show loading while city is being fetched
   if (!city) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -463,7 +459,7 @@ export default function CityVip() {
 
           {showTiers && (
             <div className="container mx-auto px-4 py-8">
-              <h2 className="text-2xl font-bold text-center mb-6">
+              <h2 className="text-2xl font-bold text-center mb-4">
                 {language === 'am' ? 'የእርስዎን ደረጃ ይምረጡ' : 'Select Your Tier'}
               </h2>
               <p className="text-center text-gray-500 mb-8">
