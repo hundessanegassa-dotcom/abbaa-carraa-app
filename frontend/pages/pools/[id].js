@@ -1,4 +1,4 @@
-// pages/pools/[id].js - COMPLETE FIXED (Pool Not Found Error Fixed)
+// pages/pools/[id].js - COMPLETE WITH TICKET IMAGE COMPONENT
 import { useRouter } from 'next/router';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -33,6 +33,11 @@ export default function PoolDetails() {
   const [language, setLanguage] = useState('am');
   const [currentRow, setCurrentRow] = useState(0);
   const seatGridRef = useRef(null);
+  
+  // ✅ NEW: Ticket verification states
+  const [ticketVerified, setTicketVerified] = useState(false);
+  const [checkingVerification, setCheckingVerification] = useState(false);
+  const [paymentSubmitted, setPaymentSubmitted] = useState(false);
 
   // Load language preference
   useEffect(() => {
@@ -100,6 +105,16 @@ export default function PoolDetails() {
     }
   }, [user, pool, id]);
 
+  // ✅ NEW: Check ticket verification status periodically
+  useEffect(() => {
+    if (participantId && paymentSubmitted) {
+      checkVerificationStatus();
+      
+      const interval = setInterval(checkVerificationStatus, 30000); // Check every 30 seconds
+      return () => clearInterval(interval);
+    }
+  }, [participantId, paymentSubmitted]);
+
   async function getCurrentUser() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -108,6 +123,44 @@ export default function PoolDetails() {
       console.error('Error getting user:', error);
     }
   }
+
+  // ✅ NEW: Check verification status function
+  const checkVerificationStatus = async () => {
+    if (!participantId || checkingVerification) return;
+    
+    setCheckingVerification(true);
+    try {
+      const { data: participant, error } = await supabase
+        .from('regular_pool_participants')
+        .select('payment_status')
+        .eq('id', participantId)
+        .single();
+
+      if (error) throw error;
+
+      if (participant?.payment_status === 'verified') {
+        setTicketVerified(true);
+        toast.success(
+          language === 'am' 
+            ? '✅ ቲኬትዎ ተረጋግጧል! የተረጋገጠ ቲኬትዎን ያውርዱ' 
+            : '✅ Your ticket is verified! Download your verified ticket'
+        );
+        // Refresh participant data to get latest
+        const { data: updatedParticipant } = await supabase
+          .from('regular_pool_participants')
+          .select('*')
+          .eq('id', participantId)
+          .single();
+        if (updatedParticipant) {
+          setParticipantData(updatedParticipant);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking verification:', error);
+    } finally {
+      setCheckingVerification(false);
+    }
+  };
 
   // ✅ FIX: Better pool fetching with error handling
   async function fetchPool() {
@@ -125,7 +178,7 @@ export default function PoolDetails() {
         .from('pools')
         .select('*')
         .eq('id', id)
-        .maybeSingle(); // ✅ Changed from .single() to .maybeSingle()
+        .maybeSingle();
       
       if (error) {
         console.error('Pool fetch error:', error);
@@ -611,6 +664,7 @@ export default function PoolDetails() {
       if (fetchError) throw new Error(`Fetch failed: ${fetchError.message}`);
       
       setParticipantData(updatedParticipant);
+      setPaymentSubmitted(true); // ✅ NEW
       setShowPayment(false);
       setShowTicket(true);
       
@@ -640,6 +694,11 @@ export default function PoolDetails() {
     }
     setShowPayment(false);
     setShowSeatSelector(true);
+  };
+
+  const handleCloseTicket = () => {
+    setShowTicket(false);
+    router.push('/dashboard');
   };
 
   // ✅ FIX: Show proper loading state
@@ -854,7 +913,7 @@ export default function PoolDetails() {
               <div className="border-t pt-4">
                 <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                   <div><p className="text-sm text-gray-500">Selected Seats</p><p className="font-bold text-lg">{selectedSeats.sort((a,b)=>a-b).join(', ')}</p></div>
-                  <div className="text-right"><p className="text-sm text-gray-500">Total Amount</p><p className="font-bold text-2xl text-green-600">ETB {totalAmount.toLocaleString()}</p><p className="text-xs text-gray-400">({selectedSeats.length} seats × ETB {entryFee.toLocaleString()})</p></div>
+                  <div className="text-right"><p className="text-sm text-gray-500">Total Amount</p><p className="font-bold text-2xl text-green-600">ETB {(selectedSeats.length * entryFee).toLocaleString()}</p><p className="text-xs text-gray-400">({selectedSeats.length} seats × ETB {entryFee.toLocaleString()})</p></div>
                 </div>
                 <button onClick={confirmSeats} disabled={loading} className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition disabled:opacity-50">
                   {loading ? 'Processing...' : `Confirm ${selectedSeats.length} Seat${selectedSeats.length !== 1 ? 's' : ''} & Proceed to Payment`}
@@ -995,26 +1054,78 @@ export default function PoolDetails() {
           {showSeatSelector && renderSeatSelector()}
           {showPayment && renderPayment()}
           
+          {/* ============================================
+              TICKET DISPLAY - UPDATED WITH TicketImage
+              ============================================ */}
           {showTicket && participantData && (
-            <div className="bg-white rounded-2xl shadow-xl p-6 max-w-2xl mx-auto">
-              <h2 className="text-2xl font-bold text-center mb-4">🎫 Your Ticket</h2>
-              <TicketImage 
-                participant={participantData}
-                pool={pool}
-                isVerified={false}
-                seatNumbers={participantData.seat_numbers}
-                ticketNumber={participantData.ticket_number}
-                amount={participantData.contribution_amount}
-                createdAt={participantData.created_at}
-                poolType="regular"
-              />
-              <div className="text-center mt-4">
-                <p className="text-sm text-yellow-600">
-                  ⏳ This is an UNVERIFIED ticket. Your seats will be confirmed after payment verification.
-                </p>
-                <button onClick={() => router.push('/dashboard')} className="mt-4 bg-gray-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-700 transition">
-                  Go to Dashboard
-                </button>
+            <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4 overflow-y-auto">
+              <div className="bg-white rounded-2xl max-w-2xl w-full my-8">
+                <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center rounded-t-2xl">
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-xl font-bold">
+                      {language === 'am' ? '🎫 የእርስዎ ቲኬት' : '🎫 Your Ticket'}
+                    </h2>
+                    {ticketVerified && (
+                      <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">
+                        ✅ {language === 'am' ? 'የተረጋገጠ' : 'Verified'}
+                      </span>
+                    )}
+                  </div>
+                  <button onClick={handleCloseTicket} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                </div>
+                <div className="p-6">
+                  <TicketImage
+                    participant={participantData}
+                    pool={{
+                      prize_name: pool.prize_name,
+                      target_amount: pool.target_amount,
+                      prize: pool.target_amount
+                    }}
+                    isVerified={ticketVerified || participantData.payment_status === 'verified'}
+                    seatNumbers={participantData.seat_numbers || selectedSeats}
+                    ticketNumber={participantData.ticket_number}
+                    amount={participantData.contribution_amount}
+                    createdAt={participantData.created_at}
+                    poolType="regular"
+                    show3D={false}
+                    language={language}
+                    onDownload={() => {
+                      toast.success(
+                        language === 'am' 
+                          ? '📥 ቲኬት እየተወረደ ነው...' 
+                          : '📥 Downloading ticket...'
+                      );
+                    }}
+                    onClose={handleCloseTicket}
+                  />
+                  
+                  {/* Verification Status Message */}
+                  {!ticketVerified && paymentSubmitted && (
+                    <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                      <p className="text-sm text-yellow-800">
+                        ⏳ {language === 'am' 
+                          ? 'ቲኬትዎ እየተረጋገጠ ነው. እባክዎ ይጠብቁ. አስተዳዳሪው ክፍያዎን ካረጋገጠ በኋላ የተረጋገጠ ቲኬት ያገኛሉ.' 
+                          : 'Your ticket is being verified. Please wait. You will receive a verified ticket once the admin confirms your payment.'}
+                      </p>
+                      <div className="mt-2 flex items-center justify-center gap-2">
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-yellow-600"></div>
+                        <span className="text-xs text-yellow-600">
+                          {language === 'am' ? 'በመጠበቅ ላይ...' : 'Waiting...'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {ticketVerified && (
+                    <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                      <p className="text-sm text-green-800">
+                        ✅ {language === 'am' 
+                          ? 'ቲኬትዎ ተረጋግጧል! የተረጋገጠ ቲኬትዎን ማውረድ ይችላሉ.' 
+                          : 'Your ticket is verified! You can download your verified ticket.'}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
