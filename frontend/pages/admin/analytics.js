@@ -1,4 +1,4 @@
-// pages/admin/analytics.js - COMPLETE ADMIN ANALYTICS DASHBOARD
+// pages/admin/analytics.js - COMPLETE ADMIN ANALYTICS DASHBOARD WITH CREATOR STATS
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/router';
@@ -33,6 +33,13 @@ export default function AdminAnalytics() {
     cityParticipants: 0,
     cityCollected: 0,
     activeCities: 0,
+    // Creator Stats
+    totalCreators: 0,
+    pendingCreators: 0,
+    approvedCreators: 0,
+    rejectedCreators: 0,
+    creatorPools: 0,
+    creatorEarnings: 0,
   });
   const [monthlyRevenue, setMonthlyRevenue] = useState([]);
   const [categoryData, setCategoryData] = useState({});
@@ -136,6 +143,18 @@ export default function AdminAnalytics() {
       const cityTotal = cityParticipants?.filter(p => p.payment_status === 'verified').length || 0;
       const cityCollected = cityParticipants?.filter(p => p.payment_status === 'verified').reduce((sum, p) => sum + (p.contribution_amount || 0), 0) || 0;
       const activeCities = [...new Set(cityParticipants?.filter(p => p.payment_status === 'verified').map(p => p.city))].length || 0;
+
+      // Get Creator Stats
+      const { data: creators } = await supabase
+        .from('pool_creators')
+        .select('verification_status, total_earnings, total_pools_created');
+
+      const totalCreators = creators?.length || 0;
+      const pendingCreators = creators?.filter(c => c.verification_status === 'pending').length || 0;
+      const approvedCreators = creators?.filter(c => c.verification_status === 'approved').length || 0;
+      const rejectedCreators = creators?.filter(c => c.verification_status === 'rejected').length || 0;
+      const creatorEarnings = creators?.reduce((sum, c) => sum + (c.total_earnings || 0), 0) || 0;
+      const creatorPools = creators?.reduce((sum, c) => sum + (c.total_pools_created || 0), 0) || 0;
 
       // Category distribution
       const categories = { vehicle: 0, machinery: 0, electronics: 0, property: 0, furniture: 0, cash: 0, vip: 0, other: 0 };
@@ -248,6 +267,12 @@ export default function AdminAnalytics() {
         cityParticipants: cityTotal,
         cityCollected: cityCollected,
         activeCities: activeCities,
+        totalCreators,
+        pendingCreators,
+        approvedCreators,
+        rejectedCreators,
+        creatorPools,
+        creatorEarnings,
       });
 
     } catch (error) {
@@ -382,6 +407,36 @@ export default function AdminAnalytics() {
           <p className="text-xl font-bold">ETB {(stats.totalCommission / 1000).toFixed(0)}K</p>
           <p className="text-[10px] opacity-90">Commissions Paid</p>
           <p className="text-[8px] opacity-75">Total agent earnings</p>
+        </div>
+      </div>
+
+      {/* Creator Stats Cards - NEW */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
+        <div className="bg-gradient-to-r from-pink-500 to-rose-500 rounded-xl shadow p-3 text-center text-white">
+          <div className="text-2xl mb-1">👑</div>
+          <p className="text-xl font-bold">{stats.totalCreators}</p>
+          <p className="text-[10px] opacity-90">Total Creators</p>
+        </div>
+        <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl shadow p-3 text-center text-white">
+          <div className="text-2xl mb-1">⏳</div>
+          <p className="text-xl font-bold">{stats.pendingCreators}</p>
+          <p className="text-[10px] opacity-90">Pending Approval</p>
+        </div>
+        <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl shadow p-3 text-center text-white">
+          <div className="text-2xl mb-1">✅</div>
+          <p className="text-xl font-bold">{stats.approvedCreators}</p>
+          <p className="text-[10px] opacity-90">Approved</p>
+        </div>
+        <div className="bg-gradient-to-r from-red-500 to-rose-500 rounded-xl shadow p-3 text-center text-white">
+          <div className="text-2xl mb-1">❌</div>
+          <p className="text-xl font-bold">{stats.rejectedCreators}</p>
+          <p className="text-[10px] opacity-90">Rejected</p>
+        </div>
+        <div className="bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl shadow p-3 text-center text-white">
+          <div className="text-2xl mb-1">🏪</div>
+          <p className="text-xl font-bold">{stats.creatorPools}</p>
+          <p className="text-[10px] opacity-90">Creator Pools</p>
+          <p className="text-[8px] opacity-75">ETB {(stats.creatorEarnings / 1000).toFixed(0)}K earnings</p>
         </div>
       </div>
 
