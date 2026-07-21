@@ -1,4 +1,4 @@
-// components/admin/AdminLayout.js - FIXED Realtime Subscription
+// components/admin/AdminLayout.js - UPDATED with Creator Applications Menu
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -26,6 +26,7 @@ export default function AdminLayout({
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [pendingCreatorApps, setPendingCreatorApps] = useState(0);
   const animationRef = useRef(null);
   const channelRef = useRef(null);
 
@@ -48,6 +49,7 @@ export default function AdminLayout({
   useEffect(() => {
     if (user) {
       fetchNotifications();
+      fetchPendingCreatorApps();
     }
   }, [user]);
 
@@ -80,6 +82,38 @@ export default function AdminLayout({
     };
   }, [user]);
 
+  // Realtime subscription for creator applications
+  useEffect(() => {
+    if (!user) return;
+
+    const creatorChannel = supabase.channel('creator_applications_channel');
+
+    creatorChannel
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'pool_creators'
+      }, (payload) => {
+        if (payload.new?.verification_status === 'pending') {
+          setPendingCreatorApps(prev => prev + 1);
+          toast.info(`👑 New creator application: ${payload.new.business_name || 'Unknown'}`);
+        }
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'pool_creators',
+        filter: 'verification_status=eq.pending'
+      }, () => {
+        fetchPendingCreatorApps();
+      })
+      .subscribe();
+
+    return () => {
+      creatorChannel.unsubscribe();
+    };
+  }, [user]);
+
   const toggle3D = () => {
     setIs3D(!is3D);
   };
@@ -104,6 +138,21 @@ export default function AdminLayout({
       setUnreadCount(data?.filter(n => !n.read).length || 0);
     } catch (error) {
       console.error('Error fetching notifications:', error);
+    }
+  };
+
+  const fetchPendingCreatorApps = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('pool_creators')
+        .select('*', { count: 'exact', head: true })
+        .eq('verification_status', 'pending');
+
+      if (!error) {
+        setPendingCreatorApps(count || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching pending creator apps:', error);
     }
   };
 
@@ -149,6 +198,7 @@ export default function AdminLayout({
 
   const menuItems = [
     { id: 'overview', label: '📊 Overview', icon: '📊', href: '/admin/dashboard' },
+    { id: 'creator-applications', label: '👑 Creator Apps', icon: '👑', href: '/admin/creator-applications', badge: pendingCreatorApps },
     { id: 'draw', label: '🎲 Draw Management', icon: '🎲', href: '/admin/draw' },
     { id: 'analytics', label: '📈 Analytics', icon: '📈', href: '/admin/analytics' },
     { id: 'users', label: '👥 Users', icon: '👥', href: '/admin/users' },
@@ -313,6 +363,11 @@ export default function AdminLayout({
                 >
                   <span className="text-lg">{item.icon}</span>
                   <span>{item.label}</span>
+                  {item.badge > 0 && (
+                    <span className="ml-auto bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                      {item.badge > 9 ? '9+' : item.badge}
+                    </span>
+                  )}
                 </Link>
               ))}
             </div>
