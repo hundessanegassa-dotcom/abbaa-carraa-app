@@ -1,4 +1,4 @@
-// pages/creator/apply.js - Pool Creator Application Form
+// pages/creator/apply.js - COMPLETE POOL CREATOR APPLICATION FORM
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/router';
@@ -8,6 +8,13 @@ import toast from 'react-hot-toast';
 import DashboardLayout from '../../components/DashboardLayout';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ImageUpload from '../../components/ImageUpload';
+import { 
+  uploadCreatorBanner, 
+  uploadCreatorID, 
+  uploadCreatorLicense,
+  validateFile,
+  getFileSize
+} from '../../lib/upload';
 import NoSSR from '../../components/NoSSR';
 
 export default function CreatorApplication() {
@@ -18,9 +25,11 @@ export default function CreatorApplication() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [existingApplication, setExistingApplication] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState({});
 
   // Form state
   const [formData, setFormData] = useState({
+    // Personal & Business Info
     business_name: '',
     business_type: 'individual',
     full_name: '',
@@ -29,29 +38,36 @@ export default function CreatorApplication() {
     location: '',
     city: '',
     about: '',
-
-    // Pool settings (what creator sets)
+    
+    // Pool Settings
     prize_amount: 100000,
     entry_fee: 100,
     total_seats: 2000,
-
-    // Payment details
+    
+    // Payment Details
     bank_name: '',
     bank_account_number: '',
     bank_account_name: '',
     telebirr_number: '',
-
+    
     // Files
     shop_banner: null,
     digital_id: null,
     business_license: null,
-
+    
     // Terms
     terms_accepted: false
   });
 
   // Preview URLs
   const [previews, setPreviews] = useState({
+    shop_banner: null,
+    digital_id: null,
+    business_license: null
+  });
+
+  // File validation errors
+  const [fileErrors, setFileErrors] = useState({
     shop_banner: null,
     digital_id: null,
     business_license: null
@@ -173,12 +189,30 @@ export default function CreatorApplication() {
     if (type === 'file') {
       const file = files[0];
       if (file) {
+        // Validate file
+        const maxSize = name === 'shop_banner' ? 2 : 5;
+        const { valid, error } = validateFile(file, { maxSize });
+        
+        if (!valid) {
+          setFileErrors(prev => ({ ...prev, [name]: error }));
+          toast.error(error);
+          return;
+        }
+        
+        setFileErrors(prev => ({ ...prev, [name]: null }));
         setFormData(prev => ({ ...prev, [name]: file }));
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          setPreviews(prev => ({ ...prev, [name]: event.target.result }));
-        };
-        reader.readAsDataURL(file);
+        
+        // Create preview for images
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            setPreviews(prev => ({ ...prev, [name]: event.target.result }));
+          };
+          reader.readAsDataURL(file);
+        } else if (file.type === 'application/pdf') {
+          // For PDFs, show a PDF icon preview
+          setPreviews(prev => ({ ...prev, [name]: '/pdf-icon.svg' }));
+        }
       }
     } else if (type === 'checkbox') {
       setFormData(prev => ({ ...prev, [name]: checked }));
@@ -195,68 +229,9 @@ export default function CreatorApplication() {
   const handleRemoveFile = (fieldName) => {
     setFormData(prev => ({ ...prev, [fieldName]: null }));
     setPreviews(prev => ({ ...prev, [fieldName]: null }));
+    setFileErrors(prev => ({ ...prev, [fieldName]: null }));
     const input = document.getElementById(fieldName);
     if (input) input.value = '';
-  };
-
-  const compressImage = (file, maxWidth = 1200, maxHeight = 400, quality = 0.8) => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target.result;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-          
-          if (width > maxWidth) {
-            height = (height * maxWidth) / width;
-            width = maxWidth;
-          }
-          if (height > maxHeight) {
-            width = (width * maxHeight) / height;
-            height = maxHeight;
-          }
-          
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-          
-          canvas.toBlob((blob) => {
-            resolve(new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), { type: 'image/jpeg' }));
-          }, 'image/jpeg', quality);
-        };
-      };
-    });
-  };
-
-  const uploadFile = async (file, folder, userId) => {
-    if (!file) return null;
-    
-    const compressedFile = await compressImage(file);
-    const fileName = `${userId}/${folder}/${Date.now()}.jpg`;
-    
-    const { data, error } = await supabase.storage
-      .from('creator-documents')
-      .upload(fileName, compressedFile, {
-        cacheControl: '3600',
-        upsert: false,
-        contentType: 'image/jpeg'
-      });
-    
-    if (error) {
-      console.error('Upload error:', error);
-      throw error;
-    }
-    
-    const { data: { publicUrl } } = supabase.storage
-      .from('creator-documents')
-      .getPublicUrl(fileName);
-    
-    return publicUrl;
   };
 
   const handleSubmit = async (e) => {
@@ -298,14 +273,34 @@ export default function CreatorApplication() {
       let digitalIdUrl = null;
       let businessLicenseUrl = null;
 
-      if (formData.shop_banner) {
-        shopBannerUrl = await uploadFile(formData.shop_banner, 'banners', user.id);
-      }
-      
-      digitalIdUrl = await uploadFile(formData.digital_id, 'ids', user.id);
-      
-      if (formData.business_license) {
-        businessLicenseUrl = await uploadFile(formData.business_license, 'licenses', user.id);
+      setUploadProgress({ banner: 0, id: 0, license: 0 });
+
+      try {
+        // Upload shop banner
+        if (formData.shop_banner) {
+          setUploadProgress(prev => ({ ...prev, banner: 20 }));
+          shopBannerUrl = await uploadCreatorBanner(formData.shop_banner, user.id);
+          setUploadProgress(prev => ({ ...prev, banner: 100 }));
+        }
+        
+        // Upload digital ID
+        setUploadProgress(prev => ({ ...prev, id: 20 }));
+        digitalIdUrl = await uploadCreatorID(formData.digital_id, user.id);
+        setUploadProgress(prev => ({ ...prev, id: 100 }));
+        
+        // Upload business license
+        if (formData.business_license) {
+          setUploadProgress(prev => ({ ...prev, license: 20 }));
+          businessLicenseUrl = await uploadCreatorLicense(formData.business_license, user.id);
+          setUploadProgress(prev => ({ ...prev, license: 100 }));
+        }
+      } catch (uploadError) {
+        console.error('Upload error:', uploadError);
+        toast.error(language === 'am' 
+          ? 'ሰነዶችን መስቀል አልተቻለም. እባክዎ እንደገና ይሞክሩ' 
+          : 'Failed to upload documents. Please try again');
+        setSubmitting(false);
+        return;
       }
 
       // Create creator profile
@@ -315,6 +310,7 @@ export default function CreatorApplication() {
           user_id: user.id,
           business_name: formData.business_name,
           business_type: formData.business_type,
+          full_name: formData.full_name,
           phone: formData.phone,
           email: formData.email || user.email,
           location: formData.location,
@@ -327,7 +323,6 @@ export default function CreatorApplication() {
           bank_account_number: formData.bank_account_number,
           bank_account_name: formData.bank_account_name,
           telebirr_number: formData.telebirr_number,
-          // Default pool settings
           default_prize_amount: formData.prize_amount,
           default_entry_fee: formData.entry_fee,
           default_total_seats: formData.total_seats,
@@ -361,14 +356,15 @@ export default function CreatorApplication() {
       );
     } finally {
       setSubmitting(false);
+      setUploadProgress({});
     }
   };
 
-  if (loading) {
-    return <LoadingSpinner fullPage message={language === 'am' ? 'በመጫን ላይ...' : 'Loading...'} />;
-  }
-
   const t = (am, en) => language === 'am' ? am : en;
+
+  if (loading) {
+    return <LoadingSpinner fullPage message={t('በመጫን ላይ...', 'Loading...')} />;
+  }
 
   return (
     <NoSSR>
@@ -413,7 +409,12 @@ export default function CreatorApplication() {
                     onRemove={() => handleRemoveFile('shop_banner')}
                     label={t('የመደብር ምስል ምረጥ', 'Choose shop banner')}
                     language={language}
+                    maxSize={2}
+                    compact={false}
                   />
+                  {fileErrors.shop_banner && (
+                    <p className="mt-1 text-xs text-red-500">{fileErrors.shop_banner}</p>
+                  )}
                 </div>
 
                 {/* Business Name */}
@@ -726,8 +727,12 @@ export default function CreatorApplication() {
                     onRemove={() => handleRemoveFile('digital_id')}
                     label={t('ዲጂታል መታወቂያ ምረጥ', 'Choose digital ID')}
                     language={language}
+                    maxSize={5}
                     required
                   />
+                  {fileErrors.digital_id && (
+                    <p className="mt-1 text-xs text-red-500">{fileErrors.digital_id}</p>
+                  )}
                 </div>
 
                 {/* Business License */}
@@ -747,7 +752,11 @@ export default function CreatorApplication() {
                     onRemove={() => handleRemoveFile('business_license')}
                     label={t('የንግድ ፍቃድ ምረጥ', 'Choose business license')}
                     language={language}
+                    maxSize={5}
                   />
+                  {fileErrors.business_license && (
+                    <p className="mt-1 text-xs text-red-500">{fileErrors.business_license}</p>
+                  )}
                 </div>
               </div>
 
