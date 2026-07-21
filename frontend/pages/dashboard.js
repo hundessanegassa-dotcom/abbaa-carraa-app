@@ -1,10 +1,10 @@
-// pages/dashboard.js - Complete Dashboard with Fixed Telegram Authentication
+// pages/dashboard.js - Complete Dashboard with PoolProductCard
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import DashboardLayout from '../components/DashboardLayout';
-import PoolCard from '../components/PoolCard';
+import PoolProductCard from '../components/PoolProductCard'; // ✅ UPDATED
 import LoadingSpinner from '../components/LoadingSpinner';
 import BackButton from '../components/BackButton';
 import toast from 'react-hot-toast';
@@ -934,7 +934,13 @@ export default function Dashboard() {
                 <>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {activePools.map((pool) => (
-                      <PoolCard key={pool.id} pool={pool} show3D={is3D} autoRotate={false} />
+                      <PoolProductCard 
+                        key={pool.id} 
+                        pool={pool} 
+                        featured={pool.is_featured} 
+                        language={language}
+                        show3D={is3D}
+                      />
                     ))}
                   </div>
                   {hasMore && (
