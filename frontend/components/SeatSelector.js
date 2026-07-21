@@ -1,4 +1,4 @@
-// components/SeatSelector.js - COMPLETE WITH 5 TIERS (Silver, Gold, Platinum, Diamond, Royal)
+// components/SeatSelector.js - OPTIMIZED for ALL Seat Counts
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -89,14 +89,11 @@ export const TIERS = {
   }
 };
 
-// Get all tier IDs
 export const TIER_IDS = ['silver', 'gold', 'platinum', 'diamond', 'royal'];
 
-// Get draw schedule text
 export const getDrawScheduleText = (tierId, language = 'am') => {
   const tier = TIERS[tierId];
   if (!tier) return language === 'am' ? 'ዕለታዊ' : 'Daily';
-  
   const schedule = tier.drawSchedule;
   if (language === 'am') {
     const map = { daily: 'ዕለታዊ እጣ', weekly: 'ሳምንታዊ እጣ', monthly: 'ወርሃዊ እጣ' };
@@ -110,21 +107,12 @@ export const getDrawScheduleText = (tierId, language = 'am') => {
   return map[schedule] || schedule;
 };
 
-// Get tier label in selected language
 export const getTierLabel = (tierId, language = 'am') => {
   const tier = TIERS[tierId];
   if (!tier) return tierId;
   if (language === 'am') return tier.labelAm;
   if (language === 'om') return tier.labelOm;
   return tier.labelEn;
-};
-
-// Get tier by contribution amount (for backward compatibility)
-export const getTierByContribution = (amount) => {
-  for (const [key, tier] of Object.entries(TIERS)) {
-    if (tier.contribution === amount) return tier;
-  }
-  return null;
 };
 
 export default function SeatSelector({
@@ -137,11 +125,12 @@ export default function SeatSelector({
   seatsPerRow: propSeatsPerRow = 20,
   maxSeats = 5,
   poolInfo,
-  programType, // 'merkato', 'city', 'regular'
+  programType,
   city,
   language = 'am',
   onSeatsSelected,
-  onCancel
+  onCancel,
+  endDate
 }) {
   const isMounted = useRef(true);
   const [selectedSeats, setSelectedSeats] = useState([]);
@@ -152,17 +141,38 @@ export default function SeatSelector({
   const [bookedSeats, setBookedSeats] = useState([]);
   const [reservedSeats, setReservedSeats] = useState([]);
   const [reservationTimer, setReservationTimer] = useState(null);
-  const [currentRow, setCurrentRow] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [seatInputMode, setSeatInputMode] = useState(false);
+  const [manualSeatInput, setManualSeatInput] = useState('');
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, mins: 0, secs: 0 });
   const seatGridRef = useRef(null);
 
-  // Get tier config if tierId is provided
+  // Get tier config
   const tier = tierId ? TIERS[tierId] : null;
-  
-  // Determine total seats and seats per row
   const totalSeats = propTotalSeats || tier?.seats || 2400;
   const seatsPerRow = propSeatsPerRow || 20;
   const rows = Math.ceil(totalSeats / seatsPerRow);
-  const rowLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const seatsPerPage = 100; // Show 100 seats per page for optimization
+  const totalPages = Math.ceil(totalSeats / seatsPerPage);
+
+  // Countdown Timer
+  useEffect(() => {
+    if (!endDate) return;
+    const target = new Date(endDate).getTime();
+    const update = () => {
+      const now = Date.now();
+      const diff = Math.max(0, target - now);
+      setTimeLeft({
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        mins: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+        secs: Math.floor((diff % (1000 * 60)) / 1000),
+      });
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [endDate]);
 
   // Cleanup
   useEffect(() => {
@@ -172,12 +182,11 @@ export default function SeatSelector({
     };
   }, [reservationTimer]);
 
-  // Fetch current user
+  // Fetch user
   useEffect(() => {
     const getUser = async () => {
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
+        const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) {
           toast.error(language === 'am' ? 'እባክዎ ወደ ስርዓት ይግቡ' : 'Please login to select seats');
           onCancel?.();
@@ -200,17 +209,14 @@ export default function SeatSelector({
     if (!sessionLoading && currentUser && (poolId || tierId)) {
       fetchBookedSeats();
       fetchUserReservations();
-      
       const interval = setInterval(() => {
         fetchBookedSeats();
         fetchUserReservations();
       }, 30000);
-      
       return () => clearInterval(interval);
     }
   }, [poolId, tierId, sessionLoading, currentUser]);
 
-  // Update total price
   useEffect(() => {
     if (isMounted.current) {
       const fee = entryFee || tier?.contribution || 0;
@@ -221,7 +227,6 @@ export default function SeatSelector({
   const fetchBookedSeats = async () => {
     try {
       let data;
-      
       if (programType === 'merkato') {
         const { data: d } = await supabase
           .from('merkato_vip_participants')
@@ -242,7 +247,6 @@ export default function SeatSelector({
           .from('pool_seats')
           .select('seat_number, status, reserved_by')
           .eq('pool_id', poolId);
-        
         const takenSeats = (d || [])
           .filter(seat => seat.status === 'taken')
           .map(seat => seat.seat_number);
@@ -250,14 +254,12 @@ export default function SeatSelector({
           .filter(seat => seat.status === 'reserved' && seat.reserved_by !== currentUser?.id)
           .map(seat => seat.seat_number);
         const allBooked = [...new Set([...takenSeats, ...reservedByOthers])];
-        
         if (isMounted.current) {
           setBookedSeats(allBooked);
           setLoading(false);
         }
         return;
       }
-      
       const allBookedSeats = [];
       if (data) {
         data.forEach(participant => {
@@ -266,7 +268,6 @@ export default function SeatSelector({
           }
         });
       }
-      
       if (isMounted.current) {
         setBookedSeats([...new Set(allBookedSeats)]);
         setLoading(false);
@@ -279,7 +280,6 @@ export default function SeatSelector({
 
   const fetchUserReservations = async () => {
     if (!currentUser) return;
-    
     try {
       if (poolId) {
         const { data, error } = await supabase
@@ -289,7 +289,6 @@ export default function SeatSelector({
           .eq('reserved_by', currentUser.id)
           .eq('status', 'reserved')
           .gte('reserved_until', new Date().toISOString());
-        
         if (!error && data && data.length > 0) {
           const reservedSeatNumbers = data.map(r => r.seat_number);
           setReservedSeats(reservedSeatNumbers);
@@ -297,15 +296,12 @@ export default function SeatSelector({
         }
         return;
       }
-      
-      // For VIP programs, check reservations table
       const { data, error } = await supabase
         .from('vip_seat_reservations')
         .select('seat_number, expires_at')
         .eq('user_id', currentUser.id)
         .eq('pool_id', poolId || `${programType}_${tierId}_${city || 'default'}`)
         .gte('expires_at', new Date().toISOString());
-      
       if (!error && data && data.length > 0) {
         const reservedSeatNumbers = data.map(r => r.seat_number);
         setReservedSeats(reservedSeatNumbers);
@@ -318,9 +314,7 @@ export default function SeatSelector({
 
   const reserveSeatsInDB = async (seatNumbers) => {
     if (!currentUser) return false;
-    
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-    
     try {
       if (poolId) {
         for (const seatNumber of seatNumbers) {
@@ -335,7 +329,6 @@ export default function SeatSelector({
               reserved_until: expiresAt,
               reserved_at: new Date().toISOString()
             }, { onConflict: 'pool_id, seat_number' });
-          
           if (error) {
             console.error('Reserve error:', error);
             return false;
@@ -349,18 +342,14 @@ export default function SeatSelector({
           expires_at: expiresAt,
           created_at: new Date().toISOString()
         }));
-        
         const { error } = await supabase
           .from('vip_seat_reservations')
           .upsert(reservations, { onConflict: 'pool_id, seat_number' });
-        
         if (error) {
           console.error('Reserve error:', error);
           return false;
         }
       }
-      
-      // Set timer to release seats after 10 minutes
       if (reservationTimer) clearTimeout(reservationTimer);
       const timer = setTimeout(() => {
         releaseUserReservations();
@@ -368,7 +357,6 @@ export default function SeatSelector({
         onCancel?.();
       }, 10 * 60 * 1000);
       setReservationTimer(timer);
-      
       return true;
     } catch (error) {
       console.error('Error reserving seats:', error);
@@ -378,7 +366,6 @@ export default function SeatSelector({
 
   const releaseUserReservations = async () => {
     if (!currentUser) return;
-    
     try {
       if (poolId) {
         await supabase
@@ -400,7 +387,6 @@ export default function SeatSelector({
           .eq('user_id', currentUser.id)
           .eq('pool_id', poolId || `${programType}_${tierId}_${city || 'default'}`);
       }
-      
       setReservedSeats([]);
       setSelectedSeats([]);
     } catch (error) {
@@ -413,9 +399,7 @@ export default function SeatSelector({
       toast.error(language === 'am' ? `መቀመጫ ${seatNum} ተይዟል` : `Seat ${seatNum} is already taken`);
       return;
     }
-
     const isSelected = selectedSeats.includes(seatNum);
-
     if (isSelected) {
       if (poolId) {
         await supabase
@@ -438,7 +422,6 @@ export default function SeatSelector({
           .eq('seat_number', seatNum)
           .eq('user_id', currentUser.id);
       }
-      
       setSelectedSeats(selectedSeats.filter(s => s !== seatNum));
       setReservedSeats(reservedSeats.filter(s => s !== seatNum));
     } else {
@@ -446,7 +429,6 @@ export default function SeatSelector({
         toast.error(language === 'am' ? `እስከ ${maxSeats} መቀመጫዎች ብቻ መምረጥ ይችላሉ` : `You can only select up to ${maxSeats} seats`);
         return;
       }
-      
       const success = await reserveSeatsInDB([seatNum]);
       if (success) {
         setSelectedSeats([...selectedSeats, seatNum]);
@@ -459,14 +441,44 @@ export default function SeatSelector({
     }
   };
 
+  const handleManualSeatSelection = async () => {
+    if (!manualSeatInput.trim()) {
+      toast.error(language === 'am' ? 'እባክዎ መቀመጫ ቁጥር ያስገቡ' : 'Please enter seat number(s)');
+      return;
+    }
+    const seatNumbers = manualSeatInput
+      .split(',')
+      .map(s => parseInt(s.trim()))
+      .filter(n => !isNaN(n) && n > 0 && n <= totalSeats);
+    if (seatNumbers.length === 0) {
+      toast.error(language === 'am' ? 'እባክዎ ትክክለኛ መቀመጫ ቁጥሮች ያስገቡ' : 'Please enter valid seat numbers');
+      return;
+    }
+    if (selectedSeats.length + seatNumbers.length > maxSeats) {
+      toast.error(language === 'am' ? `እስከ ${maxSeats} መቀመጫዎች ብቻ መምረጥ ይችላሉ` : `You can only select up to ${maxSeats} seats`);
+      return;
+    }
+    const takenSeats = seatNumbers.filter(n => bookedSeats.includes(n));
+    if (takenSeats.length > 0) {
+      toast.error(language === 'am' ? `መቀመጫዎች ${takenSeats.join(', ')} ተይዘዋል` : `Seats ${takenSeats.join(', ')} are taken`);
+      return;
+    }
+    const success = await reserveSeatsInDB(seatNumbers);
+    if (success) {
+      setSelectedSeats([...selectedSeats, ...seatNumbers]);
+      setReservedSeats([...reservedSeats, ...seatNumbers]);
+      setManualSeatInput('');
+      setSeatInputMode(false);
+      toast.success(language === 'am' ? `${seatNumbers.length} መቀመጫዎች ተይዘዋል` : `${seatNumbers.length} seats reserved`);
+    }
+  };
+
   const confirmSelection = async () => {
     if (selectedSeats.length === 0) {
       toast.error(language === 'am' ? 'እባክዎ ቢያንስ አንድ መቀመጫ ይምረጡ' : 'Please select at least one seat');
       return;
     }
-    
     if (reservationTimer) clearTimeout(reservationTimer);
-    
     onSeatsSelected({
       seats: selectedSeats,
       totalAmount: totalPrice,
@@ -481,13 +493,18 @@ export default function SeatSelector({
     toast.success(language === 'am' ? 'መቀመጫዎች ታድሰዋል! ✅' : 'Seats refreshed! ✅');
   };
 
-  const scrollToRow = (rowIndex) => {
-    setCurrentRow(rowIndex);
-    if (seatGridRef.current) {
-      const rowElement = document.getElementById(`row-${rowIndex}`);
-      if (rowElement) rowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // Get current page seats
+  const getCurrentPageSeats = () => {
+    const start = currentPage * seatsPerPage;
+    const end = Math.min(start + seatsPerPage, totalSeats);
+    const pageSeats = [];
+    for (let i = start; i < end; i++) {
+      pageSeats.push(i + 1);
     }
+    return pageSeats;
   };
+
+  const currentPageSeats = getCurrentPageSeats();
 
   if (sessionLoading || loading) {
     return (
@@ -511,21 +528,7 @@ export default function SeatSelector({
     );
   }
 
-  // Generate seat rows
-  const seatRows = [];
-  for (let row = 0; row < rows; row++) {
-    const startSeat = row * seatsPerRow + 1;
-    const endSeat = Math.min(startSeat + seatsPerRow - 1, totalSeats);
-    const rowSeats = [];
-    for (let seat = startSeat; seat <= endSeat; seat++) {
-      rowSeats.push(seat);
-    }
-    seatRows.push(rowSeats);
-  }
-
-  const availableCount = seatRows.flat().filter(s => 
-    !bookedSeats.includes(s) && !selectedSeats.includes(s) && !reservedSeats.includes(s)
-  ).length;
+  const availableCount = totalSeats - bookedSeats.length - selectedSeats.length;
   const takenCount = bookedSeats.length;
   const fee = entryFee || tier?.contribution || 0;
   const prize = poolInfo?.prize || tier?.prize || 0;
@@ -540,7 +543,7 @@ export default function SeatSelector({
               <h2 className="text-lg font-bold text-gray-800">
                 {language === 'am' ? 'መቀመጫዎችን ይምረጡ' : 'Select Your Seats'}
               </h2>
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex flex-wrap items-center gap-2 text-sm">
                 {tier && (
                   <span className={`px-2 py-0.5 rounded-full text-white text-xs ${tier.badgeColor}`}>
                     {language === 'am' ? tier.labelAm : (language === 'om' ? tier.labelOm : tier.labelEn)}
@@ -552,41 +555,53 @@ export default function SeatSelector({
                 <span className="text-gray-600">
                   {language === 'am' ? 'ሽልማት:' : 'Prize:'} ETB {prize.toLocaleString()}
                 </span>
+                <span className="text-gray-600">
+                  {language === 'am' ? 'ጠቅላላ መቀመጫዎች:' : 'Total Seats:'} {totalSeats.toLocaleString()}
+                </span>
               </div>
             </div>
             <div className="flex gap-2">
-              <button 
-                onClick={refreshSeats} 
-                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-xs transition flex items-center gap-1"
-              >
+              <button onClick={refreshSeats} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-xs transition flex items-center gap-1">
                 🔄 Refresh
               </button>
               <button onClick={onClose || onCancel} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
             </div>
           </div>
-          {/* Row Navigator */}
-          {rows > 10 && (
-            <div className="flex overflow-x-auto gap-1 mt-3 pb-2">
-              {Array.from({ length: Math.min(rows, 20) }).map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => scrollToRow(idx)}
-                  className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap transition ${
-                    currentRow === idx
-                      ? 'bg-green-600 text-white'
-                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {language === 'am' ? `ረድፍ ${idx + 1}` : `Row ${rowLetters[idx] || (idx + 1)}`}
-                </button>
-              ))}
-              {rows > 20 && <span className="px-2 py-1 text-xs text-gray-500">+{rows - 20} more</span>}
+
+          {/* COUNTDOWN TIMER - With Labels */}
+          {endDate && (
+            <div className="mt-3 bg-white/80 backdrop-blur-sm rounded-xl py-2 px-4 text-center border border-gray-200">
+              <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">
+                {language === 'am' ? 'የሚቀረው ጊዜ' : 'Time Remaining'}
+              </p>
+              <div className="flex justify-center items-center gap-3 font-mono text-lg font-bold">
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl text-green-700">{String(timeLeft.days).padStart(2, '0')}</span>
+                  <span className="text-[8px] text-gray-500 uppercase tracking-wider">{language === 'am' ? 'ቀናት' : 'Days'}</span>
+                </div>
+                <span className="text-2xl text-gray-400">:</span>
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl text-green-700">{String(timeLeft.hours).padStart(2, '0')}</span>
+                  <span className="text-[8px] text-gray-500 uppercase tracking-wider">{language === 'am' ? 'ሰዓታት' : 'Hrs'}</span>
+                </div>
+                <span className="text-2xl text-gray-400">:</span>
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl text-green-700">{String(timeLeft.mins).padStart(2, '0')}</span>
+                  <span className="text-[8px] text-gray-500 uppercase tracking-wider">{language === 'am' ? 'ደቂቃ' : 'Min'}</span>
+                </div>
+                <span className="text-2xl text-gray-400">:</span>
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl text-green-700">{String(timeLeft.secs).padStart(2, '0')}</span>
+                  <span className="text-[8px] text-gray-500 uppercase tracking-wider">{language === 'am' ? 'ሰከንድ' : 'Sec'}</span>
+                </div>
+              </div>
             </div>
           )}
         </div>
 
         {/* Seat Grid */}
         <div className="flex-1 overflow-y-auto p-4">
+          {/* Legend */}
           <div className="flex flex-wrap justify-center gap-4 mb-4 pb-3 border-b">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 bg-gray-200 border border-gray-300 rounded"></div>
@@ -628,64 +643,138 @@ export default function SeatSelector({
             <div className="w-full h-px bg-gray-300 mt-2"></div>
           </div>
 
-          {/* Seat Grid - Theater Style */}
-          <div ref={seatGridRef} className="space-y-1.5 max-h-[50vh] overflow-y-auto p-2">
-            {seatRows.map((rowSeats, rowIndex) => (
-              <div key={rowIndex} id={`row-${rowIndex}`} className="flex flex-wrap items-center gap-1">
-                <div className="w-8 text-[10px] font-mono font-semibold text-gray-400 text-right">
-                  {rowLetters[rowIndex] || (rowIndex + 1)}
-                </div>
-                <div className="flex flex-wrap gap-1 flex-1">
-                  {rowSeats.map(seatNum => {
-                    const isTaken = bookedSeats.includes(seatNum);
-                    const isSelected = selectedSeats.includes(seatNum);
-                    const isReserved = reservedSeats.includes(seatNum) && !isSelected;
-                    
-                    let bgColor = 'bg-white border border-gray-300 hover:bg-gray-100 cursor-pointer';
-                    let textColor = 'text-gray-700';
-                    let size = 'w-8 h-8 text-[10px]';
-                    
-                    if (isSelected) {
-                      bgColor = 'bg-green-600 border-green-700';
-                      textColor = 'text-white';
-                      size = 'w-8 h-8 text-[10px] ring-2 ring-green-300 ring-offset-1';
-                    }
-                    if (isTaken) {
-                      bgColor = 'bg-red-400 border-red-500';
-                      textColor = 'text-white opacity-60';
-                      size = 'w-8 h-8 text-[10px] cursor-not-allowed';
-                    }
-                    if (isReserved) {
-                      bgColor = 'bg-yellow-400 border-yellow-500 animate-pulse';
-                      textColor = 'text-gray-700';
-                    }
-
-                    return (
-                      <button
-                        key={seatNum}
-                        onClick={() => !isTaken && handleSeatClick(seatNum)}
-                        disabled={isTaken}
-                        className={`${size} rounded-lg flex items-center justify-center font-mono font-semibold transition-all ${bgColor} ${textColor}`}
-                        title={isTaken ? `Seat ${seatNum} taken` : `Select Seat ${seatNum}`}
-                      >
-                        {seatNum}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+          {/* Seat Display Toggle */}
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSeatInputMode(false)}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition ${
+                  !seatInputMode ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                }`}
+              >
+                {language === 'am' ? 'መቀመጫ ምረጥ' : 'Select Seats'}
+              </button>
+              <button
+                onClick={() => setSeatInputMode(true)}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition ${
+                  seatInputMode ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                }`}
+              >
+                {language === 'am' ? 'በቁጥር አስገባ' : 'Enter Numbers'}
+              </button>
+            </div>
+            <span className="text-xs text-gray-400">
+              {language === 'am' ? `${totalSeats.toLocaleString()} መቀመጫዎች` : `${totalSeats.toLocaleString()} seats`}
+            </span>
           </div>
 
-          {totalSeats > 500 && (
-            <p className="text-xs text-gray-400 text-center mt-4">
-              {language === 'am' ? `ሁሉም ${totalSeats.toLocaleString()} መቀመጫዎች እዚህ ይታያሉ` : `All ${totalSeats.toLocaleString()} seats are shown here`}
-            </p>
+          {/* Seat Input Mode */}
+          {seatInputMode && (
+            <div className="bg-white rounded-xl p-4 mb-4 border border-gray-200">
+              <p className="text-sm text-gray-600 mb-2">
+                {language === 'am' 
+                  ? `የመቀመጫ ቁጥሮችን በነጠላ ሰረዝ ይለያዩ (ከ1 እስከ ${totalSeats.toLocaleString()})`
+                  : `Enter seat numbers separated by commas (1 to ${totalSeats.toLocaleString()})`}
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={manualSeatInput}
+                  onChange={(e) => setManualSeatInput(e.target.value)}
+                  placeholder={language === 'am' ? 'ለምሳሌ: 5, 12, 23' : 'Example: 5, 12, 23'}
+                  className="flex-1 border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 text-sm"
+                />
+                <button
+                  onClick={handleManualSeatSelection}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold text-sm"
+                >
+                  {language === 'am' ? 'አስይዝ' : 'Reserve'}
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-2">
+                {language === 'am' ? `ከፍተኛ ${maxSeats} መቀመጫዎች` : `Maximum ${maxSeats} seats`}
+              </p>
+            </div>
           )}
+
+          {/* Paginated Seat Grid - OPTIMIZED */}
+          {!seatInputMode && (
+            <>
+              {/* Page Navigation */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mb-4">
+                  <button
+                    onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+                    disabled={currentPage === 0}
+                    className="px-3 py-1 rounded-lg text-xs font-medium bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    ◀
+                  </button>
+                  <span className="text-xs text-gray-600">
+                    {language === 'am' ? `ገጽ ${currentPage + 1} ከ ${totalPages}` : `Page ${currentPage + 1} of ${totalPages}`}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
+                    disabled={currentPage === totalPages - 1}
+                    className="px-3 py-1 rounded-lg text-xs font-medium bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    ▶                  </button>
+                </div>
+              )}
+
+              {/* Optimized Seat Grid - Only show 100 seats per page */}
+              <div ref={seatGridRef} className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-1.5 max-h-[40vh] overflow-y-auto p-2">
+                {currentPageSeats.map(seatNum => {
+                  const isTaken = bookedSeats.includes(seatNum);
+                  const isSelected = selectedSeats.includes(seatNum);
+                  const isReserved = reservedSeats.includes(seatNum) && !isSelected;
+                  
+                  let bgColor = 'bg-white border border-gray-300 hover:bg-gray-100 cursor-pointer';
+                  let textColor = 'text-gray-700';
+                  let size = 'w-8 h-8 text-[10px]';
+                  
+                  if (isSelected) {
+                    bgColor = 'bg-green-600 border-green-700';
+                    textColor = 'text-white';
+                    size = 'w-8 h-8 text-[10px] ring-2 ring-green-300 ring-offset-1';
+                  }
+                  if (isTaken) {
+                    bgColor = 'bg-red-400 border-red-500';
+                    textColor = 'text-white opacity-60';
+                    size = 'w-8 h-8 text-[10px] cursor-not-allowed';
+                  }
+                  if (isReserved) {
+                    bgColor = 'bg-yellow-400 border-yellow-500 animate-pulse';
+                    textColor = 'text-gray-700';
+                  }
+
+                  return (
+                    <button
+                      key={seatNum}
+                      onClick={() => !isTaken && handleSeatClick(seatNum)}
+                      disabled={isTaken}
+                      className={`${size} rounded-lg flex items-center justify-center font-mono font-semibold transition-all ${bgColor} ${textColor}`}
+                      title={isTaken ? `Seat ${seatNum} taken` : `Select Seat ${seatNum}`}
+                    >
+                      {seatNum}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* Total seats info */}
+          <p className="text-xs text-gray-400 text-center mt-4">
+            {language === 'am' 
+              ? `ሁሉም ${totalSeats.toLocaleString()} መቀመጫዎች ለምርጫ ዝግጁ ናቸው (ገጽ ${currentPage + 1}/${totalPages})`
+              : `All ${totalSeats.toLocaleString()} seats are available (Page ${currentPage + 1}/${totalPages})`}
+          </p>
           
+          {/* Selection Footer */}
           {selectedSeats.length > 0 && (
             <div className="sticky bottom-0 bg-gray-100 border-t border-gray-200 p-4 mt-4">
-              <div className="flex justify-between items-center flex-wrap gap-3">
+              <div className="flex flex-wrap justify-between items-center gap-3">
                 <div>
                   <p className="text-xs text-gray-500">{language === 'am' ? 'የተመረጡ መቀመጫዎች' : 'Selected Seats'}</p>
                   <p className="font-bold text-sm">{selectedSeats.sort((a,b)=>a-b).join(', ')}</p>
