@@ -1,11 +1,11 @@
-// pages/admin/bank-transfers.js - FIXED with AdminLayout
+// pages/admin/bank-transfers.js - COMPLETE with improvements
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
-import AdminLayout from '../../components/admin/AdminLayout'; // ✅ ADDED
+import AdminLayout from '../../components/admin/AdminLayout';
 
 export default function AdminBankTransfers() {
   const router = useRouter();
@@ -16,6 +16,12 @@ export default function AdminBankTransfers() {
   const [profile, setProfile] = useState(null);
   const [selectedTransfer, setSelectedTransfer] = useState(null);
   const [processing, setProcessing] = useState(false);
+  const [stats, setStats] = useState({
+    pending: 0,
+    verified: 0,
+    rejected: 0,
+    total: 0
+  });
 
   useEffect(() => {
     checkAdmin();
@@ -74,6 +80,18 @@ export default function AdminBankTransfers() {
 
       if (error) throw error;
       setTransfers(data || []);
+      
+      // Get stats
+      const { data: allTransfers } = await supabase
+        .from('bank_transfers')
+        .select('status');
+      
+      if (allTransfers) {
+        const pending = allTransfers.filter(t => t.status === 'pending').length;
+        const verified = allTransfers.filter(t => t.status === 'verified').length;
+        const rejected = allTransfers.filter(t => t.status === 'rejected').length;
+        setStats({ pending, verified, rejected, total: allTransfers.length });
+      }
     } catch (error) {
       console.error('Error fetching transfers:', error);
       toast.error('Failed to load transfers');
@@ -172,6 +190,15 @@ export default function AdminBankTransfers() {
           metadata: { pool_id: poolId, seat_numbers: seatNumbers }
         });
 
+      // 7. Admin notification
+      await supabase
+        .from('admin_notifications')
+        .insert({
+          title: '✅ Bank Transfer Verified',
+          message: `Payment of ETB ${amount.toLocaleString()} verified for ${pool?.prize_name || 'Pool'}`,
+          type: 'payment_verified'
+        });
+
       toast.success('Payment verified! User seats confirmed.', { id: toastId });
       await fetchTransfers();
       setSelectedTransfer(null);
@@ -193,7 +220,8 @@ export default function AdminBankTransfers() {
         .from('bank_transfers')
         .update({ 
           status: 'rejected',
-          rejected_at: new Date().toISOString()
+          rejected_at: new Date().toISOString(),
+          rejected_by: user?.id
         })
         .eq('id', transferId);
 
@@ -221,6 +249,15 @@ export default function AdminBankTransfers() {
           type: 'payment_rejected',
           title: '❌ Payment Rejected',
           message: `Your payment of ETB ${seatNumbers?.length * 100 || 'N/A'} could not be verified. Please contact support or try again.`,
+        });
+
+      // 4. Admin notification
+      await supabase
+        .from('admin_notifications')
+        .insert({
+          title: '❌ Bank Transfer Rejected',
+          message: `Payment rejected for ${seatNumbers?.length || 0} seats`,
+          type: 'payment_rejected'
         });
 
       toast.success('Payment rejected', { id: toastId });
@@ -252,6 +289,26 @@ export default function AdminBankTransfers() {
       profile={profile}
       activeTab="bank-transfers"
     >
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-yellow-50 rounded-xl p-4 text-center border border-yellow-200">
+          <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+          <p className="text-xs text-gray-500">⏳ Pending</p>
+        </div>
+        <div className="bg-green-50 rounded-xl p-4 text-center border border-green-200">
+          <p className="text-2xl font-bold text-green-600">{stats.verified}</p>
+          <p className="text-xs text-gray-500">✅ Verified</p>
+        </div>
+        <div className="bg-red-50 rounded-xl p-4 text-center border border-red-200">
+          <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
+          <p className="text-xs text-gray-500">❌ Rejected</p>
+        </div>
+        <div className="bg-blue-50 rounded-xl p-4 text-center border border-blue-200">
+          <p className="text-2xl font-bold text-blue-600">{stats.total}</p>
+          <p className="text-xs text-gray-500">📋 Total</p>
+        </div>
+      </div>
+
       {transfers.length === 0 ? (
         <div className="bg-white rounded-xl shadow p-12 text-center border border-gray-200">
           <div className="text-5xl mb-3">✅</div>
@@ -265,55 +322,55 @@ export default function AdminBankTransfers() {
           </button>
         </div>
       ) : (
-        <>
-          <div className="bg-white rounded-xl shadow overflow-hidden border border-gray-200">
-            <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
-              <h2 className="font-bold text-lg">Pending Transfers ({transfers.length})</h2>
-              <button
-                onClick={fetchTransfers}
-                className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-700 transition flex items-center gap-1"
-              >
-                🔄 Refresh
-              </button>
-            </div>
-            <div className="divide-y divide-gray-200">
-              {transfers.map((transfer) => (
-                <div key={transfer.id} className="p-5 hover:bg-gray-50 transition">
-                  <div className="flex flex-wrap justify-between items-start gap-4">
-                    <div className="space-y-1 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-bold text-lg">{transfer.pools?.prize_name}</h3>
-                        <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full">
-                          Pending
-                        </span>
-                      </div>
-                      <p className="text-gray-600 text-sm flex items-center gap-1">
-                        👤 {transfer.profiles?.full_name} 
-                        <span className="text-gray-400">({transfer.profiles?.email})</span>
-                      </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 text-sm">
-                        <p className="text-gray-500">📞 {transfer.profiles?.phone || 'No phone'}</p>
-                        <p className="text-gray-500">💰 ETB {transfer.amount?.toLocaleString()}</p>
-                        <p className="text-gray-500">🔖 {transfer.reference}</p>
-                        <p className="text-gray-500">🎟️ Seats: {transfer.seat_numbers?.join(', ') || 'N/A'}</p>
-                        <p className="text-gray-400 text-xs col-span-full">
-                          📅 Submitted: {new Date(transfer.created_at).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setSelectedTransfer(transfer)}
-                      disabled={processing}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition disabled:opacity-50 flex items-center gap-1"
-                    >
-                      📸 View Proof
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+        <div className="bg-white rounded-xl shadow overflow-hidden border border-gray-200">
+          <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
+            <h2 className="font-bold text-lg">Pending Transfers ({transfers.length})</h2>
+            <button
+              onClick={fetchTransfers}
+              className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-700 transition flex items-center gap-1"
+            >
+              🔄 Refresh
+            </button>
           </div>
-        </>
+          <div className="divide-y divide-gray-200">
+            {transfers.map((transfer) => (
+              <div key={transfer.id} className="p-5 hover:bg-gray-50 transition">
+                <div className="flex flex-wrap justify-between items-start gap-4">
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-bold text-lg">{transfer.pools?.prize_name || 'Unknown Pool'}</h3>
+                      <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full">
+                        ⏳ Pending
+                      </span>
+                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">
+                        ETB {transfer.amount?.toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="text-gray-600 text-sm flex items-center gap-1">
+                      👤 {transfer.profiles?.full_name || 'Unknown User'} 
+                      <span className="text-gray-400">({transfer.profiles?.email || 'No email'})</span>
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 text-sm">
+                      <p className="text-gray-500">📞 {transfer.profiles?.phone || 'No phone'}</p>
+                      <p className="text-gray-500">🔖 {transfer.reference || 'No reference'}</p>
+                      <p className="text-gray-500">🎟️ Seats: {transfer.seat_numbers?.join(', ') || 'N/A'}</p>
+                      <p className="text-gray-400 text-xs col-span-full">
+                        📅 Submitted: {new Date(transfer.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedTransfer(transfer)}
+                    disabled={processing}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition disabled:opacity-50 flex items-center gap-1"
+                  >
+                    📸 View Proof
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Proof Modal */}
@@ -331,26 +388,38 @@ export default function AdminBankTransfers() {
               </button>
             </div>
             <div className="p-6">
-              {selectedTransfer.proof_image && (
-                <div className="mb-4 border rounded-lg overflow-hidden">
+              {/* Proof Image */}
+              <div className="mb-4 border rounded-lg overflow-hidden bg-gray-100">
+                {selectedTransfer.proof_image ? (
                   <img
                     src={selectedTransfer.proof_image}
                     alt="Payment Proof"
-                    className="w-full h-auto"
+                    className="w-full h-auto max-h-[400px] object-contain"
+                    onError={(e) => {
+                      e.target.src = '/placeholder-image.png';
+                      e.target.alt = 'Image not available';
+                    }}
                   />
-                </div>
-              )}
+                ) : (
+                  <div className="p-8 text-center text-gray-400">
+                    <div className="text-4xl mb-2">🖼️</div>
+                    <p>No proof image uploaded</p>
+                  </div>
+                )}
+              </div>
 
+              {/* Transfer Details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-gray-50 rounded-lg p-4 mb-6">
-                <p><strong>👤 User:</strong> {selectedTransfer.profiles?.full_name}</p>
+                <p><strong>👤 User:</strong> {selectedTransfer.profiles?.full_name || 'N/A'}</p>
                 <p><strong>📞 Phone:</strong> {selectedTransfer.profiles?.phone || 'N/A'}</p>
                 <p><strong>💰 Amount:</strong> ETB {selectedTransfer.amount?.toLocaleString()}</p>
-                <p><strong>🔖 Reference:</strong> {selectedTransfer.reference}</p>
-                <p><strong>🎯 Pool:</strong> {selectedTransfer.pools?.prize_name}</p>
+                <p><strong>🔖 Reference:</strong> {selectedTransfer.reference || 'N/A'}</p>
+                <p><strong>🎯 Pool:</strong> {selectedTransfer.pools?.prize_name || 'N/A'}</p>
                 <p><strong>🎟️ Seats:</strong> {selectedTransfer.seat_numbers?.join(', ') || 'N/A'}</p>
                 <p className="col-span-full"><strong>📅 Submitted:</strong> {new Date(selectedTransfer.created_at).toLocaleString()}</p>
               </div>
 
+              {/* Action Buttons */}
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={() => verifyTransfer(
