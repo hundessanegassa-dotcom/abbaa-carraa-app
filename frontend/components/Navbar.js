@@ -1,4 +1,4 @@
-// components/Navbar.js - FIXED with error handling for missing tables
+// components/Navbar.js - UPDATED with Creator Dashboard link
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
@@ -26,6 +26,8 @@ export default function Navbar() {
   const [hasOrgApplication, setHasOrgApplication] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isCreator, setIsCreator] = useState(false);
+  const [language, setLanguage] = useState('am');
 
   // HIDE NAVBAR ON HOMEPAGE
   if (router.pathname === '/') {
@@ -34,6 +36,10 @@ export default function Navbar() {
 
   useEffect(() => {
     if (isClient) {
+      const savedLang = localStorage.getItem('appLanguage');
+      if (savedLang === 'am' || savedLang === 'en') {
+        setLanguage(savedLang);
+      }
       getUser();
       window.addEventListener('scroll', handleScroll);
       return () => window.removeEventListener('scroll', handleScroll);
@@ -61,6 +67,24 @@ export default function Navbar() {
         // Check if user is admin
         const { isAdmin: adminStatus } = await checkAdminStatus();
         setIsAdmin(adminStatus);
+        
+        // Check if user is a creator
+        try {
+          const { data: creatorCheck, error: creatorError } = await supabase
+            .from('pool_creators')
+            .select('id, verification_status')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          if (!creatorError && creatorCheck) {
+            setIsCreator(!!creatorCheck);
+          } else {
+            setIsCreator(false);
+          }
+        } catch (creatorErr) {
+          console.log('Creator table may not exist yet:', creatorErr.message);
+          setIsCreator(false);
+        }
         
         // ✅ FIXED: Wrap each query in try/catch to prevent 406 errors
         // Check Agent Application
@@ -160,6 +184,7 @@ export default function Navbar() {
       setUserRole(null);
       setUserType(null);
       setIsAdmin(false);
+      setIsCreator(false);
       setHasAgentApplication(false);
       setHasVendorApplication(false);
       setHasOrgApplication(false);
@@ -175,6 +200,7 @@ export default function Navbar() {
   };
 
   const getDashboardLink = () => {
+    if (isCreator) return '/creator/dashboard';
     if (userType === 'agent') return '/agent/dashboard';
     if (userType === 'vendor') return '/vendor/dashboard';
     if (userType === 'organization') return '/organization/dashboard';
@@ -184,10 +210,11 @@ export default function Navbar() {
 
   const getCreateAction = () => {
     if (!user) return null;
-    if (userType === 'agent') return { text: 'Create Pool', link: '/create-pool', icon: '📦' };
-    if (userType === 'vendor') return { text: 'List Product', link: '/vendor/listings/create', icon: '🏪' };
-    if (userType === 'organization') return { text: 'Create Private Pool', link: '/create-pool?type=private', icon: '🏊' };
-    if (userRole === 'admin') return { text: 'Create Pool (20%)', link: '/create-pool', icon: '👑' };
+    if (isCreator) return { text: language === 'am' ? 'ፑል ፍጠር' : 'Create Pool', link: '/creator/create-pool', icon: '📦' };
+    if (userType === 'agent') return { text: language === 'am' ? 'ፑል ፍጠር' : 'Create Pool', link: '/create-pool', icon: '📦' };
+    if (userType === 'vendor') return { text: language === 'am' ? 'ምርት ዘርዝር' : 'List Product', link: '/vendor/listings/create', icon: '🏪' };
+    if (userType === 'organization') return { text: language === 'am' ? 'የግል ፑል ፍጠር' : 'Create Private Pool', link: '/create-pool?type=private', icon: '🏊' };
+    if (userRole === 'admin') return { text: language === 'am' ? 'ፑል ፍጠር (20%)' : 'Create Pool (20%)', link: '/create-pool', icon: '👑' };
     return null;
   };
 
@@ -196,14 +223,18 @@ export default function Navbar() {
     if (!user) return links;
     const isIndividual = !userType || userType === 'individual';
     
+    // Show "Become Creator" if not already a creator
+    if (isIndividual && !isCreator) {
+      links.push({ text: language === 'am' ? '🏪 የፑል ፈጣሪ ይሁኑ' : '🏪 Become Pool Creator', link: '/creator/apply', color: 'text-green-600' });
+    }
     if (isIndividual && !hasAgentApplication) {
-      links.push({ text: '🤝 Become Agent', link: '/become-agent', color: 'text-yellow-600' });
+      links.push({ text: language === 'am' ? '🤝 ወኪል ይሁኑ' : '🤝 Become Agent', link: '/become-agent', color: 'text-yellow-600' });
     }
     if (isIndividual && !hasVendorApplication) {
-      links.push({ text: '🏪 Become Vendor', link: '/become-vendor', color: 'text-purple-600' });
+      links.push({ text: language === 'am' ? '🏪 ነጋዴ ይሁኑ' : '🏪 Become Vendor', link: '/become-vendor', color: 'text-purple-600' });
     }
     if (isIndividual && !hasOrgApplication) {
-      links.push({ text: '🏢 Become Organization', link: '/become-organization', color: 'text-cyan-600' });
+      links.push({ text: language === 'am' ? '🏢 ድርጅት ይሁኑ' : '🏢 Become Organization', link: '/become-organization', color: 'text-cyan-600' });
     }
     return links;
   };
@@ -260,6 +291,13 @@ export default function Navbar() {
               <Link href="/winners" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🏆 Winners </Link>
               <Link href="/how-it-works" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🎯 How It Works </Link>
               
+              {/* Creator Shop Link */}
+              {isCreator && (
+                <Link href="/creator/dashboard" className="px-2 lg:px-3 py-2 text-sm text-green-700 hover:bg-green-50 rounded-lg transition flex items-center gap-1">
+                  🏪 {language === 'am' ? 'የእኔ መደብር' : 'My Shop'}
+                </Link>
+              )}
+              
               {/* Admin Panel Link */}
               {isAdmin && (
                 <Link href="/admin/dashboard" className="ml-2 bg-red-600 text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-red-700 transition flex items-center gap-1">
@@ -298,7 +336,7 @@ export default function Navbar() {
                       {user.email?.[0]?.toUpperCase() || 'U'}
                     </div>
                     <span className="hidden lg:inline text-xs sm:text-sm font-medium text-gray-700 max-w-[80px] truncate capitalize">
-                      {userType || 'User'}
+                      {isCreator ? (language === 'am' ? 'ፈጣሪ' : 'Creator') : userType || 'User'}
                     </span>
                     <svg className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -308,7 +346,9 @@ export default function Navbar() {
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                     <div className="p-2">
                       <div className="px-3 py-2 border-b mb-1">
-                        <p className="text-sm font-semibold text-gray-800 capitalize">{userType || 'Individual'}</p>
+                        <p className="text-sm font-semibold text-gray-800 capitalize">
+                          {isCreator ? (language === 'am' ? '🏪 ፈጣሪ' : '🏪 Creator') : userType || 'Individual'}
+                        </p>
                         <p className="text-xs text-gray-500">{user.email}</p>
                       </div>
                       
@@ -331,6 +371,13 @@ export default function Navbar() {
                       <Link href={getDashboardLink()} className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded-lg transition">
                         <span>📊</span> Dashboard
                       </Link>
+                      
+                      {/* Creator Shop Link */}
+                      {isCreator && (
+                        <Link href="/creator/dashboard" className="flex items-center gap-2 px-3 py-2 text-sm text-green-700 hover:bg-green-50 rounded-lg transition">
+                          <span>🏪</span> {language === 'am' ? 'የእኔ መደብር' : 'My Shop'}
+                        </Link>
+                      )}
                       
                       {/* VIP Dashboard Links */}
                       <Link href="/merkato-vip" className="flex items-center gap-2 px-3 py-2 text-sm text-yellow-700 hover:bg-yellow-50 rounded-lg transition">
@@ -410,6 +457,13 @@ export default function Navbar() {
               <Link href="/cities" className="block py-2 px-3 text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
                 🏙️ City VIP
               </Link>
+              
+              {/* Creator Shop Mobile Link */}
+              {isCreator && (
+                <Link href="/creator/dashboard" className="block py-2 px-3 text-sm text-green-700 bg-green-50 hover:bg-green-100 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
+                  🏪 {language === 'am' ? 'የእኔ መደብር' : 'My Shop'}
+                </Link>
+              )}
               
               <Link href="/winners" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🏆 Winners </Link>
               <Link href="/how-it-works" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🎯 How It Works </Link>
