@@ -1,4 +1,4 @@
-// pages/cities/[city].js - COMPLETE WITH TICKET IMAGE COMPONENT
+// pages/cities/[city].js - COMPLETE WITH NO IMAGE REFERENCES
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -9,7 +9,7 @@ import NoSSR from '../../components/NoSSR';
 import TopCitySelector from '../../components/TopCitySelector';
 import UnifiedAgentApplication from '../../components/UnifiedAgentApplication';
 import SeatSelector from '../../components/SeatSelector';
-import TicketImage from '../../components/TicketImage'; // ✅ NEW
+import TicketImage from '../../components/TicketImage';
 import PoolProductCard from '../../components/PoolProductCard';
 import { TIERS, getDrawScheduleText, TIER_IDS, getTierLabel } from '../../components/SeatSelector';
 import { getCityData, getAllCities, addUnlistedCity, updateCityData } from '../../lib/cityData';
@@ -41,8 +41,6 @@ export default function CityVip() {
   const [checkingUser, setCheckingUser] = useState(true);
   const [citySearchTerm, setCitySearchTerm] = useState('');
   const [is3D, setIs3D] = useState(false);
-  
-  // ✅ NEW: Ticket verification states
   const [ticketVerified, setTicketVerified] = useState(false);
   const [checkingVerification, setCheckingVerification] = useState(false);
   const [paymentSubmitted, setPaymentSubmitted] = useState(false);
@@ -72,12 +70,12 @@ export default function CityVip() {
     }
   }, [cityInfo]);
 
-  // ✅ NEW: Check ticket verification status periodically
+  // Check ticket verification status periodically
   useEffect(() => {
     if (participantId && paymentSubmitted) {
       checkVerificationStatus();
       
-      const interval = setInterval(checkVerificationStatus, 30000); // Check every 30 seconds
+      const interval = setInterval(checkVerificationStatus, 30000);
       return () => clearInterval(interval);
     }
   }, [participantId, paymentSubmitted]);
@@ -109,7 +107,6 @@ export default function CityVip() {
     }
   };
 
-  // ✅ NEW: Check verification status function
   const checkVerificationStatus = async () => {
     if (!participantId || checkingVerification) return;
     
@@ -130,7 +127,6 @@ export default function CityVip() {
             ? '✅ ቲኬትዎ ተረጋግጧል! የተረጋገጠ ቲኬትዎን ያውርዱ' 
             : '✅ Your ticket is verified! Download your verified ticket'
         );
-        // Refresh participant data to get latest
         const { data: updatedParticipant } = await supabase
           .from('city_vip_participants')
           .select('*')
@@ -279,7 +275,7 @@ export default function CityVip() {
         .single();
       
       setParticipantData(updatedParticipant);
-      setPaymentSubmitted(true); // ✅ NEW
+      setPaymentSubmitted(true);
       setShowPayment(false);
       setShowTicket(true);
       
@@ -308,7 +304,7 @@ export default function CityVip() {
     router.push('/dashboard');
   };
 
-  // Convert tier to pool format for PoolProductCard
+  // Convert tier to pool format for PoolProductCard - NO IMAGES
   const convertTierToPool = (tierId, tier) => {
     const cityName = cityInfo?.name?.split('|')[0] || city || 'City';
     return {
@@ -320,8 +316,6 @@ export default function CityVip() {
       current_amount: 0,
       status: 'active',
       end_date: '2026-12-31T23:59:59',
-      image_url: tier.image_url || null,
-      prize_image: tier.image_url || null,
       is_featured: tier.tier >= 4,
       description: `${getDrawScheduleText(tierId, language)} ${language === 'am' ? 'እጣ' : 'Draw'} - ${language === 'am' ? 'እስከ' : 'Up to'} ETB ${tier.prize.toLocaleString()}`
     };
@@ -614,9 +608,7 @@ export default function CityVip() {
             </div>
           )}
 
-          {/* ============================================
-              TICKET DISPLAY - UPDATED WITH TicketImage
-              ============================================ */}
+          {/* Ticket Display */}
           {showTicket && participantData && (
             <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4 overflow-y-auto">
               <div className="bg-white rounded-2xl max-w-2xl w-full my-8">
@@ -661,7 +653,6 @@ export default function CityVip() {
                     onClose={handleCloseTicket}
                   />
                   
-                  {/* Verification Status Message */}
                   {!ticketVerified && paymentSubmitted && (
                     <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
                       <p className="text-sm text-yellow-800">
