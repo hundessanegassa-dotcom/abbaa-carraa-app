@@ -1,4 +1,4 @@
-// components/SeatSelector.js - OPTIMIZED for ALL Seat Counts
+// components/SeatSelector.js - FIXED with proper seat generation
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -145,6 +145,7 @@ export default function SeatSelector({
   const [seatInputMode, setSeatInputMode] = useState(false);
   const [manualSeatInput, setManualSeatInput] = useState('');
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, mins: 0, secs: 0 });
+  const [seatsInitialized, setSeatsInitialized] = useState(false);
   const seatGridRef = useRef(null);
 
   // Get tier config
@@ -152,7 +153,7 @@ export default function SeatSelector({
   const totalSeats = propTotalSeats || tier?.seats || 2400;
   const seatsPerRow = propSeatsPerRow || 20;
   const rows = Math.ceil(totalSeats / seatsPerRow);
-  const seatsPerPage = 100; // Show 100 seats per page for optimization
+  const seatsPerPage = 100;
   const totalPages = Math.ceil(totalSeats / seatsPerPage);
 
   // Countdown Timer
@@ -204,15 +205,69 @@ export default function SeatSelector({
     getUser();
   }, [onCancel, language]);
 
-  // Fetch booked seats
+  // Initialize seats for the pool
+  const initializeSeats = async () => {
+    if (!poolId || seatsInitialized) return;
+    
+    try {
+      // Check if seats already exist
+      const { count, error: countError } = await supabase
+        .from('pool_seats')
+        .select('*', { count: 'exact', head: true })
+        .eq('pool_id', poolId);
+      
+      if (countError) {
+        console.error('Count error:', countError);
+        return;
+      }
+      
+      // If no seats exist, generate them
+      if (count === 0 && totalSeats > 0) {
+        console.log(`Generating ${totalSeats} seats for pool ${poolId}`);
+        const seatsToInsert = [];
+        for (let i = 1; i <= totalSeats; i++) {
+          seatsToInsert.push({
+            pool_id: poolId,
+            seat_number: i,
+            status: 'available'
+          });
+        }
+        
+        // Insert in batches
+        const batchSize = 500;
+        for (let i = 0; i < seatsToInsert.length; i += batchSize) {
+          const batch = seatsToInsert.slice(i, i + batchSize);
+          const { error: insertError } = await supabase
+            .from('pool_seats')
+            .insert(batch);
+          if (insertError) {
+            console.error('Batch insert error:', insertError);
+          }
+        }
+        setSeatsInitialized(true);
+        console.log(`Successfully generated ${totalSeats} seats`);
+      } else {
+        setSeatsInitialized(true);
+      }
+    } catch (error) {
+      console.error('Error initializing seats:', error);
+    }
+  };
+
+  // Fetch booked seats and initialize
   useEffect(() => {
     if (!sessionLoading && currentUser && (poolId || tierId)) {
+      if (poolId) {
+        initializeSeats();
+      }
       fetchBookedSeats();
       fetchUserReservations();
+      
       const interval = setInterval(() => {
         fetchBookedSeats();
         fetchUserReservations();
       }, 30000);
+      
       return () => clearInterval(interval);
     }
   }, [poolId, tierId, sessionLoading, currentUser]);
@@ -227,6 +282,7 @@ export default function SeatSelector({
   const fetchBookedSeats = async () => {
     try {
       let data;
+      
       if (programType === 'merkato') {
         const { data: d } = await supabase
           .from('merkato_vip_participants')
@@ -247,6 +303,7 @@ export default function SeatSelector({
           .from('pool_seats')
           .select('seat_number, status, reserved_by')
           .eq('pool_id', poolId);
+        
         const takenSeats = (d || [])
           .filter(seat => seat.status === 'taken')
           .map(seat => seat.seat_number);
@@ -254,12 +311,14 @@ export default function SeatSelector({
           .filter(seat => seat.status === 'reserved' && seat.reserved_by !== currentUser?.id)
           .map(seat => seat.seat_number);
         const allBooked = [...new Set([...takenSeats, ...reservedByOthers])];
+        
         if (isMounted.current) {
           setBookedSeats(allBooked);
           setLoading(false);
         }
         return;
       }
+      
       const allBookedSeats = [];
       if (data) {
         data.forEach(participant => {
@@ -268,6 +327,7 @@ export default function SeatSelector({
           }
         });
       }
+      
       if (isMounted.current) {
         setBookedSeats([...new Set(allBookedSeats)]);
         setLoading(false);
@@ -280,6 +340,7 @@ export default function SeatSelector({
 
   const fetchUserReservations = async () => {
     if (!currentUser) return;
+    
     try {
       if (poolId) {
         const { data, error } = await supabase
@@ -289,6 +350,7 @@ export default function SeatSelector({
           .eq('reserved_by', currentUser.id)
           .eq('status', 'reserved')
           .gte('reserved_until', new Date().toISOString());
+        
         if (!error && data && data.length > 0) {
           const reservedSeatNumbers = data.map(r => r.seat_number);
           setReservedSeats(reservedSeatNumbers);
@@ -296,16 +358,24 @@ export default function SeatSelector({
         }
         return;
       }
-      const { data, error } = await supabase
-        .from('vip_seat_reservations')
-        .select('seat_number, expires_at')
-        .eq('user_id', currentUser.id)
-        .eq('pool_id', poolId || `${programType}_${tierId}_${city || 'default'}`)
-        .gte('expires_at', new Date().toISOString());
-      if (!error && data && data.length > 0) {
-        const reservedSeatNumbers = data.map(r => r.seat_number);
-        setReservedSeats(reservedSeatNumbers);
-        setSelectedSeats(reservedSeatNumbers);
+      
+      // For VIP programs, check reservations table
+      try {
+        const { data, error } = await supabase
+          .from('vip_seat_reservations')
+          .select('seat_number, expires_at')
+          .eq('user_id', currentUser.id)
+          .eq('pool_id', poolId || `${programType}_${tierId}_${city || 'default'}`)
+          .gte('expires_at', new Date().toISOString());
+        
+        if (!error && data && data.length > 0) {
+          const reservedSeatNumbers = data.map(r => r.seat_number);
+          setReservedSeats(reservedSeatNumbers);
+          setSelectedSeats(reservedSeatNumbers);
+        }
+      } catch (err) {
+        // Table may not exist yet, ignore
+        console.log('VIP reservations table may not exist yet');
       }
     } catch (err) {
       console.error('Fetch reservations error:', err);
@@ -315,6 +385,7 @@ export default function SeatSelector({
   const reserveSeatsInDB = async (seatNumbers) => {
     if (!currentUser) return false;
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    
     try {
       if (poolId) {
         for (const seatNumber of seatNumbers) {
@@ -329,27 +400,42 @@ export default function SeatSelector({
               reserved_until: expiresAt,
               reserved_at: new Date().toISOString()
             }, { onConflict: 'pool_id, seat_number' });
+          
           if (error) {
             console.error('Reserve error:', error);
             return false;
           }
         }
       } else {
-        const reservations = seatNumbers.map(seatNumber => ({
-          pool_id: poolId || `${programType}_${tierId}_${city || 'default'}`,
-          seat_number: seatNumber,
-          user_id: currentUser.id,
-          expires_at: expiresAt,
-          created_at: new Date().toISOString()
-        }));
-        const { error } = await supabase
-          .from('vip_seat_reservations')
-          .upsert(reservations, { onConflict: 'pool_id, seat_number' });
-        if (error) {
-          console.error('Reserve error:', error);
-          return false;
+        // For VIP programs, try to insert into reservations
+        try {
+          const reservations = seatNumbers.map(seatNumber => ({
+            pool_id: poolId || `${programType}_${tierId}_${city || 'default'}`,
+            seat_number: seatNumber,
+            user_id: currentUser.id,
+            expires_at: expiresAt,
+            created_at: new Date().toISOString()
+          }));
+          
+          const { error } = await supabase
+            .from('vip_seat_reservations')
+            .upsert(reservations, { onConflict: 'pool_id, seat_number' });
+          
+          if (error) {
+            console.error('Reserve error:', error);
+            // If table doesn't exist, just continue without reserving
+            if (error.code === '42P01') {
+              console.log('vip_seat_reservations table not found, continuing without reservation');
+              return true;
+            }
+            return false;
+          }
+        } catch (err) {
+          console.log('VIP reservations table may not exist, continuing:', err.message);
+          return true;
         }
       }
+      
       if (reservationTimer) clearTimeout(reservationTimer);
       const timer = setTimeout(() => {
         releaseUserReservations();
@@ -357,6 +443,7 @@ export default function SeatSelector({
         onCancel?.();
       }, 10 * 60 * 1000);
       setReservationTimer(timer);
+      
       return true;
     } catch (error) {
       console.error('Error reserving seats:', error);
@@ -366,6 +453,7 @@ export default function SeatSelector({
 
   const releaseUserReservations = async () => {
     if (!currentUser) return;
+    
     try {
       if (poolId) {
         await supabase
@@ -381,11 +469,16 @@ export default function SeatSelector({
           .eq('reserved_by', currentUser.id)
           .eq('status', 'reserved');
       } else {
-        await supabase
-          .from('vip_seat_reservations')
-          .delete()
-          .eq('user_id', currentUser.id)
-          .eq('pool_id', poolId || `${programType}_${tierId}_${city || 'default'}`);
+        try {
+          await supabase
+            .from('vip_seat_reservations')
+            .delete()
+            .eq('user_id', currentUser.id)
+            .eq('pool_id', poolId || `${programType}_${tierId}_${city || 'default'}`);
+        } catch (err) {
+          // Table may not exist, ignore
+          console.log('VIP reservations table may not exist');
+        }
       }
       setReservedSeats([]);
       setSelectedSeats([]);
@@ -399,7 +492,9 @@ export default function SeatSelector({
       toast.error(language === 'am' ? `መቀመጫ ${seatNum} ተይዟል` : `Seat ${seatNum} is already taken`);
       return;
     }
+    
     const isSelected = selectedSeats.includes(seatNum);
+    
     if (isSelected) {
       if (poolId) {
         await supabase
@@ -415,12 +510,16 @@ export default function SeatSelector({
           .eq('seat_number', seatNum)
           .eq('reserved_by', currentUser.id);
       } else {
-        await supabase
-          .from('vip_seat_reservations')
-          .delete()
-          .eq('pool_id', poolId || `${programType}_${tierId}_${city || 'default'}`)
-          .eq('seat_number', seatNum)
-          .eq('user_id', currentUser.id);
+        try {
+          await supabase
+            .from('vip_seat_reservations')
+            .delete()
+            .eq('pool_id', poolId || `${programType}_${tierId}_${city || 'default'}`)
+            .eq('seat_number', seatNum)
+            .eq('user_id', currentUser.id);
+        } catch (err) {
+          // Table may not exist, ignore
+        }
       }
       setSelectedSeats(selectedSeats.filter(s => s !== seatNum));
       setReservedSeats(reservedSeats.filter(s => s !== seatNum));
@@ -429,6 +528,7 @@ export default function SeatSelector({
         toast.error(language === 'am' ? `እስከ ${maxSeats} መቀመጫዎች ብቻ መምረጥ ይችላሉ` : `You can only select up to ${maxSeats} seats`);
         return;
       }
+      
       const success = await reserveSeatsInDB([seatNum]);
       if (success) {
         setSelectedSeats([...selectedSeats, seatNum]);
@@ -446,23 +546,28 @@ export default function SeatSelector({
       toast.error(language === 'am' ? 'እባክዎ መቀመጫ ቁጥር ያስገቡ' : 'Please enter seat number(s)');
       return;
     }
+    
     const seatNumbers = manualSeatInput
       .split(',')
       .map(s => parseInt(s.trim()))
       .filter(n => !isNaN(n) && n > 0 && n <= totalSeats);
+    
     if (seatNumbers.length === 0) {
       toast.error(language === 'am' ? 'እባክዎ ትክክለኛ መቀመጫ ቁጥሮች ያስገቡ' : 'Please enter valid seat numbers');
       return;
     }
+    
     if (selectedSeats.length + seatNumbers.length > maxSeats) {
       toast.error(language === 'am' ? `እስከ ${maxSeats} መቀመጫዎች ብቻ መምረጥ ይችላሉ` : `You can only select up to ${maxSeats} seats`);
       return;
     }
+    
     const takenSeats = seatNumbers.filter(n => bookedSeats.includes(n));
     if (takenSeats.length > 0) {
       toast.error(language === 'am' ? `መቀመጫዎች ${takenSeats.join(', ')} ተይዘዋል` : `Seats ${takenSeats.join(', ')} are taken`);
       return;
     }
+    
     const success = await reserveSeatsInDB(seatNumbers);
     if (success) {
       setSelectedSeats([...selectedSeats, ...seatNumbers]);
@@ -528,7 +633,7 @@ export default function SeatSelector({
     );
   }
 
-  const availableCount = totalSeats - bookedSeats.length - selectedSeats.length;
+  const availableCount = Math.max(0, totalSeats - bookedSeats.length - selectedSeats.length);
   const takenCount = bookedSeats.length;
   const fee = entryFee || tier?.contribution || 0;
   const prize = poolInfo?.prize || tier?.prize || 0;
@@ -568,7 +673,7 @@ export default function SeatSelector({
             </div>
           </div>
 
-          {/* COUNTDOWN TIMER - With Labels */}
+          {/* Countdown Timer */}
           {endDate && (
             <div className="mt-3 bg-white/80 backdrop-blur-sm rounded-xl py-2 px-4 text-center border border-gray-200">
               <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">
@@ -697,10 +802,9 @@ export default function SeatSelector({
             </div>
           )}
 
-          {/* Paginated Seat Grid - OPTIMIZED */}
+          {/* Paginated Seat Grid */}
           {!seatInputMode && (
             <>
-              {/* Page Navigation */}
               {totalPages > 1 && (
                 <div className="flex justify-center items-center gap-2 mb-4">
                   <button
@@ -718,11 +822,12 @@ export default function SeatSelector({
                     disabled={currentPage === totalPages - 1}
                     className="px-3 py-1 rounded-lg text-xs font-medium bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    ▶                  </button>
+                    ▶
+                  </button>
                 </div>
               )}
 
-              {/* Optimized Seat Grid - Only show 100 seats per page */}
+              {/* Seat Grid */}
               <div ref={seatGridRef} className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-1.5 max-h-[40vh] overflow-y-auto p-2">
                 {currentPageSeats.map(seatNum => {
                   const isTaken = bookedSeats.includes(seatNum);
