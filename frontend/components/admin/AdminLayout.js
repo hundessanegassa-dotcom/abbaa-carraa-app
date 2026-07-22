@@ -30,6 +30,7 @@ export default function AdminLayout({
   const animationRef = useRef(null);
   const channelRef = useRef(null);
   const creatorChannelRef = useRef(null);
+  const isMounted = useRef(true);
 
   // Auto-rotation for 3D effect
   useEffect(() => {
@@ -47,6 +48,19 @@ export default function AdminLayout({
     }
   }, [is3D]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+      if (channelRef.current) {
+        channelRef.current.unsubscribe();
+      }
+      if (creatorChannelRef.current) {
+        creatorChannelRef.current.unsubscribe();
+      }
+    };
+  }, []);
+
   useEffect(() => {
     if (user) {
       fetchNotifications();
@@ -56,18 +70,19 @@ export default function AdminLayout({
 
   // ✅ FIXED: Correct subscription order - add listeners BEFORE subscribe
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isMounted.current) return;
 
     // Admin Notifications Channel
     const channel = supabase.channel('admin_notifications_channel');
     
-    // ✅ Add listeners FIRST
+    // ✅ Add listeners FIRST, then subscribe
     channel
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'admin_notifications'
       }, (payload) => {
+        if (!isMounted.current) return;
         setNotifications(prev => [payload.new, ...prev]);
         setUnreadCount(prev => prev + 1);
         toast.info(`🔔 ${payload.new.title}`);
@@ -87,17 +102,18 @@ export default function AdminLayout({
 
   // ✅ FIXED: Creator applications channel with correct order
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isMounted.current) return;
 
     const creatorChannel = supabase.channel('creator_applications_channel');
     
-    // ✅ Add listeners FIRST
+    // ✅ Add listeners FIRST, then subscribe
     creatorChannel
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'pool_creators'
       }, (payload) => {
+        if (!isMounted.current) return;
         if (payload.new?.verification_status === 'pending') {
           setPendingCreatorApps(prev => prev + 1);
           toast.info(`👑 New creator application: ${payload.new.business_name || 'Unknown'}`);
@@ -109,7 +125,9 @@ export default function AdminLayout({
         table: 'pool_creators',
         filter: 'verification_status=eq.pending'
       }, () => {
-        fetchPendingCreatorApps();
+        if (isMounted.current) {
+          fetchPendingCreatorApps();
+        }
       })
       .subscribe();
 
@@ -142,8 +160,10 @@ export default function AdminLayout({
         .order('created_at', { ascending: false })
         .limit(10);
 
-      setNotifications(data || []);
-      setUnreadCount(data?.filter(n => !n.read).length || 0);
+      if (isMounted.current) {
+        setNotifications(data || []);
+        setUnreadCount(data?.filter(n => !n.read).length || 0);
+      }
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }
@@ -156,7 +176,7 @@ export default function AdminLayout({
         .select('*', { count: 'exact', head: true })
         .eq('verification_status', 'pending');
 
-      if (!error) {
+      if (!error && isMounted.current) {
         setPendingCreatorApps(count || 0);
       }
     } catch (error) {
@@ -171,10 +191,12 @@ export default function AdminLayout({
         .update({ read: true })
         .eq('id', id);
 
-      setNotifications(prev =>
-        prev.map(n => n.id === id ? { ...n, read: true } : n)
-      );
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      if (isMounted.current) {
+        setNotifications(prev =>
+          prev.map(n => n.id === id ? { ...n, read: true } : n)
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
     } catch (error) {
       console.error('Error marking notification read:', error);
     }
@@ -190,9 +212,11 @@ export default function AdminLayout({
         .update({ read: true })
         .in('id', unreadIds);
 
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-      setUnreadCount(0);
-      toast.success('All notifications marked as read');
+      if (isMounted.current) {
+        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        setUnreadCount(0);
+        toast.success('All notifications marked as read');
+      }
     } catch (error) {
       console.error('Error marking all read:', error);
       toast.error('Failed to mark all as read');
