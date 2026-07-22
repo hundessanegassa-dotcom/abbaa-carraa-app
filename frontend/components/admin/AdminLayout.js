@@ -1,4 +1,4 @@
-// components/admin/AdminLayout.js - UPDATED with Creator Applications Menu
+// components/admin/AdminLayout.js - FIXED with correct subscription order
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -29,6 +29,7 @@ export default function AdminLayout({
   const [pendingCreatorApps, setPendingCreatorApps] = useState(0);
   const animationRef = useRef(null);
   const channelRef = useRef(null);
+  const creatorChannelRef = useRef(null);
 
   // Auto-rotation for 3D effect
   useEffect(() => {
@@ -53,12 +54,14 @@ export default function AdminLayout({
     }
   }, [user]);
 
-  // ✅ FIXED: Realtime subscription with correct order
+  // ✅ FIXED: Correct subscription order - add listeners BEFORE subscribe
   useEffect(() => {
     if (!user) return;
 
+    // Admin Notifications Channel
     const channel = supabase.channel('admin_notifications_channel');
-
+    
+    // ✅ Add listeners FIRST
     channel
       .on('postgres_changes', {
         event: 'INSERT',
@@ -82,12 +85,13 @@ export default function AdminLayout({
     };
   }, [user]);
 
-  // Realtime subscription for creator applications
+  // ✅ FIXED: Creator applications channel with correct order
   useEffect(() => {
     if (!user) return;
 
     const creatorChannel = supabase.channel('creator_applications_channel');
-
+    
+    // ✅ Add listeners FIRST
     creatorChannel
       .on('postgres_changes', {
         event: 'INSERT',
@@ -109,8 +113,12 @@ export default function AdminLayout({
       })
       .subscribe();
 
+    creatorChannelRef.current = creatorChannel;
+
     return () => {
-      creatorChannel.unsubscribe();
+      if (creatorChannelRef.current) {
+        creatorChannelRef.current.unsubscribe();
+      }
     };
   }, [user]);
 
