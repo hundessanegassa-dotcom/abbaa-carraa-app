@@ -1,6 +1,5 @@
 // components/PoolProductCard.jsx
 import Link from 'next/link';
-import Image from 'next/image';
 import { useState, useEffect, useMemo } from 'react';
 
 export default function PoolProductCard({ 
@@ -51,7 +50,6 @@ export default function PoolProductCard({
   // Get image source - PRIORITIZE prize_image, then image_url
   const getImageSrc = () => {
     if (imageError) return null;
-    // Check if prize_image exists and is not empty
     if (prize_image && typeof prize_image === 'string' && prize_image.trim() !== '') {
       return prize_image;
     }
@@ -103,7 +101,6 @@ export default function PoolProductCard({
     const totalSeats = Math.min(Math.floor((target_amount * 1.2) / entryFee), 50);
     const bookedCount = current_amount ? Math.floor(current_amount / entryFee) : 0;
     const bookedSeats = [];
-    // Randomly book some seats for demo (you can replace with real data)
     for (let i = 0; i < Math.min(bookedCount, totalSeats); i++) {
       bookedSeats.push(i);
     }
@@ -194,7 +191,7 @@ export default function PoolProductCard({
           {getStatusEmoji()} {getStatusText()}
         </div>
 
-        {/* Product Image - OPTIMIZED with Next.js Image component */}
+        {/* Product Image - With Fallback */}
         <div className="relative aspect-square w-full rounded-2xl overflow-hidden shadow-lg mb-4 z-10 bg-gradient-to-br from-green-200 to-emerald-300">
           {imageSrc && !imageError ? (
             <>
@@ -203,25 +200,19 @@ export default function PoolProductCard({
                 <div className="absolute inset-0 bg-gradient-to-r from-green-200 via-green-300 to-green-200 animate-pulse" />
               )}
               
-              {/* Optimized Image with Next.js */}
-              <Image
+              {/* Optimized Image */}
+              <img
                 src={imageSrc}
                 alt={prize_name || title || 'Prize'}
-                fill
-                className={`
-                  object-cover transition-transform duration-500 hover:scale-105
-                  ${imageLoading ? 'opacity-0' : 'opacity-100'}
-                `}
-                sizes="(max-width: 400px) 100vw, 400px"
-                quality={75}
-                priority={featured}
-                placeholder="blur"
-                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAA8A/9k="
-                onLoadingComplete={() => setImageLoading(false)}
+                className={`w-full h-full object-cover transition-transform duration-500 hover:scale-105 ${
+                  imageLoading ? 'opacity-0' : 'opacity-100'
+                }`}
+                loading="lazy"
                 onError={() => {
                   setImageError(true);
                   setImageLoading(false);
                 }}
+                onLoad={() => setImageLoading(false)}
               />
             </>
           ) : (
@@ -253,11 +244,28 @@ export default function PoolProductCard({
 
         {/* Countdown Timer */}
         {end_date && isActive && (
-          <div className="bg-black/30 backdrop-blur-sm rounded-full py-1.5 px-4 text-center font-mono text-lg font-bold tracking-wider z-10 mb-2">
-            {String(timeLeft.days).padStart(2, '0')}d 
-            {String(timeLeft.hours).padStart(2, '0')}h 
-            {String(timeLeft.mins).padStart(2, '0')}m 
-            {String(timeLeft.secs).padStart(2, '0')}s
+          <div className="bg-black/30 backdrop-blur-sm rounded-xl py-2 px-4 text-center z-10 mb-2">
+            <div className="flex justify-center items-center gap-2 font-mono text-lg font-bold tracking-wider">
+              <div className="flex flex-col items-center">
+                <span>{String(timeLeft.days).padStart(2, '0')}</span>
+                <span className="text-[8px] opacity-70">{language === 'am' ? 'ቀናት' : 'days'}</span>
+              </div>
+              <span className="text-white/50">:</span>
+              <div className="flex flex-col items-center">
+                <span>{String(timeLeft.hours).padStart(2, '0')}</span>
+                <span className="text-[8px] opacity-70">{language === 'am' ? 'ሰዓታት' : 'hrs'}</span>
+              </div>
+              <span className="text-white/50">:</span>
+              <div className="flex flex-col items-center">
+                <span>{String(timeLeft.mins).padStart(2, '0')}</span>
+                <span className="text-[8px] opacity-70">{language === 'am' ? 'ደቂቃ' : 'min'}</span>
+              </div>
+              <span className="text-white/50">:</span>
+              <div className="flex flex-col items-center">
+                <span>{String(timeLeft.secs).padStart(2, '0')}</span>
+                <span className="text-[8px] opacity-70">{language === 'am' ? 'ሰከንድ' : 'sec'}</span>
+              </div>
+            </div>
           </div>
         )}
 
@@ -284,7 +292,7 @@ export default function PoolProductCard({
           </button>
         </div>
 
-        {/* Seat Selection Panel - ALL SEATS WITH LIGHT GREEN BACKGROUND */}
+        {/* Seat Selection Panel */}
         {showSeats && (
           <div className="mt-4 bg-white/20 backdrop-blur-sm rounded-2xl p-4 z-10" onClick={(e) => e.preventDefault()}>
             <p className="text-center mb-3 text-sm font-medium text-white">
@@ -343,7 +351,7 @@ export default function PoolProductCard({
           </div>
         )}
 
-        {/* Progress Bar (optional) */}
+        {/* Progress Bar */}
         {isActive && (
           <div className="mt-3 z-10">
             <div className="w-full bg-black/20 rounded-full h-1.5 overflow-hidden">
