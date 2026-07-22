@@ -1,4 +1,4 @@
-// components/admin/AdminLayout.js - FIXED with correct subscription order
+// components/admin/AdminLayout.js - FIXED with proper subscription
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -29,7 +29,6 @@ export default function AdminLayout({
   const [pendingCreatorApps, setPendingCreatorApps] = useState(0);
   const animationRef = useRef(null);
   const channelRef = useRef(null);
-  const creatorChannelRef = useRef(null);
   const isMounted = useRef(true);
 
   // Auto-rotation for 3D effect
@@ -55,9 +54,6 @@ export default function AdminLayout({
       if (channelRef.current) {
         channelRef.current.unsubscribe();
       }
-      if (creatorChannelRef.current) {
-        creatorChannelRef.current.unsubscribe();
-      }
     };
   }, []);
 
@@ -68,14 +64,18 @@ export default function AdminLayout({
     }
   }, [user]);
 
-  // ✅ FIXED: Correct subscription order - add listeners BEFORE subscribe
+  // ✅ FIXED: Only create subscription once with correct order
   useEffect(() => {
     if (!user || !isMounted.current) return;
 
-    // Admin Notifications Channel
+    // Clean up previous subscription
+    if (channelRef.current) {
+      channelRef.current.unsubscribe();
+    }
+
+    // Create new channel with listeners FIRST, then subscribe
     const channel = supabase.channel('admin_notifications_channel');
     
-    // ✅ Add listeners FIRST, then subscribe
     channel
       .on('postgres_changes', {
         event: 'INSERT',
@@ -96,46 +96,6 @@ export default function AdminLayout({
     return () => {
       if (channelRef.current) {
         channelRef.current.unsubscribe();
-      }
-    };
-  }, [user]);
-
-  // ✅ FIXED: Creator applications channel with correct order
-  useEffect(() => {
-    if (!user || !isMounted.current) return;
-
-    const creatorChannel = supabase.channel('creator_applications_channel');
-    
-    // ✅ Add listeners FIRST, then subscribe
-    creatorChannel
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'pool_creators'
-      }, (payload) => {
-        if (!isMounted.current) return;
-        if (payload.new?.verification_status === 'pending') {
-          setPendingCreatorApps(prev => prev + 1);
-          toast.info(`👑 New creator application: ${payload.new.business_name || 'Unknown'}`);
-        }
-      })
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'pool_creators',
-        filter: 'verification_status=eq.pending'
-      }, () => {
-        if (isMounted.current) {
-          fetchPendingCreatorApps();
-        }
-      })
-      .subscribe();
-
-    creatorChannelRef.current = creatorChannel;
-
-    return () => {
-      if (creatorChannelRef.current) {
-        creatorChannelRef.current.unsubscribe();
       }
     };
   }, [user]);
