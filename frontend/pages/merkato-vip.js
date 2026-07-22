@@ -1,4 +1,4 @@
-// pages/merkato-vip.js - COMPLETE WITH TICKET IMAGE COMPONENT
+// pages/merkato-vip.js - COMPLETE WITH 5 TIERS (NO IMAGES)
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
@@ -10,7 +10,7 @@ import TopCitySelector from '../components/TopCitySelector';
 import PoolProductCard from '../components/PoolProductCard';
 import TicketImage from '../components/TicketImage';
 
-// ✅ 5 TIERS FOR MERKATO VIP - 100, 500, 1000, 2500, 5000 BIRR
+// ✅ 5 TIERS FOR MERKATO VIP - NO IMAGE REFERENCES
 export const MERKATO_TIERS = {
   silver: {
     id: 'silver',
@@ -18,12 +18,11 @@ export const MERKATO_TIERS = {
     labelAm: 'ብር',
     icon: '🥈',
     contribution: 100,
-    prize: 100000,      // ✅ 100,000 ETB
+    prize: 100000,
     seats: 1200,
     color: 'from-gray-400 to-gray-500',
     badge: 'Silver',
     tier: 1,
-    image_url: '/images/merkato-silver.jpg',
     end_date: '2026-12-31T23:59:59'
   },
   gold: {
@@ -32,12 +31,11 @@ export const MERKATO_TIERS = {
     labelAm: 'ወርቅ',
     icon: '🥇',
     contribution: 500,
-    prize: 500000,      // ✅ 500,000 ETB
+    prize: 500000,
     seats: 1200,
     color: 'from-yellow-400 to-yellow-600',
     badge: 'Gold',
     tier: 2,
-    image_url: '/images/merkato-gold.jpg',
     end_date: '2026-12-31T23:59:59'
   },
   platinum: {
@@ -46,12 +44,11 @@ export const MERKATO_TIERS = {
     labelAm: 'ፕላቲኒየም',
     icon: '💎',
     contribution: 1000,
-    prize: 2000000,     // ✅ 2,000,000 ETB
+    prize: 2000000,
     seats: 2400,
     color: 'from-gray-300 to-blue-400',
     badge: 'Platinum',
     tier: 3,
-    image_url: '/images/merkato-platinum.jpg',
     end_date: '2026-12-31T23:59:59'
   },
   diamond: {
@@ -60,12 +57,11 @@ export const MERKATO_TIERS = {
     labelAm: 'አልማዝ',
     icon: '💠',
     contribution: 2500,
-    prize: 5000000,     // ✅ 5,000,000 ETB
+    prize: 5000000,
     seats: 2400,
     color: 'from-blue-400 to-cyan-400',
     badge: 'Diamond',
     tier: 4,
-    image_url: '/images/merkato-diamond.jpg',
     end_date: '2026-12-31T23:59:59'
   },
   royal: {
@@ -74,12 +70,11 @@ export const MERKATO_TIERS = {
     labelAm: 'ንጉሣዊ',
     icon: '👑',
     contribution: 5000,
-    prize: 10000000,    // ✅ 10,000,000 ETB
+    prize: 10000000,
     seats: 2400,
     color: 'from-purple-500 to-pink-500',
     badge: 'Royal',
     tier: 5,
-    image_url: '/images/merkato-royal.jpg',
     end_date: '2026-12-31T23:59:59'
   }
 };
@@ -133,7 +128,7 @@ export default function MerkatoVIP() {
     if (participantId && paymentSubmitted) {
       checkVerificationStatus();
       
-      const interval = setInterval(checkVerificationStatus, 30000); // Check every 30 seconds
+      const interval = setInterval(checkVerificationStatus, 30000);
       return () => clearInterval(interval);
     }
   }, [participantId, paymentSubmitted]);
@@ -185,7 +180,6 @@ export default function MerkatoVIP() {
             ? '✅ ቲኬትዎ ተረጋግጧል! የተረጋገጠ ቲኬትዎን ያውርዱ' 
             : '✅ Your ticket is verified! Download your verified ticket'
         );
-        // Refresh participant data to get latest
         const { data: updatedParticipant } = await supabase
           .from('merkato_vip_participants')
           .select('*')
@@ -362,7 +356,7 @@ export default function MerkatoVIP() {
     router.push('/dashboard');
   };
 
-  // Convert tier to pool format for PoolProductCard
+  // Convert tier to pool format for PoolProductCard - NO IMAGES
   const convertTierToPool = (tierId, tier) => {
     return {
       id: tierId,
@@ -373,8 +367,6 @@ export default function MerkatoVIP() {
       current_amount: 0,
       status: 'active',
       end_date: tier.end_date || '2026-12-31T23:59:59',
-      image_url: tier.image_url || null,
-      prize_image: tier.image_url || null,
       is_featured: tier.tier >= 4,
       description: `${getDrawScheduleText(tierId, language)} - ${language === 'am' ? 'እስከ' : 'Up to'} ETB ${tier.prize.toLocaleString()}`
     };
@@ -632,9 +624,7 @@ export default function MerkatoVIP() {
             </div>
           )}
 
-          {/* ============================================
-              TICKET DISPLAY - UPDATED WITH TicketImage
-              ============================================ */}
+          {/* Ticket Display */}
           {showTicket && participantData && (
             <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4 overflow-y-auto">
               <div className="bg-white rounded-2xl max-w-2xl w-full my-8">
@@ -679,7 +669,6 @@ export default function MerkatoVIP() {
                     onClose={handleCloseTicket}
                   />
                   
-                  {/* Verification Status Message */}
                   {!ticketVerified && paymentSubmitted && (
                     <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
                       <p className="text-sm text-yellow-800">
