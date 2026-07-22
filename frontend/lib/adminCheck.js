@@ -1,4 +1,4 @@
-// lib/adminCheck.js
+// lib/adminCheck.js - ENHANCED with better error handling
 import { supabase } from './supabase';
 
 export async function checkAdminStatus() {
@@ -6,7 +6,7 @@ export async function checkAdminStatus() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { isAdmin: false, error: 'No user' };
 
-    // Check profile role
+    // Check profile role - using maybeSingle to prevent 406 errors
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
@@ -17,7 +17,7 @@ export async function checkAdminStatus() {
       console.error('Profile check error:', profileError);
     }
 
-    // Check admin record
+    // Check admin record - using maybeSingle to prevent 406 errors
     const { data: adminRecord, error: adminError } = await supabase
       .from('admins')
       .select('*')
