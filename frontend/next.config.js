@@ -21,14 +21,6 @@ const nextConfig = {
     supabaseTimeout: 30000,
   },
   
-  // Add larger timeout for API routes
-  api: {
-    responseLimit: '8mb',
-    bodyParser: {
-      sizeLimit: '10mb',
-    },
-  },
-  
   // Image optimization
   images: {
     unoptimized: false, // Change to false to enable Next.js image optimization

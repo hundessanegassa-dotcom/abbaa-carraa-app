@@ -32,17 +32,17 @@
     "qrcode.react": "^3.1.0",
     "react": "18.2.0",
     "react-chartjs-2": "^5.2.0",
+    "react-countup": "^4.3.3",
     "react-dom": "18.2.0",
     "react-hook-form": "^7.48.2",
     "react-hot-toast": "^2.4.1",
     "react-i18next": "^13.5.0",
+    "react-intersection-observer": "^9.5.3",
     "react-qr-code": "^2.0.12",
     "sharp": "^0.33.2",
     "telegraf": "^4.15.3",
     "twilio": "^4.19.0",
-    "uuid": "^9.0.1",
-    "react-countup": "^4.3.3",
-    "react-intersection-observer": "^9.5.3"
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^14.0.0",
@@ -50,12 +50,14 @@
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.18",
     "autoprefixer": "^10.4.16",
+    "eslint": "^10.7.0",
+    "eslint-config-next": "^16.2.11",
     "next-sitemap": "^4.2.3",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.3.6",
     "typescript": "^5.3.3"
   },
   "engines": {
-    "node": "20.x"
+    "node": ">=20.x"
   }
 }
