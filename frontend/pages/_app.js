@@ -8,20 +8,19 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../lib/i18n';
 import useMediaQuery from '../hooks/useMediaQuery';
-import LoadingScreen from '../components/LoadingScreen';
 import SEO from '../components/SEO';
-import TelegramBotClient from '../components/TelegramBotClient';
-import { supabase } from '../lib/supabase';
 
+// Dynamic imports for better performance
+const TelegramBotClient = dynamic(() => import('../components/TelegramBotClient'), { ssr: false });
+const LoadingScreen = dynamic(() => import('../components/LoadingScreen'), { ssr: false });
 const Navbar = dynamic(() => import('../components/Navbar').catch(() => () => <div className="h-16 bg-gray-100 animate-pulse" />), { 
   ssr: false,
   loading: () => <div className="h-16 bg-gray-100 animate-pulse" /> 
 });
 
-// ✅ FIXED: Added loading fallback for Footer
 const Footer = dynamic(() => import('../components/Footer').catch(() => () => null), { 
   ssr: false,
-  loading: () => <div className="h-24 bg-gray-50" /> // Loading fallback
+  loading: () => <div className="h-24 bg-gray-50" />
 });
 
 const ChatBot = dynamic(() => import('../components/ChatBot').catch(() => () => null), { ssr: false });
@@ -34,7 +33,8 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      staleTime: 30000,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
     },
   },
 });
@@ -95,7 +95,7 @@ function MyApp({ Component, pageProps }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowInitialLoading(false);
-    }, 2000);
+    }, 800); // Reduced from 2000ms to 800ms for faster initial load
     return () => clearTimeout(timer);
   }, []);
 

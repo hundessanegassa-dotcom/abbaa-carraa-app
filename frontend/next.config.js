@@ -1,7 +1,6 @@
 // next.config.js - FULLY OPTIMIZED FOR PRODUCTION
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
   reactStrictMode: true,
   swcMinify: true,
   
@@ -23,7 +22,7 @@ const nextConfig = {
   
   // Image optimization
   images: {
-    unoptimized: false, // Change to false to enable Next.js image optimization
+    unoptimized: false,
     domains: ['supabase.co', 'ruqfgsnhvrckbvibpsyu.supabase.co'],
     remotePatterns: [
       {
@@ -35,6 +34,9 @@ const nextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60,
+    // Enable image optimization for better performance
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   
   // Add headers for better performance and security
@@ -80,6 +82,27 @@ const nextConfig = {
       ...config.optimization,
       moduleIds: 'deterministic',
       chunkIds: 'deterministic',
+      splitChunks: {
+        chunks: 'all',
+        cacheGroups: {
+          default: false,
+          vendors: false,
+          vendor: {
+            name: 'vendor',
+            chunks: 'all',
+            test: /node_modules/,
+            priority: 20,
+          },
+          common: {
+            name: 'common',
+            minChunks: 2,
+            chunks: 'all',
+            priority: 10,
+            reuseExistingChunk: true,
+            enforce: true,
+          },
+        },
+      },
     };
     
     // Enable tree shaking
