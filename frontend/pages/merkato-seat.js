@@ -897,9 +897,10 @@ export default function MerkatoSeat() {
                     <p className="text-2xl font-bold text-emerald-600">ETB {totalAmount.toLocaleString()}</p>
                   </div>
                   <div className="bg-blue-50 rounded-xl p-4 mb-4">
+                    <p className="font-semibold mb-2">{language === 'am' ? 'የክፍያ ዘዴዎች' : 'Payment Methods'}</p>
                     <p className="font-semibold">📱 TeleBirr: 0913277922</p>
                     <p className="font-semibold mt-2">🏦 CBE Bank: 1000601091686</p>
-                    <p className="text-sm">{language === 'am' ? 'የሂሳብ ባለቤት:' : 'Account:'} Negassa Hundessa</p>
+                    <p className="text-sm">{language === 'am' ? 'የሂሳብ ባለቤት:' : 'Account Name:'} NEGASSA HUNDESSA DUGA</p>
                   </div>
                   <div className="border-2 border-dashed rounded-xl p-4 text-center mb-4">
                     <input
