@@ -1,4 +1,4 @@
-// components/SeatSelector.js - COMPLETE FIXED FOR ALL PROGRAMS
+// components/SeatSelector.js - COMPLETE WITH ALL SEATS DISPLAYED
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -142,20 +142,31 @@ export default function SeatSelector({
   const [reservedSeats, setReservedSeats] = useState([]);
   const [reservationTimer, setReservationTimer] = useState(null);
   const [currentPage, setCurrentPage] = useState(0);
+  const [seatsPerPage, setSeatsPerPage] = useState(200);
   const [seatInputMode, setSeatInputMode] = useState(false);
   const [manualSeatInput, setManualSeatInput] = useState('');
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, mins: 0, secs: 0 });
   const [seatsInitialized, setSeatsInitialized] = useState(false);
   const seatGridRef = useRef(null);
+  const containerRef = useRef(null);
 
   // Get tier config
   const tier = tierId ? TIERS[tierId] : null;
   const totalSeats = propTotalSeats || tier?.seats || 2400;
   const seatsPerRow = propSeatsPerRow || 20;
-  const rows = Math.ceil(totalSeats / seatsPerRow);
-  const seatsPerPage = 100;
   const totalPages = Math.ceil(totalSeats / seatsPerPage);
   const rowLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+  // Adjust seats per page based on total seats
+  useEffect(() => {
+    if (totalSeats > 5000) {
+      setSeatsPerPage(300);
+    } else if (totalSeats > 3000) {
+      setSeatsPerPage(250);
+    } else {
+      setSeatsPerPage(200);
+    }
+  }, [totalSeats]);
 
   // Countdown Timer
   useEffect(() => {
@@ -610,6 +621,13 @@ export default function SeatSelector({
 
   const currentPageSeats = getCurrentPageSeats();
 
+  // Scroll to top when page changes
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = 0;
+    }
+  }, [currentPage]);
+
   if (sessionLoading || loading) {
     return (
       <div className="bg-white rounded-2xl shadow-lg p-6">
@@ -637,25 +655,27 @@ export default function SeatSelector({
   const fee = entryFee || tier?.contribution || 0;
   const prize = poolInfo?.prize || tier?.prize || 0;
 
-  // Build seat rows for theater display
+  // Build seat rows for current page
+  const currentPageSeatsList = getCurrentPageSeats();
+  const displayRows = Math.ceil(currentPageSeatsList.length / seatsPerRow);
   const seatRows = [];
-  const displaySeats = Math.min(totalSeats, 500); // Show max 500 seats at a time
-  const rowsToShow = Math.ceil(displaySeats / seatsPerRow);
   
-  for (let row = 0; row < rowsToShow; row++) {
-    const startSeat = row * seatsPerRow + 1;
-    const endSeat = Math.min(startSeat + seatsPerRow - 1, displaySeats);
+  for (let row = 0; row < displayRows; row++) {
+    const startSeat = row * seatsPerRow;
+    const endSeat = Math.min(startSeat + seatsPerRow, currentPageSeatsList.length);
     const rowSeats = [];
-    for (let seat = startSeat; seat <= endSeat; seat++) {
-      rowSeats.push(seat);
+    for (let i = startSeat; i < endSeat; i++) {
+      rowSeats.push(currentPageSeatsList[i]);
     }
     seatRows.push(rowSeats);
   }
 
   const scrollToRow = (rowIndex) => {
-    if (seatGridRef.current) {
+    if (containerRef.current) {
       const rowElement = document.getElementById(`row-${rowIndex}`);
-      if (rowElement) rowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (rowElement) {
+        rowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }
   };
 
@@ -726,51 +746,96 @@ export default function SeatSelector({
         </div>
 
         {/* Seat Grid */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {/* Row Navigation */}
-          {rowsToShow > 10 && (
-            <div className="flex overflow-x-auto gap-1 mb-4 pb-2">
-              {Array.from({ length: Math.min(rowsToShow, 20) }).map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => scrollToRow(idx)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
-                    idx === 0 ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {language === 'am' ? `ረድፍ ${idx + 1}` : `Row ${rowLetters[idx] || (idx + 1)}`}
-                </button>
-              ))}
-              {rowsToShow > 20 && (
-                <span className="px-3 py-1.5 text-xs text-gray-400">+{rowsToShow - 20} more</span>
-              )}
-            </div>
-          )}
-
-          {/* Manual Seat Input */}
-          <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-            <p className="text-sm font-semibold text-blue-700 mb-2">🎯 {language === 'am' ? 'የመቀመጫ ቁጥር በእጅ ያስገቡ:' : 'Enter seat number manually:'}</p>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                value={manualSeatInput}
-                onChange={(e) => setManualSeatInput(e.target.value)}
-                placeholder={language === 'am' ? `የመቀመጫ ቁጥር (1-${Math.min(totalSeats, 500)})` : `Seat number (1-${Math.min(totalSeats, 500)})`}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500"
-              />
+        <div className="flex-1 overflow-y-auto p-4" ref={containerRef}>
+          {/* Pagination - Show page numbers */}
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div className="flex flex-wrap items-center gap-2">
               <button
-                onClick={handleManualSeatSelection}
-                className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-700"
+                onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+                disabled={currentPage === 0}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {language === 'am' ? 'መቀመጫ ጨምር' : 'Add Seat'}
+                ◀
+              </button>
+              <span className="text-xs text-gray-600">
+                {language === 'am' 
+                  ? `ገጽ ${currentPage + 1} ከ ${totalPages}` 
+                  : `Page ${currentPage + 1} of ${totalPages}`}
+              </span>
+              <button
+                onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
+                disabled={currentPage === totalPages - 1}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                ▶
+              </button>
+              <span className="text-xs text-gray-400 ml-2">
+                {language === 'am' ? 'መቀመጫዎች' : 'Seats'} {currentPage * seatsPerPage + 1} - {Math.min((currentPage + 1) * seatsPerPage, totalSeats)}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSeatInputMode(!seatInputMode)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                  seatInputMode ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {seatInputMode ? '📋 ' + (language === 'am' ? 'ዝርዝር ምረጥ' : 'Select Grid') : '🎯 ' + (language === 'am' ? 'በቁጥር አስገባ' : 'Enter Numbers')}
               </button>
             </div>
           </div>
 
+          {/* Row Navigation - Quick jump to rows */}
+          {displayRows > 10 && !seatInputMode && (
+            <div className="flex overflow-x-auto gap-1 mb-4 pb-2">
+              {Array.from({ length: Math.min(displayRows, 15) }).map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => scrollToRow(idx)}
+                  className="px-2 py-1 rounded-lg text-[10px] font-medium whitespace-nowrap transition bg-gray-200 hover:bg-gray-300 text-gray-700"
+                >
+                  {language === 'am' ? `ረድፍ ${idx + 1}` : `Row ${rowLetters[idx] || (idx + 1)}`}
+                </button>
+              ))}
+              {displayRows > 15 && (
+                <span className="px-2 py-1 text-[10px] text-gray-400">+{displayRows - 15} more</span>
+              )}
+            </div>
+          )}
+
+          {/* Manual Seat Input Mode */}
+          {seatInputMode && (
+            <div className="mb-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+              <p className="text-sm font-semibold text-blue-700 mb-2">
+                {language === 'am' 
+                  ? `🎯 የመቀመጫ ቁጥሮችን በነጠላ ሰረዝ ይለያዩ (ከ1 እስከ ${totalSeats.toLocaleString()})`
+                  : `🎯 Enter seat numbers separated by commas (1 to ${totalSeats.toLocaleString()})`}
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={manualSeatInput}
+                  onChange={(e) => setManualSeatInput(e.target.value)}
+                  placeholder={language === 'am' ? 'ለምሳሌ: 5, 12, 23' : 'Example: 5, 12, 23'}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500"
+                />
+                <button
+                  onClick={handleManualSeatSelection}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
+                >
+                  {language === 'am' ? 'አስይዝ' : 'Reserve'}
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-2">
+                {language === 'am' ? `ከፍተኛ ${maxSeats} መቀመጫዎች` : `Maximum ${maxSeats} seats`}
+              </p>
+            </div>
+          )}
+
           {/* Legend */}
           <div className="flex flex-wrap justify-center gap-4 mb-4 pb-3 border-b">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 bg-gray-200 border border-gray-300 rounded"></div>
+              <div className="w-5 h-5 bg-white border border-gray-300 rounded"></div>
               <span className="text-xs">{language === 'am' ? 'ክፍት' : 'Available'}</span>
             </div>
             <div className="flex items-center gap-2">
@@ -805,67 +870,67 @@ export default function SeatSelector({
 
           {/* Screen */}
           <div className="text-center mb-4">
-            <div className="inline-block bg-gray-600 text-white text-[10px] px-4 py-1 rounded-full">🎬 SCREEN</div>
+            <div className="inline-block bg-gray-700 text-white text-[10px] px-6 py-1 rounded-full uppercase tracking-wider">🎬 SCREEN</div>
             <div className="w-full h-px bg-gray-300 mt-2"></div>
           </div>
 
-          {/* Seat Grid - Theater Style */}
-          <div ref={seatGridRef} className="space-y-1.5 max-h-[40vh] overflow-y-auto p-2">
-            {seatRows.map((rowSeats, rowIndex) => (
-              <div key={rowIndex} id={`row-${rowIndex}`} className="flex flex-wrap items-center gap-1">
-                <div className="w-8 text-[10px] font-mono font-semibold text-gray-400 text-right">
-                  {rowLetters[rowIndex] || (rowIndex + 1)}
-                </div>
-                <div className="flex flex-wrap gap-1 flex-1">
-                  {rowSeats.map(seatNum => {
-                    const isTaken = bookedSeats.includes(seatNum);
-                    const isSelected = selectedSeats.includes(seatNum);
-                    const isReserved = reservedSeats.includes(seatNum) && !isSelected;
-                    
-                    let bgColor = 'bg-white border border-gray-300 hover:bg-gray-100 cursor-pointer';
-                    let textColor = 'text-gray-700';
-                    let size = 'w-8 h-8 text-[10px]';
-                    
-                    if (isSelected) {
-                      bgColor = 'bg-green-600 border-green-700';
-                      textColor = 'text-white';
-                      size = 'w-8 h-8 text-[10px] ring-2 ring-green-300 ring-offset-1';
-                    }
-                    if (isTaken) {
-                      bgColor = 'bg-red-400 border-red-500';
-                      textColor = 'text-white opacity-60';
-                      size = 'w-8 h-8 text-[10px] cursor-not-allowed';
-                    }
-                    if (isReserved) {
-                      bgColor = 'bg-yellow-400 border-yellow-500 animate-pulse';
-                      textColor = 'text-gray-700';
-                    }
+          {/* Seat Grid - Theater Style with ALL seats */}
+          {!seatInputMode && (
+            <div className="space-y-1.5 max-h-[45vh] overflow-y-auto p-2" ref={containerRef}>
+              {seatRows.map((rowSeats, rowIndex) => (
+                <div key={rowIndex} id={`row-${rowIndex}`} className="flex flex-wrap items-center gap-1">
+                  <div className="w-8 text-[10px] font-mono font-semibold text-gray-400 text-right flex-shrink-0">
+                    {rowLetters[rowIndex] || (rowIndex + 1)}
+                  </div>
+                  <div className="flex flex-wrap gap-1 flex-1">
+                    {rowSeats.map(seatNum => {
+                      const isTaken = bookedSeats.includes(seatNum);
+                      const isSelected = selectedSeats.includes(seatNum);
+                      const isReserved = reservedSeats.includes(seatNum) && !isSelected;
+                      
+                      let bgColor = 'bg-white border border-gray-300 hover:bg-gray-100 cursor-pointer';
+                      let textColor = 'text-gray-700';
+                      let size = 'w-7 h-7 text-[9px] sm:w-8 sm:h-8 sm:text-[10px]';
+                      
+                      if (isSelected) {
+                        bgColor = 'bg-green-600 border-green-700';
+                        textColor = 'text-white';
+                        size = 'w-7 h-7 text-[9px] sm:w-8 sm:h-8 sm:text-[10px] ring-2 ring-green-300 ring-offset-1';
+                      }
+                      if (isTaken) {
+                        bgColor = 'bg-red-400 border-red-500';
+                        textColor = 'text-white opacity-60';
+                        size = 'w-7 h-7 text-[9px] sm:w-8 sm:h-8 sm:text-[10px] cursor-not-allowed';
+                      }
+                      if (isReserved) {
+                        bgColor = 'bg-yellow-400 border-yellow-500 animate-pulse';
+                        textColor = 'text-gray-700';
+                      }
 
-                    return (
-                      <button
-                        key={seatNum}
-                        onClick={() => !isTaken && handleSeatClick(seatNum)}
-                        disabled={isTaken}
-                        className={`${size} rounded-lg flex items-center justify-center font-mono font-semibold transition-all ${bgColor} ${textColor}`}
-                        title={isTaken ? `Seat ${seatNum} taken` : `Select Seat ${seatNum}`}
-                      >
-                        {seatNum}
-                      </button>
-                    );
-                  })}
+                      return (
+                        <button
+                          key={seatNum}
+                          onClick={() => !isTaken && handleSeatClick(seatNum)}
+                          disabled={isTaken}
+                          className={`${size} rounded-lg flex items-center justify-center font-mono font-semibold transition-all ${bgColor} ${textColor}`}
+                          title={isTaken ? `Seat ${seatNum} taken` : `Select Seat ${seatNum}`}
+                        >
+                          {seatNum}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Total seats info */}
-          {totalSeats > 500 && (
-            <p className="text-xs text-gray-400 text-center mt-4">
-              {language === 'am' 
-                ? `ከጠቅላላው ${totalSeats.toLocaleString()} መቀመጫዎች ውስጥ 500 እዚህ ይታያሉ`
-                : `Showing 500 of ${totalSeats.toLocaleString()} total seats`}
-            </p>
+              ))}
+            </div>
           )}
+
+          {/* Page info */}
+          <p className="text-xs text-gray-400 text-center mt-4">
+            {language === 'am' 
+              ? `ገጽ ${currentPage + 1}/${totalPages} • መቀመጫዎች ${currentPage * seatsPerPage + 1} - ${Math.min((currentPage + 1) * seatsPerPage, totalSeats)} ከ ${totalSeats.toLocaleString()}`
+              : `Page ${currentPage + 1}/${totalPages} • Seats ${currentPage * seatsPerPage + 1} - ${Math.min((currentPage + 1) * seatsPerPage, totalSeats)} of ${totalSeats.toLocaleString()}`}
+          </p>
           
           {/* Selection Footer */}
           {selectedSeats.length > 0 && (
