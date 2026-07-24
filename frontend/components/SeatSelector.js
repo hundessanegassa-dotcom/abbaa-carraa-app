@@ -1,4 +1,4 @@
-// components/SeatSelector.js - FIXED with proper seat generation
+// components/SeatSelector.js - COMPLETE FIXED FOR ALL PROGRAMS
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -155,6 +155,7 @@ export default function SeatSelector({
   const rows = Math.ceil(totalSeats / seatsPerRow);
   const seatsPerPage = 100;
   const totalPages = Math.ceil(totalSeats / seatsPerPage);
+  const rowLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
   // Countdown Timer
   useEffect(() => {
@@ -205,12 +206,11 @@ export default function SeatSelector({
     getUser();
   }, [onCancel, language]);
 
-  // Initialize seats for the pool
+  // Initialize seats for regular pools
   const initializeSeats = async () => {
-    if (!poolId || seatsInitialized) return;
+    if (!poolId || seatsInitialized || programType !== 'regular') return;
     
     try {
-      // Check if seats already exist
       const { count, error: countError } = await supabase
         .from('pool_seats')
         .select('*', { count: 'exact', head: true })
@@ -221,7 +221,6 @@ export default function SeatSelector({
         return;
       }
       
-      // If no seats exist, generate them
       if (count === 0 && totalSeats > 0) {
         console.log(`Generating ${totalSeats} seats for pool ${poolId}`);
         const seatsToInsert = [];
@@ -233,16 +232,13 @@ export default function SeatSelector({
           });
         }
         
-        // Insert in batches
         const batchSize = 500;
         for (let i = 0; i < seatsToInsert.length; i += batchSize) {
           const batch = seatsToInsert.slice(i, i + batchSize);
           const { error: insertError } = await supabase
             .from('pool_seats')
             .insert(batch);
-          if (insertError) {
-            console.error('Batch insert error:', insertError);
-          }
+          if (insertError) console.error('Batch insert error:', insertError);
         }
         setSeatsInitialized(true);
         console.log(`Successfully generated ${totalSeats} seats`);
@@ -256,8 +252,8 @@ export default function SeatSelector({
 
   // Fetch booked seats and initialize
   useEffect(() => {
-    if (!sessionLoading && currentUser && (poolId || tierId)) {
-      if (poolId) {
+    if (!sessionLoading && currentUser && (poolId || tierId || programType)) {
+      if (programType === 'regular' && poolId) {
         initializeSeats();
       }
       fetchBookedSeats();
@@ -270,7 +266,7 @@ export default function SeatSelector({
       
       return () => clearInterval(interval);
     }
-  }, [poolId, tierId, sessionLoading, currentUser]);
+  }, [poolId, tierId, sessionLoading, currentUser, programType]);
 
   useEffect(() => {
     if (isMounted.current) {
@@ -342,7 +338,7 @@ export default function SeatSelector({
     if (!currentUser) return;
     
     try {
-      if (poolId) {
+      if (poolId && programType === 'regular') {
         const { data, error } = await supabase
           .from('pool_seats')
           .select('seat_number, reserved_until')
@@ -361,11 +357,12 @@ export default function SeatSelector({
       
       // For VIP programs, check reservations table
       try {
+        const poolIdText = poolId || `${programType}_${tierId}_${city || 'default'}`;
         const { data, error } = await supabase
           .from('vip_seat_reservations')
           .select('seat_number, expires_at')
           .eq('user_id', currentUser.id)
-          .eq('pool_id', poolId || `${programType}_${tierId}_${city || 'default'}`)
+          .eq('pool_id', poolIdText)
           .gte('expires_at', new Date().toISOString());
         
         if (!error && data && data.length > 0) {
@@ -387,7 +384,7 @@ export default function SeatSelector({
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     
     try {
-      if (poolId) {
+      if (poolId && programType === 'regular') {
         for (const seatNumber of seatNumbers) {
           const { error } = await supabase
             .from('pool_seats')
@@ -409,8 +406,9 @@ export default function SeatSelector({
       } else {
         // For VIP programs, try to insert into reservations
         try {
+          const poolIdText = poolId || `${programType}_${tierId}_${city || 'default'}`;
           const reservations = seatNumbers.map(seatNumber => ({
-            pool_id: poolId || `${programType}_${tierId}_${city || 'default'}`,
+            pool_id: poolIdText,
             seat_number: seatNumber,
             user_id: currentUser.id,
             expires_at: expiresAt,
@@ -423,7 +421,6 @@ export default function SeatSelector({
           
           if (error) {
             console.error('Reserve error:', error);
-            // If table doesn't exist, just continue without reserving
             if (error.code === '42P01') {
               console.log('vip_seat_reservations table not found, continuing without reservation');
               return true;
@@ -455,7 +452,7 @@ export default function SeatSelector({
     if (!currentUser) return;
     
     try {
-      if (poolId) {
+      if (poolId && programType === 'regular') {
         await supabase
           .from('pool_seats')
           .update({
@@ -470,11 +467,12 @@ export default function SeatSelector({
           .eq('status', 'reserved');
       } else {
         try {
+          const poolIdText = poolId || `${programType}_${tierId}_${city || 'default'}`;
           await supabase
             .from('vip_seat_reservations')
             .delete()
             .eq('user_id', currentUser.id)
-            .eq('pool_id', poolId || `${programType}_${tierId}_${city || 'default'}`);
+            .eq('pool_id', poolIdText);
         } catch (err) {
           // Table may not exist, ignore
           console.log('VIP reservations table may not exist');
@@ -496,7 +494,7 @@ export default function SeatSelector({
     const isSelected = selectedSeats.includes(seatNum);
     
     if (isSelected) {
-      if (poolId) {
+      if (poolId && programType === 'regular') {
         await supabase
           .from('pool_seats')
           .update({
@@ -511,10 +509,11 @@ export default function SeatSelector({
           .eq('reserved_by', currentUser.id);
       } else {
         try {
+          const poolIdText = poolId || `${programType}_${tierId}_${city || 'default'}`;
           await supabase
             .from('vip_seat_reservations')
             .delete()
-            .eq('pool_id', poolId || `${programType}_${tierId}_${city || 'default'}`)
+            .eq('pool_id', poolIdText)
             .eq('seat_number', seatNum)
             .eq('user_id', currentUser.id);
         } catch (err) {
@@ -638,6 +637,28 @@ export default function SeatSelector({
   const fee = entryFee || tier?.contribution || 0;
   const prize = poolInfo?.prize || tier?.prize || 0;
 
+  // Build seat rows for theater display
+  const seatRows = [];
+  const displaySeats = Math.min(totalSeats, 500); // Show max 500 seats at a time
+  const rowsToShow = Math.ceil(displaySeats / seatsPerRow);
+  
+  for (let row = 0; row < rowsToShow; row++) {
+    const startSeat = row * seatsPerRow + 1;
+    const endSeat = Math.min(startSeat + seatsPerRow - 1, displaySeats);
+    const rowSeats = [];
+    for (let seat = startSeat; seat <= endSeat; seat++) {
+      rowSeats.push(seat);
+    }
+    seatRows.push(rowSeats);
+  }
+
+  const scrollToRow = (rowIndex) => {
+    if (seatGridRef.current) {
+      const rowElement = document.getElementById(`row-${rowIndex}`);
+      if (rowElement) rowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-2">
       <div className="bg-gray-100 rounded-2xl shadow-xl max-w-full w-full max-h-[98vh] overflow-hidden flex flex-col">
@@ -706,6 +727,46 @@ export default function SeatSelector({
 
         {/* Seat Grid */}
         <div className="flex-1 overflow-y-auto p-4">
+          {/* Row Navigation */}
+          {rowsToShow > 10 && (
+            <div className="flex overflow-x-auto gap-1 mb-4 pb-2">
+              {Array.from({ length: Math.min(rowsToShow, 20) }).map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => scrollToRow(idx)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
+                    idx === 0 ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {language === 'am' ? `ረድፍ ${idx + 1}` : `Row ${rowLetters[idx] || (idx + 1)}`}
+                </button>
+              ))}
+              {rowsToShow > 20 && (
+                <span className="px-3 py-1.5 text-xs text-gray-400">+{rowsToShow - 20} more</span>
+              )}
+            </div>
+          )}
+
+          {/* Manual Seat Input */}
+          <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <p className="text-sm font-semibold text-blue-700 mb-2">🎯 {language === 'am' ? 'የመቀመጫ ቁጥር በእጅ ያስገቡ:' : 'Enter seat number manually:'}</p>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={manualSeatInput}
+                onChange={(e) => setManualSeatInput(e.target.value)}
+                placeholder={language === 'am' ? `የመቀመጫ ቁጥር (1-${Math.min(totalSeats, 500)})` : `Seat number (1-${Math.min(totalSeats, 500)})`}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500"
+              />
+              <button
+                onClick={handleManualSeatSelection}
+                className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-700"
+              >
+                {language === 'am' ? 'መቀመጫ ጨምር' : 'Add Seat'}
+              </button>
+            </div>
+          </div>
+
           {/* Legend */}
           <div className="flex flex-wrap justify-center gap-4 mb-4 pb-3 border-b">
             <div className="flex items-center gap-2">
@@ -748,133 +809,63 @@ export default function SeatSelector({
             <div className="w-full h-px bg-gray-300 mt-2"></div>
           </div>
 
-          {/* Seat Display Toggle */}
-          <div className="flex justify-between items-center mb-3">
-            <div className="flex gap-2">
-              <button
-                onClick={() => setSeatInputMode(false)}
-                className={`px-3 py-1 rounded-lg text-xs font-medium transition ${
-                  !seatInputMode ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                }`}
-              >
-                {language === 'am' ? 'መቀመጫ ምረጥ' : 'Select Seats'}
-              </button>
-              <button
-                onClick={() => setSeatInputMode(true)}
-                className={`px-3 py-1 rounded-lg text-xs font-medium transition ${
-                  seatInputMode ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                }`}
-              >
-                {language === 'am' ? 'በቁጥር አስገባ' : 'Enter Numbers'}
-              </button>
-            </div>
-            <span className="text-xs text-gray-400">
-              {language === 'am' ? `${totalSeats.toLocaleString()} መቀመጫዎች` : `${totalSeats.toLocaleString()} seats`}
-            </span>
+          {/* Seat Grid - Theater Style */}
+          <div ref={seatGridRef} className="space-y-1.5 max-h-[40vh] overflow-y-auto p-2">
+            {seatRows.map((rowSeats, rowIndex) => (
+              <div key={rowIndex} id={`row-${rowIndex}`} className="flex flex-wrap items-center gap-1">
+                <div className="w-8 text-[10px] font-mono font-semibold text-gray-400 text-right">
+                  {rowLetters[rowIndex] || (rowIndex + 1)}
+                </div>
+                <div className="flex flex-wrap gap-1 flex-1">
+                  {rowSeats.map(seatNum => {
+                    const isTaken = bookedSeats.includes(seatNum);
+                    const isSelected = selectedSeats.includes(seatNum);
+                    const isReserved = reservedSeats.includes(seatNum) && !isSelected;
+                    
+                    let bgColor = 'bg-white border border-gray-300 hover:bg-gray-100 cursor-pointer';
+                    let textColor = 'text-gray-700';
+                    let size = 'w-8 h-8 text-[10px]';
+                    
+                    if (isSelected) {
+                      bgColor = 'bg-green-600 border-green-700';
+                      textColor = 'text-white';
+                      size = 'w-8 h-8 text-[10px] ring-2 ring-green-300 ring-offset-1';
+                    }
+                    if (isTaken) {
+                      bgColor = 'bg-red-400 border-red-500';
+                      textColor = 'text-white opacity-60';
+                      size = 'w-8 h-8 text-[10px] cursor-not-allowed';
+                    }
+                    if (isReserved) {
+                      bgColor = 'bg-yellow-400 border-yellow-500 animate-pulse';
+                      textColor = 'text-gray-700';
+                    }
+
+                    return (
+                      <button
+                        key={seatNum}
+                        onClick={() => !isTaken && handleSeatClick(seatNum)}
+                        disabled={isTaken}
+                        className={`${size} rounded-lg flex items-center justify-center font-mono font-semibold transition-all ${bgColor} ${textColor}`}
+                        title={isTaken ? `Seat ${seatNum} taken` : `Select Seat ${seatNum}`}
+                      >
+                        {seatNum}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
 
-          {/* Seat Input Mode */}
-          {seatInputMode && (
-            <div className="bg-white rounded-xl p-4 mb-4 border border-gray-200">
-              <p className="text-sm text-gray-600 mb-2">
-                {language === 'am' 
-                  ? `የመቀመጫ ቁጥሮችን በነጠላ ሰረዝ ይለያዩ (ከ1 እስከ ${totalSeats.toLocaleString()})`
-                  : `Enter seat numbers separated by commas (1 to ${totalSeats.toLocaleString()})`}
-              </p>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={manualSeatInput}
-                  onChange={(e) => setManualSeatInput(e.target.value)}
-                  placeholder={language === 'am' ? 'ለምሳሌ: 5, 12, 23' : 'Example: 5, 12, 23'}
-                  className="flex-1 border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 text-sm"
-                />
-                <button
-                  onClick={handleManualSeatSelection}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold text-sm"
-                >
-                  {language === 'am' ? 'አስይዝ' : 'Reserve'}
-                </button>
-              </div>
-              <p className="text-xs text-gray-400 mt-2">
-                {language === 'am' ? `ከፍተኛ ${maxSeats} መቀመጫዎች` : `Maximum ${maxSeats} seats`}
-              </p>
-            </div>
-          )}
-
-          {/* Paginated Seat Grid */}
-          {!seatInputMode && (
-            <>
-              {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-2 mb-4">
-                  <button
-                    onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
-                    disabled={currentPage === 0}
-                    className="px-3 py-1 rounded-lg text-xs font-medium bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    ◀
-                  </button>
-                  <span className="text-xs text-gray-600">
-                    {language === 'am' ? `ገጽ ${currentPage + 1} ከ ${totalPages}` : `Page ${currentPage + 1} of ${totalPages}`}
-                  </span>
-                  <button
-                    onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
-                    disabled={currentPage === totalPages - 1}
-                    className="px-3 py-1 rounded-lg text-xs font-medium bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    ▶
-                  </button>
-                </div>
-              )}
-
-              {/* Seat Grid */}
-              <div ref={seatGridRef} className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-1.5 max-h-[40vh] overflow-y-auto p-2">
-                {currentPageSeats.map(seatNum => {
-                  const isTaken = bookedSeats.includes(seatNum);
-                  const isSelected = selectedSeats.includes(seatNum);
-                  const isReserved = reservedSeats.includes(seatNum) && !isSelected;
-                  
-                  let bgColor = 'bg-white border border-gray-300 hover:bg-gray-100 cursor-pointer';
-                  let textColor = 'text-gray-700';
-                  let size = 'w-8 h-8 text-[10px]';
-                  
-                  if (isSelected) {
-                    bgColor = 'bg-green-600 border-green-700';
-                    textColor = 'text-white';
-                    size = 'w-8 h-8 text-[10px] ring-2 ring-green-300 ring-offset-1';
-                  }
-                  if (isTaken) {
-                    bgColor = 'bg-red-400 border-red-500';
-                    textColor = 'text-white opacity-60';
-                    size = 'w-8 h-8 text-[10px] cursor-not-allowed';
-                  }
-                  if (isReserved) {
-                    bgColor = 'bg-yellow-400 border-yellow-500 animate-pulse';
-                    textColor = 'text-gray-700';
-                  }
-
-                  return (
-                    <button
-                      key={seatNum}
-                      onClick={() => !isTaken && handleSeatClick(seatNum)}
-                      disabled={isTaken}
-                      className={`${size} rounded-lg flex items-center justify-center font-mono font-semibold transition-all ${bgColor} ${textColor}`}
-                      title={isTaken ? `Seat ${seatNum} taken` : `Select Seat ${seatNum}`}
-                    >
-                      {seatNum}
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          )}
-
           {/* Total seats info */}
-          <p className="text-xs text-gray-400 text-center mt-4">
-            {language === 'am' 
-              ? `ሁሉም ${totalSeats.toLocaleString()} መቀመጫዎች ለምርጫ ዝግጁ ናቸው (ገጽ ${currentPage + 1}/${totalPages})`
-              : `All ${totalSeats.toLocaleString()} seats are available (Page ${currentPage + 1}/${totalPages})`}
-          </p>
+          {totalSeats > 500 && (
+            <p className="text-xs text-gray-400 text-center mt-4">
+              {language === 'am' 
+                ? `ከጠቅላላው ${totalSeats.toLocaleString()} መቀመጫዎች ውስጥ 500 እዚህ ይታያሉ`
+                : `Showing 500 of ${totalSeats.toLocaleString()} total seats`}
+            </p>
+          )}
           
           {/* Selection Footer */}
           {selectedSeats.length > 0 && (
