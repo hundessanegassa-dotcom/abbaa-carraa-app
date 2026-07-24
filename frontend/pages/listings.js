@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Head from 'next/head';
 import toast from 'react-hot-toast';
 import NoSSR from '../components/NoSSR';
-import PoolProductCard from '../components/PoolProductCard';
+import PoolCard from '../components/PoolCard';
 import DashboardLayout from '../components/DashboardLayout';
 
 export default function Listings() {
@@ -295,13 +295,12 @@ export default function Listings() {
             ) : viewMode === 'grid' ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {filteredPools.map((pool) => (
-                  <PoolProductCard 
-                    key={pool.id} 
-                    pool={pool} 
-                    featured={pool.is_featured === true} 
-                    language={language}
-                    show3D={is3D}
-                  />
+                  <PoolCard 
+  key={pool.id} 
+  pool={pool} 
+  featured={pool.is_featured === true} 
+  language={language}
+/>
                 ))}
               </div>
             ) : (
