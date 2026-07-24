@@ -354,7 +354,12 @@ export default function CitySeat() {
                 <div className="sticky top-0 bg-white border-b p-5 flex justify-between"><h2 className="text-xl font-bold">{language === 'am' ? 'ክፍያ ያጠናቅቁ' : 'Complete Payment'}</h2><button onClick={() => { setShowPayment(false); setParticipantId(null); }} className="text-2xl">×</button></div>
                 <div className="p-6">
                   <div className="bg-gray-50 rounded-xl p-4 mb-4 text-center"><p>{language === 'am' ? 'ከተማ:' : 'City:'} {getCityDisplayName()}</p><p>{language === 'am' ? 'መቀመጫዎች:' : 'Seats:'} {selectedSeats.join(', ')}</p><p className="text-2xl font-bold text-emerald-600">ETB {totalAmount.toLocaleString()}</p></div>
-                  <div className="bg-blue-50 rounded-xl p-4 mb-4"><p className="font-semibold">📱 TeleBirr: 0913277922</p><p className="font-semibold">🏦 CBE Bank: 1000601091686</p><p className="text-sm">{language === 'am' ? 'የሂሳብ ባለቤት:' : 'Account:'} Negassa Hundessa</p></div>
+                  <div className="bg-blue-50 rounded-xl p-4 mb-4">
+                    <p className="font-semibold mb-2">{language === 'am' ? 'የክፍያ ዘዴዎች' : 'Payment Methods'}</p>
+                    <p className="font-semibold">📱 TeleBirr: 0913277922</p>
+                    <p className="font-semibold mt-2">🏦 CBE Bank: 1000601091686</p>
+                    <p className="text-sm">{language === 'am' ? 'የሂሳብ ባለቤት:' : 'Account Name:'} NEGASSA HUNDESSA DUGA</p>
+                  </div>
                   <div className="border-2 border-dashed rounded-xl p-4 text-center mb-4">
                     <input type="file" accept="image/*" className="hidden" id="paymentFile" onChange={(e) => { const file = e.target.files[0]; if (file) { setSelectedFile(file); setPreviewUrl(URL.createObjectURL(file)); } }} />
                     <label htmlFor="paymentFile" className="cursor-pointer block">
