@@ -1,4 +1,4 @@
-// pages/pools/[id].js - COMPLETE WITH TICKET IMAGE COMPONENT
+// pages/pools/[id].js - COMPLETE WITH UNIFIED SEAT SELECTOR
 import { useRouter } from 'next/router';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -6,6 +6,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import TicketImage from '../../components/TicketImage';
+import SeatSelector from '../../components/SeatSelector';
 
 export default function PoolDetails() {
   const router = useRouter();
@@ -13,7 +14,6 @@ export default function PoolDetails() {
   const isMounted = useRef(true);
   const [pool, setPool] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [user, setUser] = useState(null);
   const [showSeatSelector, setShowSeatSelector] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
@@ -24,17 +24,10 @@ export default function PoolDetails() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [bookedSeats, setBookedSeats] = useState([]);
-  const [reservedSeats, setReservedSeats] = useState([]);
-  const [reservationTimer, setReservationTimer] = useState(null);
-  const [availableSeatsCount, setAvailableSeatsCount] = useState(null);
-  const [manualSeatInput, setManualSeatInput] = useState('');
-  const [seatsInitialized, setSeatsInitialized] = useState(false);
+  const [availableSeatsCount, setAvailableSeatsCount] = useState(0);
   const [language, setLanguage] = useState('am');
-  const [currentRow, setCurrentRow] = useState(0);
-  const seatGridRef = useRef(null);
   
-  // ✅ NEW: Ticket verification states
+  // Ticket verification states
   const [ticketVerified, setTicketVerified] = useState(false);
   const [checkingVerification, setCheckingVerification] = useState(false);
   const [paymentSubmitted, setPaymentSubmitted] = useState(false);
@@ -51,28 +44,19 @@ export default function PoolDetails() {
   const winnerPrize = pool?.target_amount || 0;
   const entryFee = pool?.entry_fee || pool?.ticket_price || 10;
   const totalCollection = winnerPrize * 1.2;
-  // Use pool's total_seats if available, otherwise calculate
   const totalSeats = pool?.total_seats || Math.max(10, Math.floor(totalCollection / entryFee) || 10);
   const currentAmount = pool?.current_amount || 0;
   const progress = (currentAmount / totalCollection) * 100;
-  const maxSeatsPerUser = Math.min(5, Math.floor((totalSeats - bookedSeats.length) / 2) || 5);
-  const seatsPerRow = pool?.seats_per_row || 20;
 
-  // ✅ FIX: Better ID handling - useEffect to fetch pool when id is available
   useEffect(() => {
     if (id) {
-      console.log('Pool ID from query:', id);
       fetchPool();
       getCurrentUser();
-    } else {
-      console.log('No pool ID in query, waiting...');
     }
   }, [id]);
 
-  // ✅ FIX: Redirect if no id and not loading
   useEffect(() => {
     if (!id && !loading && router.isReady) {
-      console.log('No pool ID, redirecting to listings');
       toast.error('No pool selected');
       router.push('/listings');
     }
@@ -81,37 +65,14 @@ export default function PoolDetails() {
   useEffect(() => {
     return () => {
       isMounted.current = false;
-      if (reservationTimer) clearTimeout(reservationTimer);
-      if (reservedSeats.length > 0 && user) {
-        releaseSeats(reservedSeats);
-      }
     };
-  }, [reservedSeats, user]);
+  }, []);
 
-  useEffect(() => {
-    if (user && pool && id) {
-      const initSeats = async () => {
-        await generateSeatsIfNeeded();
-        await fetchBookedSeats();
-        await fetchUserReservations();
-      };
-      initSeats();
-      
-      const interval = setInterval(() => {
-        fetchBookedSeats();
-        fetchUserReservations();
-      }, 30000);
-      
-      return () => clearInterval(interval);
-    }
-  }, [user, pool, id]);
-
-  // ✅ NEW: Check ticket verification status periodically
+  // Check ticket verification status periodically
   useEffect(() => {
     if (participantId && paymentSubmitted) {
       checkVerificationStatus();
-      
-      const interval = setInterval(checkVerificationStatus, 30000); // Check every 30 seconds
+      const interval = setInterval(checkVerificationStatus, 30000);
       return () => clearInterval(interval);
     }
   }, [participantId, paymentSubmitted]);
@@ -125,7 +86,6 @@ export default function PoolDetails() {
     }
   }
 
-  // ✅ NEW: Check verification status function
   const checkVerificationStatus = async () => {
     if (!participantId || checkingVerification) return;
     
@@ -146,7 +106,6 @@ export default function PoolDetails() {
             ? '✅ ቲኬትዎ ተረጋግጧል! የተረጋገጠ ቲኬትዎን ያውርዱ' 
             : '✅ Your ticket is verified! Download your verified ticket'
         );
-        // Refresh participant data to get latest
         const { data: updatedParticipant } = await supabase
           .from('regular_pool_participants')
           .select('*')
@@ -163,18 +122,14 @@ export default function PoolDetails() {
     }
   };
 
-  // ✅ FIX: Better pool fetching with error handling
   async function fetchPool() {
     if (!id) {
-      console.log('No ID provided to fetchPool');
       setLoading(false);
       return;
     }
 
     setLoading(true);
     try {
-      console.log('Fetching pool with ID:', id);
-      
       const { data, error } = await supabase
         .from('pools')
         .select('*')
@@ -189,15 +144,15 @@ export default function PoolDetails() {
       }
       
       if (!data) {
-        console.error('No pool found with ID:', id);
         toast.error('Pool not found');
         setTimeout(() => router.push('/listings'), 2000);
         setLoading(false);
         return;
       }
       
-      console.log('Pool found:', data);
       if (isMounted.current) setPool(data);
+      // Get available seats count
+      await fetchAvailableSeats(data.id);
       
     } catch (err) {
       console.error('Unexpected error fetching pool:', err);
@@ -208,219 +163,26 @@ export default function PoolDetails() {
     }
   }
 
-  // Generate seats if they don't exist
-  const generateSeatsIfNeeded = async () => {
-    if (!pool || seatsInitialized || !id) return;
-    
-    try {
-      const { count, error: countError } = await supabase
-        .from('pool_seats')
-        .select('*', { count: 'exact', head: true })
-        .eq('pool_id', id);
-      
-      if (countError) throw countError;
-      
-      if (count === 0 && totalSeats > 0) {
-        console.log(`Generating ${totalSeats} seats for pool ${id}`);
-        const seatsToInsert = [];
-        for (let i = 1; i <= totalSeats; i++) {
-          seatsToInsert.push({
-            pool_id: id,
-            seat_number: i,
-            status: 'available'
-          });
-        }
-        
-        const batchSize = 500;
-        for (let i = 0; i < seatsToInsert.length; i += batchSize) {
-          const batch = seatsToInsert.slice(i, i + batchSize);
-          const { error: insertError } = await supabase
-            .from('pool_seats')
-            .insert(batch);
-          if (insertError) console.error('Batch insert error:', insertError);
-        }
-        setSeatsInitialized(true);
-        console.log(`Successfully generated ${totalSeats} seats`);
-        return true;
-      }
-      setSeatsInitialized(true);
-      return true;
-    } catch (err) {
-      console.error('Error generating seats:', err);
-      return false;
-    }
-  };
-
-  const refreshSeats = async () => {
-    if (!id) return;
-    setIsRefreshing(true);
-    try {
-      await generateSeatsIfNeeded();
-      await fetchBookedSeats();
-      await fetchUserReservations();
-      toast.success(language === 'am' ? 'መቀመጫዎች ታድሰዋል! ✅' : 'Seats refreshed! ✅');
-    } catch (error) {
-      toast.error(language === 'am' ? 'መቀመጫዎችን ማደስ አልተቻለም' : 'Failed to refresh seats');
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
-  async function fetchBookedSeats() {
-    if (!id) return;
-    
+  async function fetchAvailableSeats(poolId) {
     try {
       const { data, error } = await supabase
         .from('pool_seats')
-        .select('seat_number, status, reserved_by')
-        .eq('pool_id', id);
+        .select('seat_number, status')
+        .eq('pool_id', poolId);
       
       if (error) {
-        console.error('Fetch booked seats error:', error);
+        console.error('Error fetching seats:', error);
+        setAvailableSeatsCount(0);
         return;
       }
       
-      const takenSeats = (data || [])
-        .filter(seat => seat.status === 'taken')
-        .map(seat => seat.seat_number);
-      
-      const reservedByOthers = (data || [])
-        .filter(seat => seat.status === 'reserved' && seat.reserved_by !== user?.id)
-        .map(seat => seat.seat_number);
-      
-      const reservedByMe = (data || [])
-        .filter(seat => seat.status === 'reserved' && seat.reserved_by === user?.id)
-        .map(seat => seat.seat_number);
-      
-      const allUnavailable = [...new Set([...takenSeats, ...reservedByOthers])];
-      setBookedSeats(allUnavailable);
-      setReservedSeats(reservedByMe);
-      
-      if (reservedByMe.length > 0 && selectedSeats.length === 0) {
-        setSelectedSeats(reservedByMe);
-      }
-      
-      // Calculate available seats - ensure we have a valid count
-      const availableCount = Math.max(0, totalSeats - allUnavailable.length);
-      setAvailableSeatsCount(availableCount);
-      
-      // If seats are not initialized yet, initialize them
-      if (!seatsInitialized && availableCount === totalSeats && totalSeats > 0) {
-        await generateSeatsIfNeeded();
-      }
-      
-    } catch (err) {
-      console.error('Error fetching booked seats:', err);
-      // Set available seats to total seats on error to allow users to try
-      setAvailableSeatsCount(totalSeats);
-    }
-  }
-
-  async function fetchUserReservations() {
-    if (!user || !id) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('pool_seats')
-        .select('seat_number, reserved_until')
-        .eq('pool_id', id)
-        .eq('reserved_by', user.id)
-        .eq('status', 'reserved')
-        .gte('reserved_until', new Date().toISOString());
-      
-      if (!error && data && data.length > 0) {
-        const reservedSeatNumbers = data.map(r => r.seat_number);
-        setReservedSeats(reservedSeatNumbers);
-        setSelectedSeats(reservedSeatNumbers);
-      }
-    } catch (err) {
-      console.error('Error fetching reservations:', err);
-    }
-  }
-
-  async function reserveSeatsInDB(seatNumbers) {
-    if (!user || !id) return false;
-    
-    const expiryTime = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-    
-    try {
-      for (const seatNumber of seatNumbers) {
-        const { error } = await supabase
-          .from('pool_seats')
-          .upsert({
-            pool_id: id,
-            seat_number: seatNumber,
-            user_id: user.id,
-            reserved_by: user.id,
-            status: 'reserved',
-            reserved_until: expiryTime,
-            reserved_at: new Date().toISOString()
-          }, { onConflict: 'pool_id, seat_number' });
-        
-        if (error) {
-          console.error('Reserve error:', error);
-          return false;
-        }
-      }
-      
-      if (reservationTimer) clearTimeout(reservationTimer);
-      const timer = setTimeout(() => {
-        releaseUserReservations();
-        toast.warning('Your seat reservation has expired. Please reselect seats.', { duration: 5000 });
-        window.location.reload();
-      }, 10 * 60 * 1000);
-      setReservationTimer(timer);
-      
-      return true;
+      const taken = data?.filter(s => s.status === 'taken').length || 0;
+      const reserved = data?.filter(s => s.status === 'reserved').length || 0;
+      const available = Math.max(0, totalSeats - taken - reserved);
+      setAvailableSeatsCount(available);
     } catch (error) {
-      console.error('Error reserving seats:', error);
-      return false;
-    }
-  }
-
-  async function releaseSeats(seatNumbers) {
-    if (!seatNumbers || seatNumbers.length === 0 || !user || !id) return;
-    
-    try {
-      await supabase
-        .from('pool_seats')
-        .update({
-          status: 'available',
-          user_id: null,
-          reserved_by: null,
-          reserved_at: null,
-          reserved_until: null
-        })
-        .in('seat_number', seatNumbers)
-        .eq('pool_id', id)
-        .eq('reserved_by', user.id);
-    } catch (error) {
-      console.error('Error releasing seats:', error);
-    }
-  }
-
-  async function releaseUserReservations() {
-    if (!user || !id) return;
-    
-    try {
-      await supabase
-        .from('pool_seats')
-        .update({
-          status: 'available',
-          user_id: null,
-          reserved_by: null,
-          reserved_at: null,
-          reserved_until: null
-        })
-        .eq('pool_id', id)
-        .eq('reserved_by', user.id)
-        .eq('status', 'reserved');
-      
-      setReservedSeats([]);
-      setSelectedSeats([]);
-      await fetchBookedSeats();
-    } catch (error) {
-      console.error('Error releasing user reservations:', error);
+      console.error('Error fetching seats:', error);
+      setAvailableSeatsCount(0);
     }
   }
 
@@ -439,108 +201,11 @@ export default function PoolDetails() {
     setShowSeatSelector(true);
   };
 
-  const handleManualSeatAdd = async () => {
-    const seatNum = parseInt(manualSeatInput);
-    if (isNaN(seatNum)) {
-      toast.error('Please enter a valid seat number');
-      return;
-    }
-    if (seatNum < 1 || seatNum > totalSeats) {
-      toast.error(`Seat number must be between 1 and ${totalSeats.toLocaleString()}`);
-      return;
-    }
-    if (bookedSeats.includes(seatNum)) {
-      toast.error(`Seat ${seatNum} is already taken. Please select another seat.`);
-      setManualSeatInput('');
-      return;
-    }
-    if (selectedSeats.includes(seatNum)) {
-      toast.error(`Seat ${seatNum} is already selected`);
-      setManualSeatInput('');
-      return;
-    }
-    if (selectedSeats.length >= maxSeatsPerUser) {
-      toast.error(`You can only select up to ${maxSeatsPerUser} seats`);
-      return;
-    }
-    
-    const success = await reserveSeatsInDB([seatNum]);
-    if (success) {
-      setSelectedSeats([...selectedSeats, seatNum]);
-      setReservedSeats([...reservedSeats, seatNum]);
-      toast.success(`Seat ${seatNum} reserved for 10 minutes`);
-      await fetchBookedSeats();
-      setManualSeatInput('');
-    } else {
-      toast.error(`Seat ${seatNum} is no longer available`);
-      await fetchBookedSeats();
-    }
-  };
-
-  const toggleSeat = async (seatNum) => {
-    if (bookedSeats.includes(seatNum)) {
-      toast.error(`Seat ${seatNum} is already taken.`);
-      return;
-    }
-
-    const isSelected = selectedSeats.includes(seatNum);
-    const isReservedByYou = reservedSeats.includes(seatNum);
-
-    if (isSelected) {
-      await releaseSeats([seatNum]);
-      setSelectedSeats(selectedSeats.filter(s => s !== seatNum));
-      setReservedSeats(reservedSeats.filter(s => s !== seatNum));
-      toast.success(`Seat ${seatNum} released`);
-      await fetchBookedSeats();
-    } else if (isReservedByYou) {
-      setSelectedSeats([...selectedSeats, seatNum]);
-      toast.success(`Seat ${seatNum} selected`);
-    } else {
-      if (selectedSeats.length >= maxSeatsPerUser) {
-        toast.error(`You can only select up to ${maxSeatsPerUser} seats`);
-        return;
-      }
-      
-      const success = await reserveSeatsInDB([seatNum]);
-      if (success) {
-        setSelectedSeats([...selectedSeats, seatNum]);
-        setReservedSeats([...reservedSeats, seatNum]);
-        toast.success(`Seat ${seatNum} reserved for 10 minutes`);
-        await fetchBookedSeats();
-      } else {
-        toast.error(`Seat ${seatNum} is no longer available`);
-        await fetchBookedSeats();
-      }
-    }
-  };
-
-  const confirmSeats = async () => {
-    if (selectedSeats.length === 0) { 
-      toast.error('Select at least one seat'); 
-      return; 
-    }
-    
+  const handleSeatsSelected = async ({ seats, totalAmount, seatCount, tier }) => {
     setLoading(true);
-    const checkingToast = toast.loading('Verifying seat availability...');
     
     try {
-      await fetchBookedSeats();
-      
-      const stillAvailable = selectedSeats.every(seat => !bookedSeats.includes(seat));
-      if (!stillAvailable) {
-        const unavailableSeats = selectedSeats.filter(seat => bookedSeats.includes(seat));
-        toast.error(`Seats ${unavailableSeats.join(', ')} are no longer available.`, { id: checkingToast });
-        await fetchBookedSeats();
-        setSelectedSeats([]);
-        setReservedSeats([]);
-        setLoading(false);
-        return;
-      }
-      
       const ticketNumber = `POOL-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-      const totalAmount = selectedSeats.length * entryFee;
-      
-      toast.loading('Reserving your seats...', { id: checkingToast });
       
       const { data: participant, error } = await supabase
         .from('regular_pool_participants')
@@ -550,7 +215,7 @@ export default function PoolDetails() {
           user_name: user.user_metadata?.full_name || user.email.split('@')[0],
           pool_id: pool.id,
           pool_name: pool.prize_name,
-          seat_numbers: selectedSeats,
+          seat_numbers: seats,
           contribution_amount: totalAmount,
           prize_amount: pool.target_amount,
           payment_status: 'pending',
@@ -563,6 +228,7 @@ export default function PoolDetails() {
       
       if (error) throw error;
       
+      // Mark seats as taken
       await supabase
         .from('pool_seats')
         .update({ 
@@ -571,23 +237,19 @@ export default function PoolDetails() {
           reserved_by: null,
           reserved_until: null
         })
-        .in('seat_number', selectedSeats)
-        .eq('pool_id', pool.id)
-        .eq('reserved_by', user.id);
+        .in('seat_number', seats)
+        .eq('pool_id', pool.id);
       
       setParticipantId(participant.id);
+      setSelectedSeats(seats);
       setShowSeatSelector(false);
       setShowPayment(true);
       
-      toast.success('Seats reserved! Please complete payment.', { id: checkingToast });
+      toast.success('Seats reserved! Please complete payment.');
       
     } catch (error) { 
-      console.error('Confirmation error:', error);
-      toast.error('Failed to reserve seats: ' + error.message, { id: checkingToast });
-      await releaseSeats(selectedSeats);
-      setSelectedSeats([]);
-      setReservedSeats([]);
-      await fetchBookedSeats();
+      console.error('Error:', error);
+      toast.error('Failed to reserve seats: ' + error.message);
     } finally { 
       setLoading(false); 
     }
@@ -636,7 +298,6 @@ export default function PoolDetails() {
     
     try {
       const compressedFile = await compressImage(selectedFile);
-      
       const fileName = `${user.id}/${Date.now()}_regular_${pool.id}.jpg`;
       
       const { error: uploadError } = await supabase.storage
@@ -673,7 +334,7 @@ export default function PoolDetails() {
       if (fetchError) throw new Error(`Fetch failed: ${fetchError.message}`);
       
       setParticipantData(updatedParticipant);
-      setPaymentSubmitted(true); // ✅ NEW
+      setPaymentSubmitted(true);
       setShowPayment(false);
       setShowTicket(true);
       
@@ -687,30 +348,11 @@ export default function PoolDetails() {
     }
   };
 
-  const handleCancelSeatSelection = async () => {
-    if (selectedSeats.length > 0) {
-      await releaseSeats(selectedSeats);
-      setSelectedSeats([]);
-      setReservedSeats([]);
-    }
-    setShowSeatSelector(false);
-  };
-
-  const handleCancelPayment = async () => {
-    if (selectedSeats.length > 0) {
-      await releaseSeats(selectedSeats);
-      toast.info(`Seats ${selectedSeats.join(', ')} released`);
-    }
-    setShowPayment(false);
-    setShowSeatSelector(true);
-  };
-
   const handleCloseTicket = () => {
     setShowTicket(false);
     router.push('/dashboard');
   };
 
-  // ✅ FIX: Show proper loading state
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -722,7 +364,6 @@ export default function PoolDetails() {
     );
   }
 
-  // ✅ FIX: Show "Pool not found" with proper redirect
   if (!pool) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -737,274 +378,6 @@ export default function PoolDetails() {
       </div>
     );
   }
-
-  // Build seat rows for theater display
-  const rows = Math.ceil(totalSeats / seatsPerRow);
-  const rowLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-  const seatRows = [];
-  for (let row = 0; row < rows; row++) {
-    const startSeat = row * seatsPerRow + 1;
-    const endSeat = Math.min(startSeat + seatsPerRow - 1, totalSeats);
-    const rowSeats = [];
-    for (let seat = startSeat; seat <= endSeat; seat++) {
-      rowSeats.push(seat);
-    }
-    seatRows.push(rowSeats);
-  }
-
-  const availableCount = seatRows.flat().filter(s => 
-    !bookedSeats.includes(s) && !selectedSeats.includes(s) && !reservedSeats.includes(s)
-  ).length;
-  const takenCount = bookedSeats.length;
-
-  const scrollToRow = (rowIndex) => {
-    setCurrentRow(rowIndex);
-    if (seatGridRef.current) {
-      const rowElement = document.getElementById(`row-${rowIndex}`);
-      if (rowElement) rowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  };
-
-  const renderSeatSelector = () => {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl shadow-xl max-w-7xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
-            <div>
-              <h2 className="text-xl font-bold">Select Your Seats</h2>
-              <p className="text-sm text-gray-500">{pool.prize_name} • Max {maxSeatsPerUser} seats • Total {totalSeats.toLocaleString()} seats</p>
-            </div>
-            <div className="flex gap-2">
-              <button 
-                onClick={refreshSeats} 
-                disabled={isRefreshing}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-xs transition disabled:opacity-50 flex items-center gap-1"
-              >
-                {isRefreshing ? (
-                  <>
-                    <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Refreshing...
-                  </>
-                ) : (
-                  '🔄 Refresh Seats'
-                )}
-              </button>
-              <button onClick={handleCancelSeatSelection} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
-            </div>
-          </div>
-          
-          <div className="p-6">
-            {/* Row Navigation */}
-            <div className="flex overflow-x-auto gap-1 mb-4 pb-2">
-              {Array.from({ length: Math.min(rows, 20) }).map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => scrollToRow(idx)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
-                    currentRow === idx
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {language === 'am' ? `ረድፍ ${idx + 1}` : `Row ${rowLetters[idx] || (idx + 1)}`}
-                </button>
-              ))}
-              {rows > 20 && (
-                <span className="px-3 py-1.5 text-xs text-gray-400">+{rows - 20} more</span>
-              )}
-            </div>
-
-            {/* Manual Seat Input */}
-            <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-sm font-semibold text-blue-700 mb-2">🎯 Or enter seat number manually:</p>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  value={manualSeatInput}
-                  onChange={(e) => setManualSeatInput(e.target.value)}
-                  placeholder={`Enter seat number (1-${totalSeats.toLocaleString()})`}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500"
-                />
-                <button
-                  onClick={handleManualSeatAdd}
-                  className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-700"
-                >
-                  Add Seat
-                </button>
-              </div>
-            </div>
-            
-            <div className="flex flex-wrap justify-center gap-4 mb-4 pb-3 border-b">
-              <div className="flex items-center gap-2"><div className="w-5 h-5 bg-gray-200 border border-gray-300 rounded"></div><span>Available</span></div>
-              <div className="flex items-center gap-2"><div className="w-5 h-5 bg-green-600 rounded"></div><span>Your Selection</span></div>
-              <div className="flex items-center gap-2"><div className="w-5 h-5 bg-red-400 rounded"></div><span>Taken/Booked</span></div>
-              <div className="flex items-center gap-2"><div className="w-5 h-5 bg-yellow-400 rounded animate-pulse"></div><span>Reserved for You (10 min)</span></div>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              <div className="bg-green-50 rounded-lg p-2 text-center border">
-                <p className="text-xl font-bold text-green-600">{availableCount.toLocaleString()}</p>
-                <p className="text-[10px] text-gray-500">Available</p>
-              </div>
-              <div className="bg-yellow-50 rounded-lg p-2 text-center border">
-                <p className="text-xl font-bold text-yellow-600">{selectedSeats.length}</p>
-                <p className="text-[10px] text-gray-500">Your Selected</p>
-              </div>
-              <div className="bg-red-50 rounded-lg p-2 text-center border">
-                <p className="text-xl font-bold text-red-600">{takenCount.toLocaleString()}</p>
-                <p className="text-[10px] text-gray-500">Booked/Taken</p>
-              </div>
-            </div>
-
-            {/* Screen */}
-            <div className="text-center mb-4">
-              <div className="inline-block bg-gray-700 text-white text-[10px] px-6 py-1 rounded-full uppercase tracking-wider">🎬 SCREEN</div>
-              <div className="w-full h-px bg-gray-300 mt-2"></div>
-            </div>
-
-            {/* Seat Grid - Theater Style */}
-            <div ref={seatGridRef} className="space-y-1.5 max-h-[50vh] overflow-y-auto p-2">
-              {seatRows.map((rowSeats, rowIndex) => (
-                <div key={rowIndex} id={`row-${rowIndex}`} className="flex flex-wrap items-center gap-1">
-                  <div className="w-10 text-[10px] font-mono font-semibold text-gray-400 text-right">
-                    {rowLetters[rowIndex] || (rowIndex + 1)}
-                  </div>
-                  <div className="flex flex-wrap gap-1 flex-1">
-                    {rowSeats.map(seatNum => {
-                      const isTaken = bookedSeats.includes(seatNum);
-                      const isSelected = selectedSeats.includes(seatNum);
-                      const isReserved = reservedSeats.includes(seatNum);
-                      let bgColor = 'bg-white border border-gray-300 hover:bg-gray-100 cursor-pointer';
-                      let textColor = 'text-gray-700';
-                      let size = 'w-8 h-8 text-[10px]';
-                      
-                      if (isSelected) {
-                        bgColor = 'bg-emerald-600 border-emerald-700';
-                        textColor = 'text-white';
-                        size = 'w-8 h-8 text-[10px] ring-2 ring-emerald-300 ring-offset-1';
-                      }
-                      if (isTaken) {
-                        bgColor = 'bg-red-400 border-red-500';
-                        textColor = 'text-white opacity-60';
-                        size = 'w-8 h-8 text-[10px] cursor-not-allowed';
-                      }
-                      if (isReserved && !isSelected) {
-                        bgColor = 'bg-yellow-400 border-yellow-500 animate-pulse';
-                        textColor = 'text-gray-700';
-                      }
-
-                      return (
-                        <button
-                          key={seatNum}
-                          onClick={() => !isTaken && toggleSeat(seatNum)}
-                          disabled={isTaken}
-                          className={`${size} rounded-lg flex items-center justify-center font-mono font-semibold transition-all ${bgColor} ${textColor}`}
-                          title={isTaken ? `Seat ${seatNum} taken` : `Select Seat ${seatNum}`}
-                        >
-                          {seatNum}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {totalSeats > 500 && (
-              <p className="text-xs text-gray-400 text-center mt-4">Showing all {totalSeats.toLocaleString()} seats (scroll to see more)</p>
-            )}
-            
-            {selectedSeats.length > 0 && (
-              <div className="border-t pt-4">
-                <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
-                  <div><p className="text-sm text-gray-500">Selected Seats</p><p className="font-bold text-lg">{selectedSeats.sort((a,b)=>a-b).join(', ')}</p></div>
-                  <div className="text-right"><p className="text-sm text-gray-500">Total Amount</p><p className="font-bold text-2xl text-green-600">ETB {(selectedSeats.length * entryFee).toLocaleString()}</p><p className="text-xs text-gray-400">({selectedSeats.length} seats × ETB {entryFee.toLocaleString()})</p></div>
-                </div>
-                <button onClick={confirmSeats} disabled={loading} className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition disabled:opacity-50">
-                  {loading ? 'Processing...' : `Confirm ${selectedSeats.length} Seat${selectedSeats.length !== 1 ? 's' : ''} & Proceed to Payment`}
-                </button>
-                <p className="text-xs text-gray-400 text-center mt-3">⏰ Your selected seats are reserved for 10 minutes</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderPayment = () => {
-    const totalAmount = selectedSeats.length * entryFee;
-    
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-          <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
-            <h2 className="text-xl font-bold">Complete Payment</h2>
-            <button onClick={handleCancelPayment} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
-          </div>
-          <div className="p-6">
-            <div className="bg-gray-50 rounded-lg p-4 mb-4 text-center">
-              <p className="text-sm text-gray-600">Pool: {pool.prize_name}</p>
-              <p className="text-sm text-gray-600">Seats: {selectedSeats.join(', ')}</p>
-              <p className="text-xl font-bold text-green-600 mt-2">ETB {totalAmount.toLocaleString()}</p>
-            </div>
-            
-            <p className="text-sm text-gray-600 mb-2">Please send payment to:</p>
-            <div className="bg-blue-50 rounded-lg p-3 mb-4">
-              <p className="font-semibold mb-2">Payment Methods</p>
-              <p className="font-semibold">📱 TeleBirr: 0913277922</p>
-              <p className="font-semibold mt-2">🏦 CBE Bank: 1000601091686</p>
-              <p className="text-sm text-gray-600 mt-2">Account Name: NEGASSA HUNDESSA DUGA</p>
-            </div>
-            
-            <div className="border-2 border-dashed rounded-lg p-4 text-center mb-4 hover:border-green-500 transition">
-              <input 
-                type="file" 
-                accept="image/*" 
-                className="hidden" 
-                id="paymentFile" 
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) { 
-                    setSelectedFile(file); 
-                    setPreviewUrl(URL.createObjectURL(file)); 
-                  }
-                }} 
-              />
-              <label htmlFor="paymentFile" className="cursor-pointer block">
-                {previewUrl ? (
-                  <div>
-                    <img src={previewUrl} className="max-h-32 mx-auto mb-2 rounded" />
-                    <p className="text-green-600 text-sm">✓ Payment screenshot selected</p>
-                  </div>
-                ) : (
-                  <div>
-                    <svg className="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <p className="text-gray-500 mt-2">Click to upload payment screenshot</p>
-                    <p className="text-xs text-gray-400">JPEG, PNG (Max 5MB) - Auto-compressed</p>
-                  </div>
-                )}
-              </label>
-            </div>
-            
-            <button 
-              onClick={handlePaymentSubmit} 
-              disabled={isSubmitting || !selectedFile} 
-              className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:opacity-50"
-            >
-              {isSubmitting ? 'Processing...' : 'Submit Payment & Get Ticket'}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <>
@@ -1054,19 +427,95 @@ export default function PoolDetails() {
               </div>
 
               {pool.status === 'active' && !showSeatSelector && !showPayment && !showTicket && (
-                <button onClick={handleJoinNow} disabled={availableSeatsCount === 0 || availableSeatsCount === null} className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-semibold text-lg transition disabled:opacity-50">
-                  {availableSeatsCount === null ? 'Loading...' : availableSeatsCount === 0 ? 'No Seats Available' : `🎯 Select Seat & Join Pool (ETB ${entryFee.toLocaleString()} per seat)`}
+                <button onClick={handleJoinNow} disabled={availableSeatsCount === 0} className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-semibold text-lg transition disabled:opacity-50">
+                  {availableSeatsCount === 0 ? 'No Seats Available' : `🎯 Select Seat & Join Pool (ETB ${entryFee.toLocaleString()} per seat)`}
                 </button>
               )}
             </div>
           </div>
 
-          {showSeatSelector && renderSeatSelector()}
-          {showPayment && renderPayment()}
+          {/* Unified Seat Selector */}
+          {showSeatSelector && (
+            <SeatSelector
+              isOpen={showSeatSelector}
+              onClose={() => setShowSeatSelector(false)}
+              poolId={pool.id}
+              entryFee={entryFee}
+              totalSeats={totalSeats}
+              programType="regular"
+              language={language}
+              onSeatsSelected={handleSeatsSelected}
+              onCancel={() => setShowSeatSelector(false)}
+            />
+          )}
+
+          {/* Payment Modal */}
+          {showPayment && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+                <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
+                  <h2 className="text-xl font-bold">Complete Payment</h2>
+                  <button onClick={() => { setShowPayment(false); setParticipantId(null); }} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                </div>
+                <div className="p-6">
+                  <div className="bg-gray-50 rounded-lg p-4 mb-4 text-center">
+                    <p className="text-sm text-gray-600">Pool: {pool.prize_name}</p>
+                    <p className="text-sm text-gray-600">Seats: {selectedSeats.join(', ')}</p>
+                    <p className="text-xl font-bold text-green-600 mt-2">ETB {(selectedSeats.length * entryFee).toLocaleString()}</p>
+                  </div>
+                  
+                  <p className="text-sm text-gray-600 mb-2">Please send payment to:</p>
+                  <div className="bg-blue-50 rounded-lg p-3 mb-4">
+                    <p className="font-semibold">📱 TeleBirr: 0913277922</p>
+                    <p className="font-semibold mt-2">🏦 CBE Bank: 1000601091686</p>
+                    <p className="text-sm text-gray-600 mt-2">Account Name: NEGASSA HUNDESSA DUGA</p>
+                  </div>
+                  
+                  <div className="border-2 border-dashed rounded-lg p-4 text-center mb-4 hover:border-green-500 transition">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      id="paymentFile" 
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) { 
+                          setSelectedFile(file); 
+                          setPreviewUrl(URL.createObjectURL(file)); 
+                        }
+                      }} 
+                    />
+                    <label htmlFor="paymentFile" className="cursor-pointer block">
+                      {previewUrl ? (
+                        <div>
+                          <img src={previewUrl} className="max-h-32 mx-auto mb-2 rounded" />
+                          <p className="text-green-600 text-sm">✓ Payment screenshot selected</p>
+                        </div>
+                      ) : (
+                        <div>
+                          <svg className="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <p className="text-gray-500 mt-2">Click to upload payment screenshot</p>
+                          <p className="text-xs text-gray-400">JPEG, PNG (Max 5MB) - Auto-compressed</p>
+                        </div>
+                      )}
+                    </label>
+                  </div>
+                  
+                  <button 
+                    onClick={handlePaymentSubmit} 
+                    disabled={isSubmitting || !selectedFile} 
+                    className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:opacity-50"
+                  >
+                    {isSubmitting ? 'Processing...' : 'Submit Payment & Get Ticket'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           
-          {/* ============================================
-              TICKET DISPLAY - UPDATED WITH TicketImage
-              ============================================ */}
+          {/* Ticket Display */}
           {showTicket && participantData && (
             <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4 overflow-y-auto">
               <div className="bg-white rounded-2xl max-w-2xl w-full my-8">
@@ -1109,7 +558,6 @@ export default function PoolDetails() {
                     onClose={handleCloseTicket}
                   />
                   
-                  {/* Verification Status Message */}
                   {!ticketVerified && paymentSubmitted && (
                     <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
                       <p className="text-sm text-yellow-800">
