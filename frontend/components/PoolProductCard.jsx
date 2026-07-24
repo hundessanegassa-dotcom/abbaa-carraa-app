@@ -1,4 +1,4 @@
-// components/PoolProductCard.jsx
+// components/PoolProductCard.jsx - REMOVED seat selection (just display)
 import Link from 'next/link';
 import { useState, useEffect, useMemo } from 'react';
 
@@ -9,10 +9,6 @@ export default function PoolProductCard({
   show3D = false 
 }) {
   const [imageError, setImageError] = useState(false);
-  const [showSeats, setShowSeats] = useState(false);
-  const [selectedSeat, setSelectedSeat] = useState(null);
-  const [seats, setSeats] = useState([]);
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, mins: 0, secs: 0 });
   const [imageLoading, setImageLoading] = useState(true);
 
   if (!pool) return null;
@@ -76,6 +72,8 @@ export default function PoolProductCard({
   }, [prize_name, title]);
 
   // ===== COUNTDOWN TIMER =====
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, mins: 0, secs: 0 });
+
   useEffect(() => {
     if (!end_date) return;
     
@@ -94,40 +92,6 @@ export default function PoolProductCard({
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
   }, [end_date]);
-
-  // ===== SEAT SELECTION =====
-  useEffect(() => {
-    // Generate seat data (simulate available/booked)
-    const totalSeats = Math.min(Math.floor((target_amount * 1.2) / entryFee), 50);
-    const bookedCount = current_amount ? Math.floor(current_amount / entryFee) : 0;
-    const bookedSeats = [];
-    for (let i = 0; i < Math.min(bookedCount, totalSeats); i++) {
-      bookedSeats.push(i);
-    }
-    setSeats(Array.from({ length: totalSeats }, (_, i) => bookedSeats.includes(i)));
-  }, [target_amount, entryFee, current_amount]);
-
-  const toggleSeatSelection = () => setShowSeats(!showSeats);
-
-  const handleSeatClick = (index) => {
-    if (seats[index]) return; // already booked
-    setSelectedSeat(selectedSeat === index ? null : index);
-  };
-
-  const confirmSeat = () => {
-    if (selectedSeat === null) {
-      alert(language === 'am' ? 'እባክዎ መቀመጫ ይምረጡ' : 'Please select a seat.');
-      return;
-    }
-    alert(
-      language === 'am' 
-        ? `መቀመጫ ${selectedSeat + 1} ተረጋግጧል!` 
-        : `Seat ${selectedSeat + 1} confirmed!`
-    );
-    setSeats(prev => prev.map((b, i) => i === selectedSeat ? true : b));
-    setSelectedSeat(null);
-    setShowSeats(false);
-  };
 
   // Get status text based on language
   const getStatusText = () => {
@@ -274,82 +238,20 @@ export default function PoolProductCard({
           🎟️ {language === 'am' ? 'ተሽጧል' : 'Sold'}: <span className="font-semibold">{soldTickets}</span> / {totalSeats} {language === 'am' ? 'ቲኬቶች' : 'tickets'}
         </div>
 
-        {/* Buy & Seat Buttons */}
+        {/* Buy Button - NOW JUST A LINK TO THE POOL PAGE */}
         <div className="flex flex-wrap gap-3 justify-center z-10 mt-auto">
           <Link href={`/pools/${id}`} className="flex-1 min-w-[140px]">
             <button className="w-full bg-white text-green-700 font-bold py-3 px-4 rounded-full shadow-md hover:bg-gray-100 transition transform hover:scale-105 active:scale-95">
               💰 {language === 'am' ? 'ግዛ' : 'Buy'} ETB {formatCurrency(entryFee)}
             </button>
           </Link>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              toggleSeatSelection();
-            }}
-            className="flex-1 min-w-[100px] bg-white/20 backdrop-blur-sm border-2 border-white/60 font-semibold py-3 px-4 rounded-full hover:bg-white/30 transition transform hover:scale-105 active:scale-95"
-          >
-            {showSeats ? '🔽' : '💺'} {showSeats ? (language === 'am' ? 'ዝጋ' : 'Hide') : (language === 'am' ? 'መቀመጫ' : 'Seat')}
-          </button>
-        </div>
-
-        {/* Seat Selection Panel */}
-        {showSeats && (
-          <div className="mt-4 bg-white/20 backdrop-blur-sm rounded-2xl p-4 z-10" onClick={(e) => e.preventDefault()}>
-            <p className="text-center mb-3 text-sm font-medium text-white">
-              {language === 'am' ? 'መቀመጫ ይምረጡ' : 'Choose your seat'}
-            </p>
-            
-            {/* Seat Grid - Each seat has light green background */}
-            <div className="grid grid-cols-6 gap-2">
-              {seats.map((booked, idx) => (
-                <div
-                  key={idx}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleSeatClick(idx);
-                  }}
-                  className={`
-                    text-center py-2 rounded-lg cursor-pointer text-sm font-semibold transition-all duration-200
-                    ${booked 
-                      ? 'bg-gray-400/50 text-gray-300 cursor-not-allowed line-through' 
-                      : selectedSeat === idx 
-                        ? 'bg-green-700 text-white shadow-lg scale-105 ring-2 ring-white' 
-                        : 'bg-green-200 text-green-900 hover:bg-green-300 hover:scale-105'
-                    }
-                  `}
-                >
-                  {idx + 1}
-                </div>
-              ))}
-            </div>
-            
-            {/* Legend */}
-            <div className="flex justify-center gap-4 mt-3 text-xs text-white/80">
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 bg-green-200 rounded"></div>
-                <span>{language === 'am' ? 'ነፃ' : 'Available'}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 bg-green-700 rounded ring-1 ring-white"></div>
-                <span>{language === 'am' ? 'የተመረጠ' : 'Selected'}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 bg-gray-400/50 rounded"></div>
-                <span>{language === 'am' ? 'የተያዘ' : 'Booked'}</span>
-              </div>
-            </div>
-            
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                confirmSeat();
-              }}
-              className="w-full mt-3 bg-green-300 text-green-800 font-bold py-2.5 rounded-full hover:bg-green-200 transition transform hover:scale-105 active:scale-95 shadow-lg"
-            >
-              ✅ {language === 'am' ? 'አረጋግጥ' : 'Confirm Seat'}
+          {/* REMOVED the seat selection button - now just a "View Details" link */}
+          <Link href={`/pools/${id}`} className="flex-1 min-w-[100px]">
+            <button className="w-full bg-white/20 backdrop-blur-sm border-2 border-white/60 font-semibold py-3 px-4 rounded-full hover:bg-white/30 transition transform hover:scale-105 active:scale-95">
+              👁️ {language === 'am' ? 'ዝርዝር' : 'Details'}
             </button>
-          </div>
-        )}
+          </Link>
+        </div>
 
         {/* Progress Bar */}
         {isActive && (
