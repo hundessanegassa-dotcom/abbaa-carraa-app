@@ -389,12 +389,11 @@ export default function MerkatoVIP() {
               onClick={() => handleTierSelect(tierId)}
               className="cursor-pointer"
             >
-              <PoolProductCard 
-                pool={poolData}
-                featured={tier.tier >= 4}
-                language={language}
-                show3D={false}
-              />
+             <PoolCard 
+  pool={poolData}
+  featured={tier.tier >= 4}
+  language={language}
+/>
             </div>
           );
         })}
