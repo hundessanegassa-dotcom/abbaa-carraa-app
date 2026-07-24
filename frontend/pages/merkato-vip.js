@@ -7,7 +7,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import NoSSR from '../components/NoSSR';
 import TopCitySelector from '../components/TopCitySelector';
-import PoolProductCard from '../components/PoolProductCard';
+import PoolCard from '../components/PoolCard'
 import TicketImage from '../components/TicketImage';
 
 // ✅ 5 TIERS FOR MERKATO VIP - NO IMAGE REFERENCES
