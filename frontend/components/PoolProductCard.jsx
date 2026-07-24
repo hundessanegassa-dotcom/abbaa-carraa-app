@@ -1,4 +1,4 @@
-// components/PoolProductCard.jsx - REMOVED seat selection (just display)
+// components/PoolProductCard.jsx - OPTIMIZED (No seat generation)
 import Link from 'next/link';
 import { useState, useEffect, useMemo } from 'react';
 
@@ -106,7 +106,7 @@ export default function PoolProductCard({
     return '⏸️';
   };
 
-  // Calculate total seats
+  // Calculate displayed seats (just for display, not generation)
   const totalSeats = Math.min(Math.floor((target_amount * 1.2) / entryFee), 50);
   const participants = current_amount ? Math.floor(current_amount / entryFee) : 0;
   const soldTickets = Math.min(participants, totalSeats);
@@ -238,14 +238,13 @@ export default function PoolProductCard({
           🎟️ {language === 'am' ? 'ተሽጧል' : 'Sold'}: <span className="font-semibold">{soldTickets}</span> / {totalSeats} {language === 'am' ? 'ቲኬቶች' : 'tickets'}
         </div>
 
-        {/* Buy Button - NOW JUST A LINK TO THE POOL PAGE */}
+        {/* Buy Button - Navigate to pool page */}
         <div className="flex flex-wrap gap-3 justify-center z-10 mt-auto">
           <Link href={`/pools/${id}`} className="flex-1 min-w-[140px]">
             <button className="w-full bg-white text-green-700 font-bold py-3 px-4 rounded-full shadow-md hover:bg-gray-100 transition transform hover:scale-105 active:scale-95">
               💰 {language === 'am' ? 'ግዛ' : 'Buy'} ETB {formatCurrency(entryFee)}
             </button>
           </Link>
-          {/* REMOVED the seat selection button - now just a "View Details" link */}
           <Link href={`/pools/${id}`} className="flex-1 min-w-[100px]">
             <button className="w-full bg-white/20 backdrop-blur-sm border-2 border-white/60 font-semibold py-3 px-4 rounded-full hover:bg-white/30 transition transform hover:scale-105 active:scale-95">
               👁️ {language === 'am' ? 'ዝርዝር' : 'Details'}
