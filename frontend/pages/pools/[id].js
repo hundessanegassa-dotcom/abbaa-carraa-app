@@ -27,7 +27,7 @@ export default function PoolDetails() {
   const [bookedSeats, setBookedSeats] = useState([]);
   const [reservedSeats, setReservedSeats] = useState([]);
   const [reservationTimer, setReservationTimer] = useState(null);
-  const [availableSeatsCount, setAvailableSeatsCount] = useState(0);
+  const [availableSeatsCount, setAvailableSeatsCount] = useState(null);
   const [manualSeatInput, setManualSeatInput] = useState('');
   const [seatsInitialized, setSeatsInitialized] = useState(false);
   const [language, setLanguage] = useState('am');
@@ -51,11 +51,12 @@ export default function PoolDetails() {
   const winnerPrize = pool?.target_amount || 0;
   const entryFee = pool?.entry_fee || pool?.ticket_price || 10;
   const totalCollection = winnerPrize * 1.2;
-  const totalSeats = Math.max(10, Math.floor(totalCollection / entryFee) || 10);
+  // Use pool's total_seats if available, otherwise calculate
+  const totalSeats = pool?.total_seats || Math.max(10, Math.floor(totalCollection / entryFee) || 10);
   const currentAmount = pool?.current_amount || 0;
   const progress = (currentAmount / totalCollection) * 100;
   const maxSeatsPerUser = Math.min(5, Math.floor((totalSeats - bookedSeats.length) / 2) || 5);
-  const seatsPerRow = 20;
+  const seatsPerRow = pool?.seats_per_row || 20;
 
   // ✅ FIX: Better ID handling - useEffect to fetch pool when id is available
   useEffect(() => {
@@ -299,11 +300,19 @@ export default function PoolDetails() {
         setSelectedSeats(reservedByMe);
       }
       
+      // Calculate available seats - ensure we have a valid count
       const availableCount = Math.max(0, totalSeats - allUnavailable.length);
       setAvailableSeatsCount(availableCount);
       
+      // If seats are not initialized yet, initialize them
+      if (!seatsInitialized && availableCount === totalSeats && totalSeats > 0) {
+        await generateSeatsIfNeeded();
+      }
+      
     } catch (err) {
       console.error('Error fetching booked seats:', err);
+      // Set available seats to total seats on error to allow users to try
+      setAvailableSeatsCount(totalSeats);
     }
   }
 
@@ -946,9 +955,10 @@ export default function PoolDetails() {
             
             <p className="text-sm text-gray-600 mb-2">Please send payment to:</p>
             <div className="bg-blue-50 rounded-lg p-3 mb-4">
+              <p className="font-semibold mb-2">Payment Methods</p>
               <p className="font-semibold">📱 TeleBirr: 0913277922</p>
               <p className="font-semibold mt-2">🏦 CBE Bank: 1000601091686</p>
-              <p className="text-sm text-gray-600 mt-2">Account Name: Negassa Hundessa</p>
+              <p className="text-sm text-gray-600 mt-2">Account Name: NEGASSA HUNDESSA DUGA</p>
             </div>
             
             <div className="border-2 border-dashed rounded-lg p-4 text-center mb-4 hover:border-green-500 transition">
@@ -1044,8 +1054,8 @@ export default function PoolDetails() {
               </div>
 
               {pool.status === 'active' && !showSeatSelector && !showPayment && !showTicket && (
-                <button onClick={handleJoinNow} disabled={availableSeatsCount === 0} className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-semibold text-lg transition disabled:opacity-50">
-                  {availableSeatsCount === 0 ? 'No Seats Available' : `🎯 Select Seat & Join Pool (ETB ${entryFee.toLocaleString()} per seat)`}
+                <button onClick={handleJoinNow} disabled={availableSeatsCount === 0 || availableSeatsCount === null} className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-semibold text-lg transition disabled:opacity-50">
+                  {availableSeatsCount === null ? 'Loading...' : availableSeatsCount === 0 ? 'No Seats Available' : `🎯 Select Seat & Join Pool (ETB ${entryFee.toLocaleString()} per seat)`}
                 </button>
               )}
             </div>
