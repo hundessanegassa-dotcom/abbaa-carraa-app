@@ -1,4 +1,4 @@
-// components/admin/AdminLayout.js - FIXED with proper subscription
+// components/admin/AdminLayout.js - FIXED Realtime Subscription
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -29,6 +29,7 @@ export default function AdminLayout({
   const [pendingCreatorApps, setPendingCreatorApps] = useState(0);
   const animationRef = useRef(null);
   const channelRef = useRef(null);
+  const creatorChannelRef = useRef(null);
   const isMounted = useRef(true);
 
   // Auto-rotation for 3D effect
@@ -54,6 +55,12 @@ export default function AdminLayout({
       if (channelRef.current) {
         channelRef.current.unsubscribe();
       }
+      if (creatorChannelRef.current) {
+        creatorChannelRef.current.unsubscribe();
+      }
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
     };
   }, []);
 
@@ -64,7 +71,7 @@ export default function AdminLayout({
     }
   }, [user]);
 
-  // ✅ FIXED: Only create subscription once with correct order
+  // ✅ FIXED: Correct subscription order - add listeners BEFORE subscribe
   useEffect(() => {
     if (!user || !isMounted.current) return;
 
@@ -73,9 +80,10 @@ export default function AdminLayout({
       channelRef.current.unsubscribe();
     }
 
-    // Create new channel with listeners FIRST, then subscribe
+    // Create new channel
     const channel = supabase.channel('admin_notifications_channel');
     
+    // ✅ ADD LISTENERS FIRST, THEN SUBSCRIBE
     channel
       .on('postgres_changes', {
         event: 'INSERT',
@@ -88,7 +96,9 @@ export default function AdminLayout({
         toast.info(`🔔 ${payload.new.title}`);
       })
       .subscribe((status) => {
-        console.log('Admin notification subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Admin notification channel subscribed');
+        }
       });
 
     channelRef.current = channel;
@@ -96,6 +106,54 @@ export default function AdminLayout({
     return () => {
       if (channelRef.current) {
         channelRef.current.unsubscribe();
+      }
+    };
+  }, [user]);
+
+  // ✅ FIXED: Creator applications channel with correct order
+  useEffect(() => {
+    if (!user || !isMounted.current) return;
+
+    if (creatorChannelRef.current) {
+      creatorChannelRef.current.unsubscribe();
+    }
+
+    const creatorChannel = supabase.channel('creator_applications_channel');
+    
+    // ✅ ADD LISTENERS FIRST, THEN SUBSCRIBE
+    creatorChannel
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'pool_creators'
+      }, (payload) => {
+        if (!isMounted.current) return;
+        if (payload.new?.verification_status === 'pending') {
+          setPendingCreatorApps(prev => prev + 1);
+          toast.info(`👑 New creator application: ${payload.new.business_name || 'Unknown'}`);
+        }
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'pool_creators',
+        filter: 'verification_status=eq.pending'
+      }, () => {
+        if (isMounted.current) {
+          fetchPendingCreatorApps();
+        }
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Creator applications channel subscribed');
+        }
+      });
+
+    creatorChannelRef.current = creatorChannel;
+
+    return () => {
+      if (creatorChannelRef.current) {
+        creatorChannelRef.current.unsubscribe();
       }
     };
   }, [user]);
