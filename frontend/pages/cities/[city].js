@@ -10,7 +10,7 @@ import TopCitySelector from '../../components/TopCitySelector';
 import UnifiedAgentApplication from '../../components/UnifiedAgentApplication';
 import SeatSelector from '../../components/SeatSelector';
 import TicketImage from '../../components/TicketImage';
-import PoolProductCard from '../../components/PoolProductCard';
+import PoolCard from '../../components/PoolCard';
 import { TIERS, getDrawScheduleText, TIER_IDS, getTierLabel } from '../../components/SeatSelector';
 import { getCityData, getAllCities, addUnlistedCity, updateCityData } from '../../lib/cityData';
 
@@ -338,12 +338,11 @@ export default function CityVip() {
               onClick={() => handleTierSelect(tierId)}
               className="cursor-pointer"
             >
-              <PoolProductCard 
-                pool={poolData}
-                featured={tier.tier >= 4}
-                language={language}
-                show3D={false}
-              />
+              <PoolCard 
+  pool={poolData}
+  featured={tier.tier >= 4}
+  language={language}
+/>
             </div>
           );
         })}
