@@ -1,4 +1,4 @@
-// components/SeatSelector.js - COMPLETE WITH ALL SEATS DISPLAYED
+// components/SeatSelector.js - COMPLETE FIXED WITH TIMEOUT & ERROR HANDLING
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -149,6 +149,7 @@ export default function SeatSelector({
   const [seatsInitialized, setSeatsInitialized] = useState(false);
   const seatGridRef = useRef(null);
   const containerRef = useRef(null);
+  const loadingTimeoutRef = useRef(null);
 
   // Get tier config
   const tier = tierId ? TIERS[tierId] : null;
@@ -156,6 +157,23 @@ export default function SeatSelector({
   const seatsPerRow = propSeatsPerRow || 20;
   const totalPages = Math.ceil(totalSeats / seatsPerPage);
   const rowLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+  // ✅ TIMEOUT: Prevent infinite loading
+  useEffect(() => {
+    loadingTimeoutRef.current = setTimeout(() => {
+      if (isMounted.current && loading) {
+        console.log('⚠️ Loading timeout - forcing ready');
+        setLoading(false);
+        toast.warning(language === 'am' ? 'መቀመጫዎችን መጫን ቀርቷል. እባክዎ እንደገና ይሞክሩ' : 'Seat loading timed out. Please try again.');
+      }
+    }, 8000);
+
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Adjust seats per page based on total seats
   useEffect(() => {
@@ -192,6 +210,7 @@ export default function SeatSelector({
     return () => {
       isMounted.current = false;
       if (reservationTimer) clearTimeout(reservationTimer);
+      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
     };
   }, [reservationTimer]);
 
@@ -228,6 +247,12 @@ export default function SeatSelector({
         .eq('pool_id', poolId);
       
       if (countError) {
+        // If table doesn't exist, just continue
+        if (countError.code === '42P01') {
+          console.log('pool_seats table not found, skipping initialization');
+          setSeatsInitialized(true);
+          return;
+        }
         console.error('Count error:', countError);
         return;
       }
@@ -258,6 +283,7 @@ export default function SeatSelector({
       }
     } catch (error) {
       console.error('Error initializing seats:', error);
+      setSeatsInitialized(true);
     }
   };
 
@@ -288,28 +314,75 @@ export default function SeatSelector({
 
   const fetchBookedSeats = async () => {
     try {
+      // If no poolId or tierId, set empty and return
+      if (!poolId && !tierId) {
+        setBookedSeats([]);
+        setLoading(false);
+        return;
+      }
+      
       let data;
       
       if (programType === 'merkato') {
-        const { data: d } = await supabase
+        const { data: d, error } = await supabase
           .from('merkato_vip_participants')
           .select('seat_numbers, payment_status')
           .eq('tier', tierId || 'silver')
           .in('payment_status', ['verified', 'pending_verification']);
+        
+        if (error) {
+          // If table doesn't exist, just set empty
+          if (error.code === '42P01') {
+            console.log('merkato_vip_participants table not found');
+            setBookedSeats([]);
+            setLoading(false);
+            return;
+          }
+          console.error('Merkato fetch error:', error);
+          setBookedSeats([]);
+          setLoading(false);
+          return;
+        }
         data = d;
       } else if (programType === 'city') {
-        const { data: d } = await supabase
+        const { data: d, error } = await supabase
           .from('city_vip_participants')
           .select('seat_numbers, payment_status')
           .eq('city', city)
           .eq('tier', tierId || 'silver')
           .in('payment_status', ['verified', 'pending_verification']);
+        
+        if (error) {
+          if (error.code === '42P01') {
+            console.log('city_vip_participants table not found');
+            setBookedSeats([]);
+            setLoading(false);
+            return;
+          }
+          console.error('City fetch error:', error);
+          setBookedSeats([]);
+          setLoading(false);
+          return;
+        }
         data = d;
       } else if (poolId) {
-        const { data: d } = await supabase
+        const { data: d, error } = await supabase
           .from('pool_seats')
           .select('seat_number, status, reserved_by')
           .eq('pool_id', poolId);
+        
+        if (error) {
+          if (error.code === '42P01') {
+            console.log('pool_seats table not found');
+            setBookedSeats([]);
+            setLoading(false);
+            return;
+          }
+          console.error('Pool seats fetch error:', error);
+          setBookedSeats([]);
+          setLoading(false);
+          return;
+        }
         
         const takenSeats = (d || [])
           .filter(seat => seat.status === 'taken')
@@ -341,7 +414,10 @@ export default function SeatSelector({
       }
     } catch (err) {
       console.error('Fetch booked seats error:', err);
-      if (isMounted.current) setLoading(false);
+      if (isMounted.current) {
+        setBookedSeats([]);
+        setLoading(false);
+      }
     }
   };
 
@@ -603,8 +679,10 @@ export default function SeatSelector({
   };
 
   const refreshSeats = async () => {
+    setLoading(true);
     await fetchBookedSeats();
     await fetchUserReservations();
+    setLoading(false);
     toast.success(language === 'am' ? 'መቀመጫዎች ታድሰዋል! ✅' : 'Seats refreshed! ✅');
   };
 
@@ -628,12 +706,35 @@ export default function SeatSelector({
     }
   }, [currentPage]);
 
-  if (sessionLoading || loading) {
+  // If loading is stuck, force it to stop after timeout
+  useEffect(() => {
+    const forceStopLoading = setTimeout(() => {
+      if (isMounted.current && loading) {
+        console.log('⚠️ Force stopping loading state');
+        setLoading(false);
+      }
+    }, 8000);
+    
+    return () => clearTimeout(forceStopLoading);
+  }, [loading]);
+
+  if (sessionLoading) {
     return (
       <div className="bg-white rounded-2xl shadow-lg p-6">
         <div className="flex justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
-          <span className="ml-2 text-gray-600">Loading seats...</span>
+          <span className="ml-2 text-gray-600">{language === 'am' ? 'መግቢያ በመፈተሽ ላይ...' : 'Checking login...'}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl shadow-lg p-6">
+        <div className="flex justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+          <span className="ml-2 text-gray-600">{language === 'am' ? 'መቀመጫዎችን በመጫን ላይ...' : 'Loading seats...'}</span>
         </div>
       </div>
     );
@@ -747,7 +848,7 @@ export default function SeatSelector({
 
         {/* Seat Grid */}
         <div className="flex-1 overflow-y-auto p-4" ref={containerRef}>
-          {/* Pagination - Show page numbers */}
+          {/* Pagination */}
           <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
             <div className="flex flex-wrap items-center gap-2">
               <button
@@ -785,7 +886,7 @@ export default function SeatSelector({
             </div>
           </div>
 
-          {/* Row Navigation - Quick jump to rows */}
+          {/* Row Navigation */}
           {displayRows > 10 && !seatInputMode && (
             <div className="flex overflow-x-auto gap-1 mb-4 pb-2">
               {Array.from({ length: Math.min(displayRows, 15) }).map((_, idx) => (
