@@ -3,10 +3,21 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import DashboardLayout from '../../components/DashboardLayout';
-import LoadingSpinner from '../../components/LoadingSpinner';
+import dynamic from 'next/dynamic';
 import BackButton from '../../components/BackButton';
-import toast from 'react-hot-toast';
+import LoadingSpinner from '../../components/LoadingSpinner';
+
+// Dynamically import DashboardLayout with SSR disabled
+const DashboardLayout = dynamic(
+  () => import('../../components/DashboardLayout'),
+  { ssr: false, loading: () => <LoadingSpinner fullPage message="Loading..." /> }
+);
+
+// ✅ Import toast only on client side
+let toast;
+if (typeof window !== 'undefined') {
+  toast = require('react-hot-toast').default;
+}
 
 export default function VendorDeliveries() {
   const router = useRouter();
@@ -46,7 +57,7 @@ export default function VendorDeliveries() {
       setVendorDetails(vendorData);
 
       if (!vendorData) {
-        toast.error('Vendor access required');
+        if (toast) toast.error('Vendor access required');
         router.push('/dashboard');
         return;
       }
@@ -54,6 +65,7 @@ export default function VendorDeliveries() {
       await loadDeliveries(vendorData.id);
     } catch (error) {
       console.error('Error:', error);
+      if (toast) toast.error('Failed to load data');
     } finally {
       setLoading(false);
     }
@@ -75,7 +87,7 @@ export default function VendorDeliveries() {
       setDeliveries(data || []);
     } catch (error) {
       console.error('Error loading deliveries:', error);
-      toast.error('Failed to load deliveries');
+      if (toast) toast.error('Failed to load deliveries');
     }
   }
 
@@ -92,11 +104,11 @@ export default function VendorDeliveries() {
 
       if (error) throw error;
 
-      toast.success(`Order status updated to ${newStatus}`);
+      if (toast) toast.success(`Order status updated to ${newStatus}`);
       await loadDeliveries(vendorDetails.id);
     } catch (error) {
       console.error('Error updating delivery:', error);
-      toast.error('Failed to update delivery status');
+      if (toast) toast.error('Failed to update delivery status');
     } finally {
       setUpdating(false);
     }
@@ -303,4 +315,11 @@ export default function VendorDeliveries() {
       )}
     </DashboardLayout>
   );
+}
+
+// ✅ Add this to disable static generation for this page
+export async function getServerSideProps() {
+  return {
+    props: {}
+  };
 }
