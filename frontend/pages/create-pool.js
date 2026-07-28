@@ -1,3 +1,4 @@
+// pages/create-pool.js - COMPLETE AND FIXED
 import BackButton from '../components/BackButton';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
@@ -32,35 +33,41 @@ export default function CreatePool() {
   }, []);
 
   async function checkUser() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      router.push('/login');
-      return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      setUser(user);
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+      setProfile(profile);
+
+      const canCreatePool = ['agent', 'vendor', 'organization', 'admin'].includes(profile?.user_type);
+      
+      if (!canCreatePool) {
+        toast.error('Only Agents, Vendors, Organizations, and Admins can create pools');
+        router.push('/dashboard');
+        return;
+      }
+
+      if (!profile?.agreement_accepted) {
+        toast.error('Please accept the agreement first');
+        router.push('/register');
+        return;
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error('Error checking user:', error);
+      toast.error('Failed to load user data');
+      setLoading(false);
     }
-    setUser(user);
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
-    setProfile(profile);
-
-    const canCreatePool = ['agent', 'vendor', 'organization', 'admin'].includes(profile?.user_type);
-    
-    if (!canCreatePool) {
-      toast.error('Only Agents, Vendors, Organizations, and Admins can create pools');
-      router.push('/dashboard');
-      return;
-    }
-
-    if (!profile?.agreement_accepted) {
-      toast.error('Please accept the agreement first');
-      router.push('/register');
-      return;
-    }
-
-    setLoading(false);
   }
 
   const handleChange = (e) => {
@@ -116,7 +123,6 @@ export default function CreatePool() {
       return;
     }
 
-    // Get final city value
     const finalCity = formData.city;
     if (!finalCity || finalCity.trim() === '') {
       toast.error('Please select or enter a city');
@@ -132,8 +138,8 @@ export default function CreatePool() {
     const numberOfSeats = Math.ceil(targetAmount / contributionAmount);
 
     const poolData = {
-      name: formData.prize_name,           // Required column
-      prize_name: formData.prize_name,     // For compatibility
+      name: formData.prize_name,
+      prize_name: formData.prize_name,
       description: formData.description,
       target_amount: targetAmount,
       contribution_amount: contributionAmount,
@@ -153,24 +159,29 @@ export default function CreatePool() {
       created_at: new Date().toISOString()
     };
 
-    console.log('Submitting pool data:', poolData);
+    try {
+      const { data, error } = await supabase
+        .from('pools')
+        .insert(poolData)
+        .select()
+        .single();
 
-    const { data, error } = await supabase
-      .from('pools')
-      .insert(poolData)
-      .select()
-      .single();
+      if (error) {
+        console.error('Pool creation error:', error);
+        toast.error(error.message || 'Failed to create pool');
+        setSubmitting(false);
+        return;
+      }
 
-    if (error) {
-      console.error('Pool creation error:', error);
-      toast.error(error.message || 'Failed to create pool');
-      setSubmitting(false);
-    } else {
       toast.success(`🎉 Pool created successfully! Total to collect: ETB ${totalCollection.toLocaleString()}`);
       
       setTimeout(() => {
-        router.push(`/${profile?.user_type}/dashboard`);
+        router.push('/dashboard');
       }, 1500);
+    } catch (error) {
+      console.error('Error creating pool:', error);
+      toast.error('Failed to create pool');
+      setSubmitting(false);
     }
   };
 
@@ -337,7 +348,7 @@ export default function CreatePool() {
                 End Date
               </label>
               <input
-                type="date"
+                type="datetime-local"
                 name="end_date"
                 value={formData.end_date}
                 onChange={handleChange}
