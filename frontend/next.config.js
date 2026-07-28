@@ -1,4 +1,4 @@
-// next.config.js - FULLY OPTIMIZED FOR PRODUCTION
+// next.config.js - FULLY OPTIMIZED FOR PRODUCTION + TIKTOK SUPPORT
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -20,21 +20,43 @@ const nextConfig = {
     supabaseTimeout: 30000,
   },
   
+  // API configuration
+  api: {
+    responseLimit: '8mb',
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+  
   // Image optimization
   images: {
     unoptimized: false,
-    domains: ['supabase.co', 'ruqfgsnhvrckbvibpsyu.supabase.co'],
+    domains: [
+      'supabase.co',
+      'ruqfgsnhvrckbvibpsyu.supabase.co',
+      'tiktok.com',
+      'cdn.tiktok.com',
+      'p16-tiktokcdn-com.akamaized.net',
+      'p19-tiktokcdn-com.akamaized.net',
+    ],
     remotePatterns: [
       {
         protocol: 'https',
         hostname: '**.supabase.co',
       },
+      {
+        protocol: 'https',
+        hostname: '**.tiktok.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.tiktokcdn.com',
+      },
     ],
     formats: ['image/avif', 'image/webp'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 512],
     minimumCacheTTL: 60,
-    // Enable image optimization for better performance
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
@@ -76,7 +98,7 @@ const nextConfig = {
   },
   
   // Webpack optimizations
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, dev }) => {
     // Optimize bundle size
     config.optimization = {
       ...config.optimization,
@@ -101,6 +123,20 @@ const nextConfig = {
             reuseExistingChunk: true,
             enforce: true,
           },
+          // Separate TikTok SDK
+          tiktok: {
+            name: 'tiktok',
+            test: /[\\/]node_modules[\\/](@tiktok)[\\/]/,
+            chunks: 'all',
+            priority: 30,
+          },
+          // Separate Supabase
+          supabase: {
+            name: 'supabase',
+            test: /[\\/]node_modules[\\/](@supabase)[\\/]/,
+            chunks: 'all',
+            priority: 30,
+          },
         },
       },
     };
@@ -108,7 +144,18 @@ const nextConfig = {
     // Enable tree shaking
     config.optimization.usedExports = true;
     
+    // Bundle analyzer (optional - only in development)
+    if (!dev && !isServer) {
+      // config.plugins.push(new BundleAnalyzerPlugin())
+    }
+    
     return config;
+  },
+  
+  // Experimental features
+  experimental: {
+    optimizeCss: true,
+    scrollRestoration: true,
   },
 };
 
