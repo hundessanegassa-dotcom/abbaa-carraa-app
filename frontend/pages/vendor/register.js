@@ -1,3 +1,4 @@
+// pages/vendor/register.js - FIXED with correct table
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/router';
@@ -13,7 +14,8 @@ export default function VendorRegister() {
     description: '',
     city: '',
     phone: '',
-    email: ''
+    email: '',
+    business_type: 'vendor'
   });
 
   useEffect(() => {
@@ -35,8 +37,9 @@ export default function VendorRegister() {
     setLoading(true);
 
     try {
+      // ✅ FIXED: Use 'vendors' table instead of 'agents'
       const { error } = await supabase
-        .from('agents')
+        .from('vendors')
         .insert([{
           user_id: user.id,
           business_name: formData.business_name,
@@ -45,16 +48,23 @@ export default function VendorRegister() {
           phone: formData.phone,
           email: formData.email,
           description: formData.description,
-          is_active: true,
-          verified: false
+          verified: false,
+          status: 'pending'
         }]);
 
       if (error) throw error;
 
+      // Update profile user_type
+      await supabase
+        .from('profiles')
+        .update({ user_type: 'vendor' })
+        .eq('id', user.id);
+
       toast.success('Vendor registration submitted! We will review within 24-48 hours.');
-      router.push('/dashboard');
+      router.push('/vendor/apply');
     } catch (error) {
-      toast.error(error.message);
+      console.error('Registration error:', error);
+      toast.error(error.message || 'Failed to register');
     } finally {
       setLoading(false);
     }
@@ -63,57 +73,88 @@ export default function VendorRegister() {
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container mx-auto px-4 max-w-2xl">
-        <h1 className="text-3xl font-bold text-center mb-8">Become a Vendor</h1>
-        <p className="text-center text-gray-600 mb-8">List your products as prizes and reach more customers</p>
-        
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-4">
-          <div>
-            <label className="block text-gray-700 mb-2">Business Name *</label>
-            <input 
-              type="text" 
-              required 
-              value={formData.business_name} 
-              onChange={e => setFormData({...formData, business_name: e.target.value})} 
-              className="w-full p-2 border rounded" 
-            />
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-6">
+            <div className="flex items-center gap-3">
+              <span className="text-4xl">🏪</span>
+              <div>
+                <h1 className="text-2xl font-bold text-white">Become a Vendor</h1>
+                <p className="text-purple-100 text-sm">List your products as prizes and reach more customers</p>
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="block text-gray-700 mb-2">Business Description</label>
-            <textarea 
-              rows={3} 
-              value={formData.description} 
-              onChange={e => setFormData({...formData, description: e.target.value})} 
-              className="w-full p-2 border rounded" 
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 mb-2">City *</label>
-            <input 
-              type="text" 
-              required 
-              value={formData.city} 
-              onChange={e => setFormData({...formData, city: e.target.value})} 
-              className="w-full p-2 border rounded" 
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 mb-2">Phone *</label>
-            <input 
-              type="tel" 
-              required 
-              value={formData.phone} 
-              onChange={e => setFormData({...formData, phone: e.target.value})} 
-              className="w-full p-2 border rounded" 
-            />
-          </div>
-          <button 
-            type="submit" 
-            disabled={loading} 
-            className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
-          >
-            {loading ? 'Submitting...' : 'Register as Vendor'}
-          </button>
-        </form>
+          
+          <form onSubmit={handleSubmit} className="p-6 space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Business Name *</label>
+              <input 
+                type="text" 
+                required 
+                value={formData.business_name} 
+                onChange={e => setFormData({...formData, business_name: e.target.value})} 
+                className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
+                placeholder="Your business name"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Business Description</label>
+              <textarea 
+                rows={3} 
+                value={formData.description} 
+                onChange={e => setFormData({...formData, description: e.target.value})} 
+                className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
+                placeholder="Describe what products you offer..."
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
+              <input 
+                type="text" 
+                required 
+                value={formData.city} 
+                onChange={e => setFormData({...formData, city: e.target.value})} 
+                className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
+                placeholder="Your city"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+              <input 
+                type="tel" 
+                required 
+                value={formData.phone} 
+                onChange={e => setFormData({...formData, phone: e.target.value})} 
+                className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
+                placeholder="09XXXXXXXX"
+              />
+            </div>
+            
+            <div className="bg-blue-50 rounded-lg p-4 text-sm">
+              <p className="font-semibold text-blue-800">📝 Next Steps:</p>
+              <ul className="text-blue-700 text-xs mt-1 space-y-1 list-disc list-inside">
+                <li>After registration, you'll need to complete verification</li>
+                <li>Upload your Digital ID and Business License</li>
+                <li>Once verified, you can list products and create pools</li>
+                <li>Earn 10% commission on every successful pool</li>
+              </ul>
+            </div>
+            
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition disabled:opacity-50"
+            >
+              {loading ? 'Submitting...' : '🚀 Register as Vendor'}
+            </button>
+            
+            <p className="text-center text-sm text-gray-500">
+              Already submitted? <Link href="/vendor/apply" className="text-purple-600 hover:underline">Complete verification →</Link>
+            </p>
+          </form>
+        </div>
       </div>
     </div>
   );
