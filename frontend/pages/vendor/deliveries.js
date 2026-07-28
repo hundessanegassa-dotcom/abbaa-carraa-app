@@ -2,21 +2,34 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/router';
-import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import BackButton from '../../components/BackButton';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
-// Dynamically import DashboardLayout with SSR disabled
+// ✅ Dynamically import components with SSR disabled
 const DashboardLayout = dynamic(
   () => import('../../components/DashboardLayout'),
-  { ssr: false, loading: () => <LoadingSpinner fullPage message="Loading..." /> }
+  { 
+    ssr: false, 
+    loading: () => <LoadingSpinner fullPage message="Loading dashboard..." /> 
+  }
 );
 
 // ✅ Import toast only on client side
 let toast;
 if (typeof window !== 'undefined') {
-  toast = require('react-hot-toast').default;
+  import('react-hot-toast').then(module => {
+    toast = module.default;
+  });
+}
+
+// Helper function to safely show toast
+function showToast(message, type = 'success') {
+  if (typeof window !== 'undefined' && toast) {
+    if (type === 'success') toast.success(message);
+    else if (type === 'error') toast.error(message);
+    else toast(message);
+  }
 }
 
 export default function VendorDeliveries() {
@@ -57,7 +70,7 @@ export default function VendorDeliveries() {
       setVendorDetails(vendorData);
 
       if (!vendorData) {
-        if (toast) toast.error('Vendor access required');
+        showToast('Vendor access required', 'error');
         router.push('/dashboard');
         return;
       }
@@ -65,7 +78,7 @@ export default function VendorDeliveries() {
       await loadDeliveries(vendorData.id);
     } catch (error) {
       console.error('Error:', error);
-      if (toast) toast.error('Failed to load data');
+      showToast('Failed to load data', 'error');
     } finally {
       setLoading(false);
     }
@@ -87,7 +100,7 @@ export default function VendorDeliveries() {
       setDeliveries(data || []);
     } catch (error) {
       console.error('Error loading deliveries:', error);
-      if (toast) toast.error('Failed to load deliveries');
+      showToast('Failed to load deliveries', 'error');
     }
   }
 
@@ -104,11 +117,11 @@ export default function VendorDeliveries() {
 
       if (error) throw error;
 
-      if (toast) toast.success(`Order status updated to ${newStatus}`);
+      showToast(`Order status updated to ${newStatus}`, 'success');
       await loadDeliveries(vendorDetails.id);
     } catch (error) {
       console.error('Error updating delivery:', error);
-      if (toast) toast.error('Failed to update delivery status');
+      showToast('Failed to update delivery status', 'error');
     } finally {
       setUpdating(false);
     }
@@ -317,9 +330,9 @@ export default function VendorDeliveries() {
   );
 }
 
-// ✅ Add this to disable static generation for this page
+// ✅ Use getServerSideProps instead of getStaticProps to avoid prerendering issues
 export async function getServerSideProps() {
   return {
-    props: {}
+    props: {},
   };
 }
