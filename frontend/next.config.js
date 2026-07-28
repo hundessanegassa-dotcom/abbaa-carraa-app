@@ -137,12 +137,43 @@ const nextConfig = {
             chunks: 'all',
             priority: 30,
           },
+          // Separate react-hot-toast
+          toast: {
+            name: 'toast',
+            test: /[\\/]node_modules[\\/](react-hot-toast)[\\/]/,
+            chunks: 'all',
+            priority: 30,
+          },
         },
       },
     };
     
     // Enable tree shaking
     config.optimization.usedExports = true;
+    
+    // ✅ FIX: Handle ESM modules properly
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+      };
+    }
+    
+    // ✅ FIX: Transpile problematic packages
+    config.module = {
+      ...config.module,
+      rules: [
+        ...config.module.rules,
+        {
+          test: /\.m?js$/,
+          include: /node_modules\/react-hot-toast/,
+          type: 'javascript/auto',
+        },
+      ],
+    };
     
     // Bundle analyzer (optional - only in development)
     if (!dev && !isServer) {
@@ -152,11 +183,19 @@ const nextConfig = {
     return config;
   },
   
-  // Experimental features
+  // ✅ FIX: Experimental features with ESM support
   experimental: {
     optimizeCss: true,
     scrollRestoration: true,
+    esmExternals: 'loose', // ✅ This is the key fix for react-hot-toast
   },
+  
+  // ✅ FIX: Transpile specific packages
+  transpilePackages: [
+    'react-hot-toast',
+    '@supabase/supabase-js',
+    '@supabase/auth-helpers-nextjs',
+  ],
 };
 
 module.exports = nextConfig;
