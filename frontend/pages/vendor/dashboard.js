@@ -1,3 +1,4 @@
+// pages/vendor/dashboard.js - UPDATED with correct vendor description
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/router';
@@ -24,9 +25,13 @@ export default function VendorDashboard() {
     conversion: 0,
     totalCommission: 0,
     pendingCommission: 0,
-    charityContribution: 0
+    charityContribution: 0,
+    totalPools: 0,
+    activePools: 0,
+    completedPools: 0
   });
   const [products, setProducts] = useState([]);
+  const [pools, setPools] = useState([]);
   const [orders, setOrders] = useState([]);
   const [withdrawalHistory, setWithdrawalHistory] = useState([]);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
@@ -50,7 +55,7 @@ export default function VendorDashboard() {
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       setProfile(profile || {});
       
@@ -78,6 +83,7 @@ export default function VendorDashboard() {
 
   async function loadVendorData(userId) {
     try {
+      // Get products
       const { data: productsData, error: productsError } = await supabase
         .from('products')
         .select('*')
@@ -85,14 +91,29 @@ export default function VendorDashboard() {
         .order('created_at', { ascending: false });
 
       if (productsError) throw productsError;
-      
       setProducts(productsData || []);
       
       const activeListings = productsData?.filter(p => p.status === 'active')?.length || 0;
-      const totalStockValue = productsData?.reduce((sum, p) => sum + (p.price * (p.stock || 0)), 0) || 0;
       
+      // Get pools created by this vendor
+      const { data: poolsData, error: poolsError } = await supabase
+        .from('pools')
+        .select('*')
+        .eq('vendor_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (poolsError) throw poolsError;
+      setPools(poolsData || []);
+
+      const totalPools = poolsData?.length || 0;
+      const activePools = poolsData?.filter(p => p.status === 'active')?.length || 0;
+      const completedPools = poolsData?.filter(p => p.status === 'completed')?.length || 0;
+      
+      // Calculate total sales from pools
+      const totalSales = poolsData?.reduce((sum, p) => sum + (p.current_amount || 0), 0) || 0;
+      
+      // Get orders
       const productIds = productsData?.map(p => p.id) || [];
-      
       let ordersData = [];
       if (productIds.length > 0) {
         const { data: ordersResult, error: ordersError } = await supabase
@@ -109,12 +130,18 @@ export default function VendorDashboard() {
       }
       setOrders(ordersData);
       
-      const totalSales = ordersData?.reduce((sum, o) => sum + (o.amount || 0), 0) || 0;
       const ordersCount = ordersData?.length || 0;
       const avgOrder = ordersCount > 0 ? totalSales / ordersCount : 0;
       
+      // Commission: 10% of total pool collections
       const totalCommission = totalSales * 0.10;
-      const paidCommission = ordersData?.filter(o => o.commission_paid)?.reduce((sum, o) => sum + (o.amount * 0.10), 0) || 0;
+      // Get paid commissions
+      const { data: commissions } = await supabase
+        .from('commissions')
+        .select('amount, status')
+        .eq('vendor_id', userId);
+      
+      const paidCommission = commissions?.filter(c => c.status === 'paid').reduce((sum, c) => sum + c.amount, 0) || 0;
       const pendingCommission = totalCommission - paidCommission;
       const charityContribution = totalSales * 0.02;
       
@@ -133,11 +160,14 @@ export default function VendorDashboard() {
         orders: ordersCount,
         avgOrder,
         activeListings,
-        views: totalStockValue,
+        views: 0,
         conversion: ordersCount > 0 ? ((ordersCount / (productsData?.length || 1)) * 100).toFixed(1) : 0,
         totalCommission,
         pendingCommission,
-        charityContribution
+        charityContribution,
+        totalPools,
+        activePools,
+        completedPools
       });
       
     } catch (error) {
@@ -252,7 +282,7 @@ export default function VendorDashboard() {
   return (
     <DashboardLayout 
       title="Vendor Dashboard" 
-      subtitle="List products, manage inventory, and earn 10% commission on sales"
+      subtitle="Create pools, manage products, and earn 10% commission on pool completions"
       icon="🏪"
       bgGradient="from-purple-600 to-pink-600"
       user={user}
@@ -260,33 +290,25 @@ export default function VendorDashboard() {
     >
       <BackButton fallbackHref="/" />
 
-      {/* Role Description Card */}
+      {/* Role Description Card - UPDATED */}
       <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500 rounded-xl p-5 mb-8">
-        <h3 className="font-bold text-purple-800 text-lg mb-2">✨ Your Role: Vendor/Supplier</h3>
+        <h3 className="font-bold text-purple-800 text-lg mb-2">✨ Your Role: Vendor/Pool Creator</h3>
         <p className="text-purple-700 text-sm leading-relaxed">
-          As a Vendor/Supplier, you provide products for prize pools. This includes:
+          As a Vendor, you create prize pools for participants to join. When a pool is finalized, you earn <strong>10% commission</strong> on the total pool collection.
         </p>
-        <ul className="text-purple-700 text-sm list-disc list-inside mt-2 space-y-1">
-          <li><strong>Car Dealers</strong> - List vehicles for pool winners</li>
-          <li><strong>Real Estate Sellers</strong> - List houses/properties</li>
-          <li><strong>Electronics Shops</strong> - List phones, laptops, TVs</li>
-          <li><strong>Machinery Dealers</strong> - List equipment for businesses</li>
-          <li><strong>Furniture Stores</strong> - List sofas, beds, dining sets</li>
-          <li><strong>Any Product Provider</strong> - Your products become prizes!</li>
-        </ul>
         <div className="mt-3 bg-white/50 rounded-lg p-3 text-sm">
           <p className="font-semibold text-purple-800">🏪 How It Works:</p>
           <ul className="text-purple-700 text-xs mt-1 list-disc list-inside space-y-1">
-            <li>You list your products on the platform</li>
-            <li>Agents/Organizations create pools using your products as prizes</li>
-            <li>When a pool reaches its target, the <strong>winner receives your product</strong> (physical delivery or cash equivalent)</li>
-            <li><strong>Non-winners</strong> receive a discount code to purchase from you directly</li>
-            <li>You earn <strong>10% commission</strong> on each sale to winners</li>
-            <li>Discount sales to non-winners are <strong>commission-free</strong> (direct profit)</li>
+            <li>You create a <strong>prize pool</strong> with a specific prize</li>
+            <li>Participants <strong>buy seats</strong> in your pool</li>
+            <li>When the pool is <strong>fully funded</strong>, a winner is selected</li>
+            <li>You earn <strong>10% commission</strong> on the total collection</li>
+            <li>The <strong>winner receives the prize</strong> (cash or material)</li>
+            <li>Non-winners receive <strong>discount codes</strong> for future purchases</li>
           </ul>
         </div>
         <div className="mt-3 bg-green-50 rounded-lg p-2 text-center text-xs text-green-700">
-          💡 Example: A car dealer lists a Toyota worth 1,000,000 ETB. Agent creates a pool. Winner gets the car. 99 non-winners get 20% discount codes to buy from your dealership!
+          💡 Example: You create a pool with 1,000 seats at 100 ETB each = 100,000 ETB total. You earn 10,000 ETB commission when the pool completes!
         </div>
         {vendorDetails && vendorDetails.verified && (
           <div className="mt-3 inline-flex items-center gap-2 bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs">
@@ -297,78 +319,55 @@ export default function VendorDashboard() {
 
       {/* Quick Actions Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <Link href="/vendor/listings/create" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
-          <div className="text-2xl mb-1">➕</div>
-          <p className="font-semibold text-sm">List Product</p>
-          <p className="text-xs opacity-80">Add new item</p>
-        </Link>
-        <Link href="/create-pool" className="bg-blue-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+        <Link href="/create-pool" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
           <div className="text-2xl mb-1">🏊</div>
           <p className="font-semibold text-sm">Create Pool</p>
-          <p className="text-xs opacity-80">As vendor/agent</p>
+          <p className="text-xs opacity-80">Start a new prize pool</p>
+        </Link>
+        <Link href="/vendor/listings/create" className="bg-blue-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+          <div className="text-2xl mb-1">📦</div>
+          <p className="font-semibold text-sm">List Product</p>
+          <p className="text-xs opacity-80">Add prize items</p>
         </Link>
         <button onClick={() => window.location.href = '/vendor/analytics'} className="bg-green-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
           <div className="text-2xl mb-1">📊</div>
           <p className="font-semibold text-sm">Analytics</p>
           <p className="text-xs opacity-80">View reports</p>
         </button>
-        <button onClick={() => window.location.href = '/vendor/discounts'} className="bg-orange-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
-          <div className="text-2xl mb-1">🏷️</div>
-          <p className="font-semibold text-sm">Discounts</p>
-          <p className="text-xs opacity-80">Manage offers</p>
+        <button onClick={() => window.location.href = '/vendor/pools'} className="bg-orange-600 text-white p-4 rounded-xl text-center hover:shadow-lg transition">
+          <div className="text-2xl mb-1">🎯</div>
+          <p className="font-semibold text-sm">My Pools</p>
+          <p className="text-xs opacity-80">Manage pools</p>
         </button>
       </div>
 
-      {/* Warnings */}
-      {lowStockProducts.length > 0 && (
-        <div className="mb-6 bg-orange-50 border border-orange-200 text-orange-800 px-5 py-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="text-2xl">⚠️</div>
-          <div className="flex-1">
-            <h3 className="font-bold text-sm">Low Stock Alert</h3>
-            <p className="text-xs mt-0.5">You have {lowStockProducts.length} product(s) with less than 5 items remaining. Please restock soon.</p>
-          </div>
-          <Link href="/vendor/listings" className="text-orange-600 text-sm font-medium hover:underline">View Products →</Link>
-        </div>
-      )}
-
-      {outOfStockProducts.length > 0 && (
-        <div className="mb-6 bg-red-50 border border-red-200 text-red-800 px-5 py-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="text-2xl">📦</div>
-          <div className="flex-1">
-            <h3 className="font-bold text-sm">Out of Stock</h3>
-            <p className="text-xs mt-0.5">{outOfStockProducts.length} product(s) are out of stock and need restocking.</p>
-          </div>
-          <Link href="/vendor/listings" className="text-red-600 text-sm font-medium hover:underline">Update Stock →</Link>
-        </div>
-      )}
-
-      {/* Stats Cards */}
+      {/* Stats Cards - UPDATED with Pool Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-center">
-          <div className="w-10 h-10 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-lg">💰</div>
-          <p className="text-xs text-gray-500 font-medium">Total Sales</p>
-          <p className="text-xl font-bold text-gray-800 mt-1">{stats.totalSales.toLocaleString()} ETB</p>
+          <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-lg">🏊</div>
+          <p className="text-xs text-gray-500 font-medium">Total Pools</p>
+          <p className="text-xl font-bold text-purple-600 mt-1">{stats.totalPools}</p>
         </div>
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-center">
-          <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-lg">📦</div>
-          <p className="text-xs text-gray-500 font-medium">Orders</p>
-          <p className="text-xl font-bold text-gray-800 mt-1">{stats.orders}</p>
+          <div className="w-10 h-10 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-lg">🟢</div>
+          <p className="text-xs text-gray-500 font-medium">Active Pools</p>
+          <p className="text-xl font-bold text-green-600 mt-1">{stats.activePools}</p>
         </div>
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-center">
-          <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-lg">🏷️</div>
-          <p className="text-xs text-gray-500 font-medium">Active Listings</p>
-          <p className="text-xl font-bold text-purple-600 mt-1">{stats.activeListings}</p>
+          <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-lg">✅</div>
+          <p className="text-xs text-gray-500 font-medium">Completed Pools</p>
+          <p className="text-xl font-bold text-blue-600 mt-1">{stats.completedPools}</p>
         </div>
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-center">
-          <div className="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-lg">📈</div>
-          <p className="text-xs text-gray-500 font-medium">Conversion</p>
-          <p className="text-xl font-bold text-yellow-600 mt-1">{stats.conversion}%</p>
+          <div className="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-xl flex items-center justify-center mx-auto mb-2 text-lg">💰</div>
+          <p className="text-xs text-gray-500 font-medium">Total Collection</p>
+          <p className="text-xl font-bold text-yellow-600 mt-1">{stats.totalSales.toLocaleString()} ETB</p>
         </div>
         <div className="bg-gradient-to-br from-purple-500 to-pink-500 p-5 rounded-2xl shadow-sm text-center text-white">
           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-2 text-lg">💸</div>
-          <p className="text-xs font-medium opacity-90">Pending Commission</p>
-          <p className="text-xl font-bold mt-1">{stats.pendingCommission.toLocaleString()} ETB</p>
-          <p className="text-xs opacity-75">10% of sales</p>
+          <p className="text-xs font-medium opacity-90">Your Commission</p>
+          <p className="text-xl font-bold mt-1">{stats.totalCommission.toLocaleString()} ETB</p>
+          <p className="text-xs opacity-75">10% of collections</p>
         </div>
       </div>
 
@@ -455,6 +454,30 @@ export default function VendorDashboard() {
 
         {/* Sidebar */}
         <div className="space-y-6">
+          {/* My Pools Summary */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <span>🏊</span> My Pools
+            </h3>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="bg-purple-50 rounded-lg p-3">
+                <p className="text-2xl font-bold text-purple-600">{stats.totalPools}</p>
+                <p className="text-xs text-gray-500">Total</p>
+              </div>
+              <div className="bg-green-50 rounded-lg p-3">
+                <p className="text-2xl font-bold text-green-600">{stats.activePools}</p>
+                <p className="text-xs text-gray-500">Active</p>
+              </div>
+              <div className="bg-blue-50 rounded-lg p-3">
+                <p className="text-2xl font-bold text-blue-600">{stats.completedPools}</p>
+                <p className="text-xs text-gray-500">Completed</p>
+              </div>
+            </div>
+            <Link href="/vendor/pools" className="block text-center text-purple-600 text-sm mt-3 hover:underline">
+              View All My Pools →
+            </Link>
+          </div>
+
           {/* Pending Deliveries */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
@@ -500,7 +523,7 @@ export default function VendorDashboard() {
             </h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between py-2 border-b border-green-100">
-                <span className="text-gray-600">Total Sales</span>
+                <span className="text-gray-600">Total Collection</span>
                 <span className="font-bold">{stats.totalSales.toLocaleString()} ETB</span>
               </div>
               <div className="flex justify-between py-2 border-b border-green-100">
@@ -539,10 +562,10 @@ export default function VendorDashboard() {
               <span>💡</span> Tips for Success
             </h3>
             <ul className="text-xs text-yellow-700 space-y-1 list-disc list-inside">
-              <li>List high-quality products with clear images</li>
-              <li>Keep your inventory stocked and updated</li>
-              <li>Offer competitive prices to attract winners</li>
-              <li>Respond quickly to order inquiries</li>
+              <li>Create pools with attractive prizes to attract participants</li>
+              <li>Set reasonable entry fees to encourage participation</li>
+              <li>Promote your pools to your network</li>
+              <li>Keep your products stocked and updated</li>
               <li>Build your reputation with good ratings</li>
               <li>Create discounts to boost sales to non-winners</li>
             </ul>
