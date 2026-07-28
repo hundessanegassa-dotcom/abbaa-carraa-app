@@ -1,361 +1,250 @@
+// pages/vendor/apply.js - COMPLETE FIXED
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
 import Head from 'next/head';
+import Link from 'next/link';
 import toast from 'react-hot-toast';
+import DashboardLayout from '../../components/DashboardLayout';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import BackButton from '../../components/BackButton';
 
 export default function VendorApply() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [existingApplication, setExistingApplication] = useState(null);
   const [formData, setFormData] = useState({
-    full_name: '',
-    email: '',
-    phone: '',
     business_name: '',
-    business_type: '',
-    tin_number: '',
-    business_address: '',
     description: '',
-    digital_id_front: null,
-    digital_id_back: null,
-    business_license: null
-  });
-  
-  const [previews, setPreviews] = useState({
-    digital_id_front: null,
-    digital_id_back: null,
-    business_license: null
+    city: '',
+    phone: '',
+    email: '',
+    business_type: 'vendor'
   });
 
   useEffect(() => {
     checkUser();
   }, []);
 
-  const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-    
-    setUser(user);
-    setFormData(prev => ({
-      ...prev,
-      full_name: user.user_metadata?.full_name || '',
-      email: user.email
-    }));
-    
-    const { data: existing } = await supabase
-      .from('vendors')
-      .select('id, verified')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    
-    if (existing) {
-      if (existing.verified) {
-        toast.success('You are already an approved vendor!');
-        router.push('/vendor/dashboard');
-      } else {
-        toast.loading('Your application is pending review', { duration: 3000 });
-      }
-    }
-  };
-
-  const compressImage = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target.result;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-          
-          const maxWidth = 1024;
-          const maxHeight = 1024;
-          
-          if (width > height) {
-            if (width > maxWidth) {
-              height = (height * maxWidth) / width;
-              width = maxWidth;
-            }
-          } else {
-            if (height > maxHeight) {
-              width = (width * maxHeight) / height;
-              height = maxHeight;
-            }
-          }
-          
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-          
-          canvas.toBlob((blob) => {
-            const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
-              type: 'image/jpeg',
-              lastModified: Date.now(),
-            });
-            resolve(compressedFile);
-          }, 'image/jpeg', 0.7);
-        };
-        img.onerror = reject;
-      };
-      reader.onerror = reject;
-    });
-  };
-
-  const uploadFile = async (file, userId, type) => {
-    const fileExt = 'jpg';
-    const fileName = `${userId}_${type}_${Date.now()}.${fileExt}`;
-    const filePath = `vendor-documents/${fileName}`;
-    
-    const { error, data } = await supabase.storage
-      .from('verification-docs')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: true
-      });
-    
-    if (error) throw error;
-    
-    const { data: { publicUrl } } = supabase.storage
-      .from('verification-docs')
-      .getPublicUrl(filePath);
-    
-    return publicUrl;
-  };
-
-  const handleFileChange = async (e, field) => {
-    const selectedFile = e.target.files[0];
-    if (!selectedFile) return;
-    
-    if (!selectedFile.type.startsWith('image/')) {
-      toast.error('Please upload an image file');
-      return;
-    }
-    
-    if (selectedFile.size > 10 * 1024 * 1024) {
-      toast.error('File too large. Max 10MB');
-      return;
-    }
-    
-    toast.loading('Compressing image...', { id: `compress-${field}` });
-    
+  async function checkUser() {
     try {
-      const compressedFile = await compressImage(selectedFile);
-      setFormData(prev => ({ ...prev, [field]: compressedFile }));
-      
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviews(prev => ({ ...prev, [field]: reader.result }));
-      };
-      reader.readAsDataURL(compressedFile);
-      
-      toast.success('Image ready!', { id: `compress-${field}` });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      setUser(user);
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+      setProfile(profile);
+
+      // Check if already applied
+      const { data: existing } = await supabase
+        .from('vendors')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existing) {
+        setExistingApplication(existing);
+        if (existing.verified) {
+          toast.success('You are already a verified vendor!');
+          router.push('/vendor/dashboard');
+          return;
+        } else {
+          toast.loading('Your application is pending review', { duration: 3000 });
+        }
+      }
+
+      setFormData({
+        business_name: '',
+        description: '',
+        city: '',
+        phone: profile?.phone || '',
+        email: user.email || '',
+        business_type: 'vendor'
+      });
+
+      setLoading(false);
     } catch (error) {
-      toast.error('Using original image', { id: `compress-${field}` });
-      setFormData(prev => ({ ...prev, [field]: selectedFile }));
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviews(prev => ({ ...prev, [field]: reader.result }));
-      };
-      reader.readAsDataURL(selectedFile);
+      console.error('Error:', error);
+      toast.error('Failed to load data');
+      setLoading(false);
     }
+  }
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!formData.digital_id_front) {
-      toast.error('Please upload your Digital ID (Front)');
-      return;
-    }
-    if (!formData.digital_id_back) {
-      toast.error('Please upload your Digital ID (Back)');
-      return;
-    }
-    if (!formData.business_license) {
-      toast.error('Please upload your Business License');
-      return;
-    }
-    if (!formData.business_name || !formData.tin_number) {
-      toast.error('Please fill all required fields');
-      return;
-    }
-    
-    setLoading(true);
-    setUploadProgress(0);
-    
+    setSubmitting(true);
+
     try {
-      setUploadProgress(15);
-      const frontUrl = await uploadFile(formData.digital_id_front, user.id, 'id_front');
-      setUploadProgress(35);
-      const backUrl = await uploadFile(formData.digital_id_back, user.id, 'id_back');
-      setUploadProgress(60);
-      const licenseUrl = await uploadFile(formData.business_license, user.id, 'license');
-      setUploadProgress(85);
-      
       const { error } = await supabase
         .from('vendors')
         .insert({
           user_id: user.id,
-          full_name: formData.full_name,
-          email: formData.email,
-          phone: formData.phone,
           business_name: formData.business_name,
-          business_type: formData.business_type,
-          tin_number: formData.tin_number,
-          business_address: formData.business_address,
+          business_type: 'vendor',
+          city: formData.city,
+          phone: formData.phone,
+          email: formData.email,
           description: formData.description,
-          digital_id_front_url: frontUrl,
-          digital_id_back_url: backUrl,
-          business_license_url: licenseUrl,
           verified: false,
+          status: 'pending',
           created_at: new Date().toISOString()
         });
-      
+
       if (error) throw error;
-      
+
+      // Update profile
       await supabase
         .from('profiles')
-        .update({ user_type: 'vendor', role: 'vendor' })
+        .update({ user_type: 'vendor' })
         .eq('id', user.id);
-      
-      setUploadProgress(100);
+
       toast.success('Application submitted! Admin will review within 24-48 hours.');
-      setTimeout(() => router.push('/dashboard'), 2000);
-      
+      router.push('/vendor/dashboard');
     } catch (error) {
       console.error('Submit error:', error);
       toast.error('Failed to submit: ' + error.message);
     } finally {
-      setLoading(false);
-      setUploadProgress(0);
+      setSubmitting(false);
     }
   };
 
-  return (
-    <>
-      <Head>
-        <title>Become a Vendor - Abbaa Carraa</title>
-      </Head>
-      
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="container mx-auto px-4 max-w-3xl">
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-6">
-              <div className="flex items-center gap-3">
-                <span className="text-4xl">🏪</span>
-                <div>
-                  <h1 className="text-2xl font-bold text-white">Become a Vendor</h1>
-                  <p className="text-purple-100">List products and earn 10% commission</p>
-                </div>
-              </div>
-            </div>
-            
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              <div className="space-y-4">
-                <h2 className="text-xl font-bold text-gray-800 border-b pb-2">Personal Information</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-                    <input type="text" value={formData.full_name} disabled className="w-full border rounded-lg px-4 py-2 bg-gray-100" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                    <input type="email" value={formData.email} disabled className="w-full border rounded-lg px-4 py-2 bg-gray-100" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
-                    <input type="tel" required placeholder="09XXXXXXXX" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500" />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <h2 className="text-xl font-bold text-gray-800 border-b pb-2">Business Information</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Business Name *</label>
-                    <input type="text" required placeholder="Your business name" value={formData.business_name} onChange={(e) => setFormData({...formData, business_name: e.target.value})} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Business Type</label>
-                    <select value={formData.business_type} onChange={(e) => setFormData({...formData, business_type: e.target.value})} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500">
-                      <option value="">Select type</option>
-                      <option value="retail">Retail</option>
-                      <option value="wholesale">Wholesale</option>
-                      <option value="manufacturing">Manufacturing</option>
-                      <option value="service">Service</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">TIN Number *</label>
-                    <input type="text" required placeholder="Your Tax Identification Number" value={formData.tin_number} onChange={(e) => setFormData({...formData, tin_number: e.target.value})} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Business Address</label>
-                    <input type="text" placeholder="Location, city, sub-city" value={formData.business_address} onChange={(e) => setFormData({...formData, business_address: e.target.value})} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Business Description</label>
-                  <textarea rows="2" placeholder="Describe what products you sell..." value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500" />
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <h2 className="text-xl font-bold text-gray-800 border-b pb-2">Document Verification</h2>
-                <p className="text-sm text-gray-500">Please upload clear images of your documents</p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Digital ID - Front *</label>
-                    <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'digital_id_front')} className="w-full border rounded-lg px-3 py-2" />
-                    {previews.digital_id_front && <img src={previews.digital_id_front} alt="ID Front" className="mt-2 max-h-24 rounded border" />}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Digital ID - Back *</label>
-                    <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'digital_id_back')} className="w-full border rounded-lg px-3 py-2" />
-                    {previews.digital_id_back && <img src={previews.digital_id_back} alt="ID Back" className="mt-2 max-h-24 rounded border" />}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Business License *</label>
-                    <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'business_license')} className="w-full border rounded-lg px-3 py-2" />
-                    {previews.business_license && <img src={previews.business_license} alt="License" className="mt-2 max-h-24 rounded border" />}
-                  </div>
-                </div>
-              </div>
-              
-              {loading && uploadProgress > 0 && (
-                <div className="mt-3">
-                  <div className="flex justify-between text-xs text-gray-600 mb-1">
-                    <span>Uploading documents...</span>
-                    <span>{uploadProgress}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-purple-600 h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
-                  </div>
-                </div>
-              )}
-              
-              <div className="pt-4">
-                <button type="submit" disabled={loading || uploading} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50">
-                  {loading ? 'Submitting...' : 'Submit Application'}
-                </button>
-              </div>
-            </form>
-          </div>
+  if (loading) {
+    return <LoadingSpinner fullPage message="Loading..." />;
+  }
+
+  if (existingApplication) {
+    return (
+      <DashboardLayout 
+        title="Vendor Application" 
+        subtitle="Application status"
+        icon="📝"
+        bgGradient="from-purple-600 to-pink-600"
+        user={user}
+        profile={profile}
+      >
+        <BackButton fallbackHref="/dashboard" />
+        
+        <div className="bg-white rounded-2xl shadow-sm border p-8 text-center">
+          {existingApplication.verified ? (
+            <>
+              <div className="text-6xl mb-4">✅</div>
+              <h2 className="text-2xl font-bold text-green-600 mb-2">You are a Verified Vendor!</h2>
+              <p className="text-gray-500 mb-6">Your vendor account is active and verified.</p>
+              <Link href="/vendor/dashboard" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition">
+                Go to Dashboard
+              </Link>
+            </>
+          ) : (
+            <>
+              <div className="text-6xl mb-4">⏳</div>
+              <h2 className="text-2xl font-bold text-yellow-600 mb-2">Application Pending</h2>
+              <p className="text-gray-500 mb-6">Your vendor application is under review. You will be notified once approved.</p>
+              <p className="text-sm text-gray-400">Submitted on: {new Date(existingApplication.created_at).toLocaleDateString()}</p>
+            </>
+          )}
         </div>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <DashboardLayout 
+      title="Apply as Vendor" 
+      subtitle="List products and earn commission"
+      icon="🏪"
+      bgGradient="from-purple-600 to-pink-600"
+      user={user}
+      profile={profile}
+    >
+      <BackButton fallbackHref="/dashboard" />
+
+      <div className="bg-white rounded-2xl shadow-sm border p-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Business Name *</label>
+              <input
+                type="text"
+                name="business_name"
+                value={formData.business_name}
+                onChange={handleChange}
+                required
+                className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
+                placeholder="Your business name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                required
+                className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
+                placeholder="09XXXXXXXX"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
+            <input
+              type="text"
+              name="city"
+              value={formData.city}
+              onChange={handleChange}
+              required
+              className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
+              placeholder="Your city"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Business Description</label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              rows="4"
+              className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
+              placeholder="Describe your business, products, and services..."
+            />
+          </div>
+
+          <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+            <p className="text-sm font-semibold text-blue-800">📝 What happens next?</p>
+            <ul className="text-xs text-blue-700 mt-1 space-y-1 list-disc list-inside">
+              <li>Your application will be reviewed by our team</li>
+              <li>You will receive a notification once approved</li>
+              <li>After approval, you can list products and create pools</li>
+              <li>Earn 10% commission on every successful pool</li>
+            </ul>
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition disabled:opacity-50"
+          >
+            {submitting ? 'Submitting...' : '📤 Submit Application'}
+          </button>
+        </form>
       </div>
-    </>
+    </DashboardLayout>
   );
 }
