@@ -1,26 +1,21 @@
-// next.config.js - FULLY OPTIMIZED FOR PRODUCTION + TIKTOK SUPPORT
+// next.config.js - FIXED FOR BUILD ERRORS
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   
-  // Compression for better performance
   compress: true,
   
-  // Remove console logs in production
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
   
-  // Disable powered by header for security
   poweredByHeader: false,
   
-  // Add timeout for serverless functions
   serverRuntimeConfig: {
     supabaseTimeout: 30000,
   },
   
-  // API configuration
   api: {
     responseLimit: '8mb',
     bodyParser: {
@@ -28,7 +23,6 @@ const nextConfig = {
     },
   },
   
-  // Image optimization
   images: {
     unoptimized: false,
     domains: [
@@ -61,13 +55,11 @@ const nextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   
-  // Add headers for better performance and security
   async headers() {
     return [
       {
         source: '/:path*',
         headers: [
-          // Security headers
           { key: 'X-DNS-Prefetch-Control', value: 'on' },
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
@@ -97,7 +89,7 @@ const nextConfig = {
     ];
   },
   
-  // Webpack optimizations
+  // ✅ CRITICAL FIX: Handle ESM modules and prevent build errors
   webpack: (config, { isServer, dev }) => {
     // Optimize bundle size
     config.optimization = {
@@ -123,24 +115,15 @@ const nextConfig = {
             reuseExistingChunk: true,
             enforce: true,
           },
-          // Separate TikTok SDK
           tiktok: {
             name: 'tiktok',
             test: /[\\/]node_modules[\\/](@tiktok)[\\/]/,
             chunks: 'all',
             priority: 30,
           },
-          // Separate Supabase
           supabase: {
             name: 'supabase',
             test: /[\\/]node_modules[\\/](@supabase)[\\/]/,
-            chunks: 'all',
-            priority: 30,
-          },
-          // Separate react-hot-toast
-          toast: {
-            name: 'toast',
-            test: /[\\/]node_modules[\\/](react-hot-toast)[\\/]/,
             chunks: 'all',
             priority: 30,
           },
@@ -148,10 +131,9 @@ const nextConfig = {
       },
     };
     
-    // Enable tree shaking
     config.optimization.usedExports = true;
     
-    // ✅ FIX: Handle ESM modules properly
+    // ✅ Fix: Prevent server-side modules from breaking client build
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -159,42 +141,45 @@ const nextConfig = {
         net: false,
         tls: false,
         crypto: false,
+        stream: false,
+        http: false,
+        https: false,
+        zlib: false,
       };
     }
     
-    // ✅ FIX: Transpile problematic packages
+    // ✅ Fix: Properly handle ESM modules
     config.module = {
       ...config.module,
       rules: [
         ...config.module.rules,
         {
           test: /\.m?js$/,
-          include: /node_modules\/react-hot-toast/,
+          include: /node_modules/,
           type: 'javascript/auto',
+          resolve: {
+            fullySpecified: false,
+          },
         },
       ],
     };
     
-    // Bundle analyzer (optional - only in development)
-    if (!dev && !isServer) {
-      // config.plugins.push(new BundleAnalyzerPlugin())
-    }
-    
     return config;
   },
   
-  // ✅ FIX: Experimental features with ESM support
+  // ✅ CRITICAL FIX: Experimental features
   experimental: {
     optimizeCss: true,
     scrollRestoration: true,
-    esmExternals: 'loose', // ✅ This is the key fix for react-hot-toast
+    esmExternals: false, // ✅ Changed to false to handle ESM properly
   },
   
-  // ✅ FIX: Transpile specific packages
+  // ✅ Fix: Transpile specific packages
   transpilePackages: [
     'react-hot-toast',
     '@supabase/supabase-js',
     '@supabase/auth-helpers-nextjs',
+    'react-icons',
   ],
 };
 
