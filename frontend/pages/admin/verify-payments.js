@@ -149,12 +149,26 @@ export default function VerifyPayments() {
         status: 'cancelled'
       };
 
-      const { error } = await supabase
+      const { data: updated, error } = await supabase
         .from(tableName)
         .update(updateData)
-        .eq('id', participantId);
+        .eq('id', participantId)
+        .select()
+        .maybeSingle();
       
       if (error) throw error;
+
+      if (updated?.user_id) {
+        await supabase.from('notifications').insert({
+          user_id: updated.user_id,
+          type: approved ? 'payment_verified' : 'payment_rejected',
+          title: approved ? '✅ Payment Verified!' : '❌ Payment Rejected',
+          message: approved
+            ? `Your payment of ETB ${(updated.contribution_amount || 0).toLocaleString()} is verified. Ticket ${updated.ticket_number} is now a verified ticket.`
+            : `Your payment for ticket ${updated.ticket_number} could not be verified. Please contact support.`,
+          metadata: { ticket_number: updated.ticket_number, table: tableName, seat_numbers: updated.seat_numbers }
+        });
+      }
       
       toast.success(`Payment ${approved ? 'approved' : 'rejected'} successfully`);
       

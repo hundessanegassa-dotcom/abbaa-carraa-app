@@ -8,88 +8,11 @@ import toast from 'react-hot-toast';
 import NoSSR from '../components/NoSSR';
 import TopCitySelector from '../components/TopCitySelector';
 import PoolCard from '../components/PoolCard'
-import TicketImage from '../components/TicketImage';
+import SeatCheckout from '../components/SeatCheckout';
+import { TIERS as MERKATO_TIER_CONFIG, TIER_IDS, getDrawScheduleText } from '../lib/seatPrograms';
 
-// ✅ 5 TIERS FOR MERKATO VIP - NO IMAGE REFERENCES
-export const MERKATO_TIERS = {
-  silver: {
-    id: 'silver',
-    labelEn: 'Silver',
-    labelAm: 'ብር',
-    icon: '🥈',
-    contribution: 100,
-    prize: 100000,
-    seats: 1200,
-    color: 'from-gray-400 to-gray-500',
-    badge: 'Silver',
-    tier: 1,
-    end_date: '2026-12-31T23:59:59'
-  },
-  gold: {
-    id: 'gold',
-    labelEn: 'Gold',
-    labelAm: 'ወርቅ',
-    icon: '🥇',
-    contribution: 500,
-    prize: 500000,
-    seats: 1200,
-    color: 'from-yellow-400 to-yellow-600',
-    badge: 'Gold',
-    tier: 2,
-    end_date: '2026-12-31T23:59:59'
-  },
-  platinum: {
-    id: 'platinum',
-    labelEn: 'Platinum',
-    labelAm: 'ፕላቲኒየም',
-    icon: '💎',
-    contribution: 1000,
-    prize: 2000000,
-    seats: 2400,
-    color: 'from-gray-300 to-blue-400',
-    badge: 'Platinum',
-    tier: 3,
-    end_date: '2026-12-31T23:59:59'
-  },
-  diamond: {
-    id: 'diamond',
-    labelEn: 'Diamond',
-    labelAm: 'አልማዝ',
-    icon: '💠',
-    contribution: 2500,
-    prize: 5000000,
-    seats: 2400,
-    color: 'from-blue-400 to-cyan-400',
-    badge: 'Diamond',
-    tier: 4,
-    end_date: '2026-12-31T23:59:59'
-  },
-  royal: {
-    id: 'royal',
-    labelEn: 'Royal',
-    labelAm: 'ንጉሣዊ',
-    icon: '👑',
-    contribution: 5000,
-    prize: 10000000,
-    seats: 2400,
-    color: 'from-purple-500 to-pink-500',
-    badge: 'Royal',
-    tier: 5,
-    end_date: '2026-12-31T23:59:59'
-  }
-};
-
-// Helper function to get draw schedule text
-function getDrawScheduleText(tierId, language) {
-  const schedules = {
-    silver: { en: 'Daily Draw', am: 'ዕለታዊ እጣ' },
-    gold: { en: 'Daily Draw', am: 'ዕለታዊ እጣ' },
-    platinum: { en: 'Weekly Draw', am: 'ሳምንታዊ እጣ' },
-    diamond: { en: 'Weekly Draw', am: 'ሳምንታዊ እጣ' },
-    royal: { en: 'Monthly Draw', am: 'ወርሃዊ እጣ' }
-  };
-  return schedules[tierId]?.[language] || schedules.silver[language];
-}
+// Merkato VIP uses the shared tier configuration (single source of truth).
+export const MERKATO_TIERS = MERKATO_TIER_CONFIG;
 
 export default function MerkatoVIP() {
   const router = useRouter();
@@ -97,22 +20,10 @@ export default function MerkatoVIP() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showTiers, setShowTiers] = useState(true);
-  const [showSeats, setShowSeats] = useState(false);
-  const [showPayment, setShowPayment] = useState(false);
-  const [showTicket, setShowTicket] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
   const [selectedTierId, setSelectedTierId] = useState(null);
   const [selectedTier, setSelectedTier] = useState(null);
-  const [participantId, setParticipantId] = useState(null);
-  const [participantData, setParticipantData] = useState(null);
-  const [selectedSeats, setSelectedSeats] = useState([]);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkingUser, setCheckingUser] = useState(true);
-  const [is3D, setIs3D] = useState(false);
-  const [ticketVerified, setTicketVerified] = useState(false);
-  const [checkingVerification, setCheckingVerification] = useState(false);
-  const [paymentSubmitted, setPaymentSubmitted] = useState(false);
 
   // Load language preference
   useEffect(() => {
@@ -122,16 +33,6 @@ export default function MerkatoVIP() {
     }
     checkUser();
   }, []);
-
-  // Check ticket verification status periodically
-  useEffect(() => {
-    if (participantId && paymentSubmitted) {
-      checkVerificationStatus();
-      
-      const interval = setInterval(checkVerificationStatus, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [participantId, paymentSubmitted]);
 
   const toggleLanguage = () => {
     const newLang = language === 'am' ? 'en' : 'am';
@@ -150,49 +51,13 @@ export default function MerkatoVIP() {
         setSelectedTierId(tier);
         setSelectedTier(MERKATO_TIERS[tier]);
         setShowTiers(false);
-        setShowSeats(true);
+        setShowCheckout(true);
         router.replace('/merkato-vip', undefined, { shallow: true });
       }
     } catch (error) {
       console.error('Error checking user:', error);
     } finally {
       setCheckingUser(false);
-    }
-  };
-
-  const checkVerificationStatus = async () => {
-    if (!participantId || checkingVerification) return;
-    
-    setCheckingVerification(true);
-    try {
-      const { data: participant, error } = await supabase
-        .from('merkato_vip_participants')
-        .select('payment_status')
-        .eq('id', participantId)
-        .single();
-
-      if (error) throw error;
-
-      if (participant?.payment_status === 'verified') {
-        setTicketVerified(true);
-        toast.success(
-          language === 'am' 
-            ? '✅ ቲኬትዎ ተረጋግጧል! የተረጋገጠ ቲኬትዎን ያውርዱ' 
-            : '✅ Your ticket is verified! Download your verified ticket'
-        );
-        const { data: updatedParticipant } = await supabase
-          .from('merkato_vip_participants')
-          .select('*')
-          .eq('id', participantId)
-          .single();
-        if (updatedParticipant) {
-          setParticipantData(updatedParticipant);
-        }
-      }
-    } catch (error) {
-      console.error('Error checking verification:', error);
-    } finally {
-      setCheckingVerification(false);
     }
   };
 
@@ -208,152 +73,12 @@ export default function MerkatoVIP() {
     setSelectedTierId(tierId);
     setSelectedTier(MERKATO_TIERS[tierId]);
     setShowTiers(false);
-    setShowSeats(true);
+    setShowCheckout(true);
   };
 
-  const handleSeatsSelected = async ({ seats, totalAmount, seatCount, tier }) => {
-    const tierConfig = MERKATO_TIERS[tier];
-    setLoading(true);
-    
-    try {
-      const ticketNumber = `MK-${tier.toUpperCase()}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-      
-      const { data: participant, error } = await supabase
-        .from('merkato_vip_participants')
-        .insert({
-          user_id: user.id,
-          user_email: user.email,
-          user_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-          tier: tier,
-          pool_type: tier,
-          seat_numbers: seats,
-          contribution_amount: totalAmount,
-          prize_amount: tierConfig.prize,
-          payment_status: 'pending',
-          ticket_number: ticketNumber,
-          status: 'active',
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      setParticipantId(participant.id);
-      setSelectedSeats(seats);
-      setShowSeats(false);
-      setShowPayment(true);
-      
-      toast.success(language === 'am' ? 'መቀመጫዎች ተይዘዋል! እባክዎ ክፍያ ይፈጽሙ' : 'Seats reserved! Please complete payment.');
-      
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error(language === 'am' ? 'መቀመጫዎችን ማስያዝ አልተቻለም' : 'Failed to reserve seats');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const compressImage = (file) => new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target.result;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width, height = img.height;
-        const maxSize = 1024;
-        if (width > height) {
-          if (width > maxSize) {
-            height = (height * maxSize) / width;
-            width = maxSize;
-          }
-        } else {
-          if (height > maxSize) {
-            width = (width * maxSize) / height;
-            height = maxSize;
-          }
-        }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        canvas.toBlob((blob) => {
-          resolve(new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), { type: 'image/jpeg' }));
-        }, 'image/jpeg', 0.7);
-      };
-    };
-  });
-
-  const handlePaymentSubmit = async () => {
-    if (!selectedFile) {
-      toast.error(language === 'am' ? 'እባክዎ የክፍያ ማስረጃ ይስቀሉ' : 'Please upload payment screenshot');
-      return;
-    }
-    
-    setIsSubmitting(true);
-    const loadingToast = toast.loading(language === 'am' ? 'የክፍያ ማስረጃ በላይናላይ ላይ እየተሰቀለ ነው...' : 'Uploading payment screenshot...');
-    
-    try {
-      const compressedFile = await compressImage(selectedFile);
-      const fileName = `merkato-payments/${participantId}/${Date.now()}.jpg`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('payment-proofs')
-        .upload(fileName, compressedFile);
-      
-      if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
-      
-      const { data: { publicUrl } } = supabase.storage
-        .from('payment-proofs')
-        .getPublicUrl(fileName);
-      
-      const { error: updateError } = await supabase
-        .from('merkato_vip_participants')
-        .update({
-          payment_status: 'pending_verification',
-          payment_proof_url: publicUrl,
-          payment_submitted_at: new Date().toISOString()
-        })
-        .eq('id', participantId);
-      
-      if (updateError) throw updateError;
-      
-      const { data: updatedParticipant } = await supabase
-        .from('merkato_vip_participants')
-        .select('*')
-        .eq('id', participantId)
-        .single();
-      
-      setParticipantData(updatedParticipant);
-      setPaymentSubmitted(true);
-      setShowPayment(false);
-      setShowTicket(true);
-      
-      toast.success(language === 'am' ? 'ክፍያ ተልኳል! ያልተረጋገጠ ቲኬትዎ ዝግጁ ነው' : 'Payment submitted! Your unverified ticket is ready', { id: loadingToast });
-      
-    } catch (error) {
-      console.error('Payment error:', error);
-      toast.error(error.message || language === 'am' ? 'ክፍያ መላክ አልተቻለም' : 'Failed to submit payment', { id: loadingToast });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleCloseSeats = () => {
-    setShowSeats(false);
+  const handleCheckoutClosed = () => {
+    setShowCheckout(false);
     setShowTiers(true);
-  };
-
-  const handleClosePayment = () => {
-    setShowPayment(false);
-    setShowSeats(true);
-  };
-
-  const handleCloseTicket = () => {
-    setShowTicket(false);
-    router.push('/dashboard');
   };
 
   // Convert tier to pool format for PoolProductCard - NO IMAGES
@@ -373,7 +98,7 @@ export default function MerkatoVIP() {
   };
 
   const renderTierSelection = () => {
-    const tierIds = ['silver', 'gold', 'platinum', 'diamond', 'royal'];
+    const tierIds = TIER_IDS;
     
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 max-w-7xl mx-auto">
@@ -466,236 +191,18 @@ export default function MerkatoVIP() {
             </div>
           )}
 
-          {showSeats && selectedTier && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
-                  <h3 className="font-bold text-lg">
-                    {language === 'am' ? 'መቀመጫ ምረጥ' : 'Select Seats'}
-                  </h3>
-                  <button onClick={handleCloseSeats} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
-                </div>
-                <div className="p-6">
-                  <div className="text-center mb-4">
-                    <p className="text-2xl">{selectedTier.icon}</p>
-                    <p className="font-bold text-xl">
-                      {language === 'am' ? selectedTier.labelAm : selectedTier.labelEn}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {language === 'am' ? 'እያንዳንዱ መቀመጫ' : 'Each seat'} ETB {selectedTier.contribution.toLocaleString()}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {language === 'am' ? 'ሽልማት' : 'Prize'} ETB {selectedTier.prize.toLocaleString()}
-                    </p>
-                  </div>
-                  
-                  <div className="border-t pt-4 mt-2">
-                    <p className="text-center text-gray-500 text-sm">
-                      {language === 'am' 
-                        ? 'ለማስያዝ በቀጥታ መቀመጫ ቁጥሮችን ይተይቡ (ከ1 እስከ ' + selectedTier.seats + ')' 
-                        : 'Enter seat numbers to reserve (1 to ' + selectedTier.seats + ')'}
-                    </p>
-                    
-                    <div className="mt-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {language === 'am' ? 'የመቀመጫ ቁጥሮች (በነጠላ ሰረዝ ይለያዩ)' : 'Seat Numbers (comma separated)'}
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500"
-                        placeholder={language === 'am' ? 'ለምሳሌ: 5, 12, 23' : 'Example: 5, 12, 23'}
-                        onChange={(e) => {
-                          const numbers = e.target.value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
-                          setSelectedSeats(numbers);
-                        }}
-                      />
-                      <p className="text-xs text-gray-400 mt-1">
-                        {language === 'am' ? 'ከፍተኛ 5 መቀመጫዎች' : 'Maximum 5 seats'}
-                      </p>
-                    </div>
-                    
-                    <div className="mt-4 bg-gray-50 rounded-lg p-4">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">{language === 'am' ? 'የተመረጡ መቀመጫዎች' : 'Selected Seats'}</span>
-                        <span className="font-semibold">{selectedSeats.length > 0 ? selectedSeats.join(', ') : '-'}</span>
-                      </div>
-                      <div className="flex justify-between text-sm mt-2">
-                        <span className="text-gray-600">{language === 'am' ? 'ጠቅላላ ክፍያ' : 'Total Amount'}</span>
-                        <span className="font-bold text-green-600">
-                          ETB {(selectedSeats.length * selectedTier.contribution).toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <button
-                      className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50"
-                      disabled={selectedSeats.length === 0}
-                      onClick={() => {
-                        if (selectedSeats.length === 0) {
-                          toast.error(language === 'am' ? 'እባክዎ ቢያንስ አንድ መቀመጫ ይምረጡ' : 'Please select at least one seat');
-                          return;
-                        }
-                        handleSeatsSelected({
-                          seats: selectedSeats,
-                          totalAmount: selectedSeats.length * selectedTier.contribution,
-                          seatCount: selectedSeats.length,
-                          tier: selectedTierId
-                        });
-                      }}
-                    >
-                      {language === 'am' ? 'መቀመጫዎችን አስይዝ' : 'Reserve Seats'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {showPayment && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-                <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
-                  <h2 className="text-xl font-bold">{language === 'am' ? 'ክፍያ ያጠናቅቁ' : 'Complete Payment'}</h2>
-                  <button onClick={handleClosePayment} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
-                </div>
-                <div className="p-6">
-                  <div className="bg-gray-50 rounded-lg p-4 mb-4 text-center">
-                    <p className="text-sm text-gray-600">{language === 'am' ? 'የተመረጡ መቀመጫዎች' : 'Selected Seats'}</p>
-                    <p className="font-bold">{selectedSeats.join(', ')}</p>
-                    <p className="text-xl font-bold text-green-600 mt-2">
-                      ETB {(selectedSeats.length * selectedTier.contribution).toLocaleString()}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {selectedSeats.length} {language === 'am' ? 'መቀመጫ ×' : 'seats ×'} ETB {selectedTier.contribution.toLocaleString()}
-                    </p>
-                  </div>
-                  
-                  <p className="text-sm text-gray-600 mb-2">{language === 'am' ? 'ክፍያ ወደዚህ ይላኩ:' : 'Send payment to:'}</p>
-                  <div className="bg-blue-50 rounded-lg p-3 mb-4">
-                    <p className="font-semibold">📱 TeleBirr: 0913277922</p>
-                    <p className="font-semibold mt-2">🏦 CBE Bank: 1000601091686</p>
-                    <p className="text-sm text-gray-600 mt-2">{language === 'am' ? 'የሂሳብ ባለቤት:' : 'Account:'} Negassa Hundessa</p>
-                  </div>
-                  
-                  <div className="border-2 border-dashed rounded-lg p-4 text-center mb-4 hover:border-green-500 transition">
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      className="hidden" 
-                      id="paymentFile" 
-                      onChange={(e) => {
-                        const file = e.target.files[0];
-                        if (file) { 
-                          setSelectedFile(file); 
-                          setPreviewUrl(URL.createObjectURL(file)); 
-                        }
-                      }} 
-                    />
-                    <label htmlFor="paymentFile" className="cursor-pointer block">
-                      {previewUrl ? (
-                        <div>
-                          <img src={previewUrl} className="max-h-32 mx-auto mb-2 rounded" />
-                          <p className="text-green-600 text-sm">✓ {language === 'am' ? 'ማስረጃ ተመርጧል' : 'Screenshot selected'}</p>
-                        </div>
-                      ) : (
-                        <div>
-                          <svg className="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <p className="text-gray-500 mt-2">{language === 'am' ? 'የክፍያ ማስረጃ ለመጫን ጠቅ ያድርጉ' : 'Click to upload payment screenshot'}</p>
-                          <p className="text-xs text-gray-400">JPEG, PNG (Max 5MB)</p>
-                        </div>
-                      )}
-                    </label>
-                  </div>
-                  
-                  <button 
-                    onClick={handlePaymentSubmit} 
-                    disabled={isSubmitting || !selectedFile} 
-                    className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50"
-                  >
-                    {isSubmitting ? 
-                      (language === 'am' ? 'በሂደት ላይ...' : 'Processing...') : 
-                      (language === 'am' ? 'ክፍያ አስገባ እና ቲኬት አግኝ' : 'Submit Payment & Get Ticket')}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Ticket Display */}
-          {showTicket && participantData && (
-            <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4 overflow-y-auto">
-              <div className="bg-white rounded-2xl max-w-2xl w-full my-8">
-                <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center rounded-t-2xl">
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-xl font-bold">
-                      {language === 'am' ? '🎫 የእርስዎ ቲኬት' : '🎫 Your Ticket'}
-                    </h2>
-                    {ticketVerified && (
-                      <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">
-                        ✅ {language === 'am' ? 'የተረጋገጠ' : 'Verified'}
-                      </span>
-                    )}
-                  </div>
-                  <button onClick={handleCloseTicket} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
-                </div>
-                <div className="p-6">
-                  <TicketImage
-                    participant={participantData}
-                    pool={{
-                      prize_name: selectedTier ? 
-                        `${selectedTier.icon} ${language === 'am' ? selectedTier.labelAm : selectedTier.labelEn}` : 
-                        'Merkato VIP',
-                      target_amount: selectedTier?.prize || 0,
-                      prize: selectedTier?.prize || 0
-                    }}
-                    isVerified={ticketVerified || participantData.payment_status === 'verified'}
-                    seatNumbers={selectedSeats}
-                    ticketNumber={participantData.ticket_number}
-                    amount={participantData.contribution_amount}
-                    createdAt={participantData.created_at}
-                    poolType="merkato"
-                    show3D={is3D}
-                    language={language}
-                    onDownload={() => {
-                      toast.success(
-                        language === 'am' 
-                          ? '📥 ቲኬት እየተወረደ ነው...' 
-                          : '📥 Downloading ticket...'
-                      );
-                    }}
-                    onClose={handleCloseTicket}
-                  />
-                  
-                  {!ticketVerified && paymentSubmitted && (
-                    <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-                      <p className="text-sm text-yellow-800">
-                        ⏳ {language === 'am' 
-                          ? 'ቲኬትዎ እየተረጋገጠ ነው. እባክዎ ይጠብቁ. አስተዳዳሪው ክፍያዎን ካረጋገጠ በኋላ የተረጋገጠ ቲኬት ያገኛሉ.' 
-                          : 'Your ticket is being verified. Please wait. You will receive a verified ticket once the admin confirms your payment.'}
-                      </p>
-                      <div className="mt-2 flex items-center justify-center gap-2">
-                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-yellow-600"></div>
-                        <span className="text-xs text-yellow-600">
-                          {language === 'am' ? 'በመጠበቅ ላይ...' : 'Waiting...'}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {ticketVerified && (
-                    <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-                      <p className="text-sm text-green-800">
-                        ✅ {language === 'am' 
-                          ? 'ቲኬትዎ ተረጋግጧል! የተረጋገጠ ቲኬትዎን ማውረድ ይችላሉ.' 
-                          : 'Your ticket is verified! You can download your verified ticket.'}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+          {showCheckout && selectedTier && (
+            <SeatCheckout
+              programType="merkato"
+              tierId={selectedTierId}
+              entryFee={selectedTier.contribution}
+              totalSeats={selectedTier.seats}
+              prize={selectedTier.prize}
+              poolName={`${selectedTier.icon} ${language === 'am' ? selectedTier.labelAm : selectedTier.labelEn} - Merkato VIP`}
+              user={user}
+              language={language}
+              onClose={handleCheckoutClosed}
+            />
           )}
         </div>
       </>
