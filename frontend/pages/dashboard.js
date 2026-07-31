@@ -369,7 +369,7 @@ export default function Dashboard() {
         .select('*')
         .eq('user_id', session.user.id)
         .eq('is_approved', true)
-        .single();
+        .maybeSingle();
       
       if (agentInfo) {
         setIsAgent(true);
