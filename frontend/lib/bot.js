@@ -17,7 +17,7 @@ export const bot = BOT_TOKEN ? new Telegraf(BOT_TOKEN) : null;
 const TRANSLATIONS = {
   en: {
     // Welcome & Language
-    welcome: "🌟 *Welcome to Abbaa Carraa!*\n\n🏆 *Ethiopia's #1 Prize Platform*\n\n🚗 Win Cars\n🏠 Win Houses\n💰 Win Cash up to 10M ETB\n🏭 Win Machinery\n💻 Win Electronics\n\n💚 *2% Supports* Kidney & Heart Patients\n\n🎯 *Ready to win? Let's get started!*\n\n🏪 *Open Your Own Shop* - Create pools and earn 10% commission!",
+    welcome: "🌟 *Welcome to PrizeHub Ethiopia!*\n\n🏆 *Ethiopia's Premier Prize Platform*\n_abbaa carraa ethiopia shop_\n\n🚗 Win Cars\n🏠 Win Houses\n💰 Win Cash up to 10M ETB\n🏭 Win Machinery\n💻 Win Electronics\n\n💚 *2% Supports* Kidney & Heart Patients\n\n🎯 *Ready to win? Let's get started!*\n\n🏪 *Open Your Own Shop* - Create pools and earn commission!",
     language_select: "🌐 *Choose Your Language*\n\nPlease select your preferred language:",
     language_set: "✅ Language set to English! 🎉",
     
@@ -29,10 +29,10 @@ const TRANSLATIONS = {
     
     // Main Menu - UPDATED ORDER
     main_menu: "👋 *Welcome {name}!*\n\n🎯 *Choose an option below:*",
-    programs: "🎯 *Abbaa Carraa Programs*\n\n*Choose your winning path:*\n\n1️⃣ 🚀 *Open Abbaa Carraa App*\nStart your journey now!\n\n2️⃣ 🏊 *Regular Pools*\n🚗 Cars • 🏠 Houses • 🏭 Machinery • 💻 Electronics\n💵 From 100 ETB\n\n3️⃣ 🏙️ *City VIP*\n💰 Win Cash up to 10M ETB\n📅 Daily • Weekly • Monthly Draws\n🎟️ 5 Tiers Available\n\n4️⃣ 🏪 *Merkato VIP*\n💰 Win Cash up to 10M ETB\n📅 Daily • Weekly • Monthly Draws\n🎟️ 5 Tiers Available\n\n5️⃣ 🏪 *Open Your Own Shop*\n💰 Earn 10% Commission\n👥 Create pools • Set your own prizes\n\n6️⃣ 🤝 *Partner Program*\n💰 Earn 10% Commission\n👥 Refer customers • Create pools\n\n7️⃣ 📊 *Dashboard*\nView your activity and tickets\n\n8️⃣ 📖 *How It Works*\nLearn how to win\n\n9️⃣ 🏆 *Winners*\nView recent winners\n\n🔟 📞 *Support*\nContact us",
+    programs: "🎯 *PrizeHub Ethiopia Programs*\n\n*Choose your winning path:*\n\n1️⃣ 🚀 *Open PrizeHub App*\nStart your journey now!\n\n2️⃣ 🏊 *Regular Pools*\n🚗 Cars • 🏠 Houses • 🏭 Machinery • 💻 Electronics\n💵 From 100 ETB\n\n3️⃣ 🏙️ *City VIP*\n💰 Win Cash up to 10M ETB\n📅 Daily • Weekly • Monthly Draws\n🎟️ 5 Tiers Available\n\n4️⃣ 🏪 *Merkato VIP*\n💰 Win Cash up to 10M ETB\n📅 Daily • Weekly • Monthly Draws\n🎟️ 5 Tiers Available\n\n5️⃣ 🏪 *Open Your Own Shop*\n💰 Earn Commission\n👥 Create pools • Set your own prizes\n\n6️⃣ 🤝 *Partner Program*\n💰 Earn Commission\n👥 Refer customers • Create pools\n\n7️⃣ 📊 *Dashboard*\nView your activity and tickets\n\n8️⃣ 📖 *How It Works*\nLearn how to win\n\n9️⃣ 🏆 *Winners*\nView recent winners\n\n🔟 📞 *Support*\nContact us",
     
     // Program Details
-    program_1: "🚀 *Open Abbaa Carraa App*\n\nStart your winning journey now!\n\n👇 Click below to open the app:",
+    program_1: "🚀 *Open PrizeHub Ethiopia App*\n\nStart your winning journey now!\n\n👇 Click below to open the app:",
     program_2: "🏊 *Join Regular Pools*\n\n🚗 Win Cars\n🏠 Win Houses\n🏭 Win Machinery\n💻 Win Electronics\n\n💵 Entry from 100 ETB\n🎁 Amazing prizes await!",
     program_3: "🏙️ *Join City VIP*\n\n📍 Win in your city!\n💰 Up to 10M ETB Cash\n📅 Daily • Weekly • Monthly\n🎟️ 5 Tiers",
     program_4: "🏪 *Join Merkato VIP*\n\n💰 Up to 10M ETB Cash\n📅 Daily • Weekly • Monthly\n🎟️ 5 Tiers: Silver • Gold • Platinum • Diamond • Royal",
@@ -89,7 +89,7 @@ const TRANSLATIONS = {
 
   am: {
     // Welcome & Language
-    welcome: "🌟 *እንኳን ወደ Abbaa Carraa በደህና መጡ!*\n\n🏆 *የኢትዮጵያ ቀዳሚ የሽልማት መድረክ*\n\n🚗 መኪናዎች ያሸንፉ\n🏠 ቤቶች ያሸንፉ\n🏭 ማሽነሪዎች ያሸንፉ\n💻 ኤሌክትሮኒክስ ያሸንፉ\n💰 እስከ 10 ሚሊዮን ብር ያሸንፉ\n\n💚 *2% ለጤና* የኩላሊት እና የልብ ህመምተኞችን ይደግፋል\n\n🎯 *ለማሸነፍ ዝግጁ? እንጀምር!*\n\n🏪 *የራስዎን መደብር ይክፈቱ* - ፑሎች ይፍጠሩ እና 10% ኮሚሽን ያግኙ!",
+    welcome: "🌟 *እንኳን ወደ PrizeHub Ethiopia በደህና መጡ!*\n\n🏆 *የኢትዮጵያ ቀዳሚ የሽልማት መድረክ*\n_abbaa carraa ethiopia shop_\n\n🚗 መኪናዎች ያሸንፉ\n🏠 ቤቶች ያሸንፉ\n🏭 ማሽነሪዎች ያሸንፉ\n💻 ኤሌክትሮኒክስ ያሸንፉ\n💰 እስከ 10 ሚሊዮን ብር ያሸንፉ\n\n💚 *2% ለጤና* የኩላሊት እና የልብ ህመምተኞችን ይደግፋል\n\n🎯 *ለማሸነፍ ዝግጁ? እንጀምር!*\n\n🏪 *የራስዎን መደብር ይክፈቱ* - ፑሎች ይፍጠሩ እና ኮሚሽን ያግኙ!",
     language_select: "🌐 *ቋንቋዎን ይምረጡ*\n\nእባክዎ የሚመርጡትን ቋንቋ ይምረጡ:",
     language_set: "✅ ቋንቋ ወደ አማርኛ ተቀይሯል! 🎉",
     
@@ -101,10 +101,10 @@ const TRANSLATIONS = {
     
     // Main Menu - UPDATED ORDER
     main_menu: "👋 *እንኳን ደህና መጡ {name}!*\n\n🎯 *ከታች ያለውን ይምረጡ:*",
-    programs: "🎯 *የAbbaa Carraa ፕሮግራሞች*\n\n*የማሸነፍ መንገድዎን ይምረጡ:*\n\n1️⃣ 🚀 *የAbbaa Carraa መተግበሪያ ይክፈቱ*\nጉዞዎን አሁን ይጀምሩ!\n\n2️⃣ 🏊 *መደበኛ የእጣ መደቦች*\n🚗 መኪና • 🏠 ቤት • 🏭 ማሽነሪ • 💻 ኤሌክትሮኒክስ\n💵 ከ100 ብር ጀምሮ\n\n3️⃣ 🏙️ *የከተማ ቪአይፒ*\n💰 እስከ 10 ሚሊዮን ብር ጥሬ ገንዘብ\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ\n🎟️ 5 ደረጃዎች\n\n4️⃣ 🏪 *መርካቶ ቪአይፒ*\n💰 እስከ 10 ሚሊዮን ብር ጥሬ ገንዘብ\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ\n🎟️ 5 ደረጃዎች\n\n5️⃣ 🏪 *የራስዎን መደብር ይክፈቱ*\n💰 10% ኮሚሽን ያግኙ\n👥 ፑሎች ይፍጠሩ • የራስዎን ሽልማቶች ያዘጋጁ\n\n6️⃣ 🤝 *የአጋር ፕሮግራም*\n💰 10% ኮሚሽን ያግኙ\n👥 ደንበኞችን ያመልክቱ • ፑሎች ይፍጠሩ\n\n7️⃣ 📊 *ዳሽቦርድ*\nእንቅስቃሴዎን እና ቲኬቶችዎን ይመልከቱ\n\n8️⃣ 📖 *እንዴት እንሳተፋለን?*\nእንዴት እንደሚሳተፉ ይማሩ\n\n9️⃣ 🏆 *አሸናፊዎች*\nየቅርብ ጊዜ አሸናፊዎችን ይመልከቱ\n\n🔟 📞 *እኛን ያግኙ*\nያግኙን",
+    programs: "🎯 *የPrizeHub Ethiopia ፕሮግራሞች*\n\n*የማሸነፊያ መንገድዎን ይምረጡ:*\n\n1️⃣ 🚀 *የPrizeHub Ethiopia መተግበሪያን ይክፈቱ*\nየማሸነፍ ጉዞዎን አሁን ይጀምሩ!\n\n2️⃣ 🏊 *መደበኛ የእጣ መደቦች*\n🚗 መኪናዎች • 🏠 ቤቶች • 🏭 ማሽነሪዎች • 💻 ኤሌክትሮኒክስ\n💵 ከ100 ብር ጀምሮ\n\n3️⃣ 🏙️ *የከተማ ቪአይፒ*\n💰 እስከ 10 ሚሊዮን ብር ጥሬ ገንዘብ\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ የእጣ መሳቢያዎች\n🎟️ 5 ደረጃዎች አሉ\n\n4️⃣ 🏪 *የመርካቶ ቪአይፒ*\n💰 እስከ 10 ሚሊዮን ብር ጥሬ ገንዘብ\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ የእጣ መሳቢያዎች\n🎟️ 5 ደረጃዎች አሉ\n\n5️⃣ 🏪 *የራስዎን መደብር ይክፈቱ*\n💰 ኮሚሽን ያግኙ\n👥 ፑሎች ይፍጠሩ • የራስዎን ሽልማቶች ያዘጋጁ\n\n6️⃣ 🤝 *የአጋር ፕሮግራም*\n💰 ኮሚሽን ያግኙ\n👥 ደንበኞችን ያመልክቱ • ፑሎች ይፍጠሩ\n\n7️⃣ 📊 *ዳሽቦርድ*\nእንቅስቃሴዎን እና ቲኬቶችዎን ይመልከቱ\n\n8️⃣ 📖 *እንዴት እንደሚሰራ*\nእንዴት ማሸነፍ እንደሚችሉ ይወቁ\n\n9️⃣ 🏆 *አሸናፊዎች*\nየቅርብ ጊዜ አሸናፊዎችን ይመልከቱ\n\n🔟 📞 *እኛን ያግኙ*\nያግኙን",
     
     // Program Details
-    program_1: "🚀 *የAbbaa Carraa መተግበሪያ ይክፈቱ*\n\nየማሸነፍ ጉዞዎን አሁን ይጀምሩ!\n\n👇 መተግበሪያውን ለመክፈት ከታች ይጫኑ:",
+    program_1: "🚀 *የPrizeHub Ethiopia መተግበሪያን ይክፈቱ*\n\nየማሸነፍ ጉዞዎን አሁን ይጀምሩ!\n\n👇 መተግበሪያውን ለመክፈት ከታች ይጫኑ:",
     program_2: "🏊 *ወደ መደበኛ የእጣ መደቦች ይቀላቀሉ*\n\n🚗 መኪናዎች ያሸንፉ\n🏠 ቤቶች ያሸንፉ\n🏭 ማሽነሪዎች ያሸንፉ\n💻 ኤሌክትሮኒክስ ያሸንፉ\n\n💵 ከ100 ብር ጀምሮ\n🎁 አስደናቂ ሽልማቶች ይጠብቁዎታል!",
     program_3: "🏙️ *ወደ ከተማ ቪአይፒ ይቀላቀሉ*\n\n📍 በከተማዎ ያሸንፉ!\n💰 እስከ 10 ሚሊዮን ብር ጥሬ ገንዘብ\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ\n🎟️ 5 ደረጃዎች",
     program_4: "🏪 *ወደ መርካቶ ቪአይፒ ይቀላቀሉ*\n\n💰 እስከ 10 ሚሊዮን ብር ጥሬ ገንዘብ\n📅 ዕለታዊ • ሳምንታዊ • ወርሃዊ\n🎟️ 5 ደረጃዎች",
