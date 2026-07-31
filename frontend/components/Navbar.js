@@ -29,10 +29,6 @@ export default function Navbar() {
   const [isCreator, setIsCreator] = useState(false);
   const [language, setLanguage] = useState('am');
 
-  // HIDE NAVBAR ON HOMEPAGE
-  if (router.pathname === '/') {
-    return null;
-  }
 
   useEffect(() => {
     if (isClient) {
@@ -242,8 +238,8 @@ export default function Navbar() {
   const createAction = getCreateAction();
   const becomeLinks = getBecomeLinks();
 
-  // Don't render navbar on login page or homepage
-  if (router.pathname === '/login' || router.pathname === '/register' || router.pathname === '/') {
+  // Don't render navbar on login page or register page
+  if (router.pathname === '/login' || router.pathname === '/register') {
     return null;
   }
 
@@ -269,9 +265,9 @@ export default function Navbar() {
               </div>
               <div>
                 <span className="font-bold text-sm sm:text-xl bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
-                  Abbaa Carraa
+                  PrizeHub Ethiopia
                 </span>
-                <span className="text-[8px] sm:text-[10px] text-gray-400 block -mt-0.5 sm:-mt-1">Ethio</span>
+                <span className="text-[8px] sm:text-[10px] text-gray-400 block -mt-0.5 sm:-mt-1">abbaa carraa ethiopia shop</span>
               </div>
             </Link>
             

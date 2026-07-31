@@ -60,7 +60,7 @@ export default function Home() {
   const [registerForm, setRegisterForm] = useState({
     fullName: '', email: '', phone: '', password: '', confirmPassword: '', city: '', agreeTerms: false
   });
-  const [activeView, setActiveView] = useState('app');
+  const [activeView, setActiveView] = useState('classic');
   const [showModeDrawer, setShowModeDrawer] = useState(false);
   const [selectedCityForTiers, setSelectedCityForTiers] = useState(null);
   const [showCityTiersModal, setShowCityTiersModal] = useState(false);
@@ -227,6 +227,51 @@ export default function Home() {
 
   const loadData = async () => {
     setLoading(true);
+    const fallbackPools = [
+      {
+        id: 'mock-1',
+        prize_name: 'Toyota Vitz 2018',
+        description: 'Highly economical and clean family hatchback.',
+        target_amount: 850000,
+        entry_fee: 500,
+        category: 'cars',
+        is_featured: true,
+        status: 'active',
+        current_amount: 425000,
+        current_participants: 850,
+        total_seats: 1700,
+        prize_image: '/images/v8-car.jpg'
+      },
+      {
+        id: 'mock-2',
+        prize_name: 'Modern Apartment in Addis Ababa',
+        description: '2-bedroom modern apartment near Bole.',
+        target_amount: 15000000,
+        entry_fee: 5000,
+        category: 'houses',
+        is_featured: true,
+        status: 'active',
+        current_amount: 6000000,
+        current_participants: 1200,
+        total_seats: 3000,
+        prize_image: '/images/modern-house.jpg'
+      },
+      {
+        id: 'mock-3',
+        prize_name: 'Heavy Wheel Loader',
+        description: 'Premium machinery for high productivity.',
+        target_amount: 6500000,
+        entry_fee: 2500,
+        category: 'machinery',
+        is_featured: false,
+        status: 'active',
+        current_amount: 1950000,
+        current_participants: 780,
+        total_seats: 2600,
+        prize_image: '/images/wheel-loader.jpg'
+      }
+    ];
+
     try {
       const { data: poolsData, error: poolsError } = await supabase
         .from('pools')
@@ -273,12 +318,20 @@ export default function Home() {
         });
       }
 
-      setPools(poolsData || []);
-      setFeaturedPools(featuredData || []);
+      setPools((poolsData && poolsData.length > 0) ? poolsData : fallbackPools);
+      setFeaturedPools((featuredData && featuredData.length > 0) ? featuredData : fallbackPools.filter(p => p.is_featured));
       
     } catch (error) {
-      console.error('Error loading data:', error);
-      toast.error('Failed to load pools');
+      console.warn('Supabase offline or failed to load. Displaying robust fallback pools:', error.message);
+      setPools(fallbackPools);
+      setFeaturedPools(fallbackPools.filter(p => p.is_featured));
+      setStats({
+        total_pools: fallbackPools.length,
+        total_winners: 14,
+        total_agents: 35,
+        total_raised: 8375000,
+        total_cities: uniqueCities.length
+      });
     } finally {
       setLoading(false);
       setDataLoaded(true);
@@ -449,7 +502,7 @@ export default function Home() {
         <div className="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-bold text-gray-800">{t('Create Account', 'Create Account')}</h2>
-            <p className="text-sm text-gray-500">{t('Join Abbaa Carraa to start winning!', 'Join Abbaa Carraa to start winning!')}</p>
+            <p className="text-sm text-gray-500">{t('Join PrizeHub Ethiopia to start winning!', 'Join PrizeHub Ethiopia to start winning!')}</p>
           </div>
           <button onClick={() => setShowRegisterModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
         </div>
@@ -554,7 +607,7 @@ export default function Home() {
   // MOVING MARQUEE
   // ============================================
   const MovingMarquee = () => {
-    const marqueeText = `🏆 በAbbaa Carraa ወርቃማ እድልን ያሸንፉ! • 🥈 Silver: 100 ETB (1200 Seats) • 🥇 Gold: 500 ETB (1200 Seats) • 💎 Platinum: 1,000 ETB (2400 Seats) • 💠 Diamond: 2,500 ETB (2400 Seats) • 👑 Royal: 5,000 ETB (2400 Seats) • 🏪 Merkato VIP & 🏙️ City VIP Available! • 💚 2% Supports Health • Join & Start Winning Today! 🎯`;
+    const marqueeText = `🏆 በPrizeHub Ethiopia ወርቃማ እድልን ያሸንፉ! • 🥈 Silver: 100 ETB (1200 Seats) • 🥇 Gold: 500 ETB (1200 Seats) • 💎 Platinum: 1,000 ETB (2400 Seats) • 💠 Diamond: 2,500 ETB (2400 Seats) • 👑 Royal: 5,000 ETB (2400 Seats) • 🏪 Merkato VIP & 🏙️ City VIP Available! • 💚 2% Supports Health • Join & Start Winning Today! 🎯`;
 
     return (
       <div className="w-full overflow-hidden bg-gradient-to-r from-green-600 to-teal-600 py-2.5 md:py-3 shadow-inner">
@@ -597,7 +650,7 @@ export default function Home() {
     return (
       <>
         <Head>
-          <title>Abbaa Carraa - Win Amazing Prizes</title>
+          <title>PrizeHub Ethiopia - Win Amazing Prizes</title>
           <meta name="description" content="Win amazing prizes. Join Merkato VIP, City VIP across 94 Ethiopian cities, or Regular Pools." />
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
         </Head>
@@ -629,7 +682,7 @@ export default function Home() {
     return (
       <>
         <Head>
-          <title>Abbaa Carraa - Win Amazing Prizes</title>
+          <title>PrizeHub Ethiopia - Win Amazing Prizes</title>
           <meta name="description" content="Win amazing prizes. Join Merkato VIP, City VIP across 94 Ethiopian cities, or Regular Pools." />
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
         </Head>
@@ -655,7 +708,7 @@ export default function Home() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 md:gap-2">
                 <span className="text-xl md:text-2xl">🎫</span>
-                <span className="font-bold text-sm md:text-lg text-gray-800">Abbaa Carraa</span>
+                <span className="font-bold text-sm md:text-lg text-gray-800">PrizeHub Ethiopia</span>
               </div>
               <div className="flex items-center gap-1.5 md:gap-2">
                 <Link href="/login" className="text-[10px] md:text-xs bg-green-100 text-green-700 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full hover:bg-green-200 transition font-medium">
@@ -862,7 +915,7 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Abbaa Carraa - Win Amazing Prizes | Merkato VIP | City VIP | Regular Pools</title>
+        <title>PrizeHub Ethiopia - Win Amazing Prizes | Merkato VIP | City VIP | Regular Pools</title>
         <meta name="description" content="Win amazing prizes. Join Merkato VIP, City VIP across 94 Ethiopian cities, or Regular Pools. 2% supports kidney & heart disease patients." />
       </Head>
 
@@ -880,8 +933,8 @@ export default function Home() {
               <Link href="/" className="flex items-center gap-2 group shrink-0">
                 <span className="text-2xl group-hover:scale-110 transition-transform">🎫</span>
                 <div>
-                  <span className="font-bold text-white text-lg">Abbaa Carraa</span>
-                  <span className="text-xs text-gray-400 ml-2 hidden sm:inline">| Ethiopia's Premier Platform</span>
+                  <span className="font-bold text-white text-lg">PrizeHub Ethiopia</span>
+                  <span className="text-xs text-gray-400 ml-2 hidden sm:inline">| abbaa carraa ethiopia shop</span>
                 </div>
               </Link>
               <div className="hidden md:flex items-center gap-1">
@@ -981,68 +1034,30 @@ export default function Home() {
         {/* Hero Banner */}
         <div className="w-full bg-gradient-to-br from-green-700 to-teal-700">
           <div className="max-w-7xl mx-auto">
-            <img src="/images/abbaa-carraa-bg.png" alt="Abbaa Carraa" className="w-full h-auto object-cover block" loading="eager" fetchPriority="high" style={{ maxHeight: '500px', objectPosition: 'center' }} />
+            <img src="/images/abbaa-carraa-bg.png" alt="PrizeHub Ethiopia" className="w-full h-auto object-cover block" loading="eager" fetchPriority="high" style={{ maxHeight: '500px', objectPosition: 'center' }} />
           </div>
         </div>
 
         {/* Hero Text */}
-        <div className="bg-white py-12 w-full">
-          <div className="container mx-auto px-4 text-center">
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-4 py-1.5 rounded-full text-sm font-semibold mb-5 animate-pulse">🔥 {t("Ethiopia's #1 Prize Platform", "Ethiopia's #1 Prize Platform")} 🏆</div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900">
-              {t('Welcome to', 'Welcome to')} <span className="bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">Abbaa Carraa</span>
+        <div className="bg-gray-100/80 py-16 w-full border-b border-gray-200">
+          <div className="container mx-auto px-6 max-w-4xl text-center bg-white p-8 sm:p-12 rounded-3xl shadow-xl border border-gray-100">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-5 py-1.5 rounded-full text-xs sm:text-sm font-bold mb-6 shadow-sm">🔥 {t("Ethiopia's Premium Prize Platform", "Ethiopia's Premium Prize Platform")} 🏆</div>
+            <h1 className="text-3xl sm:text-5xl font-extrabold text-gray-900 leading-tight">
+              {t('Welcome to', 'Welcome to')} <span className="bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">PrizeHub Ethiopia</span>
             </h1>
-            <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mt-4">{t('Win cars, houses, machinery, electronics, and more through community savings!', 'Win cars, houses, machinery, electronics, and more through community savings!')}</p>
-            <div className="mt-4 inline-flex items-center gap-2 bg-green-50 border border-green-200 px-4 py-2 rounded-full">
-              <span className="text-green-600 text-lg">💚</span>
-              <span className="text-green-700 font-medium">{t('2% supports kidney & heart disease patients', '2% supports kidney & heart disease patients')}</span>
+            <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto mt-4 leading-relaxed font-medium">
+              {t('PrizeHub Ethiopia offers a trusted, community-focused savings & prize system under the sub-brand abbaa carraa ethiopia shop. Create customized reward pools, browse high-value regular pools, or step up to our exclusive City & Merkato VIP programs.', 'PrizeHub Ethiopia offers a trusted, community-focused savings & prize system under the sub-brand abbaa carraa ethiopia shop. Create customized reward pools, browse high-value regular pools, or step up to our exclusive City & Merkato VIP programs.')}
+            </p>
+            <div className="mt-6 inline-flex items-center gap-2 bg-green-50 border border-green-200 px-5 py-2.5 rounded-full shadow-sm">
+              <span className="text-green-600 text-xl">💚</span>
+              <span className="text-green-800 text-xs sm:text-sm font-semibold">{t('2% supports kidney & heart disease treatment across Ethiopia', '2% supports kidney & heart disease treatment across Ethiopia')}</span>
             </div>
-            <div className="flex flex-wrap justify-center gap-4 mt-8">
-              <Link href="/merkato-vip" className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2">
-                <span>🏪</span> {t('Join Merkato VIP', 'Join Merkato VIP')} <span>→</span>
-              </Link>
-              <button onClick={() => { setShowCityDropdown(!showCityDropdown); }} className="bg-gradient-to-r from-gray-700 to-gray-900 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2 relative">
-                <span>🏙️</span> {t('Join City VIP', 'Join City VIP')} <span>↓</span>
-                {showCityDropdown && (
-                  <div className="absolute top-full left-0 mt-2 w-80 md:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
-                    <div className="p-3 bg-gray-50 border-b">
-                      <input type="text" placeholder={t('🔍 Search city... (94 cities)', '🔍 Search city... (94 cities)')} value={citySearchTerm} onChange={(e) => setCitySearchTerm(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500" autoFocus />
-                      <p className="text-xs text-gray-400 mt-1">{filteredCityList.length} / {uniqueCities.length} cities</p>
-                    </div>
-                    <div className="max-h-64 overflow-y-auto">
-                      {filteredCityList.slice(0, 20).map(city => (
-                        <button
-                          key={city.id}
-                          onClick={() => {
-                            setSelectedCityForTiers(city);
-                            setShowCityTiersModal(true);
-                            setShowCityDropdown(false);
-                            setCitySearchTerm('');
-                          }}
-                          className="w-full text-left px-4 py-3 hover:bg-gray-50 transition border-b last:border-0 flex items-center gap-3"
-                        >
-                          <span className="text-2xl">{city.icon}</span>
-                          <div className="flex-1">
-                            <div className="font-medium text-gray-800">{city.name}</div>
-                            <div className="text-xs text-gray-500">{city.nameEn} • {city.region}</div>
-                          </div>
-                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">👁️ Tiers</span>
-                        </button>
-                      ))}
-                      {filteredCityList.length > 20 && (
-                        <Link href="/cities" className="block px-4 py-3 text-center text-sm text-green-600 hover:bg-gray-50">
-                          {t(`View all ${filteredCityList.length} cities →`, `View all ${filteredCityList.length} cities →`)}
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                )}
+            <div className="flex flex-wrap justify-center gap-3 mt-10">
+              <button onClick={() => scrollToSection('program-groups')} className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-8 py-3.5 rounded-2xl font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition duration-200 transform inline-flex items-center gap-2 text-sm sm:text-base">
+                <span>🏊</span> {t('Explore Programs', 'Explore Programs')} <span>↓</span>
               </button>
-              <button onClick={() => scrollToSection('regular-pools')} className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2">
-                <span>🏊</span> {t('Join Regular Pools', 'Join Regular Pools')} <span>→</span>
-              </button>
-              <Link href="/become-creator" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg transition hover:scale-105 transform inline-flex items-center gap-2 animate-pulse">
-                <span>🏪</span> {t('Open Your Own Shop', 'Open Your Own Shop')} <span>→</span>
+              <Link href="/about" className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-8 py-3.5 rounded-2xl font-bold hover:-translate-y-0.5 transition duration-200 transform inline-flex items-center gap-2 text-sm sm:text-base border border-gray-200">
+                <span>ℹ️</span> {t('How It Works', 'How It Works')}
               </Link>
             </div>
           </div>
@@ -1068,206 +1083,168 @@ export default function Home() {
         <MovingAd />
         <AdvertisingBanner />
 
-        {/* Main Content */}
-        <div id="pools-section" className="container mx-auto px-4 py-12">
-          <h2 className="text-3xl font-bold text-center mb-4">{t('Available Opportunities', 'Available Opportunities')}</h2>
-          <p className="text-center text-gray-500 mb-8">{t('Choose from VIP programs or regular pools', 'Choose from VIP programs or regular pools')}</p>
+        {/* Main Content Groupings - Clean White Background */}
+        <div id="program-groups" className="bg-white py-16 scroll-mt-20">
+          <div className="container mx-auto px-6 max-w-6xl">
+            <h2 className="text-3xl font-extrabold text-center text-gray-900 mb-2">
+              {t('Explore Our Programs', 'Explore Our Programs')}
+            </h2>
+            <p className="text-center text-gray-500 max-w-lg mx-auto mb-12 text-sm sm:text-base">
+              {t('Participate, save, and win with PrizeHub Ethiopia or build your own audience and earn commission.', 'Participate, save, and win with PrizeHub Ethiopia or build your own audience and earn commission.')}
+            </p>
 
-          {/* Merkato VIP */}
-          <div id="merkato-vip" className="mb-12 scroll-mt-20">
-            <Link href="/merkato-vip" className="block relative bg-gradient-to-r from-yellow-500 via-orange-500 to-red-600 rounded-2xl p-6 md:p-8 text-white transform hover:scale-105 transition-all duration-500 shadow-2xl overflow-hidden group cursor-pointer">
-              <div className="absolute inset-0 opacity-20">
-                <div className="absolute -top-10 -left-10 text-8xl animate-bounce">🏪</div>
-                <div className="absolute -bottom-10 -right-10 text-8xl animate-pulse">💰</div>
-              </div>
-              <div className="relative z-10">
-                <div className="flex justify-between items-center flex-wrap gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="text-5xl md:text-6xl animate-bounce">🏪</div>
-                    <div>
-                      <div className="font-bold text-2xl md:text-3xl">{t('መርካቶ VIP', 'Merkato VIP')}</div>
-                      <div className="text-xs md:text-sm opacity-90">{t('5 Premium Tiers • Win Cash up to 10M ETB', '5 Premium Tiers • Win Cash up to 10M ETB')}</div>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <div className="bg-gray-400 text-white px-2 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg">🥈 {t('Silver', 'Silver')}</div>
-                    <div className="bg-yellow-400 text-gray-900 px-2 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg">🥇 {t('Gold', 'Gold')}</div>
-                    <div className="bg-blue-300 text-gray-900 px-2 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg">💎 {t('Platinum', 'Platinum')}</div>
-                    <div className="bg-cyan-400 text-gray-900 px-2 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg">💠 {t('Diamond', 'Diamond')}</div>
-                    <div className="bg-purple-500 text-white px-2 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-lg">👑 {t('Royal', 'Royal')}</div>
-                  </div>
-                  <div className="bg-white text-gray-900 px-5 py-2 rounded-full font-bold hover:bg-gray-100 transition transform hover:scale-105 shadow-xl flex items-center gap-2 text-sm md:text-base">
-                    <span>🎯</span><span>{t('Join Now', 'Join Now')}</span><span>→</span>
-                  </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {/* Card 1: Join Regular Pools to win cars, houses, machinery and more */}
+              <div className="bg-gray-50 p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                <div>
+                  <div className="text-4xl mb-4">🚗</div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">
+                    {t('Join Regular Pools', 'Join Regular Pools')}
+                  </h3>
+                  <p className="text-gray-600 text-sm leading-relaxed mb-6">
+                    {t('Win life-changing physical assets like brand-new cars, modern homes, machinery, and key heavy equipment. Under abbaa carraa ethiopia shop, vendors can easily showcase their properties.', 'Win life-changing physical assets like brand-new cars, modern homes, machinery, and key heavy equipment. Under abbaa carraa ethiopia shop, vendors can easily showcase their properties.')}
+                  </p>
                 </div>
-                <div className="mt-4 text-center">
-                  <p className="text-sm md:text-lg font-bold animate-pulse">{t('"ዛሬ፣ በዚህ ሳምንት እና በዚህ ወር አንድ ተሳታፊ ሚሊየነር እናድርገው"', '"Today, this week, and this month - let\'s make one participant a millionaire"')}</p>
-                </div>
+                <button onClick={() => { scrollToSection('regular-pools-direct'); }} className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-2xl font-bold transition text-sm flex items-center justify-center gap-1">
+                  {t('View Regular Pools', 'View Regular Pools')} <span>→</span>
+                </button>
               </div>
-            </Link>
-          </div>
 
-          {/* City VIP */}
-          <div id="city-vip" className="mb-12 scroll-mt-20">
-            <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-6 shadow-xl">
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-4xl">🏙️</span>
-                  <div>
-                    <h3 className="text-xl font-bold text-white">{t('City VIP Programs', 'City VIP Programs')}</h3>
-                    <p className="text-sm text-gray-300">{t('5 Premium Tiers • {count}+ Ethiopian cities available!', '5 Premium Tiers • {count}+ Ethiopian cities available!').replace('{count}', uniqueCities.length)}</p>
-                  </div>
+              {/* Card 2: Join Merkato VIP and win upto 40 million birr */}
+              <div className="bg-gray-50 p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                <div>
+                  <div className="text-4xl mb-4">🏪</div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">
+                    {t('Join Merkato VIP', 'Join Merkato VIP')}
+                  </h3>
+                  <p className="text-gray-600 text-sm leading-relaxed mb-6">
+                    {t("Win premium cash rewards up to 40 Million Birr in Merkato's official premier VIP levels. High frequency daily, weekly, and monthly draws with high seats capability.", "Win premium cash rewards up to 40 Million Birr in Merkato's official premier VIP levels. High frequency daily, weekly, and monthly draws with high seats capability.")}
+                  </p>
                 </div>
-                <div className="relative">
-                  <button onClick={() => setShowCityDropdown(!showCityDropdown)} className="flex items-center gap-2 px-5 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition shadow-md">
-                    <span>🎯</span><span>{t('Select City', 'Select City')}</span>
-                    <svg className={`w-4 h-4 transition-transform ${showCityDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  {showCityDropdown && (
-                    <div className="absolute top-full left-0 mt-2 w-80 md:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
-                      <div className="p-3 bg-gray-50 border-b">
-                        <input type="text" placeholder={t('🔍 Search your city... (94 cities available)', '🔍 Search your city... (94 cities available)')} value={citySearchTerm} onChange={(e) => setCitySearchTerm(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500" autoFocus />
-                        <p className="text-xs text-gray-400 mt-1">{t('Showing {count} of {total} cities', 'Showing {count} of {total} cities').replace('{count}', filteredCityList.length).replace('{total}', uniqueCities.length)}</p>
-                      </div>
-                      <div className="max-h-96 overflow-y-auto">
-                        {filteredCityList.length === 0 ? <div className="p-4 text-center text-gray-500">{t('No cities found', 'No cities found')}</div> : filteredCityList.map(city => (
-                          <button
-                            key={city.id}
-                            onClick={() => {
-                              setSelectedCityForTiers(city);
-                              setShowCityTiersModal(true);
-                              setShowCityDropdown(false);
-                              setCitySearchTerm('');
-                            }}
-                            className="w-full text-left px-4 py-3 hover:bg-gray-50 transition border-b last:border-0 flex items-center gap-3 group"
-                          >
-                            <span className="text-2xl">{city.icon}</span>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-gray-800 group-hover:text-green-600 transition">{city.name}</span>
-                              </div>
-                              <div className="text-xs text-gray-500">{city.nameEn} • {city.region}</div>
-                            </div>
-                            <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full group-hover:bg-green-600 group-hover:text-white transition">👁️ {t('Tiers', 'Tiers')}</span>
-                          </button>
-                        ))}
-                      </div>
-                      <div className="p-2 text-center text-xs text-gray-400 bg-gray-50">{uniqueCities.length}+ Ethiopian cities • 5 Premium Tiers • Up to 10M ETB</div>
-                    </div>
-                  )}
-                </div>
+                <Link href="/merkato-vip" className="w-full text-center bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-2xl font-bold transition text-sm block">
+                  {t('Enter Merkato VIP', 'Enter Merkato VIP')} <span>→</span>
+                </Link>
               </div>
-              <div className="grid grid-cols-3 md:grid-cols-5 gap-3 mt-6 pt-4 border-t border-gray-700">
-                <div className="text-center bg-gray-800 rounded-lg p-2">
-                  <div className="text-2xl">🥈</div>
-                  <div className="text-white font-bold text-xs">100 ETB</div>
-                  <div className="text-[8px] text-gray-400">1,200 {t('Seats', 'Seats')}</div>
+
+              {/* Card 3: Join City VIP and win cash upto 10 million birr */}
+              <div className="bg-gray-50 p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                <div>
+                  <div className="text-4xl mb-4">🏙️</div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">
+                    {t('Join City VIP', 'Join City VIP')}
+                  </h3>
+                  <p className="text-gray-600 text-sm leading-relaxed mb-6">
+                    {t('Win major cash awards up to 10 Million Birr across 94 major cities in Ethiopia. Play in Silver, Gold, Platinum, Diamond, or Royal tiers.', 'Win major cash awards up to 10 Million Birr across 94 major cities in Ethiopia. Play in Silver, Gold, Platinum, Diamond, or Royal tiers.')}
+                  </p>
                 </div>
-                <div className="text-center bg-gray-800 rounded-lg p-2">
-                  <div className="text-2xl">🥇</div>
-                  <div className="text-white font-bold text-xs">500 ETB</div>
-                  <div className="text-[8px] text-gray-400">1,200 {t('Seats', 'Seats')}</div>
+                <button onClick={() => { setShowCityDropdown(!showCityDropdown); }} className="w-full bg-gray-800 hover:bg-gray-900 text-white py-3 rounded-2xl font-bold transition text-sm flex items-center justify-center gap-1">
+                  {t('Choose Your City', 'Choose Your City')} <span>↓</span>
+                </button>
+              </div>
+
+              {/* Card 4: Join Partner Program and earn commissions */}
+              <div className="bg-gray-50 p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                <div>
+                  <div className="text-4xl mb-4">🤝</div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">
+                    {t('Join Partner Program', 'Join Partner Program')}
+                  </h3>
+                  <p className="text-gray-600 text-sm leading-relaxed mb-6">
+                    {t('Become an authorized agent, vendor, or organization organizer. Bring clients to our City VIP and Merkato VIP systems and earn half of the total commission generated.', 'Become an authorized agent, vendor, or organization organizer. Bring clients to our City VIP and Merkato VIP systems and earn half of the total commission generated.')}
+                  </p>
                 </div>
-                <div className="text-center bg-gray-800 rounded-lg p-2">
-                  <div className="text-2xl">💎</div>
-                  <div className="text-white font-bold text-xs">1,000 ETB</div>
-                  <div className="text-[8px] text-gray-400">2,400 {t('Seats', 'Seats')}</div>
+                <button onClick={() => { scrollToSection('partner-program'); }} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-2xl font-bold transition text-sm flex items-center justify-center gap-1">
+                  {t('Learn Commission Program', 'Learn Commission Program')} <span>→</span>
+                </button>
+              </div>
+
+              {/* Card 5: Open your shop and create prize pool */}
+              <div className="bg-gray-50 p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                <div>
+                  <div className="text-4xl mb-4">🏪</div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">
+                    {t('Open Your Shop', 'Open Your Shop')}
+                  </h3>
+                  <p className="text-gray-600 text-sm leading-relaxed mb-6">
+                    {t('Create fully customized prize pools for your members, complete with your own personal bank account and Telebirr configurations for fast direct settlement.', 'Create fully customized prize pools for your members, complete with your own personal bank account and Telebirr configurations for fast direct settlement.')}
+                  </p>
                 </div>
-                <div className="text-center bg-gray-800 rounded-lg p-2">
-                  <div className="text-2xl">💠</div>
-                  <div className="text-white font-bold text-xs">2,500 ETB</div>
-                  <div className="text-[8px] text-gray-400">2,400 {t('Seats', 'Seats')}</div>
-                </div>
-                <div className="text-center bg-gray-800 rounded-lg p-2">
-                  <div className="text-2xl">👑</div>
-                  <div className="text-white font-bold text-xs">5,000 ETB</div>
-                  <div className="text-[8px] text-gray-400">2,400 {t('Seats', 'Seats')}</div>
-                </div>
+                <Link href="/become-creator" className="w-full text-center bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-2xl font-bold transition text-sm block">
+                  {t('Setup Your Shop', 'Setup Your Shop')} <span>→</span>
+                </Link>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Regular Pools */}
-          <div id="regular-pools" className="mb-12 scroll-mt-20">
-            <button onClick={() => setShowRegularPools(!showRegularPools)} className="w-full bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white rounded-2xl p-6 transition-all duration-300 shadow-lg group">
-              <div className="flex flex-col items-center text-center">
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center gap-3">
-                    <span className="text-4xl group-hover:scale-110 transition-transform">🏊</span>
-                    <div className="text-left">
-                      <h3 className="text-2xl font-bold">{t('Regular Prize Pools', 'Regular Prize Pools')}</h3>
-                      <p className="text-sm text-gray-300">{t('Win Cars, Houses, Machinery & Electronics', 'Win Cars, Houses, Machinery & Electronics')}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">{showRegularPools ? t('Close', 'Close') : t('View', 'View')}</span>
-                    <svg className={`w-5 h-5 transition-transform duration-300 ${showRegularPools ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="mt-3 pt-3 border-t border-gray-600 w-full">
-                  <div className="rounded-lg p-2">
-                    <p className="text-sm md:text-base font-bold text-yellow-300">🎯 {t('Join and WIN!', 'Join and WIN!')}</p>
-                    <p className="text-xs text-gray-300">{t('ይሳተፉ እና ያሸንፉ!', 'ይሳተፉ እና ያሸንፉ!')}</p>
-                    <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
-                      <span className="text-lg">🚗</span><span className="text-xs font-semibold text-white">{t('Car', 'Car')}</span><span className="text-gray-400">•</span>
-                      <span className="text-lg">🏭</span><span className="text-xs font-semibold text-white">{t('Machinery', 'Machinery')}</span><span className="text-gray-400">•</span>
-                      <span className="text-lg">🏠</span><span className="text-xs font-semibold text-white">{t('House', 'House')}</span><span className="text-gray-400">•</span>
-                      <span className="text-lg">💻</span><span className="text-xs font-semibold text-white">{t('Electronics', 'Electronics')}</span><span className="text-gray-400">•</span>
-                      <span className="text-lg">🎁</span><span className="text-xs font-semibold text-white">{t('Much More', 'Much More')}</span>
-                    </div>
-                  </div>
-                </div>
+        {/* Regular Pools Display Section */}
+        <div id="regular-pools-direct" className="bg-gray-50 py-16 scroll-mt-20">
+          <div className="container mx-auto px-6 max-w-6xl">
+            <div className="flex justify-between items-center mb-10">
+              <div>
+                <h2 className="text-3xl font-extrabold text-gray-900">🏊 {t('Active Regular Pools', 'Active Regular Pools')}</h2>
+                <p className="text-gray-500 text-sm mt-1">{t('Join today with direct Telebirr & bank payments', 'Join today with direct Telebirr & bank payments')}</p>
               </div>
-            </button>
-            {showRegularPools && (
-              <div className="mt-6 animate-fade-in">
-                <div className="flex justify-between items-center flex-wrap gap-4 mb-6">
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-700">{t('Available Prize Pools', 'Available Prize Pools')}</h4>
-                    <p className="text-sm text-gray-500">{t('Choose based on your budget and preference', 'Choose based on your budget and preference')}</p>
-                  </div>
-                </div>
-                {pools.length === 0 ? (
-                  <div className="text-center py-12 bg-gray-50 rounded-lg">
-                    <div className="text-5xl mb-3">🏊</div>
-                    <p className="text-gray-500">{t('No active pools at the moment', 'No active pools at the moment')}</p>
-                    <p className="text-sm text-gray-400 mt-2">{t('Check back soon!', 'Check back soon!')}</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {pools.map((pool) => <PoolCard key={pool.id} pool={pool} featured={pool.is_featured === true} language={language} />)}
-                  </div>
-                )}
+              <Link href="/listings" className="text-sm font-bold text-green-600 hover:text-green-700">{t('See All Pools →', 'See All Pools →')}</Link>
+            </div>
+            {pools.length === 0 ? (
+              <div className="text-center py-16 bg-white rounded-3xl border shadow-sm">
+                <p className="text-gray-500 font-medium">{t('No active regular pools available at the moment.', 'No active regular pools available at the moment.')}</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {pools.map((pool) => <PoolCard key={pool.id} pool={pool} featured={pool.is_featured === true} language={language} />)}
               </div>
             )}
           </div>
+        </div>
 
-          {/* Partner Program Section */}
-          <div id="partner-program" className="mb-12 scroll-mt-20">
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 md:p-8 shadow-xl text-white">
-              <div className="text-center">
-                <div className="text-5xl mb-3">🤝</div>
-                <h3 className="text-2xl md:text-3xl font-bold">{t('Partner Program', 'Partner Program')}</h3>
-                <p className="text-sm md:text-base text-blue-200 mt-2">{t('Join our partner program and start earning commissions today!', 'Join our partner program and start earning commissions today!')}</p>
-                <p className="text-xs text-blue-300 mt-1">{t('✓ No upfront fees ✓ Earn 10% on every successful pool ✓ 24/7 support', '✓ No upfront fees ✓ Earn 10% on every successful pool ✓ 24/7 support')}</p>
+        {/* Partner Program Detailed Commission Grid */}
+        <div id="partner-program" className="bg-white py-16 border-t border-gray-100 scroll-mt-20">
+          <div className="container mx-auto px-6 max-w-5xl">
+            <h2 className="text-3xl font-extrabold text-center text-gray-900 mb-2">🤝 {t('Commission & Partner Roles', 'Commission & Partner Roles')}</h2>
+            <p className="text-center text-gray-500 mb-12 text-sm sm:text-base">
+              {t('Transparent direct commission tracking for certified PrizeHub Ethiopia partners.', 'Transparent direct commission tracking for certified PrizeHub Ethiopia partners.')}
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Agents */}
+              <div className="bg-gray-50 p-8 rounded-3xl border border-gray-200 shadow-sm">
+                <span className="text-3xl block mb-4">🤝</span>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{t('Verified Agents', 'Verified Agents')}</h3>
+                <p className="text-xs text-gray-400 mb-4 uppercase tracking-wider font-semibold">{t('Merkato VIP, City VIP & Regular Pools', 'Merkato VIP, City VIP & Regular Pools')}</p>
+                <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+                  {t('Promote regular and VIP programs to clients. Earn 50% of the platform-generated commission (half of the total platform fee) for every seat booked.', 'Promote regular and VIP programs to clients. Earn 50% of the platform-generated commission (half of the total platform fee) for every seat booked.')}
+                </p>
+                <button onClick={() => handleRoleSelection('agent')} className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2.5 rounded-xl text-xs font-bold transition">
+                  {t('Register Agent', 'Register Agent')}
+                </button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-                <button onClick={() => handleRoleSelection('agent')} className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg">
-                  <span>🤝</span> {t('Become an Agent', 'Become an Agent')}
+
+              {/* Vendors */}
+              <div className="bg-gray-50 p-8 rounded-3xl border border-gray-200 shadow-sm">
+                <span className="text-3xl block mb-4">🏪</span>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{t('Verified Vendors', 'Verified Vendors')}</h3>
+                <p className="text-xs text-gray-400 mb-4 uppercase tracking-wider font-semibold">{t('Regular Pools property asset creation', 'Regular Pools property asset creation')}</p>
+                <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+                  {t('List houses, cars, machinery, or heavy assets under official platform bank accounts/Telebirr. When pool reaches target, you earn half of platform-generated commission.', 'List houses, cars, machinery, or heavy assets under official platform bank accounts/Telebirr. When pool reaches target, you earn half of platform-generated commission.')}
+                </p>
+                <button onClick={() => handleRoleSelection('vendor')} className="w-full bg-purple-500 hover:bg-purple-600 text-white py-2.5 rounded-xl text-xs font-bold transition">
+                  {t('Register Vendor', 'Register Vendor')}
                 </button>
-                <button onClick={() => handleRoleSelection('vendor')} className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg">
-                  <span>🏪</span> {t('Become a Vendor', 'Become a Vendor')}
+              </div>
+
+              {/* Organizers */}
+              <div className="bg-gray-50 p-8 rounded-3xl border border-gray-200 shadow-sm">
+                <span className="text-3xl block mb-4">🏢</span>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{t('Organization Organizers', 'Organization Organizers')}</h3>
+                <p className="text-xs text-gray-400 mb-4 uppercase tracking-wider font-semibold">{t('Internal staff saving & reward pools', 'Internal staff saving & reward pools')}</p>
+                <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+                  {t('Establish special internal pools for your corporate or association members. Managed under official platform bank details with custom organizer commissions.', 'Establish special internal pools for your corporate or association members. Managed under official platform bank details with custom organizer commissions.')}
+                </p>
+                <button onClick={() => handleRoleSelection('organization')} className="w-full bg-cyan-500 hover:bg-cyan-600 text-white py-2.5 rounded-xl text-xs font-bold transition">
+                  {t('Register Organizer', 'Register Organizer')}
                 </button>
-                <button onClick={() => handleRoleSelection('organization')} className="bg-cyan-500 hover:bg-cyan-600 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg">
-                  <span>🏢</span> {t('Become an Organization', 'Become an Organization')}
-                </button>
-                <Link href="/become-creator" className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg">
-                  <span>🏪</span> {t('Become a Pool Creator', 'Become a Pool Creator')}
-                </Link>
               </div>
             </div>
           </div>

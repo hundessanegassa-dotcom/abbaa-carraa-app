@@ -17,6 +17,7 @@ export const MERKATO_TIERS = {
     labelEn: 'Silver',
     labelAm: 'ብር',
     icon: '🥈',
+    image_url: '/images/v8-car.jpg',
     contribution: 100,
     prize: 100000,
     seats: 1200,
@@ -30,6 +31,7 @@ export const MERKATO_TIERS = {
     labelEn: 'Gold',
     labelAm: 'ወርቅ',
     icon: '🥇',
+    image_url: '/images/sino-truck.jpg',
     contribution: 500,
     prize: 500000,
     seats: 1200,
@@ -43,6 +45,7 @@ export const MERKATO_TIERS = {
     labelEn: 'Platinum',
     labelAm: 'ፕላቲኒየም',
     icon: '💎',
+    image_url: '/images/modern-house.jpg',
     contribution: 1000,
     prize: 2000000,
     seats: 2400,
@@ -56,6 +59,7 @@ export const MERKATO_TIERS = {
     labelEn: 'Diamond',
     labelAm: 'አልማዝ',
     icon: '💠',
+    image_url: '/images/excavator.jpg',
     contribution: 2500,
     prize: 5000000,
     seats: 2400,
@@ -69,6 +73,7 @@ export const MERKATO_TIERS = {
     labelEn: 'Royal',
     labelAm: 'ንጉሣዊ',
     icon: '👑',
+    image_url: '/images/wheel-loader.jpg',
     contribution: 5000,
     prize: 10000000,
     seats: 2400,
@@ -356,7 +361,7 @@ export default function MerkatoVIP() {
     router.push('/dashboard');
   };
 
-  // Convert tier to pool format for PoolProductCard - NO IMAGES
+  // Convert tier to pool format for PoolProductCard - WITH REAL IMAGES
   const convertTierToPool = (tierId, tier) => {
     return {
       id: tierId,
@@ -366,6 +371,7 @@ export default function MerkatoVIP() {
       target_amount: tier.prize,
       current_amount: 0,
       status: 'active',
+      image_url: tier.image_url,
       end_date: tier.end_date || '2026-12-31T23:59:59',
       is_featured: tier.tier >= 4,
       description: `${getDrawScheduleText(tierId, language)} - ${language === 'am' ? 'እስከ' : 'Up to'} ETB ${tier.prize.toLocaleString()}`

@@ -131,7 +131,8 @@ const nextConfig = {
       },
     };
     
-    config.optimization.usedExports = true;
+    // Commented out to prevent conflict with cacheUnaffected in dev mode
+    // config.optimization.usedExports = true;
     
     // ✅ Fix: Prevent server-side modules from breaking client build
     if (!isServer) {
@@ -169,7 +170,7 @@ const nextConfig = {
   
   // ✅ CRITICAL FIX: Experimental features
   experimental: {
-    optimizeCss: true,
+    optimizeCss: false, // Disabled to prevent "Cannot find module 'critters'" error
     scrollRestoration: true,
     esmExternals: false, // ✅ Changed to false to handle ESM properly
   },

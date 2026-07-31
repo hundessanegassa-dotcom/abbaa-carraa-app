@@ -11,8 +11,20 @@ import UnifiedAgentApplication from '../../components/UnifiedAgentApplication';
 import SeatSelector from '../../components/SeatSelector';
 import TicketImage from '../../components/TicketImage';
 import PoolCard from '../../components/PoolCard';
-import { TIERS, getDrawScheduleText, TIER_IDS, getTierLabel } from '../../components/SeatSelector';
+import { TIERS } from '../../components/SeatSelector';
 import { getCityData, getAllCities, addUnlistedCity, updateCityData } from '../../lib/cityData';
+
+// Helper function to get draw schedule text
+function getDrawScheduleText(tierId, language) {
+  const schedules = {
+    silver: { en: 'Daily Draw', am: 'ዕለታዊ እጣ' },
+    gold: { en: 'Daily Draw', am: 'ዕለታዊ እጣ' },
+    platinum: { en: 'Weekly Draw', am: 'ሳምንታዊ እጣ' },
+    diamond: { en: 'Weekly Draw', am: 'ሳምንታዊ እጣ' },
+    royal: { en: 'Monthly Draw', am: 'ወርሃዊ እጣ' }
+  };
+  return schedules[tierId]?.[language] || schedules.silver[language];
+}
 
 // Get city list from lib
 const cityList = getAllCities();
@@ -304,7 +316,7 @@ export default function CityVip() {
     router.push('/dashboard');
   };
 
-  // Convert tier to pool format for PoolProductCard - NO IMAGES
+  // Convert tier to pool format for PoolProductCard - WITH REAL IMAGES
   const convertTierToPool = (tierId, tier) => {
     const cityName = cityInfo?.name?.split('|')[0] || city || 'City';
     return {
@@ -315,6 +327,7 @@ export default function CityVip() {
       target_amount: tier.prize,
       current_amount: 0,
       status: 'active',
+      image_url: tier.image_url,
       end_date: '2026-12-31T23:59:59',
       is_featured: tier.tier >= 4,
       description: `${getDrawScheduleText(tierId, language)} ${language === 'am' ? 'እጣ' : 'Draw'} - ${language === 'am' ? 'እስከ' : 'Up to'} ETB ${tier.prize.toLocaleString()}`

@@ -17,6 +17,7 @@ export const TIERS = {
     color: 'from-gray-400 to-gray-500',
     badgeColor: 'bg-gray-500',
     icon: '🥈',
+    image_url: '/images/v8-car.jpg',
     drawSchedule: 'daily',
     tier: 1
   },
@@ -30,6 +31,7 @@ export const TIERS = {
     color: 'from-yellow-400 to-yellow-600',
     badgeColor: 'bg-yellow-500',
     icon: '🥇',
+    image_url: '/images/sino-truck.jpg',
     drawSchedule: 'daily',
     tier: 2
   },
@@ -43,6 +45,7 @@ export const TIERS = {
     color: 'from-gray-300 to-blue-400',
     badgeColor: 'bg-blue-500',
     icon: '💎',
+    image_url: '/images/modern-house.jpg',
     drawSchedule: 'weekly',
     tier: 3
   },
@@ -56,6 +59,7 @@ export const TIERS = {
     color: 'from-blue-400 to-cyan-400',
     badgeColor: 'bg-cyan-500',
     icon: '💠',
+    image_url: '/images/excavator.jpg',
     drawSchedule: 'weekly',
     tier: 4
   },
@@ -69,6 +73,7 @@ export const TIERS = {
     color: 'from-purple-500 to-pink-500',
     badgeColor: 'bg-purple-500',
     icon: '👑',
+    image_url: '/images/wheel-loader.jpg',
     drawSchedule: 'monthly',
     tier: 5
   }

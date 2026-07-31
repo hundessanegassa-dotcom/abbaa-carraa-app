@@ -27,6 +27,9 @@ export default function CreatePool() {
         category: 'general',
         prize_image: null,
         image_preview: null,
+        custom_bank_name: '',
+        custom_bank_account: '',
+        custom_telebirr_number: '',
         terms_accepted: false
     });
 
@@ -161,7 +164,10 @@ export default function CreatePool() {
                 draw_date: formData.draw_date,
                 platform_fee_percentage: 10,
                 total_collected: 0,
-                current_participants: 0
+                current_participants: 0,
+                custom_bank_name: formData.custom_bank_name,
+                custom_bank_account: formData.custom_bank_account,
+                custom_telebirr_number: formData.custom_telebirr_number
             };
 
             const { data: pool, error: poolError } = await supabase
@@ -414,6 +420,61 @@ export default function CreatePool() {
                                         <option value="machinery">{language === 'am' ? 'ማሽነሪ' : 'Machinery'}</option>
                                         <option value="cash">{language === 'am' ? 'ጥሬ ገንዘብ' : 'Cash'}</option>
                                     </select>
+                                </div>
+
+                                {/* Custom Payment Configurations */}
+                                <div className="border-t border-gray-200 pt-6">
+                                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                        <span>🏦</span> {language === 'am' ? 'የራስዎ የክፍያ አካውንቶች (አማራጭ)' : 'Your Custom Payment Accounts (Optional)'}
+                                    </h3>
+                                    <p className="text-xs text-gray-500 mb-4">
+                                        {language === 'am'
+                                            ? 'ባዶ ከቀረ ክፍያ ወደ ዋናው የPrizeHub Ethiopia አካውንት ይላካል። የራስዎን ካስገቡ ግን ተጠቃሚዎች በቀጥታ ወደ እርስዎ ይልካሉ።'
+                                            : 'If left blank, contributions go to the official PrizeHub Ethiopia accounts. If provided, members will pay directly to your custom details.'}
+                                    </p>
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    {language === 'am' ? 'የባንክ ስም' : 'Bank Name'}
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="custom_bank_name"
+                                                    value={formData.custom_bank_name}
+                                                    onChange={handleInputChange}
+                                                    placeholder="e.g. Commercial Bank of Ethiopia (CBE) / CBE Birr"
+                                                    className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    {language === 'am' ? 'የባንክ አካውንት ቁጥር / CBE Birr ቁጥር' : 'Bank Account / CBE Birr Number'}
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="custom_bank_account"
+                                                    value={formData.custom_bank_account}
+                                                    onChange={handleInputChange}
+                                                    placeholder="e.g. 1000123456789"
+                                                    className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                {language === 'am' ? 'የቴሌብር ስልክ ቁጥር' : 'Custom Telebirr Mobile Number'}
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="custom_telebirr_number"
+                                                value={formData.custom_telebirr_number}
+                                                onChange={handleInputChange}
+                                                placeholder="e.g. 0912345678"
+                                                className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Terms */}

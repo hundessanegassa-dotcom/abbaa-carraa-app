@@ -168,7 +168,7 @@ function MyApp({ Component, pageProps }) {
       '/cities/seat': 'Select Seats - City VIP',
       '/payment/merkato': 'Payment - Merkato VIP',
     };
-    return titles[path] || 'Abbaa Carraa';
+    return titles[path] || 'PrizeHub Ethiopia';
   };
 
   if (showInitialLoading) {

@@ -1,6 +1,6 @@
 {
   "common": {
-    "welcome": "እንኳን ወደ Abbaa Carraa በደህና መጡ",
+    "welcome": "እንኳን ወደ PrizeHub Ethiopia በደህና መጡ",
     "tagline": "ማህበረሰብን መሰረት ያደረገ የሽልማት እና የአስተዋጽኦ መድረክ",
     "home": "መነሻ",
     "join": "ተቀላቀል",
@@ -111,7 +111,7 @@
     "cash_equivalent_banner_title": "ሙሉ የገንዘብ ዋስትና",
     "cash_equivalent_banner_text": "ሁሉም ሽልማቶች በገንዘብ ተመጣጣኝ ዋስትና የተደገፉ ናቸው። አካላዊ ሽልማቱ በማይገኝ ጊዜ ሙሉ የገንዘብ መጠኑን ይቀበላሉ።",
     "cash_equivalent_banner_button": "ተጨማሪ ይወቁ",
-    "join_today": "ዛሬውኑ Abbaa Carraa ይቀላቀሉ",
+    "join_today": "ዛሬውኑ PrizeHub Ethiopia ይቀላቀሉ",
     "join_description": "እንዴት መሳተፍ እንደሚፈልጉ ይምረጡ። የእጣ መደቦችን ይፍጠሩ እና ኮሚሽን ያግኙ ወይም ለማሸነፍ መደቦችን ይቀላቀሉ።",
     "not_set": "አልተዘጋጀም",
     "active": "ንቁ",
@@ -125,7 +125,7 @@
     "copy_link": "ሊንክ ቅዳ",
     "link_copied": "ሊንክ ተቀድቷል!",
     "join_me_to_win": "ተቀላቀል",
-    "on_abbaa_carraa": "በabbaa carra",
+    "on_abbaa_carraa": "በPrizeHub Ethiopia",
     "to_enter": "ለመግባት"
   },
   "stats": {
@@ -157,10 +157,10 @@
     "total_amount": "ጠቅላላ መጠን",
     "tickets": "ቲኬቶች",
     "total_collection": "ጠቅላላ ስብስብ",
-    "incl_commission": "20% ኮሚሽን ጨምሮ"
+    "incl_commission": "የኮሚሽን ጨምሮ"
   },
   "how_it_works": {
-    "title": "Abbaa Carraa እንዴት ይሰራል",
+    "title": "PrizeHub Ethiopia እንዴት ይሰራል",
     "find_pool": "የእጣ መደብ ፈልግ",
     "find_pool_desc": "በከተማ ወይም በምድብ ንቁ የእጣ መደቦችን ይመልከቱ",
     "contribute": "አስተዋጽኦ አድርግ",
@@ -170,7 +170,7 @@
   },
   "agent": {
     "become_agent": "ወኪል ሁን",
-    "earn_commission": "10 በመቶ ኮሚሽን አግኝ",
+    "earn_commission": "ኮሚሽን አግኝ",
     "register_agent": "እንደ ወኪል ይመዝገቡ",
     "agent_dashboard": "የወኪል ዳሽቦርድ",
     "my_listings": "የእኔ ዝርዝሮች",
@@ -218,9 +218,9 @@
     "individuals": "ግለሰቦች"
   },
   "moving_ad": {
-    "join_today": "ዛሬውኑ Abbaa Carraa ይቀላቀሉ እና አስደናቂ ሽልማቶችን ያሸንፉ",
+    "join_today": "ዛሬውኑ PrizeHub Ethiopia ይቀላቀሉ እና አስደናቂ ሽልማቶችን ያሸንፉ",
     "recent_winner": "የቅርብ ጊዜ አሸናፊ 650,000 ብር ዋጋ ያለው ቶዮታ ቪትዝ አሸንፏል",
-    "become_agent": "ወኪል ሁን እና 10 በመቶ ኮሚሽን አግኝ",
+    "become_agent": "ወኪል ሁን እና ኮሚሽን አግኝ",
     "vendor_opportunity": "አቅራቢዎች ምርቶችዎን እንደ ሽልማት ዝርዝር ያድርጉ",
     "participants": "ከ1000 በላይ ተሳታፊዎች የእጣ መደቦቻችንን ተቀላቅለዋል",
     "learn_more": "ተጨማሪ ይወቁ",
@@ -231,7 +231,7 @@
   },
   "banners": {
     "agent": "ወኪል ሁን",
-    "agent_desc": "በሚፈጥሩት የእጣ መደብ ሁሉ 10 በመቶ ኮሚሽን ያግኙ",
+    "agent_desc": "በሚፈጥሩት የእጣ መደብ ሁሉ ኮሚሽን ያግኙ",
     "vendor": "አቅራቢ ሁን",
     "vendor_desc": "ምርቶችዎን እንደ ሽልማት ይዘርዝሩ አሸናፊው ነጻ ያገኛል",
     "organization": "ድርጅት ይመዝገቡ",
@@ -272,7 +272,7 @@
     "privacy": "የግላዊነት ፖሊሲ"
   },
   "chatbot": {
-    "title": "የAbbaa Carraa አጋዥ",
+    "title": "የPrizeHub Ethiopia አጋዥ",
     "placeholder": "ጥያቄዎን ይጻፉ",
     "send": "ላክ",
     "online": "በመስመር ላይ",
