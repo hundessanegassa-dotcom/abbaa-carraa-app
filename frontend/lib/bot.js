@@ -872,20 +872,58 @@ export async function handleBotMessages() {
     
     await ctx.reply(t.language_set, { parse_mode: 'Markdown' });
     
-    if (userSessions[userId]) {
-      userSessions[userId].step = 'ask_name';
-      userSessions[userId].language = lang;
-    } else {
-      userSessions[userId] = { 
-        step: 'ask_name', 
-        language: lang,
-        data: {} 
-      };
-    }
+    userSessions[userId] = {
+      step: 'ask_phone',
+      language: lang,
+      data: { fullName: ctx.from.first_name + (ctx.from.last_name ? ' ' + ctx.from.last_name : '') }
+    };
     
-    await ctx.reply(t.ask_name, { parse_mode: 'Markdown' });
+    // Direct phone number request using native keyboard contact sharing button for 100% speed!
+    await ctx.reply(t.ask_phone, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        keyboard: [
+          [{ text: '📱 Share My Contact / ስልክ ቁጥሬን ያጋሩ', request_contact: true }]
+        ],
+        one_time_keyboard: true,
+        resize_keyboard: true
+      }
+    });
     
     await ctx.answerCbQuery();
+  });
+
+  // ============================================
+  // NATIVE CONTACT PHONE NUMBER HANDLER (100% FAST)
+  // ============================================
+  bot.on('contact', async (ctx) => {
+    const user = ctx.from;
+    const userId = user.id;
+    const contact = ctx.message.contact;
+    const phoneNumber = contact.phone_number;
+
+    const session = userSessions[userId];
+    const lang = session?.language || await getUserLanguage(userId);
+    const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+    const isCreator = await isPoolCreator(userId);
+
+    // Let the system read client's telegram account and register them
+    await saveUserProfile(
+      userId,
+      user.username,
+      user.first_name,
+      user.last_name,
+      phoneNumber,
+      user.first_name + (user.last_name ? ' ' + user.last_name : '')
+    );
+
+    await ctx.reply(t.phone_received, {
+      parse_mode: 'Markdown',
+      reply_markup: { remove_keyboard: true } // clean up the contact sharing keyboard
+    });
+
+    await showPrograms(ctx, userId, lang);
+    delete userSessions[userId];
   });
 
   // ============================================
@@ -1004,17 +1042,6 @@ export async function handleBotMessages() {
       return;
     }
 
-    if (session.step === 'ask_name') {
-      session.data.fullName = text;
-      session.step = 'ask_phone';
-      
-      const lang = session.language || await getUserLanguage(userId);
-      const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-      
-      await ctx.reply(t.ask_phone, { parse_mode: 'Markdown' });
-      return;
-    }
-    
     if (session.step === 'ask_phone') {
       session.data.phone = text;
       session.step = 'complete';
@@ -1028,10 +1055,13 @@ export async function handleBotMessages() {
         user.first_name,
         user.last_name,
         text,
-        session.data.fullName
+        session.data.fullName || (user.first_name + (user.last_name ? ' ' + user.last_name : ''))
       );
       
-      await ctx.reply(t.phone_received, { parse_mode: 'Markdown' });
+      await ctx.reply(t.phone_received, {
+        parse_mode: 'Markdown',
+        reply_markup: { remove_keyboard: true }
+      });
       
       await showPrograms(ctx, userId, lang);
       
