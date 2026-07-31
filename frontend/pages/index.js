@@ -604,32 +604,6 @@ export default function Home() {
   );
 
   // ============================================
-  // MOVING MARQUEE
-  // ============================================
-  const MovingMarquee = () => {
-    const marqueeText = `🏆 በPrizeHub Ethiopia ወርቃማ እድልን ያሸንፉ! • 🥈 Silver: 100 ETB (1200 Seats) • 🥇 Gold: 500 ETB (1200 Seats) • 💎 Platinum: 1,000 ETB (2400 Seats) • 💠 Diamond: 2,500 ETB (2400 Seats) • 👑 Royal: 5,000 ETB (2400 Seats) • 🏪 Merkato VIP & 🏙️ City VIP Available! • 💚 2% Supports Health • Join & Start Winning Today! 🎯`;
-
-    return (
-      <div className="w-full overflow-hidden bg-gradient-to-r from-green-600 to-teal-600 py-2.5 md:py-3 shadow-inner">
-        <div className="whitespace-nowrap animate-marquee-slow" style={{ display: 'inline-block' }}>
-          <span className="text-white font-semibold text-[11px] md:text-sm tracking-wide px-4">{marqueeText}</span>
-        </div>
-        <style jsx>{`
-          @keyframes marquee-slow {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
-          }
-          .animate-marquee-slow {
-            animation: marquee-slow 45s linear infinite;
-            will-change: transform;
-          }
-          .animate-marquee-slow:hover { animation-play-state: paused; }
-        `}</style>
-      </div>
-    );
-  };
-
-  // ============================================
   // LOADING STATE
   // ============================================
   if (loading && isInitialLoad) {
@@ -654,8 +628,6 @@ export default function Home() {
           <meta name="description" content="Win amazing prizes. Join Merkato VIP, City VIP across 94 Ethiopian cities, or Regular Pools." />
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
         </Head>
-        
-        <MovingMarquee />
         
         <div className="fixed top-4 right-4 z-50">
           <ModeDrawer />
@@ -688,7 +660,6 @@ export default function Home() {
         </Head>
 
         <div className="min-h-screen bg-gray-50 pb-20">
-          <MovingMarquee />
 
           {/* Telegram Badge */}
           {isInTelegram && (
@@ -920,65 +891,64 @@ export default function Home() {
       </Head>
 
       <div className="min-h-screen bg-white w-full">
-        <MovingMarquee />
 
         <div className="fixed top-4 right-4 z-50">
           <ModeDrawer />
         </div>
 
         {/* Navbar */}
-        <nav className="sticky top-0 z-40 bg-gray-900 shadow-lg border-b border-gray-700">
+        <nav className="sticky top-0 z-40 bg-gray-100 shadow-md border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-between h-16">
               <Link href="/" className="flex items-center gap-2 group shrink-0">
                 <span className="text-2xl group-hover:scale-110 transition-transform">🎫</span>
                 <div>
-                  <span className="font-bold text-white text-lg">PrizeHub Ethiopia</span>
-                  <span className="text-xs text-gray-400 ml-2 hidden sm:inline">| abbaa carraa ethiopia shop</span>
+                  <span className="font-bold text-gray-900 text-lg">PrizeHub Ethiopia</span>
+                  <span className="text-xs text-gray-600 ml-2 hidden sm:inline">| abbaa carraa ethiopia shop</span>
                 </div>
               </Link>
               <div className="hidden md:flex items-center gap-1">
                 <div className="relative">
-                  <button onClick={() => setProgramsDropdownOpen(!programsDropdownOpen)} className="flex items-center gap-2 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition text-sm font-medium">
+                  <button onClick={() => setProgramsDropdownOpen(!programsDropdownOpen)} className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-black hover:bg-gray-200 rounded-lg transition text-sm font-medium">
                     <span>📋</span> {t('Programs', 'Programs')}
                     <svg className={`w-4 h-4 transition-transform ${programsDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
                   {programsDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-72 bg-gray-800 rounded-xl shadow-2xl border border-gray-700 z-50 overflow-hidden">
-                      <Link href="/merkato-vip" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-b border-gray-700">
+                    <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden animate-fadeIn">
+                      <Link href="/merkato-vip" className="w-full text-left px-4 py-3 text-gray-700 hover:text-black hover:bg-gray-50 transition flex items-center gap-3 border-b border-gray-100">
                         <span className="text-xl">🏪</span>
-                        <div><div className="font-medium">{t('Merkato VIP', 'Merkato VIP')}</div><div className="text-xs text-gray-400">{t('5 Tiers • Up to 10M ETB', '5 Tiers • Up to 10M ETB')}</div></div>
+                        <div><div className="font-medium">{t('Merkato VIP', 'Merkato VIP')}</div><div className="text-xs text-gray-500">{t('5 Tiers • Up to 10M ETB', '5 Tiers • Up to 10M ETB')}</div></div>
                       </Link>
-                      <button onClick={() => setShowCityDropdown(!showCityDropdown)} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-b border-gray-700">
+                      <button onClick={() => setShowCityDropdown(!showCityDropdown)} className="w-full text-left px-4 py-3 text-gray-700 hover:text-black hover:bg-gray-50 transition flex items-center gap-3 border-b border-gray-100">
                         <span className="text-xl">🏙️</span>
-                        <div><div className="font-medium">{t('City VIP', 'City VIP')}</div><div className="text-xs text-gray-400">{t('94 Cities • 5 Tiers', '94 Cities • 5 Tiers')}</div></div>
+                        <div><div className="font-medium">{t('City VIP', 'City VIP')}</div><div className="text-xs text-gray-500">{t('94 Cities • 5 Tiers', '94 Cities • 5 Tiers')}</div></div>
                       </button>
-                      <button onClick={() => scrollToSection('regular-pools')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3 border-b border-gray-700">
+                      <button onClick={() => scrollToSection('regular-pools')} className="w-full text-left px-4 py-3 text-gray-700 hover:text-black hover:bg-gray-50 transition flex items-center gap-3 border-b border-gray-100">
                         <span className="text-xl">🏊</span>
-                        <div><div className="font-medium">{t('Regular Pools', 'Regular Pools')}</div><div className="text-xs text-gray-400">{t('Cars, Houses & More', 'Cars, Houses & More')}</div></div>
+                        <div><div className="font-medium">{t('Regular Pools', 'Regular Pools')}</div><div className="text-xs text-gray-500">{t('Cars, Houses & More', 'Cars, Houses & More')}</div></div>
                       </button>
-                      <Link href="/become-creator" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-3">
+                      <Link href="/become-creator" className="w-full text-left px-4 py-3 text-gray-700 hover:text-black hover:bg-gray-50 transition flex items-center gap-3">
                         <span className="text-xl">🏪</span>
-                        <div><div className="font-medium">{t('Become Creator', 'Become Creator')}</div><div className="text-xs text-gray-400">{t('Earn 10% Commission', 'Earn 10% Commission')}</div></div>
+                        <div><div className="font-medium">{t('Become Creator', 'Become Creator')}</div><div className="text-xs text-gray-500">{t('Earn 10% Commission', 'Earn 10% Commission')}</div></div>
                       </Link>
-                      <div className="border-t border-gray-700 my-1"></div>
+                      <div className="border-t border-gray-200 my-1"></div>
                       <div className="px-4 py-2 text-xs text-gray-500">{t('Partner Program', 'Partner Program')}</div>
-                      <button onClick={() => handleRoleSelection('agent')} className="w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-2">
+                      <button onClick={() => handleRoleSelection('agent')} className="w-full text-left px-4 py-2 text-gray-700 hover:text-black hover:bg-gray-55 transition flex items-center gap-2">
                         <span className="text-lg">🤝</span> {t('Become an Agent', 'Become an Agent')}
                       </button>
-                      <button onClick={() => handleRoleSelection('vendor')} className="w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-2">
+                      <button onClick={() => handleRoleSelection('vendor')} className="w-full text-left px-4 py-2 text-gray-700 hover:text-black hover:bg-gray-55 transition flex items-center gap-2">
                         <span className="text-lg">🏪</span> {t('Become a Vendor', 'Become a Vendor')}
                       </button>
-                      <button onClick={() => handleRoleSelection('organization')} className="w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700 transition flex items-center gap-2">
+                      <button onClick={() => handleRoleSelection('organization')} className="w-full text-left px-4 py-2 text-gray-700 hover:text-black hover:bg-gray-55 transition flex items-center gap-2">
                         <span className="text-lg">🏢</span> {t('Become an Organization', 'Become an Organization')}
                       </button>
                     </div>
                   )}
                 </div>
-                <Link href="/about" className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition whitespace-nowrap text-sm font-medium">ℹ️ {t('About', 'About')}</Link>
-                <Link href="/contact" className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition whitespace-nowrap text-sm font-medium">📞 {t('Contact', 'Contact')}</Link>
+                <Link href="/about" className="px-4 py-2 text-gray-700 hover:text-black hover:bg-gray-200 rounded-lg transition whitespace-nowrap text-sm font-medium">ℹ️ {t('About', 'About')}</Link>
+                <Link href="/contact" className="px-4 py-2 text-gray-700 hover:text-black hover:bg-gray-200 rounded-lg transition whitespace-nowrap text-sm font-medium">📞 {t('Contact', 'Contact')}</Link>
               </div>
               <div className="hidden md:flex items-center gap-2">
                 <TopCitySelector />
@@ -988,37 +958,37 @@ export default function Home() {
                   <span>🏪</span> {t('Open Shop', 'Open Shop')}
                 </Link>
               </div>
-              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition">
+              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 rounded-lg text-gray-600 hover:text-black hover:bg-gray-200 transition">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   {mobileMenuOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
                 </svg>
               </button>
             </div>
             {mobileMenuOpen && (
-              <div className="md:hidden py-4 border-t border-gray-700 space-y-2">
+              <div className="md:hidden py-4 border-t border-gray-200 space-y-2">
                 <div className="flex gap-2 px-4 py-2">
                   <Link href="/login" className="flex-1 text-center px-3 py-2 bg-green-600 text-white rounded-lg text-xs">🔐 {t('Login', 'Login')}</Link>
                   <button onClick={() => { setShowRegisterModal(true); setMobileMenuOpen(false); }} className="flex-1 text-center px-3 py-2 bg-green-600 text-white rounded-lg text-xs">📝 {t('Register', 'Register')}</button>
                   <Link href="/become-creator" className="flex-1 text-center px-3 py-2 bg-purple-600 text-white rounded-lg text-xs">🏪 {t('Shop', 'Shop')}</Link>
                 </div>
-                <Link href="/merkato-vip" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
-                  <span className="text-xl">🏪</span><div><div>{t('Merkato VIP', 'Merkato VIP')}</div><div className="text-xs text-gray-400">{t('5 Tiers • Up to 10M', '5 Tiers • Up to 10M')}</div></div>
+                <Link href="/merkato-vip" className="w-full text-left px-4 py-3 text-gray-700 hover:text-black hover:bg-gray-200 rounded-lg transition flex items-center gap-3">
+                  <span className="text-xl">🏪</span><div><div>{t('Merkato VIP', 'Merkato VIP')}</div><div className="text-xs text-gray-500">{t('5 Tiers • Up to 10M', '5 Tiers • Up to 10M')}</div></div>
                 </Link>
-                <Link href="/city-vip" className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
-                  <span className="text-xl">🏙️</span><div><div>{t('City VIP', 'City VIP')}</div><div className="text-xs text-gray-400">{t('94 Cities • 5 Tiers', '94 Cities • 5 Tiers')}</div></div>
+                <Link href="/city-vip" className="w-full text-left px-4 py-3 text-gray-700 hover:text-black hover:bg-gray-200 rounded-lg transition flex items-center gap-3">
+                  <span className="text-xl">🏙️</span><div><div>{t('City VIP', 'City VIP')}</div><div className="text-xs text-gray-500">{t('94 Cities • 5 Tiers', '94 Cities • 5 Tiers')}</div></div>
                 </Link>
-                <button onClick={() => scrollToSection('regular-pools')} className="w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-3">
-                  <span className="text-xl">🏊</span><div><div>{t('Regular Pools', 'Regular Pools')}</div><div className="text-xs text-gray-400">{t('Cars, Houses & More', 'Cars, Houses & More')}</div></div>
+                <button onClick={() => scrollToSection('regular-pools')} className="w-full text-left px-4 py-3 text-gray-700 hover:text-black hover:bg-gray-200 rounded-lg transition flex items-center gap-3">
+                  <span className="text-xl">🏊</span><div><div>{t('Regular Pools', 'Regular Pools')}</div><div className="text-xs text-gray-500">{t('Cars, Houses & More', 'Cars, Houses & More')}</div></div>
                 </button>
-                <div className="h-px bg-gray-700 my-2"></div>
+                <div className="h-px bg-gray-200 my-2"></div>
                 <div className="px-4 py-1 text-xs text-gray-500">{t('Partner Program', 'Partner Program')}</div>
-                <button onClick={() => handleRoleSelection('agent')} className="w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-2">
+                <button onClick={() => handleRoleSelection('agent')} className="w-full text-left px-4 py-2 text-gray-700 hover:text-black hover:bg-gray-200 rounded-lg transition flex items-center gap-2">
                   <span className="text-lg">🤝</span> {t('Become an Agent', 'Become an Agent')}
                 </button>
-                <button onClick={() => handleRoleSelection('vendor')} className="w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-2">
+                <button onClick={() => handleRoleSelection('vendor')} className="w-full text-left px-4 py-2 text-gray-700 hover:text-black hover:bg-gray-200 rounded-lg transition flex items-center gap-2">
                   <span className="text-lg">🏪</span> {t('Become a Vendor', 'Become a Vendor')}
                 </button>
-                <button onClick={() => handleRoleSelection('organization')} className="w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition flex items-center gap-2">
+                <button onClick={() => handleRoleSelection('organization')} className="w-full text-left px-4 py-2 text-gray-700 hover:text-black hover:bg-gray-200 rounded-lg transition flex items-center gap-2">
                   <span className="text-lg">🏢</span> {t('Become an Organization', 'Become an Organization')}
                 </button>
                 <div className="pt-2"><TopCitySelector /></div>
@@ -1028,7 +998,6 @@ export default function Home() {
         </nav>
 
         <GlobalAnnouncement />
-        <CashEquivalentBanner />
         <CharityBanner />
 
         {/* Hero Banner */}

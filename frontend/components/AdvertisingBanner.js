@@ -29,16 +29,16 @@ export default function AdvertisingBanner() {
   return (
     <div className="my-10 px-4 max-w-4xl mx-auto">
       {/* Label above banner */}
-      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest text-center mb-2">
+      <p className="text-xs font-bold text-gray-500 uppercase tracking-widest text-center mb-2">
         📢 Premium Sponsor Advertising Spot
       </p>
 
-      <div className="bg-gradient-to-r from-gray-800 via-gray-900 to-black text-white rounded-3xl overflow-hidden shadow-2xl border border-gray-700/50 transition-all duration-500 hover:shadow-emerald-500/10 hover:border-emerald-500/20">
+      <div className="bg-gray-100 text-gray-800 rounded-3xl overflow-hidden shadow-md border border-gray-200 transition-all duration-500 hover:shadow-emerald-500/5 hover:border-emerald-500/20">
         <div className="flex flex-col md:flex-row min-h-[220px]">
           {/* Static Left Icon or Picture representing the ad category */}
-          <div className="md:w-1/3 bg-gradient-to-br from-gray-800 to-gray-900 flex flex-col items-center justify-center p-8 border-b md:border-b-0 md:border-r border-gray-700/30">
+          <div className="md:w-1/3 bg-gray-200 flex flex-col items-center justify-center p-8 border-b md:border-b-0 md:border-r border-gray-300/30">
             <span className="text-7xl mb-2 filter drop-shadow-md animate-bounce">{slide.image}</span>
-            <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+            <span className="bg-emerald-100 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
               {slide.promo}
             </span>
           </div>
@@ -48,12 +48,12 @@ export default function AdvertisingBanner() {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">ADVERTISE WITH US</span>
+                <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">ADVERTISE WITH US</span>
               </div>
-              <h3 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+              <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">
                 {slide.title}
               </h3>
-              <p className="text-gray-400 text-sm mt-2 leading-relaxed">
+              <p className="text-gray-600 text-sm mt-2 leading-relaxed">
                 {slide.desc}
               </p>
             </div>
@@ -65,7 +65,7 @@ export default function AdvertisingBanner() {
               >
                 Advertise Here Now →
               </a>
-              <Link href="/contact" className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 text-center py-2.5 rounded-xl font-semibold transition text-xs sm:text-sm border border-gray-700">
+              <Link href="/contact" className="flex-1 bg-white hover:bg-gray-50 text-gray-700 text-center py-2.5 rounded-xl font-semibold transition text-xs sm:text-sm border border-gray-200">
                 Contact Ad Sales
               </Link>
             </div>
@@ -80,7 +80,7 @@ export default function AdvertisingBanner() {
             key={idx}
             onClick={() => setCurrentIndex(idx)}
             className={`h-2 rounded-full transition-all duration-300 ${
-              currentIndex === idx ? 'w-8 bg-emerald-500' : 'w-2 bg-gray-700'
+              currentIndex === idx ? 'w-8 bg-emerald-500' : 'w-2 bg-gray-300'
             }`}
             title={`Go to slide ${idx + 1}`}
           />
