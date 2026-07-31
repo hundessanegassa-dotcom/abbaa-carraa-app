@@ -128,6 +128,15 @@ export default function PoolDetails() {
       return;
     }
 
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    if (!isUuid) {
+      console.warn('⚠️ Invalid pool ID format, redirecting to listings.');
+      toast.error('Pool not found');
+      setTimeout(() => router.push('/listings'), 2000);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const { data, error } = await supabase

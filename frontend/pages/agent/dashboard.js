@@ -68,7 +68,7 @@ export default function AgentDashboard() {
         .from('agents')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
         
       if (agentError || !agentData) {
         toast.error('You are not registered as an agent. Please apply first.');
