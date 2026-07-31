@@ -9,6 +9,7 @@ import { I18nextProvider } from 'react-i18next';
 import i18n from '../lib/i18n';
 import useMediaQuery from '../hooks/useMediaQuery';
 import SEO from '../components/SEO';
+import MovingMarquee from '../components/MovingMarquee';
 
 // Dynamic imports for better performance
 const TelegramBotClient = dynamic(() => import('../components/TelegramBotClient'), { ssr: false });
@@ -218,6 +219,7 @@ function MyApp({ Component, pageProps }) {
             )}
             
             <div className="min-h-screen flex flex-col bg-gray-50">
+              {!isAuthPage && <MovingMarquee />}
               {!isAuthPage && (
                 <>
                   {isMobile ? <MobileHeader title={title} /> : <Navbar />}
