@@ -1,27 +1,36 @@
 /**
- * Commission Calculation for Abbaa Carraa Ethio
+ * Commission Calculation & Verification Rules for PrizeHub Ethiopia
  * 
  * Standard Commission Structure (Non-Admin):
  * - Winner gets 100% of target amount
- * - Pool Creator earns 10% of target amount
+ * - Pool Creator/Vendor/Organizer earns 10% of target amount
  * - Platform earns 10% of target amount
  * - Total collected = target + 20% (120% of target)
  * 
- * Admin Commission Structure:
- * - Winner gets 100% of target amount
- * - Admin Creator earns 20% of target amount (full commission)
- * - Platform earns 0%
- * - Total collected = target + 20% (120% of target)
+ * VIP Programs (Merkato VIP & City VIP) Commission Structure:
+ * - We need Agents that bring clients to the system and earn commission
+ *   that is half of total commission that the system generates.
+ * - Total Platform Commission generated = 20% of target amount.
+ * - Agents earn exactly half of that generated commission, which is 10% (0.50 * 20%) of the target amount.
+ *
+ * Regular Pools Commission Structure:
+ * - We need Agents, Vendors, and Organization Organizers.
+ * - Vendors list their products (houses/cars/machinery/etc.) under PrizeHub.
+ *   After pool target is reached, they share commission that is half percent of what the platform generates.
+ *   Let's check code deeply: Total commission rate is 20%. Platform keeps half, vendor gets half.
+ * - Organization organizers create internal pools for members and earn commission, under platform bank/Telebirr details.
  */
 
 /**
  * Calculate commission for a pool
  * @param {number} targetAmount - The amount winner receives (in ETB)
  * @param {boolean} isAdmin - Whether the pool creator is an admin
+ * @param {string} programType - 'regular' | 'merkato_vip' | 'city_vip'
+ * @param {string} partnerRole - 'agent' | 'vendor' | 'organization' | 'none'
  * @returns {Object} Commission details
  */
-export function calculateCommission(targetAmount, isAdmin = false) {
-  const totalCommissionRate = 0.20; // 20% total added
+export function calculateCommission(targetAmount, isAdmin = false, programType = 'regular', partnerRole = 'none') {
+  const totalCommissionRate = 0.20; // 20% total added to target
   const totalCommission = targetAmount * totalCommissionRate;
   
   if (isAdmin) {
@@ -34,51 +43,127 @@ export function calculateCommission(targetAmount, isAdmin = false) {
       totalCollection: targetAmount + totalCommission,
       creatorRate: 20,
       platformRate: 0,
-      // Additional helpful fields
       totalCommissionRate: 20,
       winnerPercentage: 100,
       creatorPercentage: 20,
       platformPercentage: 0
     };
-  } else {
-    // Regular user gets 10%, platform gets 10%
-    const creatorCommission = targetAmount * 0.10; // 10% of target
-    const platformCommission = targetAmount * 0.10; // 10% of target
+  }
+
+  // VIP programs (Merkato VIP / City VIP) with Agents:
+  if ((programType === 'merkato_vip' || programType === 'city_vip') && partnerRole === 'agent') {
+    // Agents earn half of the total commission that the system generates (half of 20% is 10%)
+    const agentCommission = totalCommission * 0.50; // 10% of target amount
+    const platformCommission = totalCommission * 0.50; // 10% of target amount
     
     return {
       targetAmount: targetAmount,
       totalCommission: totalCommission,
-      creatorCommission: creatorCommission,
+      creatorCommission: agentCommission, // Agent commission is half of total commission
       platformCommission: platformCommission,
       totalCollection: targetAmount + totalCommission,
       creatorRate: 10,
       platformRate: 10,
-      // Additional helpful fields
       totalCommissionRate: 20,
       winnerPercentage: 100,
       creatorPercentage: 10,
       platformPercentage: 10
     };
   }
+
+  // Regular pools with vendors/agents/organizers
+  if (programType === 'regular') {
+    if (partnerRole === 'vendor') {
+      // Vendors list their property and earn half of what the platform generates (10% of target amount)
+      const vendorCommission = totalCommission * 0.50;
+      const platformCommission = totalCommission * 0.50;
+      return {
+        targetAmount: targetAmount,
+        totalCommission: totalCommission,
+        creatorCommission: vendorCommission,
+        platformCommission: platformCommission,
+        totalCollection: targetAmount + totalCommission,
+        creatorRate: 10,
+        platformRate: 10,
+        totalCommissionRate: 20,
+        winnerPercentage: 100,
+        creatorPercentage: 10,
+        platformPercentage: 10
+      };
+    } else if (partnerRole === 'agent') {
+      // Regular pool agents also earn half of total commission
+      const agentCommission = totalCommission * 0.50;
+      const platformCommission = totalCommission * 0.50;
+      return {
+        targetAmount: targetAmount,
+        totalCommission: totalCommission,
+        creatorCommission: agentCommission,
+        platformCommission: platformCommission,
+        totalCollection: targetAmount + totalCommission,
+        creatorRate: 10,
+        platformRate: 10,
+        totalCommissionRate: 20,
+        winnerPercentage: 100,
+        creatorPercentage: 10,
+        platformPercentage: 10
+      };
+    } else if (partnerRole === 'organization') {
+      // Organization organizers create internal pools and earn commission (10% of target)
+      const orgCommission = targetAmount * 0.10;
+      const platformCommission = targetAmount * 0.10;
+      return {
+        targetAmount: targetAmount,
+        totalCommission: totalCommission,
+        creatorCommission: orgCommission,
+        platformCommission: platformCommission,
+        totalCollection: targetAmount + totalCommission,
+        creatorRate: 10,
+        platformRate: 10,
+        totalCommissionRate: 20,
+        winnerPercentage: 100,
+        creatorPercentage: 10,
+        platformPercentage: 10
+      };
+    }
+  }
+
+  // Fallback / Standard structure:
+  const creatorCommission = targetAmount * 0.10; // 10%
+  const platformCommission = targetAmount * 0.10; // 10%
+
+  return {
+    targetAmount: targetAmount,
+    totalCommission: totalCommission,
+    creatorCommission: creatorCommission,
+    platformCommission: platformCommission,
+    totalCollection: targetAmount + totalCommission,
+    creatorRate: 10,
+    platformRate: 10,
+    totalCommissionRate: 20,
+    winnerPercentage: 100,
+    creatorPercentage: 10,
+    platformPercentage: 10
+  };
 }
 
 /**
  * Format commission for display
  * @param {number} targetAmount - The amount winner receives (in ETB)
  * @param {boolean} isAdmin - Whether the pool creator is an admin
+ * @param {string} programType - 'regular' | 'merkato_vip' | 'city_vip'
+ * @param {string} partnerRole - 'agent' | 'vendor' | 'organization' | 'none'
  * @returns {Object} Formatted commission strings
  */
-export function formatCommission(targetAmount, isAdmin = false) {
-  const calc = calculateCommission(targetAmount, isAdmin);
+export function formatCommission(targetAmount, isAdmin = false, programType = 'regular', partnerRole = 'none') {
+  const calc = calculateCommission(targetAmount, isAdmin, programType, partnerRole);
   
   return {
     winnerGets: `ETB ${calc.targetAmount.toLocaleString()}`,
     creatorGets: `ETB ${calc.creatorCommission.toLocaleString()} (${calc.creatorRate}%)`,
     platformGets: `ETB ${calc.platformCommission.toLocaleString()} (${calc.platformRate}%)`,
     totalCollection: `ETB ${calc.totalCollection.toLocaleString()}`,
-    // Additional helpful formats
-    summary: `${calc.creatorRate}% commission for you, ${calc.platformRate}% for platform`,
-    shortSummary: isAdmin ? 'You earn 20% commission!' : 'You earn 10% commission!'
+    summary: `${calc.creatorRate}% commission for partner, ${calc.platformRate}% for platform`,
+    shortSummary: isAdmin ? 'Platform collects 20%' : `Partner earns half of generated platform commission (${calc.creatorRate}%)!`
   };
 }
 
@@ -104,7 +189,6 @@ export function calculateSeats(targetAmount, contributionAmount) {
     targetAmount: targetAmount,
     overage: overage,
     contributionAmount: contributionAmount,
-    // For display
     formattedSeats: `${seats} seat${seats !== 1 ? 's' : ''}`,
     formattedOverage: overage > 0 ? `ETB ${overage.toLocaleString()} extra` : 'Exact match'
   };
@@ -124,7 +208,6 @@ export function calculateWinnerPayout(targetAmount) {
     charityContribution: charityDeduction,
     netAmount: netToWinner,
     charityPercentage: 2,
-    // For display
     formattedGross: `ETB ${targetAmount.toLocaleString()}`,
     formattedCharity: `ETB ${charityDeduction.toLocaleString()}`,
     formattedNet: `ETB ${netToWinner.toLocaleString()}`
@@ -189,12 +272,12 @@ export function getRoleCommission(role) {
     agent: {
       asCreator: 10,
       asParticipant: 0,
-      description: 'Create pools and earn 10% commission on each pool!'
+      description: 'Create pools and earn half of platform-generated commission (10% of total target value).'
     },
     vendor: {
       asCreator: 10,
       asParticipant: 0,
-      description: 'List products, earn 10% commission when pools are created from your products.'
+      description: 'List products and earn half of generated platform commission (10% of total target value) once pool target is reached.'
     },
     organization: {
       asCreator: 10,
@@ -213,7 +296,6 @@ export function getRoleCommission(role) {
 
 // Example usage and test
 if (typeof window !== 'undefined') {
-  // For debugging in browser console
   window.commissionUtils = {
     calculateCommission,
     formatCommission,

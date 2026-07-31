@@ -16,8 +16,8 @@ export default function Footer() {
                 <span className="text-white text-xl">🎁</span>
               </div>
               <div>
-                <h3 className="text-xl font-bold bg-gradient-to-r from-green-400 to-teal-400 bg-clip-text text-transparent">Abbaa Carraa</h3>
-                <p className="text-xs text-gray-500">Ethio</p>
+                <h3 className="text-xl font-bold bg-gradient-to-r from-green-400 to-teal-400 bg-clip-text text-transparent">PrizeHub Ethiopia</h3>
+                <p className="text-xs text-gray-500">abbaa carraa ethiopia shop</p>
               </div>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">A community-driven prize and contribution platform</p>
@@ -72,7 +72,7 @@ export default function Footer() {
             <div className="mt-4 pt-3 border-t border-gray-800">
               <h4 className="text-sm font-semibold text-green-400 mb-2 flex items-center gap-1">🏦 Bank Transfer</h4>
               <div className="bg-gray-800/50 rounded-lg p-3">
-                <p className="text-gray-300 text-sm">Account: <span className="text-green-400">Abbaa Carraa</span></p>
+                <p className="text-gray-300 text-sm">Account: <span className="text-green-400">PrizeHub Ethiopia</span></p>
                 <p className="text-xs text-gray-500 mt-1">⏱️ Verification in 24h</p>
               </div>
             </div>
@@ -86,7 +86,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-gray-800 mt-6 pt-6 text-center">
-          <p className="text-gray-500 text-sm">© {currentYear} Abbaa Carraa Ethio. All rights reserved.</p>
+          <p className="text-gray-500 text-sm">© {currentYear} PrizeHub Ethiopia. All rights reserved.</p>
           <p className="text-gray-600 text-xs mt-1">🇪🇹 Empowering Ethiopians to win amazing prizes</p>
           <p className="text-green-600 text-xs mt-1">💚 2% of all contributions support kidney & heart disease patients</p>
         </div>

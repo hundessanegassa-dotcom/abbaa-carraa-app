@@ -1,6 +1,6 @@
 {
   "common": {
-    "welcome": "Welcome to Abbaa Carraa",
+    "welcome": "Welcome to PrizeHub Ethiopia",
     "tagline": "A community-driven prize and contribution platform",
     "home": "Home",
     "join": "Join Pool",
@@ -111,7 +111,7 @@
     "cash_equivalent_banner_title": "100% Cash Equivalent Guarantee",
     "cash_equivalent_banner_text": "All prizes are backed by cash equivalent value. You receive the full cash amount if the physical prize is unavailable.",
     "cash_equivalent_banner_button": "Learn More",
-    "join_today": "Join Abbaa Carraa Today",
+    "join_today": "Join PrizeHub Ethiopia Today",
     "join_description": "Choose how you want to participate. Create pools and earn commission or join pools to win prizes.",
     "not_set": "Not set",
     "active": "Active",
@@ -125,7 +125,7 @@
     "copy_link": "Copy Link",
     "link_copied": "Link copied to clipboard!",
     "join_me_to_win": "Join me to win",
-    "on_abbaa_carraa": "on Abbaa Carraa",
+    "on_abbaa_carraa": "on PrizeHub Ethiopia",
     "to_enter": "to enter"
   },
   "stats": {
@@ -157,10 +157,10 @@
     "total_amount": "Total Amount",
     "tickets": "tickets",
     "total_collection": "Total Collection",
-    "incl_commission": "incl. 20% commission"
+    "incl_commission": "incl. commission"
   },
   "how_it_works": {
-    "title": "How Abbaa Carraa Works",
+    "title": "How PrizeHub Ethiopia Works",
     "find_pool": "Find a Prize Pool",
     "find_pool_desc": "Browse active prize pools by city or category",
     "contribute": "Contribute",
@@ -170,7 +170,7 @@
   },
   "agent": {
     "become_agent": "Become an Agent",
-    "earn_commission": "Earn 10 percent Commission",
+    "earn_commission": "Earn Commission",
     "register_agent": "Register as Agent",
     "agent_dashboard": "Agent Dashboard",
     "my_listings": "My Listings",
@@ -218,9 +218,9 @@
     "individuals": "Individuals"
   },
   "moving_ad": {
-    "join_today": "Join Abbaa Carraa today and win amazing prizes",
+    "join_today": "Join PrizeHub Ethiopia today and win amazing prizes",
     "recent_winner": "Recent winner won a Toyota Vitz worth 650,000 ETB",
-    "become_agent": "Become an Agent and earn 10 percent commission",
+    "become_agent": "Become an Agent and earn commission",
     "vendor_opportunity": "Vendors list your products as prizes",
     "participants": "Over 1000 participants have joined our pools",
     "learn_more": "Learn More",
@@ -231,7 +231,7 @@
   },
   "banners": {
     "agent": "Become an Agent",
-    "agent_desc": "Earn 10 percent commission on every pool you create",
+    "agent_desc": "Earn commission on every pool you create",
     "vendor": "Become a Vendor",
     "vendor_desc": "List your products as prizes. Winner gets FREE",
     "organization": "Become an Organization",
@@ -272,7 +272,7 @@
     "privacy": "Privacy Policy"
   },
   "chatbot": {
-    "title": "Abbaa Carraa Assistant",
+    "title": "PrizeHub Ethiopia Assistant",
     "placeholder": "Type your question",
     "send": "Send",
     "online": "Online",

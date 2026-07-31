@@ -17,6 +17,7 @@ export const MERKATO_TIERS = {
     labelEn: 'Silver',
     labelAm: 'ብር',
     icon: '🥈',
+    image_url: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250" width="100%" height="100%"><defs><linearGradient id="silver-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%23e2e8f0"/><stop offset="50%" stop-color="%2394a3b8"/><stop offset="100%" stop-color="%23475569"/></linearGradient><linearGradient id="shine" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="%23ffffff" stop-opacity="0"/><stop offset="50%" stop-color="%23ffffff" stop-opacity="0.4"/><stop offset="100%" stop-color="%23ffffff" stop-opacity="0"/></linearGradient></defs><rect width="400" height="250" rx="20" fill="url(%23silver-grad)"/><path d="M 200 40 L 320 80 L 290 200 L 110 200 L 80 80 Z" fill="%23cbd5e1" stroke="%2394a3b8" stroke-width="4" opacity="0.9"/><text x="200" y="145" font-family="system-ui" font-size="24" font-weight="bold" fill="%23475569" text-anchor="middle" letter-spacing="4">SILVER 999</text><rect width="400" height="250" rx="20" fill="url(%23shine)"/></svg>`,
     contribution: 100,
     prize: 100000,
     seats: 1200,
@@ -30,6 +31,7 @@ export const MERKATO_TIERS = {
     labelEn: 'Gold',
     labelAm: 'ወርቅ',
     icon: '🥇',
+    image_url: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250" width="100%" height="100%"><defs><linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%23fef08a"/><stop offset="50%" stop-color="%23eab308"/><stop offset="100%" stop-color="%23854d0e"/></linearGradient><linearGradient id="shine" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="%23ffffff" stop-opacity="0"/><stop offset="50%" stop-color="%23ffffff" stop-opacity="0.5"/><stop offset="100%" stop-color="%23ffffff" stop-opacity="0"/></linearGradient></defs><rect width="400" height="250" rx="20" fill="url(%23gold-grad)"/><path d="M 200 40 L 320 80 L 290 200 L 110 200 L 80 80 Z" fill="%23fef08a" stroke="%23ca8a04" stroke-width="4" opacity="0.9"/><text x="200" y="145" font-family="system-ui" font-size="24" font-weight="bold" fill="%23854d0e" text-anchor="middle" letter-spacing="4">FINE GOLD 99.9</text><rect width="400" height="250" rx="20" fill="url(%23shine)"/></svg>`,
     contribution: 500,
     prize: 500000,
     seats: 1200,
@@ -43,6 +45,7 @@ export const MERKATO_TIERS = {
     labelEn: 'Platinum',
     labelAm: 'ፕላቲኒየም',
     icon: '💎',
+    image_url: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250" width="100%" height="100%"><defs><linearGradient id="plat-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%23f1f5f9"/><stop offset="50%" stop-color="%23cbd5e1"/><stop offset="100%" stop-color="%2364748b"/></linearGradient><linearGradient id="shine" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="%23ffffff" stop-opacity="0"/><stop offset="50%" stop-color="%23ffffff" stop-opacity="0.6"/><stop offset="100%" stop-color="%23ffffff" stop-opacity="0"/></linearGradient></defs><rect width="400" height="250" rx="20" fill="url(%23plat-grad)"/><circle cx="200" cy="125" r="60" fill="none" stroke="%23cbd5e1" stroke-width="8" opacity="0.4"/><text x="200" y="135" font-family="system-ui" font-size="26" font-weight="bold" fill="%23334155" text-anchor="middle" letter-spacing="6">PLATINUM</text><rect width="400" height="250" rx="20" fill="url(%23shine)"/></svg>`,
     contribution: 1000,
     prize: 2000000,
     seats: 2400,
@@ -56,6 +59,7 @@ export const MERKATO_TIERS = {
     labelEn: 'Diamond',
     labelAm: 'አልማዝ',
     icon: '💠',
+    image_url: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250" width="100%" height="100%"><defs><linearGradient id="diam-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%23ecfeff"/><stop offset="50%" stop-color="%2322d3ee"/><stop offset="100%" stop-color="%230369a1"/></linearGradient><linearGradient id="shine" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="%23ffffff" stop-opacity="0"/><stop offset="50%" stop-color="%23ffffff" stop-opacity="0.6"/><stop offset="100%" stop-color="%23ffffff" stop-opacity="0"/></linearGradient></defs><rect width="400" height="250" rx="20" fill="url(%23diam-grad)"/><polygon points="200,40 280,100 200,210 120,100" fill="%23cffafe" stroke="%2322d3ee" stroke-width="4" opacity="0.8"/><line x1="200" y1="40" x2="200" y2="210" stroke="%2322d3ee" stroke-width="2" opacity="0.5"/><line x1="120" y1="100" x2="280" y2="100" stroke="%2322d3ee" stroke-width="2" opacity="0.5"/><rect width="400" height="250" rx="20" fill="url(%23shine)"/></svg>`,
     contribution: 2500,
     prize: 5000000,
     seats: 2400,
@@ -69,6 +73,7 @@ export const MERKATO_TIERS = {
     labelEn: 'Royal',
     labelAm: 'ንጉሣዊ',
     icon: '👑',
+    image_url: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250" width="100%" height="100%"><defs><linearGradient id="royal-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%23fae8ff"/><stop offset="50%" stop-color="%23d946ef"/><stop offset="100%" stop-color="%23701a75"/></linearGradient><linearGradient id="shine" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="%23ffffff" stop-opacity="0"/><stop offset="50%" stop-color="%23ffffff" stop-opacity="0.7"/><stop offset="100%" stop-color="%23ffffff" stop-opacity="0"/></linearGradient></defs><rect width="400" height="250" rx="20" fill="url(%23royal-grad)"/><path d="M 120 180 L 100 100 L 150 140 L 200 80 L 250 140 L 300 100 L 280 180 Z" fill="%23fdf4ff" stroke="%23d946ef" stroke-width="4" opacity="0.8"/><circle cx="100" cy="100" r="6" fill="%23fdbaf8"/><circle cx="200" cy="80" r="8" fill="%23fdbaf8"/><circle cx="300" cy="100" r="6" fill="%23fdbaf8"/><rect width="400" height="250" rx="20" fill="url(%23shine)"/></svg>`,
     contribution: 5000,
     prize: 10000000,
     seats: 2400,
@@ -356,7 +361,7 @@ export default function MerkatoVIP() {
     router.push('/dashboard');
   };
 
-  // Convert tier to pool format for PoolProductCard - NO IMAGES
+  // Convert tier to pool format for PoolProductCard - WITH REAL IMAGES
   const convertTierToPool = (tierId, tier) => {
     return {
       id: tierId,
@@ -366,6 +371,7 @@ export default function MerkatoVIP() {
       target_amount: tier.prize,
       current_amount: 0,
       status: 'active',
+      image_url: tier.image_url,
       end_date: tier.end_date || '2026-12-31T23:59:59',
       is_featured: tier.tier >= 4,
       description: `${getDrawScheduleText(tierId, language)} - ${language === 'am' ? 'እስከ' : 'Up to'} ETB ${tier.prize.toLocaleString()}`
