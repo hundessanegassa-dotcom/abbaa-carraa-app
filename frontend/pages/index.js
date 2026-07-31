@@ -1095,7 +1095,7 @@ export default function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {/* Card 1: Join Regular Pools to win cars, houses, machinery and more */}
-              <div className="bg-gray-50 p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+              <div className="bg-gray-100 p-8 rounded-3xl border-2 border-gray-200 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all flex flex-col justify-between">
                 <div>
                   <div className="text-4xl mb-4">🚗</div>
                   <h3 className="text-xl font-bold text-gray-900 mb-3">
@@ -1105,13 +1105,13 @@ export default function Home() {
                     {t('Win life-changing physical assets like brand-new cars, modern homes, machinery, and key heavy equipment. Under abbaa carraa ethiopia shop, vendors can easily showcase their properties.', 'Win life-changing physical assets like brand-new cars, modern homes, machinery, and key heavy equipment. Under abbaa carraa ethiopia shop, vendors can easily showcase their properties.')}
                   </p>
                 </div>
-                <button onClick={() => { scrollToSection('regular-pools-direct'); }} className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-2xl font-bold transition text-sm flex items-center justify-center gap-1">
-                  {t('View Regular Pools', 'View Regular Pools')} <span>→</span>
+                <button onClick={() => { scrollToSection('regular-pools-direct'); }} className="w-full bg-white text-green-700 border-2 border-green-500 hover:bg-green-50 py-3 rounded-2xl font-bold transition text-sm flex items-center justify-center gap-2">
+                  <span>🚗</span> {t('View Regular Pools', 'View Regular Pools')} <span>→</span>
                 </button>
               </div>
 
               {/* Card 2: Join Merkato VIP and win upto 40 million birr */}
-              <div className="bg-gray-50 p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+              <div className="bg-gray-100 p-8 rounded-3xl border-2 border-gray-200 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all flex flex-col justify-between">
                 <div>
                   <div className="text-4xl mb-4">🏪</div>
                   <h3 className="text-xl font-bold text-gray-900 mb-3">
@@ -1121,29 +1121,56 @@ export default function Home() {
                     {t("Win premium cash rewards up to 40 Million Birr in Merkato's official premier VIP levels. High frequency daily, weekly, and monthly draws with high seats capability.", "Win premium cash rewards up to 40 Million Birr in Merkato's official premier VIP levels. High frequency daily, weekly, and monthly draws with high seats capability.")}
                   </p>
                 </div>
-                <Link href="/merkato-vip" className="w-full text-center bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-2xl font-bold transition text-sm block">
-                  {t('Enter Merkato VIP', 'Enter Merkato VIP')} <span>→</span>
+                <Link href="/merkato-vip" className="w-full text-center bg-white text-green-700 border-2 border-green-500 hover:bg-green-50 py-3 rounded-2xl font-bold transition text-sm flex items-center justify-center gap-2">
+                  <span>🏪</span> {t('Enter Merkato VIP', 'Enter Merkato VIP')} <span>→</span>
                 </Link>
               </div>
 
               {/* Card 3: Join City VIP and win cash upto 10 million birr */}
-              <div className="bg-gray-50 p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+              <div className="bg-gray-100 p-8 rounded-3xl border-2 border-gray-200 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all flex flex-col justify-between cursor-pointer" onClick={() => { setShowCityDropdown(!showCityDropdown); }}>
                 <div>
                   <div className="text-4xl mb-4">🏙️</div>
                   <h3 className="text-xl font-bold text-gray-900 mb-3">
                     {t('Join City VIP', 'Join City VIP')}
                   </h3>
                   <p className="text-gray-600 text-sm leading-relaxed mb-6">
-                    {t('Win major cash awards up to 10 Million Birr across 94 major cities in Ethiopia. Play in Silver, Gold, Platinum, Diamond, or Royal tiers.', 'Win major cash awards up to 10 Million Birr across 94 major cities in Ethiopia. Play in Silver, Gold, Platinum, Diamond, or Royal tiers.')}
+                    {t('Win major cash awards up to 10 Million Birr across 94 major cities in Ethiopia. Play in Silver, Gold, Platinum, Diamond, or Royal tiers. Click to choose your city!', 'Win major cash awards up to 10 Million Birr across 94 major cities in Ethiopia. Play in Silver, Gold, Platinum, Diamond, or Royal tiers. Click to choose your city!')}
                   </p>
                 </div>
-                <button onClick={() => { setShowCityDropdown(!showCityDropdown); }} className="w-full bg-gray-800 hover:bg-gray-900 text-white py-3 rounded-2xl font-bold transition text-sm flex items-center justify-center gap-1">
-                  {t('Choose Your City', 'Choose Your City')} <span>↓</span>
-                </button>
+                <div className="relative">
+                  <button onClick={(e) => { e.stopPropagation(); setShowCityDropdown(!showCityDropdown); }} className="w-full bg-white text-green-700 border-2 border-green-500 hover:bg-green-50 py-3 rounded-2xl font-bold transition text-sm flex items-center justify-center gap-2">
+                    <span>🏙️</span> {t('Choose Your City', 'Choose Your City')} <span>↓</span>
+                  </button>
+                  {showCityDropdown && (
+                    <div className="absolute bottom-full left-0 mb-2 w-full bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                      <div className="p-3 bg-gray-50 border-b">
+                        <input type="text" placeholder={t('🔍 Search city... (94 cities)', '🔍 Search city... (94 cities)')} value={citySearchTerm} onChange={(e) => setCitySearchTerm(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500" autoFocus />
+                        <p className="text-xs text-gray-400 mt-1">{filteredCityList.length} / {uniqueCities.length} cities</p>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto">
+                        {filteredCityList.slice(0, 10).map(city => (
+                          <button
+                            key={city.id}
+                            onClick={() => {
+                              setSelectedCityForTiers(city);
+                              setShowCityTiersModal(true);
+                              setShowCityDropdown(false);
+                              setCitySearchTerm('');
+                            }}
+                            className="w-full text-left px-4 py-2.5 hover:bg-gray-50 transition border-b last:border-0 flex items-center gap-3 text-gray-800 text-xs font-semibold"
+                          >
+                            <span className="text-xl">{city.icon}</span>
+                            <span className="flex-1">{city.name} ({city.nameEn})</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Card 4: Join Partner Program and earn commissions */}
-              <div className="bg-gray-50 p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+              <div className="bg-gray-100 p-8 rounded-3xl border-2 border-gray-200 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all flex flex-col justify-between">
                 <div>
                   <div className="text-4xl mb-4">🤝</div>
                   <h3 className="text-xl font-bold text-gray-900 mb-3">
@@ -1153,13 +1180,13 @@ export default function Home() {
                     {t('Become an authorized agent, vendor, or organization organizer. Bring clients to our City VIP and Merkato VIP systems and earn half of the total commission generated.', 'Become an authorized agent, vendor, or organization organizer. Bring clients to our City VIP and Merkato VIP systems and earn half of the total commission generated.')}
                   </p>
                 </div>
-                <button onClick={() => { scrollToSection('partner-program'); }} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-2xl font-bold transition text-sm flex items-center justify-center gap-1">
-                  {t('Learn Commission Program', 'Learn Commission Program')} <span>→</span>
+                <button onClick={() => { scrollToSection('partner-program'); }} className="w-full bg-white text-green-700 border-2 border-green-500 hover:bg-green-50 py-3 rounded-2xl font-bold transition text-sm flex items-center justify-center gap-2">
+                  <span>🤝</span> {t('Learn Commission Program', 'Learn Commission Program')} <span>→</span>
                 </button>
               </div>
 
               {/* Card 5: Open your shop and create prize pool */}
-              <div className="bg-gray-50 p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+              <div className="bg-gray-100 p-8 rounded-3xl border-2 border-gray-200 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all flex flex-col justify-between">
                 <div>
                   <div className="text-4xl mb-4">🏪</div>
                   <h3 className="text-xl font-bold text-gray-900 mb-3">
@@ -1169,8 +1196,8 @@ export default function Home() {
                     {t('Create fully customized prize pools for your members, complete with your own personal bank account and Telebirr configurations for fast direct settlement.', 'Create fully customized prize pools for your members, complete with your own personal bank account and Telebirr configurations for fast direct settlement.')}
                   </p>
                 </div>
-                <Link href="/become-creator" className="w-full text-center bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-2xl font-bold transition text-sm block">
-                  {t('Setup Your Shop', 'Setup Your Shop')} <span>→</span>
+                <Link href="/become-creator" className="w-full text-center bg-white text-green-700 border-2 border-green-500 hover:bg-green-50 py-3 rounded-2xl font-bold transition text-sm flex items-center justify-center gap-2">
+                  <span>🏪</span> {t('Setup Your Shop', 'Setup Your Shop')} <span>→</span>
                 </Link>
               </div>
             </div>
