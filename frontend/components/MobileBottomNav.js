@@ -35,7 +35,7 @@ export default function MobileBottomNav() {
   const navItems = [
     { name: 'Home', icon: '🏠', path: '/' },
     { name: 'Pools', icon: '🎁', path: '/listings' },
-    { name: 'Winners', icon: '🏆', path: '/winners' },
+    { name: 'Tickets', icon: '🎫', path: '/tickets' },
     { name: 'Profile', icon: '👤', path: dashboardPath },
   ];
 

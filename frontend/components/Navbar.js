@@ -285,6 +285,7 @@ export default function Navbar() {
               </Link>
               
               <Link href="/winners" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🏆 Winners </Link>
+              <Link href="/tickets" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition flex items-center gap-1 font-semibold"> 🎫 Tickets </Link>
               <Link href="/how-it-works" className="px-2 lg:px-3 py-2 text-sm text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition"> 🎯 How It Works </Link>
               
               {/* Creator Shop Link */}
@@ -462,6 +463,7 @@ export default function Navbar() {
               )}
               
               <Link href="/winners" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🏆 Winners </Link>
+              <Link href="/tickets" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg font-semibold" onClick={() => setMobileMenuOpen(false)}> 🎫 Tickets </Link>
               <Link href="/how-it-works" className="block py-2 px-3 text-sm text-gray-700 hover:bg-green-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}> 🎯 How It Works </Link>
               
               {/* Mobile Admin Link */}
