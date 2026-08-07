@@ -58,20 +58,9 @@ export default function Profile() {
     }
   }, []);
 
-  // Auto-rotation for 3D effect
+  // Auto-rotation for 3D effect disabled to prevent input focus loss
   useEffect(() => {
-    if (is3D) {
-      const animate = () => {
-        setRotation(prev => (prev + 0.2) % 360);
-        animationRef.current = requestAnimationFrame(animate);
-      };
-      animationRef.current = requestAnimationFrame(animate);
-      return () => {
-        if (animationRef.current) {
-          cancelAnimationFrame(animationRef.current);
-        }
-      };
-    }
+    // Disabled continuous state updates to ensure form inputs work flawlessly at all times
   }, [is3D]);
 
   useEffect(() => {
@@ -491,20 +480,6 @@ export default function Profile() {
                   />
                 </div>
 
-                {/* Full Name (Amharic) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {language === 'am' ? 'ሙሉ ስም (አማርኛ)' : 'Full Name (Amharic)'}
-                  </label>
-                  <input
-                    type="text"
-                    name="full_name_am"
-                    value={profile.full_name_am || ''}
-                    onChange={handleChange}
-                    placeholder="ሙሉ ስም በአማርኛ"
-                    className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-amharic"
-                  />
-                </div>
 
                 {/* Phone Number */}
                 <div>
@@ -565,20 +540,6 @@ export default function Profile() {
                   </select>
                 </div>
 
-                {/* City (Amharic) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {language === 'am' ? 'ከተማ (አማርኛ)' : 'City (Amharic)'}
-                  </label>
-                  <input
-                    type="text"
-                    name="city_am"
-                    value={profile.city_am || ''}
-                    onChange={handleChange}
-                    placeholder="ከተማ በአማርኛ"
-                    className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-amharic"
-                  />
-                </div>
 
                 {/* Address */}
                 <div>
