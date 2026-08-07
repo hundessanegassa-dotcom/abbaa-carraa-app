@@ -5,12 +5,28 @@
 -- permissive RLS policies, and sample pools from start to finish in Supabase.
 -- Paste this script directly into the Supabase SQL Editor and execute.
 
--- 1. ENABLE NECESSARY EXTENSIONS
+-- 1. DROP EXISTING TABLES TO PREVENT CACHE AND COLUMNS MISMATCH
+DROP TABLE IF EXISTS public.commissions CASCADE;
+DROP TABLE IF EXISTS public.withdrawals CASCADE;
+DROP TABLE IF EXISTS public.contact_messages CASCADE;
+DROP TABLE IF EXISTS public.announcements CASCADE;
+DROP TABLE IF EXISTS public.agents CASCADE;
+DROP TABLE IF EXISTS public.vendors CASCADE;
+DROP TABLE IF EXISTS public.organizations CASCADE;
+DROP TABLE IF EXISTS public.vip_seat_reservations CASCADE;
+DROP TABLE IF EXISTS public.merkato_vip_participants CASCADE;
+DROP TABLE IF EXISTS public.city_vip_participants CASCADE;
+DROP TABLE IF EXISTS public.regular_pool_participants CASCADE;
+DROP TABLE IF EXISTS public.pool_seats CASCADE;
+DROP TABLE IF EXISTS public.pools CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;
+
+-- 2. ENABLE NECESSARY EXTENSIONS
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- 2. CREATE PROFILES TABLE (USERS)
-CREATE TABLE IF NOT EXISTS public.profiles (
+-- 3. CREATE PROFILES TABLE (USERS)
+CREATE TABLE public.profiles (
     id UUID REFERENCES auth.users(id) PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
     full_name TEXT,
@@ -44,8 +60,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 3. CREATE POOLS TABLE (REWARDS / PROGRAMS)
-CREATE TABLE IF NOT EXISTS public.pools (
+-- 4. CREATE POOLS TABLE (REWARDS / PROGRAMS)
+CREATE TABLE public.pools (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT,
     title_en TEXT,
@@ -77,8 +93,8 @@ CREATE TABLE IF NOT EXISTS public.pools (
     telebirr_account TEXT
 );
 
--- 4. CREATE POOL SEATS TABLE (THEATER SEAT RESERVATION & STATS)
-CREATE TABLE IF NOT EXISTS public.pool_seats (
+-- 5. CREATE POOL SEATS TABLE (THEATER SEAT RESERVATION & STATS)
+CREATE TABLE public.pool_seats (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     pool_id UUID REFERENCES public.pools(id) ON DELETE CASCADE,
     seat_number INTEGER NOT NULL,
@@ -92,8 +108,8 @@ CREATE TABLE IF NOT EXISTS public.pool_seats (
     UNIQUE (pool_id, seat_number)
 );
 
--- 5. CREATE REGULAR POOL PARTICIPANTS TABLE
-CREATE TABLE IF NOT EXISTS public.regular_pool_participants (
+-- 6. CREATE REGULAR POOL PARTICIPANTS TABLE
+CREATE TABLE public.regular_pool_participants (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES public.profiles(id),
     user_email TEXT,
@@ -111,8 +127,8 @@ CREATE TABLE IF NOT EXISTS public.regular_pool_participants (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 6. CREATE CITY VIP PARTICIPANTS TABLE
-CREATE TABLE IF NOT EXISTS public.city_vip_participants (
+-- 7. CREATE CITY VIP PARTICIPANTS TABLE
+CREATE TABLE public.city_vip_participants (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES public.profiles(id),
     user_email TEXT,
@@ -131,8 +147,8 @@ CREATE TABLE IF NOT EXISTS public.city_vip_participants (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 7. CREATE MERKATO VIP PARTICIPANTS TABLE
-CREATE TABLE IF NOT EXISTS public.merkato_vip_participants (
+-- 8. CREATE MERKATO VIP PARTICIPANTS TABLE
+CREATE TABLE public.merkato_vip_participants (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES public.profiles(id),
     user_email TEXT,
@@ -149,8 +165,8 @@ CREATE TABLE IF NOT EXISTS public.merkato_vip_participants (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 8. CREATE VIP SEAT RESERVATIONS TABLE (10-MINUTE TIMER)
-CREATE TABLE IF NOT EXISTS public.vip_seat_reservations (
+-- 9. CREATE VIP SEAT RESERVATIONS TABLE (10-MINUTE TIMER)
+CREATE TABLE public.vip_seat_reservations (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     pool_id TEXT NOT NULL, -- Text identifier city-tier or merkato-tier
     seat_number INTEGER NOT NULL,
@@ -160,8 +176,8 @@ CREATE TABLE IF NOT EXISTS public.vip_seat_reservations (
     UNIQUE (pool_id, seat_number)
 );
 
--- 9. CREATE AGENTS TABLE (PARTNERS)
-CREATE TABLE IF NOT EXISTS public.agents (
+-- 10. CREATE AGENTS TABLE (PARTNERS)
+CREATE TABLE public.agents (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES public.profiles(id) UNIQUE,
     full_name TEXT,
@@ -181,8 +197,8 @@ CREATE TABLE IF NOT EXISTS public.agents (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 10. CREATE VENDORS TABLE (PARTNERS)
-CREATE TABLE IF NOT EXISTS public.vendors (
+-- 11. CREATE VENDORS TABLE (PARTNERS)
+CREATE TABLE public.vendors (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES public.profiles(id) UNIQUE,
     full_name TEXT,
@@ -205,8 +221,8 @@ CREATE TABLE IF NOT EXISTS public.vendors (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 11. CREATE ORGANIZATIONS TABLE (PARTNERS)
-CREATE TABLE IF NOT EXISTS public.organizations (
+-- 12. CREATE OVERVIEW ORGANIZATIONS TABLE (PARTNERS)
+CREATE TABLE public.organizations (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES public.profiles(id) UNIQUE,
     full_name TEXT,
@@ -225,8 +241,8 @@ CREATE TABLE IF NOT EXISTS public.organizations (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 12. CREATE WITHDRAWALS TABLE
-CREATE TABLE IF NOT EXISTS public.withdrawals (
+-- 13. CREATE WITHDRAWALS TABLE
+CREATE TABLE public.withdrawals (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     agent_id UUID,
     amount DECIMAL(15,2) NOT NULL,
@@ -237,8 +253,8 @@ CREATE TABLE IF NOT EXISTS public.withdrawals (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 13. CREATE CONTACT MESSAGES TABLE
-CREATE TABLE IF NOT EXISTS public.contact_messages (
+-- 14. CREATE CONTACT MESSAGES TABLE
+CREATE TABLE public.contact_messages (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
     email TEXT,
@@ -249,8 +265,8 @@ CREATE TABLE IF NOT EXISTS public.contact_messages (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 14. CREATE ANNOUNCEMENTS TABLE
-CREATE TABLE IF NOT EXISTS public.announcements (
+-- 15. CREATE ANNOUNCEMENTS TABLE
+CREATE TABLE public.announcements (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     title TEXT NOT NULL,
     message TEXT NOT NULL,
@@ -260,8 +276,8 @@ CREATE TABLE IF NOT EXISTS public.announcements (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 15. CREATE COMMISSIONS TABLE
-CREATE TABLE IF NOT EXISTS public.commissions (
+-- 16. CREATE COMMISSIONS TABLE
+CREATE TABLE public.commissions (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES public.profiles(id),
     pool_id UUID REFERENCES public.pools(id),
@@ -271,7 +287,7 @@ CREATE TABLE IF NOT EXISTS public.commissions (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 16. INSERT SEED/SAMPLE POOLS (CARS, HOUSES, MACHINERY)
+-- 17. INSERT SEED/SAMPLE POOLS (CARS, HOUSES, MACHINERY)
 INSERT INTO public.pools (title_en, title_am, prize_name, description_en, description_am, target_amount, entry_fee, total_seats, is_featured, category, image_url)
 VALUES
     (
@@ -314,7 +330,7 @@ VALUES
         'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?auto=format&fit=crop&q=80&w=800'
     );
 
--- 17. AUTOMATICALLY INITIALIZE STORAGE BUCKETS
+-- 18. AUTOMATICALLY INITIALIZE STORAGE BUCKETS
 -- Supabase stores buckets inside the storage.buckets table.
 INSERT INTO storage.buckets (id, name, public)
 VALUES
@@ -329,7 +345,7 @@ VALUES
     ('registration-docs', 'registration-docs', TRUE)
 ON CONFLICT (id) DO UPDATE SET public = TRUE;
 
--- 18. ENABLE ROW LEVEL SECURITY (RLS) FOR ABSOLUTE SAFETY
+-- 19. ENABLE ROW LEVEL SECURITY (RLS) FOR ABSOLUTE SAFETY
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pools ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pool_seats ENABLE ROW LEVEL SECURITY;
@@ -345,7 +361,7 @@ ALTER TABLE public.contact_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.commissions ENABLE ROW LEVEL SECURITY;
 
--- 19. ATTACH FULL-PERMISSIVE RLS POLICIES FOR FRONTEND INTERACTIONS
+-- 20. ATTACH FULL-PERMISSIVE RLS POLICIES FOR FRONTEND INTERACTIONS
 -- These public policies guarantee that select, insert, and update operations succeed perfectly without blocking users.
 
 -- Profiles Policies
@@ -412,7 +428,7 @@ CREATE POLICY "Anyone can view announcements" ON public.announcements FOR SELECT
 -- Commissions Policies
 CREATE POLICY "Anyone can view commissions" ON public.commissions FOR SELECT USING (true);
 
--- 20. ATTACH PERMISSIVE STORAGE POLICIES TO ALL BUCKETS
+-- 21. ATTACH PERMISSIVE STORAGE POLICIES TO ALL BUCKETS
 -- This ensures storage upload operations succeed cleanly for users without strict security blocks.
 CREATE POLICY "Public storage access" ON storage.objects FOR SELECT USING (true);
 CREATE POLICY "Public storage upload" ON storage.objects FOR INSERT WITH CHECK (true);
