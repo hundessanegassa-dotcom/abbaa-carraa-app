@@ -105,7 +105,7 @@ export default function SeatSelector({
   const [reservationTimer, setReservationTimer] = useState(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [manualSeatInput, setManualSeatInput] = useState('');
-  const [seatsPerPage] = useState(200);
+  const [seatsPerPage] = useState(10000);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, mins: 0, secs: 0 });
   const containerRef = useRef(null);
   const loadingTimeoutRef = useRef(null);
@@ -264,6 +264,12 @@ export default function SeatSelector({
     if (!currentUser) return false;
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(poolId);
+    if (!isUuid) {
+      console.warn('ℹ️ Mock/Fallback pool ID, reserving seat in memory state');
+      return true;
+    }
+
     try {
       if (poolId) {
         for (const seatNumber of seatNumbers) {
@@ -768,10 +774,12 @@ export default function SeatSelector({
                         key={seatNum}
                         onClick={() => !isTaken && handleSeatClick(seatNum)}
                         disabled={isTaken}
-                        className={`${size} rounded-lg flex items-center justify-center font-mono font-semibold transition-all ${bgColor} ${textColor}`}
+                        className={`${size} rounded-lg flex items-center justify-center font-mono font-semibold transition-all ${bgColor} ${textColor} relative`}
                         title={isTaken ? `Seat ${seatNum} taken` : `Select Seat ${seatNum}`}
                       >
-                        {seatNum}
+                        {isTaken ? (
+                          <span className="absolute inset-0 flex items-center justify-center text-red-600 font-extrabold text-sm sm:text-base bg-red-100 rounded-lg">X</span>
+                        ) : seatNum}
                       </button>
                     );
                   })}

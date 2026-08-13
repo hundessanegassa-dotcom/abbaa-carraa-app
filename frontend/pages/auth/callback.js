@@ -65,49 +65,91 @@ export default function AuthCallback() {
   }, [router]);
 
   const createOrUpdateProfile = useCallback(async (session, role) => {
-    const { data: existingProfile } = await supabase
-      .from('profiles')
-      .select('id, role, agreement_accepted')
-      .eq('id', session.user.id)
-      .maybeSingle();
+    let existingProfile = null;
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, role, agreement_accepted')
+        .eq('id', session.user.id)
+        .maybeSingle();
+      existingProfile = data;
+    } catch (e) {
+      console.warn('Profiles query error:', e);
+    }
     
     if (existingProfile) {
       if (!existingProfile.agreement_accepted) {
-        await supabase
-          .from('profiles')
-          .update({
-            agreement_accepted: true,
-            agreement_accepted_at: new Date().toISOString(),
-            agreement_version: '1.0',
-            role: role,
-            user_type: role,
-            status: role === 'individual' ? 'active' : 'pending_approval',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', session.user.id);
+        try {
+          await supabase
+            .from('profiles')
+            .update({
+              agreement_accepted: true,
+              agreement_accepted_at: new Date().toISOString(),
+              agreement_version: '1.0',
+              role: role,
+              user_type: role,
+              status: role === 'individual' ? 'active' : 'pending_approval',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', session.user.id);
+        } catch (updateErr) {
+          console.warn('Update with agreement columns failed, trying basic update:', updateErr);
+          await supabase
+            .from('profiles')
+            .update({
+              agreement_accepted: true,
+              role: role,
+              user_type: role,
+              status: role === 'individual' ? 'active' : 'pending_approval',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', session.user.id);
+        }
       }
       return existingProfile;
     } else {
-      const { data: newProfile, error } = await supabase
-        .from('profiles')
-        .insert({
-          id: session.user.id,
-          email: session.user.email,
-          full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
-          role: role,
-          user_type: role,
-          agreement_accepted: role === 'individual' ? true : false,
-          agreement_accepted_at: role === 'individual' ? new Date().toISOString() : null,
-          agreement_version: role === 'individual' ? '1.0' : null,
-          status: role === 'individual' ? 'active' : 'pending_approval',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return newProfile;
+      try {
+        const { data: newProfile, error } = await supabase
+          .from('profiles')
+          .insert({
+            id: session.user.id,
+            email: session.user.email,
+            full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+            role: role,
+            user_type: role,
+            agreement_accepted: role === 'individual' ? true : false,
+            agreement_accepted_at: role === 'individual' ? new Date().toISOString() : null,
+            agreement_version: role === 'individual' ? '1.0' : null,
+            status: role === 'individual' ? 'active' : 'pending_approval',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        return newProfile;
+      } catch (insertErr) {
+        console.warn('Insert with agreement columns failed, trying basic insert:', insertErr);
+        const { data: newProfile, error: basicErr } = await supabase
+          .from('profiles')
+          .insert({
+            id: session.user.id,
+            email: session.user.email,
+            full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+            role: role,
+            user_type: role,
+            agreement_accepted: role === 'individual' ? true : false,
+            status: role === 'individual' ? 'active' : 'pending_approval',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (basicErr) throw basicErr;
+        return newProfile;
+      }
     }
   }, []);
 
