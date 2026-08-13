@@ -144,6 +144,28 @@ export default function MerkatoVIP() {
     localStorage.setItem('appLanguage', newLang);
   };
 
+  const [dbPools, setDbPools] = useState([]);
+
+  useEffect(() => {
+    fetchDbPools();
+  }, []);
+
+  const fetchDbPools = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('pools')
+        .select('*')
+        .eq('category', 'merkato_vip')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+      if (!error && data) {
+        setDbPools(data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const checkUser = async () => {
     setCheckingUser(true);
     try {
@@ -379,6 +401,51 @@ export default function MerkatoVIP() {
   };
 
   const renderTierSelection = () => {
+    if (dbPools.length > 0) {
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+          {dbPools.map((pool) => {
+            const poolData = {
+              id: pool.id,
+              title_en: pool.prize_name,
+              title_am: pool.prize_name,
+              prize_name: pool.prize_name,
+              entry_fee: pool.entry_fee,
+              target_amount: pool.target_amount,
+              current_amount: pool.current_amount || 0,
+              image_url: pool.image_url || 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=800',
+              category: 'merkato_vip'
+            };
+            return (
+              <div
+                key={pool.id}
+                onClick={() => {
+                  setSelectedTierId(pool.id);
+                  setSelectedTier({
+                    id: pool.id,
+                    labelEn: pool.prize_name,
+                    labelAm: pool.prize_name,
+                    contribution: pool.entry_fee,
+                    prize: pool.target_amount,
+                    seats: pool.total_seats || 2400
+                  });
+                  setShowTiers(false);
+                  setShowSeats(true);
+                }}
+                className="cursor-pointer"
+              >
+                <PoolCard
+                  pool={poolData}
+                  featured={true}
+                  language={language}
+                />
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
     const tierIds = ['silver', 'gold', 'platinum', 'diamond', 'royal'];
     
     return (

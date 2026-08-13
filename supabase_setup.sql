@@ -54,6 +54,7 @@ CREATE TABLE public.profiles (
     role TEXT DEFAULT 'individual' CHECK (role IN ('individual', 'agent', 'vendor', 'organization', 'creator', 'admin')),
     user_type TEXT DEFAULT 'individual',
     agreement_accepted BOOLEAN DEFAULT FALSE,
+    agreement_accepted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
     total_contributions DECIMAL(15,2) DEFAULT 0.00,
     total_wins INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -342,7 +343,9 @@ VALUES
     ('digital-ids', 'digital-ids', TRUE),
     ('vendor-licenses', 'vendor-licenses', TRUE),
     ('vendor-ids', 'vendor-ids', TRUE),
-    ('registration-docs', 'registration-docs', TRUE)
+    ('registration-docs', 'registration-docs', TRUE),
+    ('creator-documents', 'creator-documents', TRUE),
+    ('pool-images', 'pool-images', TRUE)
 ON CONFLICT (id) DO UPDATE SET public = TRUE;
 
 -- 19. ENABLE ROW LEVEL SECURITY (RLS) FOR ABSOLUTE SAFETY

@@ -127,7 +127,8 @@ export default function AdminDashboard() {
   const [uploading, setUploading] = useState(false);
   const [newPool, setNewPool] = useState({
     prize_name: '', description: '', target_amount: '', entry_fee: '10', ticket_price: '5',
-    start_date: new Date().toISOString().slice(0, 16), end_date: '', image_url: '', is_featured: true
+    start_date: new Date().toISOString().slice(0, 16), end_date: '', image_url: '', is_featured: true,
+    category: 'regular', city: ''
   });
 
   // Document viewer modal
@@ -1762,14 +1763,17 @@ export default function AdminDashboard() {
           created_by: user?.id, 
           start_date: newPool.start_date, 
           end_date: newPool.end_date, 
-          admin_commission_rate: 20 
+          admin_commission_rate: 20,
+          category: newPool.category || 'regular',
+          city: newPool.city ? newPool.city.toLowerCase().trim() : null
         });
       
-      toast.success('Pool created and featured!');
+      toast.success('Pool created successfully!');
       setShowPoolModal(false);
       setNewPool({ 
         prize_name: '', description: '', target_amount: '', entry_fee: '10', ticket_price: '5',
-        start_date: new Date().toISOString().slice(0, 16), end_date: '', image_url: '', is_featured: true 
+        start_date: new Date().toISOString().slice(0, 16), end_date: '', image_url: '', is_featured: true,
+        category: 'regular', city: ''
       });
       loadAllPools();
       loadFeaturedPools();
@@ -2920,6 +2924,37 @@ export default function AdminDashboard() {
               <button onClick={() => setShowPoolModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
             </div>
             <div className="p-6 space-y-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Category *</label>
+                  <select
+                    className="w-full border rounded-lg p-3"
+                    value={newPool.category || 'regular'}
+                    onChange={(e) => setNewPool({...newPool, category: e.target.value})}
+                  >
+                    <option value="regular">Regular Pool</option>
+                    <option value="merkato_vip">Merkato VIP</option>
+                    <option value="city_vip">City VIP</option>
+                  </select>
+                </div>
+                {(newPool.category === 'city_vip') ? (
+                  <div>
+                    <label className="block text-sm font-medium mb-1">City Name *</label>
+                    <input
+                      type="text"
+                      className="w-full border rounded-lg p-3"
+                      placeholder="e.g., ambo, adama, gondar"
+                      value={newPool.city || ''}
+                      onChange={(e) => setNewPool({...newPool, city: e.target.value})}
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Status</label>
+                    <input type="text" disabled className="w-full border rounded-lg p-3 bg-gray-50" value="Active" />
+                  </div>
+                )}
+              </div>
               <div><label className="block text-sm font-medium mb-1">Prize Name *</label><input type="text" className="w-full border rounded-lg p-3" placeholder="e.g., iPhone 15 Pro Max" value={newPool.prize_name} onChange={(e) => setNewPool({...newPool, prize_name: e.target.value})} /></div>
               <div><label className="block text-sm font-medium mb-1">Description</label><textarea rows="3" className="w-full border rounded-lg p-3" placeholder="Describe the prize and pool rules..." value={newPool.description} onChange={(e) => setNewPool({...newPool, description: e.target.value})} /></div>
               <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-1">Target Amount (ETB) *</label><input type="number" className="w-full border rounded-lg p-3" placeholder="10000" value={newPool.target_amount} onChange={(e) => setNewPool({...newPool, target_amount: e.target.value})} /></div><div><label className="block text-sm font-medium mb-1">Entry Fee (ETB)</label><input type="number" className="w-full border rounded-lg p-3" placeholder="10" value={newPool.entry_fee} onChange={(e) => setNewPool({...newPool, entry_fee: e.target.value})} /></div></div>
