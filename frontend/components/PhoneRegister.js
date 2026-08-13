@@ -125,6 +125,10 @@ export default function PhoneRegister() {
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/dashboard`,
+        queryParams: {
+          prompt: 'select_account',
+          access_type: 'offline',
+        },
       },
     });
     if (error) {
