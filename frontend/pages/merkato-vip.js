@@ -1,4 +1,4 @@
-// pages/merkato-vip.js - COMPLETE WITH 5 TIERS (NO IMAGES)
+// pages/merkato-vip.js - COMPLETE WITH 5 TIERS & UNIFIED THEATER SEAT SELECTOR
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
@@ -7,10 +7,11 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import NoSSR from '../components/NoSSR';
 import TopCitySelector from '../components/TopCitySelector';
-import PoolCard from '../components/PoolCard'
+import PoolCard from '../components/PoolCard';
 import TicketImage from '../components/TicketImage';
+import SeatSelector from '../components/SeatSelector';
 
-// ✅ 5 TIERS FOR MERKATO VIP - NO IMAGE REFERENCES
+// ✅ 5 TIERS FOR MERKATO VIP
 export const MERKATO_TIERS = {
   silver: {
     id: 'silver',
@@ -255,7 +256,7 @@ export default function MerkatoVIP() {
           pool_type: tier,
           seat_numbers: seats,
           contribution_amount: totalAmount,
-          prize_amount: tierConfig.prize,
+          prize_amount: tierConfig?.prize || selectedTier?.prize || 1000000,
           payment_status: 'pending',
           ticket_number: ticketNumber,
           status: 'active',
@@ -539,89 +540,21 @@ export default function MerkatoVIP() {
             </div>
           )}
 
+          {/* Unified Theater Seat Selector */}
           {showSeats && selectedTier && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
-                  <h3 className="font-bold text-lg">
-                    {language === 'am' ? 'መቀመጫ ምረጥ' : 'Select Seats'}
-                  </h3>
-                  <button onClick={handleCloseSeats} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
-                </div>
-                <div className="p-6">
-                  <div className="text-center mb-4">
-                    <p className="text-2xl">{selectedTier.icon}</p>
-                    <p className="font-bold text-xl">
-                      {language === 'am' ? selectedTier.labelAm : selectedTier.labelEn}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {language === 'am' ? 'እያንዳንዱ መቀመጫ' : 'Each seat'} ETB {selectedTier.contribution.toLocaleString()}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {language === 'am' ? 'ሽልማት' : 'Prize'} ETB {selectedTier.prize.toLocaleString()}
-                    </p>
-                  </div>
-                  
-                  <div className="border-t pt-4 mt-2">
-                    <p className="text-center text-gray-500 text-sm">
-                      {language === 'am' 
-                        ? 'ለማስያዝ በቀጥታ መቀመጫ ቁጥሮችን ይተይቡ (ከ1 እስከ ' + selectedTier.seats + ')' 
-                        : 'Enter seat numbers to reserve (1 to ' + selectedTier.seats + ')'}
-                    </p>
-                    
-                    <div className="mt-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {language === 'am' ? 'የመቀመጫ ቁጥሮች (በነጠላ ሰረዝ ይለያዩ)' : 'Seat Numbers (comma separated)'}
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500"
-                        placeholder={language === 'am' ? 'ለምሳሌ: 5, 12, 23' : 'Example: 5, 12, 23'}
-                        onChange={(e) => {
-                          const numbers = e.target.value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
-                          setSelectedSeats(numbers);
-                        }}
-                      />
-                      <p className="text-xs text-gray-400 mt-1">
-                        {language === 'am' ? 'ከፍተኛ 5 መቀመጫዎች' : 'Maximum 5 seats'}
-                      </p>
-                    </div>
-                    
-                    <div className="mt-4 bg-gray-50 rounded-lg p-4">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">{language === 'am' ? 'የተመረጡ መቀመጫዎች' : 'Selected Seats'}</span>
-                        <span className="font-semibold">{selectedSeats.length > 0 ? selectedSeats.join(', ') : '-'}</span>
-                      </div>
-                      <div className="flex justify-between text-sm mt-2">
-                        <span className="text-gray-600">{language === 'am' ? 'ጠቅላላ ክፍያ' : 'Total Amount'}</span>
-                        <span className="font-bold text-green-600">
-                          ETB {(selectedSeats.length * selectedTier.contribution).toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <button
-                      className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50"
-                      disabled={selectedSeats.length === 0}
-                      onClick={() => {
-                        if (selectedSeats.length === 0) {
-                          toast.error(language === 'am' ? 'እባክዎ ቢያንስ አንድ መቀመጫ ይምረጡ' : 'Please select at least one seat');
-                          return;
-                        }
-                        handleSeatsSelected({
-                          seats: selectedSeats,
-                          totalAmount: selectedSeats.length * selectedTier.contribution,
-                          seatCount: selectedSeats.length,
-                          tier: selectedTierId
-                        });
-                      }}
-                    >
-                      {language === 'am' ? 'መቀመጫዎችን አስይዝ' : 'Reserve Seats'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <SeatSelector
+              isOpen={showSeats}
+              onClose={handleCloseSeats}
+              onCancel={handleCloseSeats}
+              programType="merkato"
+              tierId={selectedTierId}
+              entryFee={selectedTier.contribution}
+              totalSeats={selectedTier.seats}
+              maxSeats={5}
+              language={language}
+              onSeatsSelected={handleSeatsSelected}
+              poolInfo={{ prize: selectedTier.prize }}
+            />
           )}
 
           {showPayment && (
