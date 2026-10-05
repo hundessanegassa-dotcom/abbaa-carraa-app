@@ -1,114 +1,114 @@
-// pages/cities.js
+// pages/cities.js - DYNAMIC ADMIN-CREATED CITY VIP POOLS
 import Head from 'next/head';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { useRouter } from 'next/router';
-import toast from 'react-hot-toast';
+import { getCityData } from '../lib/cityData';
 
 export default function CitiesPage() {
-  const router = useRouter();
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [adminCities, setAdminCities] = useState([]);
 
   useEffect(() => {
     checkUser();
+    fetchAdminCityVipPools();
   }, []);
 
   const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const cityData = {
-    'addis-ababa': {
-      name: 'አዲስ አበባ | Addis Ababa',
-      slogan: 'የኢትዮጵያ የንግድ እና የዲፕሎማሲ ልብ',
-      businesses: '50,000+',
-      workers: '200,000+',
-      color: 'from-gray-700 to-gray-900',
-      icon: '🏙️',
-      featured: true,
-      prize: '40,000,000 ETB'
-    },
-    'dire-dawa': {
-      name: 'ድሬ ዳዋ | Dire Dawa',
-      slogan: 'የሎጂስቲክስ እና የማኑፋክቸሪንግ በር',
-      businesses: '15,000+',
-      workers: '60,000+',
-      color: 'from-gray-700 to-gray-900',
-      icon: '🚂',
-      featured: true,
-      prize: '40,000,000 ETB'
-    },
-    'mekelle': {
-      name: 'መቀሌ | Mekelle',
-      slogan: 'የሰሜኑ የኢንዱስትሪ እና የትምህርት ማዕከል',
-      businesses: '18,000+',
-      workers: '70,000+',
-      color: 'from-gray-700 to-gray-900',
-      icon: '🏭',
-      featured: true,
-      prize: '40,000,000 ETB'
-    },
-    'adama': {
-      name: 'አዳማ | Adama',
-      slogan: 'የመኪና እና የኢንዱስትሪ ከተማ',
-      businesses: '20,000+',
-      workers: '80,000+',
-      color: 'from-gray-700 to-gray-900',
-      icon: '🏭',
-      featured: false,
-      prize: '40,000,000 ETB'
-    },
-    'hawassa': {
-      name: 'ሀዋሳ | Hawassa',
-      slogan: 'የኢንዱስትሪ ፓርክ እና የሀይቅ ከተማ',
-      businesses: '12,000+',
-      workers: '50,000+',
-      color: 'from-gray-700 to-gray-900',
-      icon: '🏞️',
-      featured: false,
-      prize: '40,000,000 ETB'
-    },
-    'gondar': {
-      name: 'ጎንደር | Gondar',
-      slogan: 'የባህል ቅርስ እና የቱሪዝም ከተማ',
-      businesses: '10,000+',
-      workers: '40,000+',
-      color: 'from-gray-700 to-gray-900',
-      icon: '🏰',
-      featured: false,
-      prize: '40,000,000 ETB'
-    },
-    'bahir-dar': {
-      name: 'ባህር ዳር | Bahir Dar',
-      slogan: 'የሀይቆች እና የጨርቃጨርቅ ከተማ',
-      businesses: '12,000+',
-      workers: '50,000+',
-      color: 'from-gray-700 to-gray-900',
-      icon: '🏞️',
-      featured: false,
-      prize: '40,000,000 ETB'
-    },
-    'jimma': {
-      name: 'ጅማ | Jimma',
-      slogan: 'የቡና እና የንግድ ከተማ',
-      businesses: '8,000+',
-      workers: '30,000+',
-      color: 'from-gray-700 to-gray-900',
-      icon: '☕',
-      featured: false,
-      prize: '40,000,000 ETB'
-    },
-    'bishoftu': {
-      name: 'ቢሾፍቱ | Bishoftu',
-      slogan: 'የሀይቆች እና የአየር ሃይል ከተማ',
-      businesses: '12,000+',
-      workers: '45,000+',
-      color: 'from-gray-700 to-gray-900',
-      icon: '✈️',
-      featured: false,
-      prize: '40,000,000 ETB'
+  const fetchAdminCityVipPools = async () => {
+    setLoading(true);
+    try {
+      // Fetch configs from city_vip_config
+      const { data: configData, error: configError } = await supabase
+        .from('city_vip_config')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      // Fetch active pools with category 'city_vip'
+      const { data: poolsData, error: poolsError } = await supabase
+        .from('pools')
+        .select('*')
+        .eq('category', 'city_vip')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      const combinedMap = new Map();
+
+      if (configData && configData.length > 0) {
+        configData.forEach(c => {
+          const cityId = c.city_id || (c.city_name ? c.city_name.toLowerCase().replace(/\s+/g, '-') : 'city');
+          const meta = getCityData(cityId);
+          combinedMap.set(cityId, {
+            id: cityId,
+            name: c.city_name || meta.name.split('|')[0].trim(),
+            nameEn: meta.name.split('|')[1]?.trim() || cityId,
+            slogan: c.description || meta.slogan || 'Join City VIP and win big!',
+            prize: `ETB ${(c.prize_amount || 1000000).toLocaleString()}`,
+            contribution: c.contribution_amount || 500,
+            color: meta.color || 'from-gray-700 to-gray-900',
+            icon: meta.icon || '🏙️',
+            businesses: meta.businesses || '5,000+',
+            workers: meta.workers || '20,000+'
+          });
+        });
+      }
+
+      if (poolsData && poolsData.length > 0) {
+        poolsData.forEach(p => {
+          const cityId = p.city ? p.city.toLowerCase().replace(/\s+/g, '-') : 'city';
+          if (!combinedMap.has(cityId)) {
+            const meta = getCityData(cityId);
+            combinedMap.set(cityId, {
+              id: cityId,
+              name: p.city || meta.name.split('|')[0].trim(),
+              nameEn: meta.name.split('|')[1]?.trim() || cityId,
+              slogan: p.description || meta.slogan || 'Join City VIP and win big!',
+              prize: `ETB ${(p.target_amount || 1000000).toLocaleString()}`,
+              contribution: p.entry_fee || p.contribution_amount || 500,
+              color: meta.color || 'from-gray-700 to-gray-900',
+              icon: meta.icon || '🏙️',
+              businesses: meta.businesses || '5,000+',
+              workers: meta.workers || '20,000+'
+            });
+          }
+        });
+      }
+
+      // If no admin pools created yet, fallback to default initial cities so page isn't completely empty
+      if (combinedMap.size === 0) {
+        const defaultFeatured = ['addis-ababa', 'dire-dawa', 'mekelle', 'adama', 'hawassa'];
+        defaultFeatured.forEach(cityId => {
+          const meta = getCityData(cityId);
+          combinedMap.set(cityId, {
+            id: cityId,
+            name: meta.name.split('|')[0].trim(),
+            nameEn: meta.name.split('|')[1]?.trim() || cityId,
+            slogan: meta.slogan,
+            prize: '40,000,000 ETB',
+            contribution: 500,
+            color: meta.color || 'from-gray-700 to-gray-900',
+            icon: meta.icon || '🏙️',
+            businesses: meta.businesses || '10,000+',
+            workers: meta.workers || '40,000+'
+          });
+        });
+      }
+
+      setAdminCities(Array.from(combinedMap.values()));
+    } catch (e) {
+      console.error('Error fetching admin city VIP pools:', e);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -145,45 +145,46 @@ export default function CitiesPage() {
     </Link>
   );
 
-  const CityCard = ({ id, city }) => (
-    <Link href={`/cities/${id}`}>
-      <div className="group relative bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl cursor-pointer h-full">
+  const CityCard = ({ city }) => (
+    <Link href={`/cities/${city.id}`}>
+      <div className="group relative bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl cursor-pointer h-full flex flex-col justify-between">
         <div className="absolute top-4 right-4 z-10 bg-gradient-to-r from-gray-700 to-gray-900 text-white px-3 py-1 rounded-full text-xs font-bold">
           🏆 {city.prize}
         </div>
-        <div className={`bg-gradient-to-r ${city.color} p-4 text-white text-center`}>
-          <div className="text-5xl mb-2">{city.icon}</div>
-          <h3 className="text-xl font-bold">{city.name.split('|')[0]}</h3>
-          <p className="text-xs opacity-80 mt-1">{city.name.split('|')[1]}</p>
-        </div>
-        <div className="p-5">
-          <p className="text-sm text-gray-700 mb-3 line-clamp-2">{city.slogan}</p>
-          <div className="flex justify-around text-center text-xs mb-4">
-            <div>
-              <p className="font-bold text-gray-800">{city.businesses}</p>
-              <p className="text-gray-500">ንግዶች</p>
-            </div>
-            <div>
-              <p className="font-bold text-gray-800">{city.workers}</p>
-              <p className="text-gray-500">ሠራተኞች</p>
+        <div>
+          <div className={`bg-gradient-to-r ${city.color} p-4 text-white text-center`}>
+            <div className="text-5xl mb-2">{city.icon}</div>
+            <h3 className="text-xl font-bold">{city.name}</h3>
+            <p className="text-xs opacity-80 mt-1">{city.nameEn}</p>
+          </div>
+          <div className="p-5">
+            <p className="text-sm text-gray-700 mb-3 line-clamp-2">{city.slogan}</p>
+            <div className="flex justify-around text-center text-xs mb-4">
+              <div>
+                <p className="font-bold text-gray-800">{city.businesses}</p>
+                <p className="text-gray-500">ንግዶች</p>
+              </div>
+              <div>
+                <p className="font-bold text-gray-800">{city.workers}</p>
+                <p className="text-gray-500">ሠራተኞች</p>
+              </div>
             </div>
           </div>
+        </div>
+        <div className="p-5 pt-0">
           <button className="w-full bg-gradient-to-r from-gray-700 to-gray-900 text-white py-2 rounded-lg font-semibold text-sm hover:shadow-lg transition transform hover:scale-105">
-            Join {city.name.split('|')[0]} VIP →
+            Join {city.name} VIP →
           </button>
         </div>
       </div>
     </Link>
   );
 
-  const featuredCities = Object.entries(cityData).filter(([_, city]) => city.featured);
-  const allCities = Object.entries(cityData);
-
   return (
     <>
       <Head>
         <title>City VIP Programs - Win 40 Million Birr | Abbaa Carraa</title>
-        <meta name="description" content="Join VIP programs in your city. Win 1 Million Birr daily, 10 Million weekly, or 40 Million monthly. Available in Addis Ababa, Dire Dawa, Mekelle, and more Ethiopian cities." />
+        <meta name="description" content="Join VIP programs in your city. Win up to 40 Million Birr. Created by Admin across Ethiopian cities." />
       </Head>
 
       <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
@@ -229,41 +230,30 @@ export default function CitiesPage() {
           </div>
         </div>
 
-        {/* Featured Cities Section */}
+        {/* Active City VIP Programs */}
         <div className="container mx-auto px-4 py-16">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-800 mb-2">🏆 ታዋቂ ከተሞች</h2>
-            <p className="text-gray-600">Featured Cities</p>
+            <h2 className="text-4xl font-bold text-gray-800 mb-2">🏆 የከተማ ቪአይፒ ፑሎች</h2>
+            <p className="text-gray-600">Active City VIP Pools Created by Admin</p>
             <div className="w-24 h-1 bg-gradient-to-r from-gray-700 to-gray-900 mx-auto mt-4 rounded-full"></div>
           </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <MerkatoCard />
-            {featuredCities.map(([id, city]) => (
-              <CityCard key={id} id={id} city={city} />
-            ))}
-          </div>
-        </div>
 
-        {/* All Cities Section */}
-        <div className="bg-gray-100 py-16">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-800 mb-2">📍 ሁሉም ከተሞች</h2>
-              <p className="text-gray-600">All Cities</p>
-              <div className="w-24 h-1 bg-gradient-to-r from-gray-700 to-gray-900 mx-auto mt-4 rounded-full"></div>
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-800"></div>
             </div>
-            
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {allCities.map(([id, city]) => (
-                <CityCard key={id} id={id} city={city} />
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <MerkatoCard />
+              {adminCities.map((city) => (
+                <CityCard key={city.id} city={city} />
               ))}
             </div>
-          </div>
+          )}
         </div>
 
         {/* How It Works Section */}
-        <div className="container mx-auto px-4 py-16">
+        <div className="container mx-auto px-4 py-16 border-t border-gray-200">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-800 mb-2">እንዴት እንሳተፋለን?</h2>
             <p className="text-gray-600">How It Works</p>
@@ -298,8 +288,8 @@ export default function CitiesPage() {
           <div className="container mx-auto px-4 text-center">
             <div className="grid md:grid-cols-3 gap-8 max-w-3xl mx-auto">
               <div>
-                <div className="text-4xl font-bold mb-2">9+</div>
-                <div className="text-sm opacity-80">ከተሞች | Cities</div>
+                <div className="text-4xl font-bold mb-2">{adminCities.length}+</div>
+                <div className="text-sm opacity-80">ንቁ የከተማ ፑሎች | Active City Pools</div>
               </div>
               <div>
                 <div className="text-4xl font-bold mb-2">150,000+</div>

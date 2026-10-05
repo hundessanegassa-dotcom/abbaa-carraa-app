@@ -1,21 +1,107 @@
-// pages/cities/index.js - COMPLETE CITY VIP LISTING PAGE (ALL CITIES)
+// pages/cities/index.js - DYNAMIC CITY VIP LISTING PAGE (ADMIN-CREATED POOLS)
 import Head from 'next/head';
 import Link from 'next/link';
-import { useState } from 'react';
-import { getAllCities, getCityData } from '../../lib/cityData';
-// Get all cities dynamically
-const ethiopianCities = getAllCities();
+import { useState, useEffect } from 'react';
+import { supabase } from '../../lib/supabase';
+import { getCityData } from '../../lib/cityData';
 
 export default function CitiesIndex() {
   const [searchTerm, setSearchTerm] = useState('');
   const [regionFilter, setRegionFilter] = useState('all');
   const [showAllCities, setShowAllCities] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [cityPools, setCityPools] = useState([]);
 
-  // Get unique regions for filter
-  const regions = ['all', ...new Set(ethiopianCities.map(city => city.region || 'Ethiopia'))];
+  useEffect(() => {
+    fetchCityPools();
+  }, []);
 
-  // Filter cities based on search and region
-  const filteredCities = ethiopianCities.filter(city => {
+  const fetchCityPools = async () => {
+    setLoading(true);
+    try {
+      const { data: configData } = await supabase
+        .from('city_vip_config')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      const { data: poolsData } = await supabase
+        .from('pools')
+        .select('*')
+        .eq('category', 'city_vip')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      const combinedMap = new Map();
+
+      if (configData && configData.length > 0) {
+        configData.forEach(c => {
+          const cityId = c.city_id || (c.city_name ? c.city_name.toLowerCase().replace(/\s+/g, '-') : 'city');
+          const meta = getCityData(cityId);
+          combinedMap.set(cityId, {
+            id: cityId,
+            name: c.city_name || meta.name.split('|')[0].trim(),
+            nameEn: meta.name.split('|')[1]?.trim() || cityId,
+            region: meta.region || 'Ethiopia',
+            icon: meta.icon || '🏙️',
+            population: meta.population || 'N/A',
+            description: c.description || meta.description || 'Join City VIP and win big!',
+            prize: `ETB ${(c.prize_amount || 1000000).toLocaleString()}`,
+            color: meta.color || 'from-gray-700 to-gray-900'
+          });
+        });
+      }
+
+      if (poolsData && poolsData.length > 0) {
+        poolsData.forEach(p => {
+          const cityId = p.city ? p.city.toLowerCase().replace(/\s+/g, '-') : 'city';
+          if (!combinedMap.has(cityId)) {
+            const meta = getCityData(cityId);
+            combinedMap.set(cityId, {
+              id: cityId,
+              name: p.city || meta.name.split('|')[0].trim(),
+              nameEn: meta.name.split('|')[1]?.trim() || cityId,
+              region: meta.region || 'Ethiopia',
+              icon: meta.icon || '🏙️',
+              population: meta.population || 'N/A',
+              description: p.description || meta.description || 'Join City VIP and win big!',
+              prize: `ETB ${(p.target_amount || 1000000).toLocaleString()}`,
+              color: meta.color || 'from-gray-700 to-gray-900'
+            });
+          }
+        });
+      }
+
+      // Fallback default cities if none created by admin yet
+      if (combinedMap.size === 0) {
+        const defaultCities = ['addis-ababa', 'dire-dawa', 'mekelle', 'adama', 'hawassa', 'gondar', 'bahir-dar', 'jimma'];
+        defaultCities.forEach(cityId => {
+          const meta = getCityData(cityId);
+          combinedMap.set(cityId, {
+            id: cityId,
+            name: meta.name.split('|')[0].trim(),
+            nameEn: meta.name.split('|')[1]?.trim() || cityId,
+            region: meta.region || 'Ethiopia',
+            icon: meta.icon || '🏙️',
+            population: meta.population || 'N/A',
+            description: meta.description || 'Join City VIP and win big!',
+            prize: '10,000,000 ETB',
+            color: meta.color || 'from-gray-700 to-gray-900'
+          });
+        });
+      }
+
+      setCityPools(Array.from(combinedMap.values()));
+    } catch (e) {
+      console.error('Error loading city pools:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const regions = ['all', ...new Set(cityPools.map(city => city.region || 'Ethiopia'))];
+
+  const filteredCities = cityPools.filter(city => {
     const matchesSearch = city.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (city.nameEn || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRegion = regionFilter === 'all' || city.region === regionFilter;
@@ -28,7 +114,7 @@ export default function CitiesIndex() {
     <>
       <Head>
         <title>City VIP Programs - Join Your City's Exclusive VIP | Abbaa Carraa</title>
-        <meta name="description" content="Join your city's VIP program and win up to 10 Million Birr. Available in all Ethiopian cities." />
+        <meta name="description" content="Join your city's VIP program and win up to 10 Million Birr. Available in Ethiopian cities." />
       </Head>
 
       <div className="min-h-screen bg-gray-50">
@@ -43,7 +129,7 @@ export default function CitiesIndex() {
               Join Your City's <span className="text-yellow-400">Exclusive VIP</span>
             </h1>
             <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
-              Win up to 10 Million Birr in your city's VIP program. Available in all Ethiopian cities!
+              Win up to 10 Million Birr in your city's VIP program. Created by Admin across Ethiopian cities!
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               <a href="#cities" className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-full font-semibold transition flex items-center gap-2">
@@ -90,41 +176,47 @@ export default function CitiesIndex() {
 
             {/* Results Count */}
             <div className="mt-4 text-sm text-gray-500">
-              Found {filteredCities.length} {filteredCities.length === 1 ? 'city' : 'cities'}
+              Found {filteredCities.length} {filteredCities.length === 1 ? 'city pool' : 'city pools'}
             </div>
           </div>
 
           {/* Cities Grid */}
-          <div id="cities" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            {displayedCities.map((city) => {
-              const cityDetail = getCityData(city.id);
-              return (
+          {loading ? (
+            <div className="text-center py-16">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+              <p className="mt-4 text-gray-500">Loading city pools...</p>
+            </div>
+          ) : (
+            <div id="cities" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              {displayedCities.map((city) => (
                 <Link key={city.id} href={`/cities/${city.id}`}>
-                  <div className={`bg-gradient-to-r ${cityDetail?.color || 'from-gray-700 to-gray-900'} rounded-2xl p-5 text-white hover:shadow-xl transition transform hover:scale-105 cursor-pointer h-full flex flex-col`}>
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="text-4xl">{city.icon || '🏙️'}</div>
-                      <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{cityDetail?.population || 'N/A'}</span>
+                  <div className={`bg-gradient-to-r ${city.color} rounded-2xl p-5 text-white hover:shadow-xl transition transform hover:scale-105 cursor-pointer h-full flex flex-col justify-between`}>
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="text-4xl">{city.icon}</div>
+                        <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{city.population}</span>
+                      </div>
+                      <h3 className="font-bold text-xl">{city.name}</h3>
+                      <p className="text-sm opacity-90 mb-1">{city.nameEn}</p>
+                      <p className="text-xs opacity-80 mt-2 line-clamp-2">{city.description}</p>
                     </div>
-                    <h3 className="font-bold text-xl">{city.name}</h3>
-                    <p className="text-sm opacity-90 mb-1">{city.nameEn || city.id}</p>
-                    <p className="text-xs opacity-80 mt-2 line-clamp-2">{cityDetail?.description || 'Join City VIP and win big!'}</p>
                     <div className="mt-4 flex justify-between items-center">
-                      <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">Up to 10M ETB</span>
+                      <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{city.prize}</span>
                       <span className="text-sm font-semibold flex items-center gap-1">
                         Join Now <span className="text-lg">→</span>
                       </span>
                     </div>
                   </div>
                 </Link>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
 
           {/* No Results */}
-          {filteredCities.length === 0 && (
+          {!loading && filteredCities.length === 0 && (
             <div className="text-center py-16 bg-white rounded-2xl shadow-md">
               <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">No cities found</h3>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">No city pools found</h3>
               <p className="text-gray-500">Try a different search term or clear the filter</p>
               <button
                 onClick={() => { setSearchTerm(''); setRegionFilter('all'); }}
@@ -136,7 +228,7 @@ export default function CitiesIndex() {
           )}
 
           {/* Show More / Show Less Button */}
-          {filteredCities.length > 12 && (
+          {!loading && filteredCities.length > 12 && (
             <div className="text-center mt-8">
               <button
                 onClick={() => setShowAllCities(!showAllCities)}
