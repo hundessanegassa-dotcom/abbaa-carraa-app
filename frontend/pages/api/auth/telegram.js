@@ -7,34 +7,42 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { initData, user } = req.body;
+    const { initData, user, telegram_id, username, first_name, last_name } = req.body;
 
-    if (!user || !user.id) {
-      return res.status(400).json({ error: 'Invalid user data' });
+    // Support both user object and top-level fields
+    const telegramId = user?.id || telegram_id;
+    const tgUsername = user?.username || username || null;
+    const tgFirstName = user?.first_name || first_name || '';
+    const tgLastName = user?.last_name || last_name || '';
+
+    if (!telegramId) {
+      return res.status(400).json({ error: 'Invalid user data: telegram_id required' });
     }
 
-    console.log('📱 Telegram WebApp auth for user:', user.id);
+    console.log('📱 Telegram WebApp auth for user:', telegramId);
 
-    // Check if user exists
+    // Check if user exists safely using maybeSingle
     let { data: profile, error: findError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('telegram_id', user.id)
-      .single();
+      .eq('telegram_id', telegramId)
+      .maybeSingle();
 
-    if (findError && findError.code !== 'PGRST116') {
+    if (findError) {
+      console.error('Error finding user:', findError);
       throw findError;
     }
 
     if (!profile) {
       console.log('👤 Creating new user from WebApp');
+      const fullName = `${tgFirstName} ${tgLastName}`.trim() || 'Telegram User';
       const { data: newUser, error: createError } = await supabase
         .from('profiles')
         .insert({
-          telegram_id: user.id,
-          telegram_username: user.username || null,
-          full_name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Telegram User',
-          email: `${user.username || user.id}@telegram.user`,
+          telegram_id: telegramId,
+          telegram_username: tgUsername,
+          full_name: fullName,
+          email: `${tgUsername || telegramId}@telegram.user`,
           language: 'en',
           role: 'individual',
           user_type: 'individual',
@@ -53,7 +61,7 @@ export default async function handler(req, res) {
     // Generate session token
     const sessionToken = Buffer.from(JSON.stringify({
       userId: profile.id,
-      telegramId: user.id,
+      telegramId: telegramId,
       timestamp: Date.now()
     })).toString('base64');
 
@@ -68,6 +76,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('❌ Telegram WebApp auth error:', error);
-    res.status(500).json({ error: 'Authentication failed' });
+    res.status(500).json({ error: error.message || 'Authentication failed' });
   }
 }

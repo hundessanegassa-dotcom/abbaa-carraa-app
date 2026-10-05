@@ -72,25 +72,6 @@ export default function CitiesIndex() {
         });
       }
 
-      // Fallback default cities if none created by admin yet
-      if (combinedMap.size === 0) {
-        const defaultCities = ['addis-ababa', 'dire-dawa', 'mekelle', 'adama', 'hawassa', 'gondar', 'bahir-dar', 'jimma'];
-        defaultCities.forEach(cityId => {
-          const meta = getCityData(cityId);
-          combinedMap.set(cityId, {
-            id: cityId,
-            name: meta.name.split('|')[0].trim(),
-            nameEn: meta.name.split('|')[1]?.trim() || cityId,
-            region: meta.region || 'Ethiopia',
-            icon: meta.icon || '🏙️',
-            population: meta.population || 'N/A',
-            description: meta.description || 'Join City VIP and win big!',
-            prize: '10,000,000 ETB',
-            color: meta.color || 'from-gray-700 to-gray-900'
-          });
-        });
-      }
-
       setCityPools(Array.from(combinedMap.values()));
     } catch (e) {
       console.error('Error loading city pools:', e);

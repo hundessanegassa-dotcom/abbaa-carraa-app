@@ -84,26 +84,6 @@ export default function CitiesPage() {
         });
       }
 
-      // If no admin pools created yet, fallback to default initial cities so page isn't completely empty
-      if (combinedMap.size === 0) {
-        const defaultFeatured = ['addis-ababa', 'dire-dawa', 'mekelle', 'adama', 'hawassa'];
-        defaultFeatured.forEach(cityId => {
-          const meta = getCityData(cityId);
-          combinedMap.set(cityId, {
-            id: cityId,
-            name: meta.name.split('|')[0].trim(),
-            nameEn: meta.name.split('|')[1]?.trim() || cityId,
-            slogan: meta.slogan,
-            prize: '40,000,000 ETB',
-            contribution: 500,
-            color: meta.color || 'from-gray-700 to-gray-900',
-            icon: meta.icon || '🏙️',
-            businesses: meta.businesses || '10,000+',
-            workers: meta.workers || '40,000+'
-          });
-        });
-      }
-
       setAdminCities(Array.from(combinedMap.values()));
     } catch (e) {
       console.error('Error fetching admin city VIP pools:', e);

@@ -1,4 +1,4 @@
-// pages/login.js - FIXED VERSION
+// pages/login.js - FIXED VERSION WITH PARTNER & ADMIN AUTH
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
@@ -116,18 +116,21 @@ export default function Login() {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, user_type')
         .eq('id', data.user.id)
-        .single();
+        .maybeSingle();
 
-      if (!profile || !['agent', 'vendor', 'organization'].includes(profile.role)) {
-        toast.error('This account is not registered as a partner. Please login as individual.');
+      const userRole = profile?.role || profile?.user_type || 'individual';
+      const allowedPartnerRoles = ['agent', 'vendor', 'organization', 'admin'];
+
+      if (!profile || !allowedPartnerRoles.includes(userRole)) {
+        toast.error('This account is not registered as a partner or admin. Please login as individual.');
         await supabase.auth.signOut();
         return;
       }
 
-      toast.success('Welcome back partner! 🎉');
-      const redirectPath = redirect || '/dashboard';
+      toast.success('Welcome back! 🎉');
+      const redirectPath = redirect || (userRole === 'admin' ? '/admin/dashboard' : '/dashboard');
       router.push(redirectPath);
 
     } catch (error) {
@@ -152,11 +155,11 @@ export default function Login() {
               <span className="text-4xl">🎁</span>
             </div>
             <h1 className="text-2xl font-bold text-gray-800 mb-2">
-              {showPartnerLogin ? 'Partner Login' : 'Welcome to Abbaa Carraa'}
+              {showPartnerLogin ? 'Partner / Admin Login' : 'Welcome to Abbaa Carraa'}
             </h1>
             <p className="text-gray-500">
               {showPartnerLogin 
-                ? 'Sign in to your partner account' 
+                ? 'Sign in to your partner or admin account'
                 : 'Sign in to continue to your pool'}
             </p>
           </div>
@@ -198,7 +201,7 @@ export default function Login() {
                 onClick={() => setShowPartnerLogin(true)}
                 className="w-full text-center text-sm text-green-600 hover:text-green-700 font-medium"
               >
-                🔑 Login as Partner (Agent/Vendor/Organization)
+                🔑 Login as Partner / Admin (Agent/Vendor/Organization/Admin)
               </button>
 
               <div className="mt-6 pt-4 border-t border-gray-200 text-center">
@@ -243,7 +246,7 @@ export default function Login() {
                   disabled={partnerLoading}
                   className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-2 rounded-lg font-semibold transition disabled:opacity-50"
                 >
-                  {partnerLoading ? 'Signing in...' : 'Sign in as Partner'}
+                  {partnerLoading ? 'Signing in...' : 'Sign in as Partner / Admin'}
                 </button>
               </form>
 
